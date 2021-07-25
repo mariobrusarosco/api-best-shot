@@ -121,51 +121,51 @@ Router.post('/', async (req, res) => {
   return res.send('Thanks!! Your user was successfully registered!')
 })
 
-// Router.put('/', async (req, res) => {
-//   //  Validation Errors
-//   const { error } = validateExistingUser(req.body)
+Router.put('/', async (req, res) => {
+  //  Validation Errors
+  const { error } = validateExistingUser(req.body)
 
-//   if (error) {
-//     return res.status(400).send(errorsMap[error.message])
-//   }
+  if (error) {
+    return res.status(400).send(errorsMap[error.message])
+  }
 
-//   const { id } = req.body
+  const { id } = req.body
 
-//   const user = await User.findById(id)
+  const user = await User.findById(id)
 
-//   if (!user) {
-//     return res.send('user not found')
-//   }
+  if (!user) {
+    return res.send('user not found')
+  }
 
-//   // Query and then update approach
+  // Query and then update approach
 
-//   // Assigning new properties
-//   user.isPublished = false
-//   user.name = "Walter 'Heisenberg' White"
+  // Assigning new properties
+  user.isPublished = false
+  user.name = "Walter 'Heisenberg' White"
 
-//   // Using ge .set() method
-//   user.set({
-//     isPublished: false,
-//     name: "Walter 'Heisenberg' White"
-//   })
+  // Using ge .set() method
+  user.set({
+    isPublished: false,
+    name: "Walter 'Heisenberg' White"
+  })
 
-//   // Update First approach
-//   const updatedUser = await User
-//     .findOneAndUpdate(
-//       {_id: mockedId },
-//       {
-//         $set: {
-//           name: 'bbbbb',
-//           isPublished: false
-//         }
-//       },
-//       { new: true }
-//     ).select('name')
+  // Update First approach
+  const updatedUser = await User
+    .findOneAndUpdate(
+      {_id: mockedId },
+      {
+        $set: {
+          name: 'bbbbb',
+          isPublished: false
+        }
+      },
+      { new: true }
+    ).select('name')
 
-//   // const updatedUser = await user.save()
+  // const updatedUser = await user.save()
 
-//   res.send(updatedUser)
-// })
+  res.send(updatedUser)
+})
 
 module.exports = Router
 
@@ -200,69 +200,4 @@ module.exports = Router
 // 	)
 
 // 	res.send(deletedUser)
-// })
-
-// Common Functions
-
-// const getUser = req => {
-//   return mock.users.find(user => {
-//     return user.id === parseInt(req.params.id)
-//   })
-// }
-
-// Router.get('/:id', (req, res) => {
-//   const user = getUser(req)
-
-//   if (!user) {
-//     return res.status(404).send('Invalid User Id')
-//   }
-
-//   return res.send(user)
-// })
-
-// Router.get('/', (req, res) => {
-//   res.send(mock.users)
-// })
-
-// Router.post('/', (req, res) => {
-//   // TODO:Two options of validation:
-//   // -> 'joi' library
-//   // ->  'Own validators'
-//   validateUser(req)
-//     .then(({ name }) => {
-//       const user = {
-//         id: mock.users.length + 1,
-//         name
-//       }
-
-//       mock.users.push(user)
-//       return res.send(mock.users)
-//     })
-//     .catch(({ details }) => res.status(404).send(details.map(error => error.message)))
-// })
-
-// Router.put('/:id', (req, res) => {
-//   const user = getUser(req)
-
-//   if (!user) {
-//     return res.status(404).send('Invalid User Id')
-//   }
-
-//   validateUser(req)
-//     .then(({ name }) => {
-//       user.name = name
-//       return res.send(user)
-//     })
-//     .catch(({ details }) => res.status(404).send(details.map(error => error.message)))
-// })
-
-// Router.delete('/:id', (req, res) => {
-//   const user = getUser(req)
-
-//   if (!user) {
-//     return res.status(404).send('Invalid User Id')
-//   }
-
-//   console.log('deleting user')
-//   return res.send(user)
 // })

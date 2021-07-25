@@ -1,14 +1,5 @@
 const mongoose = require('mongoose')
 
-const isLocalEnv = process.env.NODE_ENV === 'local'
-const credentials = isLocalEnv
-  ? 'mongodb://localhost/local-best-shot'
-  : process.env.DB_CREDENTIALS
-
-
-console.log('process.env.DB_CREDENTIALS', process.env.DB_CREDENTIALS)
-
-
 module.exports = () => {
   mongoose
     .connect(process.env.DB_CREDENTIALS, { useNewUrlParser: true,  useUnifiedTopology: true })

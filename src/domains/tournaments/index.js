@@ -1,17 +1,17 @@
 const express = require('express')
-const Router = express.Router()
+const router = express.Router()
 
 // const { API_VERSION } = process.env
 const { API_VERSION } = require('../../config')
 
-console.log({ API_VERSION})
 // Auth Middleware
 // const authorization = require('../middlewares/authorization')
 
-const tournaments = require('./api')
+const apiHandlers = require("./api")
 
-console.log(`${API_VERSION}/tournaments`)
+module.exports = app => {
+  console.log("[Domain] - Tournaments")
 
-Router.use(`${API_VERSION}/tournaments`, tournaments)
+  app.use(`${API_VERSION}/tournaments`, apiHandlers)
+}
 
-module.exports = Router

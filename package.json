@@ -5,6 +5,7 @@
   "scripts": {
     "server-prod": "nodemon -r dotenv/config src/index.js",
     "dev": "nodemon -r dotenv/config src/index.js --inspect",
+    "start-local-db": "systemctl status mongod",
     "prod": "",
     "cy-open": "cypress open",
     "test:watch": "NODE_ENV=local jest --watchAll --verbose",

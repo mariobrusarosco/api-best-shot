@@ -37,8 +37,10 @@ app.use(function(req, res, next) {
   next()
 })
 
-// ROUTES
-app.use(require('./domains/tournaments'))
+
+// Domains
+require('./domains/tournaments')(app)
+
 app.use(expressErrorHandler)
 // require('./routes')(app)
 

@@ -23,11 +23,14 @@ require('./db')()
 // MIDDLEWARES
 require('./middlewares')(app)
 
+
+
+
 // Domains
 require('./domains/tournaments')(app)
 
 app.use(expressErrorHandler)
-require('./routes')(app)
+// require('./routes')(app)
 
 // if (process.env.NODE_ENV !== 'local') {
 // Serving assets like main.css or main.js
@@ -41,7 +44,7 @@ require('./routes')(app)
 // app.use(express.static('dist'))
 
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.resolve(__dirname, 'index.html'))
+  res.sendFile(path.resolve(__dirname, 'index.html'))
 })
 
 // Listener

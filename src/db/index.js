@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-module.exports = () => {
+const connect = () => {
   mongoose
     .connect(process.env.DB_CREDENTIALS, { useNewUrlParser: true,  useUnifiedTopology: true })
     .then(() => {
@@ -11,3 +11,7 @@ module.exports = () => {
       new Error({ type: 'Mongo connection error', message: error })
     })
 }
+
+const close = () => mongoose.disconnect()
+
+module.exports = { connect, close }

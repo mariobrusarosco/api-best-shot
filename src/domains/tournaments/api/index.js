@@ -16,6 +16,17 @@ const Tournament = require('../model')
 
 const { API_VERSION } = require('../../../config')
 
+const getTournament = async (req,res) => {
+  try{
+    const requestedId = req.params.tournamentId
+    const tournament = await Tournament.find({ _id: requestedId })
+
+    res.status(200).send(tournament)
+  }catch(err) {
+    console.log(err)
+    res.status(500).send("generic error")
+  }
+}
 
 const getAllTournaments = async (req, res) => {
   try {
@@ -37,7 +48,7 @@ const createTournament = async (req, res) => {
     try{
       const insertionResult = await newTournament.save()
 
-      res.status(200).send(insertionResult)
+      res.status(201).send(insertionResult)
     }catch(error) {
       const errorMessage = error.code == 11000 ? "Mongo DB: duplicated key" : "Mongo DB error when trying to save()";
 
@@ -50,5 +61,6 @@ router.route("/")
   .get(getAllTournaments)
   .post(createTournament)
 
+router.route("/:tournamentId").get(getTournament)
 
 module.exports = router

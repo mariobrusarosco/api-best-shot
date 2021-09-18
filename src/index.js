@@ -18,7 +18,8 @@ const expressErrorHandler = require('./middlewares/express')
 // require('./logging')()
 
 // DB
-require('./db')()
+const { connect } = require('./db');
+connect();
 
 // MIDDLEWARES
 require('./middlewares')(app)
@@ -27,7 +28,7 @@ require('./middlewares')(app)
 require('./domains/tournaments')(app)
 
 app.use(expressErrorHandler)
-require('./routes')(app)
+// require('./routes')(app)
 
 // if (process.env.NODE_ENV !== 'local') {
 // Serving assets like main.css or main.js
@@ -46,3 +47,5 @@ app.get('*', (req, res) => {
 
 // Listener
 app.listen(PORT, () => console.log(`Serving at ${PORT} - ${process.env.NODE_ENV}`))
+
+module.exports = app;

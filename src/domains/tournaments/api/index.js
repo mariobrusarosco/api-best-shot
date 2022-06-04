@@ -24,7 +24,7 @@ const getTournament = async (req,res) => {
     res.status(200).send(tournament)
   }catch(err) {
     console.log(err)
-    res.status(500).send("generic error")
+    res.status(500).send("generic error",err)
   }
 }
 

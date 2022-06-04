@@ -1,13 +1,12 @@
 {
   "name": "api-best-shot",
-  "version": "0.1.1",
+  "version": "0.2.1",
   "description": "API - Best Shot",
   "scripts": {
     "server-prod": "nodemon -r dotenv/config src/index.js",
     "dev": "nodemon -r dotenv/config src/index.js --inspect",
-    "start-local-db": "systemctl start mongod",
+    "start-local-db": "",
     "prod": "",
-    "cy-open": "cypress open",
     "test:watch": "NODE_ENV=local jest --watchAll --verbose",
     "test": "mocha ./src/test/**/*.js --recursive --exit",
     "lint": "eslint src"

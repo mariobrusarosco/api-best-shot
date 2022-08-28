@@ -1,22 +1,10 @@
 {
   "compilerOptions": {
-    "experimentalDecorators": true,
-    "outDir": "./dist/",
-    "allowJs": true,
-    "sourceMap": true,
-    "allowSyntheticDefaultImports": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "noUnusedLocals": true,
-    "noImplicitAny": true,
-    "target": "es2015",
-    "module": "ESNext",
-    "strict": true,
-    "baseUrl": "/"
-  },
-  "include": ["src/**/*", "src/index.ts"],
-  "exclude": ["node_modules", "dist"]
+    "target": "es5",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "baseUrl": "./",
+    "esModuleInterop": true
+  }
 }

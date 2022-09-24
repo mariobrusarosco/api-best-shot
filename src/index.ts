@@ -8,6 +8,7 @@ import logger from './middlewares/logger'
 import db from './db'
 import FileRouting from './playground/sending-files'
 import ServingWebsites from './playground/serving-sites'
+import TemplateEngines from './playground/template-engines'
 
 const PORT = 9090
 
@@ -49,3 +50,4 @@ console.log('best shot api!')
 // Playground Area
 FileRouting(app)
 ServingWebsites(app)
+TemplateEngines(app)

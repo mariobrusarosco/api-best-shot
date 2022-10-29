@@ -1,0 +1,23 @@
+# flyctl launch added from .gitignore
+# Folders
+**/node_modules
+**/dist
+**/build
+
+# Files
+**/error.log
+**/combined.log
+**/exceptions.log
+**/crash.log
+
+**/.env
+**/npm-debug.log
+**/yarn-error.log
+
+**/.vscode
+
+**/cypress/screenshots
+**/cypress/videos
+
+
+**/.env

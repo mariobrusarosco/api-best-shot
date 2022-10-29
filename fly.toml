@@ -3,13 +3,15 @@
 app = "api-best-shot"
 kill_signal = "SIGINT"
 kill_timeout = 5
-processes = []
+
+[processes]
+web = "yarn serve:prod"
 
 [build]
   builder = "heroku/buildpacks:20"
 
 [env]
-  PORT = "8080"
+  PORT = "9090"
 
 [experimental]
   allowed_public_ports = []

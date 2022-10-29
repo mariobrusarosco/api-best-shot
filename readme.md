@@ -16,6 +16,10 @@ are shared via .env file under the key of 'DB_CREDENTIALS'
 
 https://cloud.mongodb.com/
 
+https://account.mongodb.com/
+
+### Setting up Mongo (locally)
+
 ### Install Mongo DB on Mac
 
 TO DO DONE!
@@ -23,3 +27,10 @@ TO DO DONE!
 ### Access the API (under development stage)
 
 https://api-dev-best-shot.herokuapp.com/
+
+
+
+### TESTING
+
+https://getsimple.works/how-to-stub-mongoose-methods-and-mock-document-objects
+

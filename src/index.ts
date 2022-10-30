@@ -29,9 +29,9 @@ MatchRouting(app)
 // Rest routes - temporary place'
 
 // Playground Area
-FileRouting(app)
-ServingWebsites(app)
-TemplateEngines(app)
+// FileRouting(app)
+// ServingWebsites(app)
+// TemplateEngines(app)
 
 async function startServer() {
   console.log('best shot api!')

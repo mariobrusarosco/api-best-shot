@@ -6,7 +6,8 @@
   "scripts": {
     "build": "rimraf ./dist && tsc",
     "dev": "nodemon -r dotenv/config ./src/index.ts",
-    "serve-prod": "yarn build && node -r dotenv/config ./dist/src/index.js",
+    "serve-prod": "node -r dotenv/config ./dist/src/index.js",
+    "build-and-serve-prod": "yarn build && yarn build-and-serve-prod",
     "compile": "tsc --noEmit"
   },
   "author": "Mario Brusarosco",

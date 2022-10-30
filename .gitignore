@@ -1,6 +1,5 @@
 # Folders
 node_modules
-dist
 build
 
 # Files
@@ -17,3 +16,6 @@ yarn-error.log
 
 cypress/screenshots
 cypress/videos
+
+
+.env

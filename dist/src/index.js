@@ -45,9 +45,6 @@ var routes_2 = __importDefault(require("./domains/league/routes"));
 var routes_3 = __importDefault(require("./domains/match/routes"));
 var routes_4 = __importDefault(require("./domains/user/routes"));
 var logger_1 = __importDefault(require("./middlewares/logger"));
-var sending_files_1 = __importDefault(require("./playground/sending-files"));
-var serving_sites_1 = __importDefault(require("./playground/serving-sites"));
-var template_engines_1 = __importDefault(require("./playground/template-engines"));
 var database_1 = __importDefault(require("./services/database"));
 var PORT = process.env.PORT || 3000;
 var app = (0, express_1.default)();
@@ -61,9 +58,9 @@ app.use(logger_1.default);
 (0, routes_3.default)(app);
 // Rest routes - temporary place'
 // Playground Area
-(0, sending_files_1.default)(app);
-(0, serving_sites_1.default)(app);
-(0, template_engines_1.default)(app);
+// FileRouting(app)
+// ServingWebsites(app)
+// TemplateEngines(app)
 function startServer() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {

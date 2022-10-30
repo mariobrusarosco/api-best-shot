@@ -49,7 +49,7 @@ var sending_files_1 = __importDefault(require("./playground/sending-files"));
 var serving_sites_1 = __importDefault(require("./playground/serving-sites"));
 var template_engines_1 = __importDefault(require("./playground/template-engines"));
 var database_1 = __importDefault(require("./services/database"));
-var PORT = 9090;
+var PORT = process.env.PORT || 3000;
 var app = (0, express_1.default)();
 // JSON Parser Middleware
 app.use(express_1.default.json());

@@ -29,6 +29,59 @@ async function getMatch(req: Request, res: Response) {
   }
 }
 
+async function getAllMatches(req: Request, res: Response) {
+  try {
+    const matches = await Match.find(
+      {},
+      {
+        __v: 0
+      }
+    )
+
+    return res.status(200).send(matches)
+  } catch (error: any) {
+    if (error?.value === 'NULL') {
+      return res.status(ErrorMapper.NOT_FOUND.status).send(ErrorMapper.NOT_FOUND.status)
+    } else {
+      // log here: ErrorMapper.BIG_FIVE_HUNDRED.debug
+      return res
+        .status(GlobalErrorMapper.BIG_FIVE_HUNDRED.status)
+        .send(GlobalErrorMapper.BIG_FIVE_HUNDRED.user)
+    }
+  }
+}
+
+async function getAllTeamMatches(req: Request, res: Response) {
+  const teamId = req?.query.team
+  console.log({ teamId })
+
+  if (!teamId) {
+    return res
+      .status(ErrorMapper.NO_PROVIDED_TEAM_ABREVIATION.status)
+      .send(ErrorMapper.NO_PROVIDED_TEAM_ABREVIATION.user)
+  }
+
+  try {
+    const match = await Match.findOne(
+      { $or: [{ host: teamId }, { visitor: teamId }] },
+      {
+        __v: 0
+      }
+    )
+
+    return res.status(200).send(match)
+  } catch (error: any) {
+    if (error?.value === 'NULL') {
+      return res.status(ErrorMapper.NOT_FOUND.status).send(ErrorMapper.NOT_FOUND.status)
+    } else {
+      // log here: ErrorMapper.BIG_FIVE_HUNDRED.debug
+      return res
+        .status(GlobalErrorMapper.BIG_FIVE_HUNDRED.status)
+        .send(GlobalErrorMapper.BIG_FIVE_HUNDRED.user)
+    }
+  }
+}
+
 async function createMatch(req: Request, res: Response) {
   const body = req?.body as IMatch
 
@@ -87,7 +140,9 @@ async function updateMatch(req: Request, res: Response) {
 const MatchController = {
   getMatch,
   createMatch,
-  updateMatch
+  updateMatch,
+  getAllTeamMatches,
+  getAllMatches
 }
 
 export default MatchController

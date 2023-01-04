@@ -7,13 +7,22 @@ import League, { ILeague } from '../schema'
 async function getAllLeagues(req: Request, res: Response) {
   const token = req.headers.token
 
+  console.log({ token })
+
   try {
     const allLeagues = await League.find(
-      { members: token },
+      // { members: token },
+      {},
       {
         __v: 0
       }
     )
+    // const allLeagues = await League.find(
+    //   { members: token },
+    //   {
+    //     __v: 0
+    //   }
+    // )
     return res.status(200).send(allLeagues)
   } catch (error) {
     // log here: ErrorMapper.BIG_FIVE_HUNDRED.debug

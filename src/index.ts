@@ -13,7 +13,7 @@ import ServingWebsites from './playground/serving-sites'
 import TemplateEngines from './playground/template-engines'
 import databaseService from './services/database'
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 9090
 
 const app = express()
 
@@ -45,8 +45,6 @@ MatchRouting(app)
 // TemplateEngines(app)
 
 async function startServer() {
-  console.log('best shot api!')
-  // DB Connection
   await databaseService.connect()
 
   app.listen(PORT, () => console.log(`Listening on port ${PORT}`))

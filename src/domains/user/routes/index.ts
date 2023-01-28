@@ -5,6 +5,7 @@ import UserController from '../controllers/user-controllers'
 const UserRouting = (app: Express) => {
   const userRouter = express.Router()
 
+  userRouter.get('/:userId', UserController.getUser)
   userRouter.get('/', UserController.getAllUsers)
   userRouter.post('/', UserController.createUser)
 

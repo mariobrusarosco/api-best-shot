@@ -1,6 +1,29 @@
 import { Request, Response } from 'express'
-import { GlobalErrorMapper } from '../../shared/error-handling/mapper'
+import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 import User, { IUser } from '../schema'
+
+async function getUser(req: Request, res: Response) {
+  try {
+    const userId = req?.params.userId
+
+    const user = await User.findOne(
+      { _id: userId },
+      {
+        __v: 0
+      }
+    )
+
+    if (user) {
+      return res.status(200).json(user)
+    } else {
+      return res.status(404).json({ message: 'User Not Found' })
+    }
+  } catch (error) {
+    console.log({ error })
+
+    handleInternalServerErrorResponse(res, error)
+  }
+}
 
 async function getAllUsers(req: Request, res: Response) {
   try {
@@ -12,10 +35,7 @@ async function getAllUsers(req: Request, res: Response) {
     )
     return res.status(200).send(allLeagues)
   } catch (error) {
-    // log here: ErrorMapper.BIG_FIVE_HUNDRED.debug
-    return res
-      .status(GlobalErrorMapper.BIG_FIVE_HUNDRED.status)
-      .send(GlobalErrorMapper.BIG_FIVE_HUNDRED.user)
+    handleInternalServerErrorResponse(res, error)
   }
 }
 
@@ -31,23 +51,20 @@ async function createUser(req: Request, res: Response) {
       ...body
     })
 
-    res.json(result)
+    return res.json(result)
   } catch (error: any) {
     if (error?.value === 'NULL') {
       return res.status(404).send('user not found. fix the mapper dude')
     } else {
-      console.error(error)
-      // log here: ErrorMapper.BIG_FIVE_HUNDRED.debug
-      res
-        .status(GlobalErrorMapper.BIG_FIVE_HUNDRED.status)
-        .send(GlobalErrorMapper.BIG_FIVE_HUNDRED.user)
+      return handleInternalServerErrorResponse(res, error)
     }
   }
 }
 
 const UserController = {
   getAllUsers,
-  createUser
+  createUser,
+  getUser
 }
 
 export default UserController

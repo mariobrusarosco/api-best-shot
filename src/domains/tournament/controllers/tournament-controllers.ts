@@ -4,6 +4,7 @@ import { ErrorMapper } from '../error-handling/mapper'
 
 import Tournament, { ITournament } from '../schema'
 import Match from '../../match/schema'
+import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 
 async function getTournamentMatches(req: Request, res: Response) {
   const tournamentId = req?.params.tournamentId
@@ -68,10 +69,7 @@ async function getTournament(req: Request, res: Response) {
     if (error?.kind === 'ObjectId') {
       return res.status(ErrorMapper.NOT_FOUND.status).send(ErrorMapper.NOT_FOUND.status)
     } else {
-      // log here: ErrorMapper.BIG_FIVE_HUNDRED.debug
-      return res
-        .status(GlobalErrorMapper.BIG_FIVE_HUNDRED.status)
-        .send(GlobalErrorMapper.BIG_FIVE_HUNDRED.user)
+      return handleInternalServerErrorResponse(res, error)
     }
   }
 }
@@ -88,10 +86,12 @@ async function createTournament(req: Request, res: Response) {
       ...body
     })
 
-    res.json(result)
+    return res.json(result)
   } catch (error) {
     // log here: ErrorMapper.DUPLICATED_LABEL.debug
-    res.status(ErrorMapper.DUPLICATED_LABEL.status).send(ErrorMapper.DUPLICATED_LABEL)
+    return res
+      .status(ErrorMapper.DUPLICATED_LABEL.status)
+      .send(ErrorMapper.DUPLICATED_LABEL)
   }
 }
 

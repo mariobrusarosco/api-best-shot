@@ -34,6 +34,7 @@ export interface IUser {
   email: String
   firstName: String
   lastName: String
+  leagues: String[]
 }
 
 export const UserSchema = new Schema<IUser>({
@@ -49,6 +50,10 @@ export const UserSchema = new Schema<IUser>({
   },
   lastName: {
     type: String,
+    required: true
+  },
+  leagues: {
+    type: [String],
     required: true
   }
 })

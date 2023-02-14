@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+import { GlobalErrorMapper } from '../../shared/error-handling/mapper'
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 import User, { IUser } from '../schema'
 
@@ -61,10 +62,33 @@ async function createUser(req: Request, res: Response) {
   }
 }
 
+async function updateUser(req: Request, res: Response) {
+  const body = req?.body as IUser
+  const userId = req?.params?.userId
+
+  // console.log({ body })
+
+  try {
+    const updatedUser = await User.findOneAndUpdate({ _id: userId }, body, {
+      returnDocument: 'after'
+    })
+
+    console.log({ updatedUser })
+
+    res.json(updatedUser)
+  } catch (error) {
+    console.error(error)
+    return res
+      .status(GlobalErrorMapper.BIG_FIVE_HUNDRED.status)
+      .send(GlobalErrorMapper.BIG_FIVE_HUNDRED.user)
+  }
+}
+
 const UserController = {
   getAllUsers,
   createUser,
-  getUser
+  getUser,
+  updateUser
 }
 
 export default UserController

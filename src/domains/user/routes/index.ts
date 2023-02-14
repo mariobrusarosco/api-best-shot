@@ -8,6 +8,7 @@ const UserRouting = (app: Express) => {
   userRouter.get('/:userId', UserController.getUser)
   userRouter.get('/', UserController.getAllUsers)
   userRouter.post('/', UserController.createUser)
+  userRouter.patch('/:userId', UserController.updateUser)
 
   app.use(`${process.env.API_V1_VERSION}/user`, userRouter)
 }

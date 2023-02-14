@@ -32,8 +32,8 @@ export const LeagueSchema = new mongoose.Schema({
     type: [String],
     required: true
   },
-  tournament: {
-    type: String,
+  tournaments: {
+    type: [String],
     require: true
   }
 })

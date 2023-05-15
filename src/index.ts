@@ -1,5 +1,6 @@
 import express from 'express'
 import mongoose from 'mongoose'
+import cookieParser from 'cookie-parser'
 import middleware1 from './middlewares/middleware1'
 import middleware2 from './middlewares/middleware2'
 
@@ -7,6 +8,7 @@ import TournamentRouting from './domains/tournament/routes'
 import LeagueRouting from './domains/league/routes'
 import MatchRouting from './domains/match/routes'
 import UserRouting from './domains/user/routes'
+import AuthRouting from './domains/auth/routes'
 import logger from './middlewares/logger'
 import FileRouting from './playground/sending-files'
 import ServingWebsites from './playground/serving-sites'
@@ -19,6 +21,10 @@ const app = express()
 
 // JSON Parser Middleware
 app.use(express.json())
+
+console.log(cookieParser())
+// Temp middlewares
+app.use(cookieParser() as any)
 app.use(logger)
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', '*')
@@ -37,6 +43,7 @@ TournamentRouting(app)
 LeagueRouting(app)
 UserRouting(app)
 MatchRouting(app)
+AuthRouting(app)
 // Rest routes - temporary place'
 
 // Playground Area

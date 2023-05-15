@@ -31,10 +31,12 @@ import { Schema, model } from 'mongoose'
 export const USER_COLLECTION_NAME = 'User'
 
 export interface IUser {
-  email: String
-  firstName: String
-  lastName: String
-  leagues: String[]
+  email: string
+  password: string
+  firstName: string
+  lastName: string
+  leagues: string[]
+  token: string
 }
 
 export const UserSchema = new Schema<IUser>({
@@ -43,6 +45,11 @@ export const UserSchema = new Schema<IUser>({
     require: true,
     unique: true,
     dropDups: true
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 6
   },
   firstName: {
     type: String,
@@ -55,6 +62,9 @@ export const UserSchema = new Schema<IUser>({
   leagues: {
     type: [String],
     required: true
+  },
+  token: {
+    type: String
   }
 })
 

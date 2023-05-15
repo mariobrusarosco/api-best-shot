@@ -1,8 +1,24 @@
+import { GlobalErrorMapper } from '../../shared/error-handling/mapper'
+// import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 import { Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
-import { GlobalErrorMapper } from '../../shared/error-handling/mapper'
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
-import User, { IUser } from '../schema'
+import User, { IUser } from '../../user/schema'
+// const jwt = require('jsonwebtoken')
+import jwt from 'jsonwebtoken'
+
+function getToken(email: string, expirationTime: any) {
+  //example of seeting up expiration time
+  //2 hours to expire in seconds
+  //const maxAge = 2 * 60 * 60
+
+  //generate token for the user
+  const token = jwt.sign({ email }, process.env.TOKEN_KEY as string, {
+    expiresIn: expirationTime //2h in seconds
+  })
+
+  return token
+}
 
 async function getUserByUsername(email: string) {
   console.log('inside authService')
@@ -94,21 +110,35 @@ async function createUser(req: Request, res: Response) {
   const salt = await bcrypt.genSalt(10)
   //hash password
   const hashedPassword = await bcrypt.hash(body.password, salt)
+  //2 hours to expire in seconds
+  const maxAge = 2 * 60 * 60
+
+  const token = getToken(body.email, maxAge)
 
   try {
-    console.log('asdsdssaddas')
+    const existingUser = await User.findOne({ email: body.email })
+    if (existingUser) {
+      return res.status(400).send('email is taken')
+    }
+
     const result = await User.create({
-      ...body
+      ...body,
+      password: hashedPassword,
+      token
+    })
+
+    res.cookie('best-shot-token', token, {
+      httpOnly: true,
+      maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds
     })
 
     return res.json(result)
   } catch (error: any) {
-    console.log('asdsdssaddas', error?.value)
-    // if (error?.value === 'NULL') {
-    //   return res.status(404).send('user not found. fix the mapper dude')
-    // } else {
-    //   return handleInternalServerErrorResponse(res, error)
-    // }
+    if (error?.value === 'NULL') {
+      return res.status(404).send('user not found. fix the mapper dude')
+    } else {
+      return handleInternalServerErrorResponse(res, error)
+    }
   }
 }
 
@@ -134,7 +164,22 @@ async function updateUser(req: Request, res: Response) {
   }
 }
 
-const UserController = {
+async function start(req: Request, res: Response) {
+  const body = req?.body
+
+  try {
+    console.log({ body })
+
+    return res.status(200).send('start')
+  } catch (error) {
+    console.error(error)
+    return res
+      .status(GlobalErrorMapper.BIG_FIVE_HUNDRED.status)
+      .send(GlobalErrorMapper.BIG_FIVE_HUNDRED.user)
+  }
+}
+
+const AuthController = {
   getAllUsers,
   createUser,
   getUser,
@@ -145,4 +190,4 @@ const UserController = {
   loginUser
 }
 
-export default UserController
+export default AuthController

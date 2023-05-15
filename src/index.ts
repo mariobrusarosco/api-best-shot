@@ -7,6 +7,7 @@ import TournamentRouting from './domains/tournament/routes'
 import LeagueRouting from './domains/league/routes'
 import MatchRouting from './domains/match/routes'
 import UserRouting from './domains/user/routes'
+import AuthRouting from './domains/auth/routes'
 import logger from './middlewares/logger'
 import FileRouting from './playground/sending-files'
 import ServingWebsites from './playground/serving-sites'
@@ -37,6 +38,7 @@ TournamentRouting(app)
 LeagueRouting(app)
 UserRouting(app)
 MatchRouting(app)
+AuthRouting(app)
 // Rest routes - temporary place'
 
 // Playground Area

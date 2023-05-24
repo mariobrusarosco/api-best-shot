@@ -6,6 +6,7 @@ import { handleInternalServerErrorResponse } from '../../shared/error-handling/h
 import User, { IUser } from '../../user/schema'
 // const jwt = require('jsonwebtoken')
 import jwt from 'jsonwebtoken'
+import path from 'path'
 
 function getToken(email: string, expirationTime: any) {
   //example of seeting up expiration time
@@ -128,8 +129,11 @@ async function createUser(req: Request, res: Response) {
     })
 
     res.cookie('best-shot-token', token, {
-      httpOnly: true,
-      maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds
+      // httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds,
+      // path: 'http://localhost:3000'
     })
 
     return res.json(result)

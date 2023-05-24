@@ -1,6 +1,7 @@
 import express from 'express'
 import mongoose from 'mongoose'
-import cookieParser from 'cookie-parser'
+const cookieParser = require('cookie-parser')
+const cors = require('cors')
 import middleware1 from './middlewares/middleware1'
 import middleware2 from './middlewares/middleware2'
 
@@ -22,12 +23,12 @@ const app = express()
 // JSON Parser Middleware
 app.use(express.json())
 
-console.log(cookieParser())
+// console.log(cookieParser())
 // Temp middlewares
-app.use(cookieParser() as any)
+
 app.use(logger)
 app.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000')
   res.header(
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Origin'
@@ -37,6 +38,12 @@ app.use(function (req, res, next) {
 
   next()
 })
+app.use(cookieParser() as any)
+// app.use(
+//   cors({
+//     credentials: true
+//   })
+// )
 
 // Rest routes - temporary place
 TournamentRouting(app)

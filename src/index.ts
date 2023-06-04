@@ -24,6 +24,7 @@ const app = express()
 app.use(express.json())
 
 // console.log(cookieParser())
+console.log('----------', process.env.ACESS_CONTROL_ALLOW_ORIGIN)
 // Temp middlewares
 
 app.use(logger)
@@ -39,11 +40,12 @@ app.use(function (req, res, next) {
   next()
 })
 app.use(cookieParser() as any)
-// app.use(
-//   cors({
-//     credentials: true
-//   })
-// )
+app.use(
+  cors({
+    origin: true,
+    credentials: true
+  })
+)
 
 // Rest routes - temporary place
 TournamentRouting(app)

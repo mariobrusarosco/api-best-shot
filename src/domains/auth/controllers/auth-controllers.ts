@@ -159,7 +159,7 @@ async function createUser(req: Request, res: Response) {
     res.cookie('best-shot-token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      sameSite: 'none',
       maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds,
       // path: 'http://localhost:3000'
     })

@@ -35,28 +35,56 @@ async function getUserByIdAndDelete(id: string) {
   return await User.findByIdAndDelete(id)
 }
 
-async function loginUser(email: string, password: string) {
-  //get the user
-  const user = await User.findOne({ email }, 'email password')
+async function loginUser(req: Request, res: Response) {
+  const body = req?.body as IUser
 
-  return { user }
+  if (!body.email) {
+    return res.status(400).send('You must provide an email.')
+  }
 
-  //validate the hashed password we have in our database
-  // const validPassword = await bcrypt.compare(password, user?.password))
-  // //2 hours to expire in seconds
-  // const maxAge = 2 * 60 * 60
-  // //set up the jwt token
-  // const token = utils.getToken(username, maxAge)
+  if (!body.password) {
+    return res.status(400).send('You must provide a password.')
+  }
 
-  // //add token to the user
-  // user.token = token
-  // //remember to save your modification
-  // //https://masteringjs.io/tutorials/mongoose/update
-  // await user.save()
+  try {
+    //get the user
+    const user = await User.findOne({ email: body.email }, 'email password')
+    //validate the hashed password we have in our database
+    const validPassword = await bcrypt.compare(body.password, user?.password || '')
 
-  // console.log({ token })
+    if (!user && !validPassword) {
+      return res.status(400).send('Incorrect email or password.')
+    }
 
-  // return { user, validPassword, token, maxAge }
+    //2 hours to expire in seconds
+    const maxAge = 2 * 60 * 60
+    //set up the jwt token
+    const token = getToken(body.email, maxAge)
+
+    // Temp TS hack
+    if (user !== null) {
+      // //add token to the user
+      user.token = token
+      await user.save()
+      console.log({ token })
+
+      res.cookie('best-shot-token', token, {
+        // httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds,
+        // path: 'http://localhost:3000'
+      })
+
+      return res.status(200).send({ email: user.email })
+    }
+  } catch (error: any) {
+    if (error?.value === 'NULL') {
+      return res.status(404).send('user not found. fix the mapper dude')
+    }
+
+    return handleInternalServerErrorResponse(res, error)
+  }
 }
 
 async function getUser(req: Request, res: Response) {
@@ -97,7 +125,6 @@ async function getAllUsers(req: Request, res: Response) {
 }
 
 async function createUser(req: Request, res: Response) {
-  console.warn('createUser')
   const body = req?.body as IUser
 
   if (!body.email) {
@@ -137,7 +164,11 @@ async function createUser(req: Request, res: Response) {
       // path: 'http://localhost:3000'
     })
 
-    return res.json(result)
+    return res.json({
+      email: result.email,
+      firstName: result.firstName,
+      lastName: result.lastName
+    })
   } catch (error: any) {
     if (error?.value === 'NULL') {
       return res.status(404).send('user not found. fix the mapper dude')

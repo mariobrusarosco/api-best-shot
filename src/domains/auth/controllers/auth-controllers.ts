@@ -158,7 +158,7 @@ async function createUser(req: Request, res: Response) {
 
     res.cookie('best-shot-token', token, {
       // path: '/',
-      domain: 'best-shot-mariobrusarosco.vercel.app',
+      domain: '.best-shot-mariobrusarosco.vercel.app',
       httpOnly: true,
       secure: true,
       sameSite: 'none',

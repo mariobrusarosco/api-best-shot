@@ -13,7 +13,7 @@ const TournamentRouting = (app: Express) => {
     TournamentController.getTournamentMatches
   )
 
-  app.use(`${process.env.API_V1_VERSION}/tournament`, tournamentRouter)
+  app.use(`${process.env.API_VERSION}/tournament`, tournamentRouter)
 }
 
 export default TournamentRouting

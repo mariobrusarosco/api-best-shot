@@ -11,7 +11,7 @@ const MatchRouting = (app: Express) => {
   mactchRouter.patch('/:matchId', MatchController.updateMatch)
   mactchRouter.post('/', MatchController.createMatch)
 
-  app.use(`${process.env.API_V1_VERSION}/match`, mactchRouter)
+  app.use(`${process.env.API_VERSION}/match`, mactchRouter)
 }
 
 export default MatchRouting

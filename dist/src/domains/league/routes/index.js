@@ -11,6 +11,6 @@ var LeagueRouting = function (app) {
     leagueRouter.get('/', league_controllers_1.default.getAllLeagues);
     leagueRouter.get('/:leagueId', league_controllers_1.default.getLeague);
     leagueRouter.patch('/:leagueId', league_controllers_1.default.updateLeague);
-    app.use("".concat(process.env.API_V1_VERSION, "/league"), leagueRouter);
+    app.use("".concat(process.env.API_VERSION, "/league"), leagueRouter);
 };
 exports.default = LeagueRouting;

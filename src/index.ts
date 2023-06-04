@@ -40,12 +40,13 @@ app.use(function (req, res, next) {
   next()
 })
 app.use(cookieParser() as any)
-app.use(
-  cors({
-    origin: true,
-    credentials: true
-  })
-)
+
+const corsConfig = {
+  origin: true,
+  credentials: true
+}
+app.use(cors(corsConfig))
+app.options('*', cors(corsConfig))
 
 // Rest routes - temporary place
 TournamentRouting(app)

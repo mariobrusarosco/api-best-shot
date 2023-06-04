@@ -9,6 +9,6 @@ var UserRouting = function (app) {
     var userRouter = express_1.default.Router();
     userRouter.get('/', user_controllers_1.default.getAllUsers);
     userRouter.post('/', user_controllers_1.default.createUser);
-    app.use("".concat(process.env.API_V1_VERSION, "/user"), userRouter);
+    app.use("".concat(process.env.API_VERSION, "/user"), userRouter);
 };
 exports.default = UserRouting;

@@ -9,7 +9,7 @@ const UserRouting = (app: Express) => {
   userRouter.get('/', UserController.getAllUsers)
   userRouter.patch('/:userId', UserController.updateUser)
 
-  app.use(`${process.env.API_V1_VERSION}/user`, userRouter)
+  app.use(`${process.env.API_VERSION}/user`, userRouter)
 }
 
 export default UserRouting

@@ -10,6 +10,6 @@ var MatchRouting = function (app) {
     mactchRouter.get('/:matchId', match_controller_1.default.getMatch);
     mactchRouter.patch('/:matchId', match_controller_1.default.updateMatch);
     mactchRouter.post('/', match_controller_1.default.createMatch);
-    app.use("".concat(process.env.API_V1_VERSION, "/match"), mactchRouter);
+    app.use("".concat(process.env.API_VERSION, "/match"), mactchRouter);
 };
 exports.default = MatchRouting;

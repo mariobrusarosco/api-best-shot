@@ -10,7 +10,7 @@ const LeagueRouting = (app: Express) => {
   leagueRouter.get('/:leagueId', LeagueController.getLeague)
   leagueRouter.patch('/:leagueId', LeagueController.updateLeague)
 
-  app.use(`${process.env.API_V1_VERSION}/league`, leagueRouter)
+  app.use(`${process.env.API_VERSION}/league`, leagueRouter)
 }
 
 export default LeagueRouting

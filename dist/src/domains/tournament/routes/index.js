@@ -11,6 +11,6 @@ var TournamentRouting = function (app) {
     tournamentRouter.get('/', tournament_controllers_1.default.getAllTournaments);
     tournamentRouter.get('/:tournamentId', tournament_controllers_1.default.getTournament);
     tournamentRouter.get('/:tournamentId/matches', tournament_controllers_1.default.getTournamentMatches);
-    app.use("".concat(process.env.API_V1_VERSION, "/tournament"), tournamentRouter);
+    app.use("".concat(process.env.API_VERSION, "/tournament"), tournamentRouter);
 };
 exports.default = TournamentRouting;

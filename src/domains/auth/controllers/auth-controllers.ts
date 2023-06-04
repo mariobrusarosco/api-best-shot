@@ -157,11 +157,12 @@ async function createUser(req: Request, res: Response) {
     })
 
     res.cookie('best-shot-token', token, {
+      // path: '/',
+      domain: 'best-shot-mariobrusarosco.vercel.app',
       httpOnly: true,
       secure: true,
       sameSite: 'none',
       maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds,
-      // path: 'http://localhost:3000'
     })
 
     return res.json({

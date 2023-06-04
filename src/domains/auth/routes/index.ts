@@ -6,7 +6,7 @@ const AuthRouting = (app: Express) => {
   const userRouter = express.Router()
   console.warn('auth routing', `${process.env.API_VERSION}/auth`)
 
-  // userRouter.get('/', AuthController.start)
+  userRouter.get('/login', AuthController.loginUser)
   userRouter.post('/', AuthController.createUser)
 
   app.use(`${process.env.API_VERSION}/auth`, userRouter)

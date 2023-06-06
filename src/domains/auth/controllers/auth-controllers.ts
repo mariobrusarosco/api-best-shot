@@ -72,9 +72,7 @@ async function loginUser(req: Request, res: Response) {
         // secure: process.env.NODE_ENV === 'development' ? false : true,
         // httpOnly: process.env.NODE_ENV === 'development' ? false : true,
         domain:
-          process.env.NODE_ENV === 'development'
-            ? 'localhost'
-            : 'best-shot-mariobrusarosco.vercel.app',
+          process.env.NODE_ENV === 'development' ? 'localhost' : 'best-shot.vercel.app',
         secure: true,
         sameSite: process.env.NODE_ENV === 'development' ? false : 'none',
         maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds,
@@ -165,9 +163,7 @@ async function createUser(req: Request, res: Response) {
       // secure: process.env.NODE_ENV === 'development' ? false : true,
       // httpOnly: process.env.NODE_ENV === 'development' ? false : true,
       domain:
-        process.env.NODE_ENV === 'development'
-          ? 'localhost'
-          : 'best-shot-mariobrusarosco.vercel.app',
+        process.env.NODE_ENV === 'development' ? 'localhost' : 'best-shot.vercel.app',
       secure: true,
       sameSite: process.env.NODE_ENV === 'development' ? false : 'none',
       maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds,

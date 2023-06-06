@@ -24,8 +24,17 @@ const app = express()
 app.use(express.json())
 
 // console.log(cookieParser())
-console.log('----------', process.env.ACESS_CONTROL_ALLOW_ORIGIN)
+console.log('----------', process.env.ACESS_CONTROL_ALLOW_ORIGIN, process.env.NODE_ENV)
 // Temp middlewares
+
+app.use(cookieParser() as any)
+
+const corsConfig = {
+  origin: process.env.ACESS_CONTROL_ALLOW_ORIGIN,
+  credentials: true
+}
+app.use(cors(corsConfig))
+// app.options('*', cors(corsConfig))
 
 app.use(logger)
 app.use(function (req, res, next) {
@@ -39,14 +48,6 @@ app.use(function (req, res, next) {
 
   next()
 })
-app.use(cookieParser() as any)
-
-const corsConfig = {
-  origin: true,
-  credentials: true
-}
-app.use(cors(corsConfig))
-app.options('*', cors(corsConfig))
 
 // Rest routes - temporary place
 TournamentRouting(app)

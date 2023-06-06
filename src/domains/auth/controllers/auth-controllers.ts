@@ -66,14 +66,18 @@ async function loginUser(req: Request, res: Response) {
       // //add token to the user
       user.token = token
       await user.save()
-      console.log({ token })
 
       res.cookie('best-shot-token', token, {
-        // httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
+        // path: '/',
+        // secure: process.env.NODE_ENV === 'development' ? false : true,
+        // httpOnly: process.env.NODE_ENV === 'development' ? false : true,
+        domain:
+          process.env.NODE_ENV === 'development'
+            ? 'localhost'
+            : 'best-shot-mariobrusarosco.vercel.app',
+        secure: true,
+        sameSite: process.env.NODE_ENV === 'development' ? false : 'none',
         maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds,
-        // path: 'http://localhost:3000'
       })
 
       return res.status(200).send({ email: user.email })
@@ -158,10 +162,14 @@ async function createUser(req: Request, res: Response) {
 
     res.cookie('best-shot-token', token, {
       // path: '/',
-      domain: 'best-shot-mariobrusarosco.vercel.app',
-      // httpOnly: true,
-      // secure: true,
-      sameSite: 'none',
+      // secure: process.env.NODE_ENV === 'development' ? false : true,
+      // httpOnly: process.env.NODE_ENV === 'development' ? false : true,
+      domain:
+        process.env.NODE_ENV === 'development'
+          ? 'localhost'
+          : 'best-shot-mariobrusarosco.vercel.app',
+      secure: true,
+      sameSite: process.env.NODE_ENV === 'development' ? false : 'none',
       maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds,
     })
 

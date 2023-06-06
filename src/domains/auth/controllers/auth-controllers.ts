@@ -68,11 +68,10 @@ async function loginUser(req: Request, res: Response) {
       await user.save()
 
       res.cookie('best-shot-token', token, {
-        // path: '/',
+        path: '/',
         // secure: process.env.NODE_ENV === 'development' ? false : true,
         // httpOnly: process.env.NODE_ENV === 'development' ? false : true,
-        domain:
-          process.env.NODE_ENV === 'development' ? 'localhost' : 'best-shot.vercel.app',
+        domain: process.env.NODE_ENV === 'development' ? 'localhost' : 'vercel.app',
         secure: true,
         sameSite: process.env.NODE_ENV === 'development' ? false : 'none',
         maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds,
@@ -159,11 +158,10 @@ async function createUser(req: Request, res: Response) {
     })
 
     res.cookie('best-shot-token', token, {
-      // path: '/',
+      path: '/',
       // secure: process.env.NODE_ENV === 'development' ? false : true,
       // httpOnly: process.env.NODE_ENV === 'development' ? false : true,
-      domain:
-        process.env.NODE_ENV === 'development' ? 'localhost' : 'best-shot.vercel.app',
+      domain: process.env.NODE_ENV === 'development' ? 'localhost' : 'vercel.app',
       secure: true,
       sameSite: process.env.NODE_ENV === 'development' ? false : 'none',
       maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds,

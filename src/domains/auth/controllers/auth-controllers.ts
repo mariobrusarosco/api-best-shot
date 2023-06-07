@@ -68,7 +68,7 @@ async function loginUser(req: Request, res: Response) {
       await user.save()
 
       res.cookie('best-shot-token', token, {
-        path: '/',
+        // path: '/',
         // secure: process.env.NODE_ENV === 'development' ? false : true,
         // httpOnly: process.env.NODE_ENV === 'development' ? false : true,
         // domain:
@@ -161,7 +161,7 @@ async function createUser(req: Request, res: Response) {
     })
 
     res.cookie('best-shot-token', token, {
-      path: '/',
+      // path: '/',
       // secure: process.env.NODE_ENV === 'development' ? false : true,
       // httpOnly: process.env.NODE_ENV === 'development' ? false : true,
       // domain:

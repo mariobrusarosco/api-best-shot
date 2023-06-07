@@ -164,10 +164,7 @@ async function createUser(req: Request, res: Response) {
       // path: '/',
       // secure: process.env.NODE_ENV === 'development' ? false : true,
       httpOnly: process.env.NODE_ENV === 'development' ? false : true,
-      // domain:
-      //   process.env.NODE_ENV === 'development'
-      //     ? 'localhost'
-      //     : 'web-production-bc47.up.railway.app',
+      domain: process.env.NODE_ENV === 'development' ? 'localhost' : 'vercel.app',
       secure: true,
       sameSite: process.env.NODE_ENV === 'development' ? false : 'none',
       maxAge: maxAge * 1000 //convert 2h to ms; maxAge uses miliseconds,

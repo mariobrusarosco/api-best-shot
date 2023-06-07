@@ -70,7 +70,7 @@ async function loginUser(req: Request, res: Response) {
       res.cookie('best-shot-token', token, {
         // path: '/',
         // secure: process.env.NODE_ENV === 'development' ? false : true,
-        // httpOnly: process.env.NODE_ENV === 'development' ? false : true,
+        httpOnly: process.env.NODE_ENV === 'development' ? false : true,
         // domain:
         //   process.env.NODE_ENV === 'development'
         //     ? 'localhost'
@@ -163,7 +163,7 @@ async function createUser(req: Request, res: Response) {
     res.cookie('best-shot-toasdsasadken', token, {
       // path: '/',
       // secure: process.env.NODE_ENV === 'development' ? false : true,
-      // httpOnly: process.env.NODE_ENV === 'development' ? false : true,
+      httpOnly: process.env.NODE_ENV === 'development' ? false : true,
       // domain:
       //   process.env.NODE_ENV === 'development'
       //     ? 'localhost'

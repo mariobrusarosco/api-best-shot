@@ -160,7 +160,7 @@ async function createUser(req: Request, res: Response) {
       token
     })
 
-    res.cookie('best-shot-token', token, {
+    res.cookie('best-shot-toasdsasadken', token, {
       // path: '/',
       // secure: process.env.NODE_ENV === 'development' ? false : true,
       // httpOnly: process.env.NODE_ENV === 'development' ? false : true,

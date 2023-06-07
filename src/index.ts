@@ -35,7 +35,7 @@ const corsConfig = {
   credentials: true
 }
 app.use(cors(corsConfig))
-// app.options('*', cors(corsConfig))
+app.options('*', cors(corsConfig))
 
 app.use(logger)
 app.use(function (req, res, next) {

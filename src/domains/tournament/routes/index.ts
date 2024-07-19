@@ -7,11 +7,11 @@ const TournamentRouting = (app: Express) => {
 
   tournamentRouter.post('/', TournamentController.createTournament)
   tournamentRouter.get('/', TournamentController.getAllTournaments)
-  tournamentRouter.get('/:tournamentId', TournamentController.getTournament)
-  tournamentRouter.get(
-    '/:tournamentId/matches',
-    TournamentController.getTournamentMatches
-  )
+  tournamentRouter.get('/:tournamentId', TournamentController.getBuiltInTournament)
+  // tournamentRouter.get(
+  //   '/:tournamentId/matches',
+  //   TournamentController.getTournamentMatches
+  // )
 
   app.use(`${process.env.API_VERSION}/tournament`, tournamentRouter)
 }

@@ -1,17 +1,11 @@
-import mongoose from 'mongoose'
+import 'dotenv/config'
 
-const connect = () => {
-  return mongoose
-    .connect(process.env.DB_CREDENTIALS ?? '')
-    .then(() => {
-      console.log('Connected to a mongo DB')
-    })
-    .catch(error => {
-      console.error('bad connection', error)
-      new Error('Mongo connection error')
-    })
-}
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 
-const close = () => mongoose.disconnect()
+const connectionString = process.env.DATABASE_URL as string
 
-export default { connect, close }
+const client = postgres(connectionString)
+const db = drizzle(client)
+
+export default db

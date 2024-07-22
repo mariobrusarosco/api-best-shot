@@ -1,20 +1,14 @@
 import express from 'express'
-import mongoose from 'mongoose'
+import logger from './middlewares/logger'
 const cookieParser = require('cookie-parser')
 const cors = require('cors')
-import middleware1 from './middlewares/middleware1'
-import middleware2 from './middlewares/middleware2'
 
 import TournamentRouting from './domains/tournament/routes'
 import LeagueRouting from './domains/league/routes'
-import MatchRouting from './domains/match/routes'
-import UserRouting from './domains/user/routes'
+import GuessRouting from './domains/guess/routes'
+import ScoreRouting from './domains/score/routes'
 import AuthRouting from './domains/auth/routes'
-import logger from './middlewares/logger'
-import FileRouting from './playground/sending-files'
-import ServingWebsites from './playground/serving-sites'
-import TemplateEngines from './playground/template-engines'
-// import './services/database'
+import MatchRouting from './domains/match/routes'
 
 const PORT = process.env.PORT || 9090
 
@@ -52,10 +46,11 @@ app.use(function (req, res, next) {
 
 // Rest routes - temporary place
 TournamentRouting(app)
-// LeagueRouting(app)
-// UserRouting(app)
-// MatchRouting(app)
-// AuthRouting(app)
+AuthRouting(app)
+LeagueRouting(app)
+GuessRouting(app)
+ScoreRouting(app)
+MatchRouting(app)
 // Rest routes - temporary place'
 
 async function startServer() {

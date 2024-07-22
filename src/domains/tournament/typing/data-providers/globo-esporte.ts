@@ -1,9 +1,9 @@
-export type RawSerieARound = {
+export type globoEsporteApiRound = {
   id: number
-  content: RawSerieAGame[]
+  content: globoEsporteApiGame[]
 }
 
-export type RawSerieAGame = {
+export type globoEsporteApiGame = {
   id: number
   data_realizacao: string
   hora_realizacao: string
@@ -25,20 +25,4 @@ export type RawSerieAGame = {
     nome_popular: string
   }
   jogo_ja_comecou: boolean
-}
-
-export type SerieAGame = {
-  id: number
-  date: string
-  time: string
-  homeScore: number | null
-  awayScore: number | null
-  homeTeam: string
-  awayTeam: string
-  stadium: string
-}
-
-export type SerieARound = {
-  id: number
-  games: SerieAGame[]
 }

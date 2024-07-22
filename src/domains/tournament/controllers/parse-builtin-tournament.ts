@@ -1,25 +1,27 @@
 import fs from 'fs'
-import axios from 'axios'
-import { RawSerieARound } from '../typing'
+import { ApiRound } from '../typing/typing'
 
-export const mapBrazilianSerieARound = (round: RawSerieARound) => {
-  const games = round.content
-  const mappedGames = games.map(game => {
+export const mapRound = (round: ApiRound) => {
+  const roundId = round.id
+  const roundGames = round.content
+
+  const normalizedMatches = roundGames.map(game => {
     return {
-      id: game.id,
+      externalId: game.id,
       date: game.data_realizacao,
       time: game.hora_realizacao,
-      homeScore: game.placar_oficial_mandante,
+      homeScore: game?.placar_oficial_mandante,
       awayScore: game.placar_oficial_visitante,
-      homeTeam: game.equipes.mandante.nome_popular,
-      awayTeam: game.equipes.visitante.nome_popular,
-      stadium: game.sede.nome_popular
+      homeTeam: game.equipes.mandante?.sigla,
+      awayTeam: game.equipes.visitante?.sigla,
+      stadium: game.sede?.nome_popular,
+      gameStarted: game.jogo_ja_comecou
     }
   })
 
   return {
-    id: round.id,
-    games: mappedGames
+    id: roundId,
+    matches: normalizedMatches
   }
 }
 

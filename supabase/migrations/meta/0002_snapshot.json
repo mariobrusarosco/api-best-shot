@@ -1,6 +1,6 @@
 {
-  "id": "c921afb7-3f43-4d66-9bf2-3d601e8dde18",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "5dd5b8f4-1afc-4f0b-ab2f-f7f9b5abc8cf",
+  "prevId": "dfe160ad-c08f-4f65-a139-3641b1350af7",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -190,7 +190,7 @@
         },
         "round_id": {
           "name": "round_id",
-          "type": "numeric",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -260,15 +260,7 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "match_tournament_id_round_id_pk": {
-          "name": "match_tournament_id_round_id_pk",
-          "columns": [
-            "tournament_id",
-            "round_id"
-          ]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
     "public.member": {

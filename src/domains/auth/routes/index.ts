@@ -3,13 +3,11 @@ import type { Express } from 'express'
 import AuthController from '../controllers/auth-controllers'
 
 const AuthRouting = (app: Express) => {
-  const userRouter = express.Router()
-  console.warn('auth routing', `${process.env.API_VERSION}/auth`)
+  const memberRouter = express.Router()
 
-  userRouter.post('/login', AuthController.loginUser)
-  userRouter.post('/', AuthController.createUser)
+  memberRouter.post('/', AuthController.getMember)
 
-  app.use(`${process.env.API_VERSION}/auth`, userRouter)
+  app.use(`${process.env.API_VERSION}/whoami`, memberRouter)
 }
 
 export default AuthRouting

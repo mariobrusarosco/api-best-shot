@@ -1,0 +1,1 @@
+ALTER TABLE "match" ALTER COLUMN "round_id" SET DATA TYPE text;

@@ -1,75 +1,69 @@
 import { Request, Response } from 'express'
 import { GlobalErrorMapper } from '../../shared/error-handling/mapper'
 import { ErrorMapper } from '../error-handling/mapper'
-import { eq } from 'drizzle-orm'
-import Match from '../../match/schema'
+import { eq, and, getTableColumns } from 'drizzle-orm'
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 import {
   InsertTournament,
+  MATCH_TABLE,
   TOURNAMENT_EXTERNAL_ID,
   TOURNAMENT_TABLE
 } from '../../../services/database/schema'
 import db from '../../../services/database'
-import {
-  mapBrazilianSerieARound,
-  parseBuiltInTournament
-} from './parse-builtin-tournament'
-// import { db } from 'src/services/database/index'
+import { mapRound, parseBuiltInTournament } from './parse-builtin-tournament'
+import { ApiRound } from '../typing/typing'
+import { isNullable } from '../../../utils'
 
-// async function getTournamentMatches(req: Request, res: Response) {
-//   const tournamentId = req?.params.tournamentId
-
-//   try {
-//     await Tournament.findOne(
-//       { _id: tournamentId },
-//       {
-//         __v: 0
-//       }
-//     )
-
-//     const allRelatedMatches = await Match.find({ tournamentId })
-
-//     return res.status(200).send(allRelatedMatches)
-//   } catch (error: any) {
-//     if (error?.kind === 'ObjectId') {
-//       return res.status(ErrorMapper.NOT_FOUND.status).send(ErrorMapper.NOT_FOUND.user)
-//     } else {
-//       console.error(error)
-//       return res
-//         .status(GlobalErrorMapper.BIG_FIVE_HUNDRED.status)
-//         .send(GlobalErrorMapper.BIG_FIVE_HUNDRED.user)
-//     }
-//   }
-// }
-
-async function getTournament(req: Request, res: Response) {
-  const tournamentId = req?.params.tournamentId
-
-  try {
-    const tournament = await db
-      .select()
-      .from(TOURNAMENT_TABLE)
-      .innerJoin(
-        TOURNAMENT_EXTERNAL_ID,
-        eq(TOURNAMENT_TABLE.id, TOURNAMENT_EXTERNAL_ID.tournamentId)
-      )
-      .where(eq(TOURNAMENT_TABLE.id, tournamentId))
-
-    return res.status(200).send(tournament)
-  } catch (error: any) {
-    return handleInternalServerErrorResponse(res, error)
+const toSQLReadyMatch = ({
+  tournamentId,
+  roundId,
+  match
+}: {
+  tournamentId: string
+  roundId: number
+  match: any
+}) => {
+  return {
+    externalId: String(match.externalId),
+    tournamentId: tournamentId,
+    roundId: String(roundId),
+    homeTeam: match.homeTeam,
+    awayTeam: match.awayTeam,
+    stadium: match.stadium,
+    awayScore: isNullable(match.awayScore) ? null : String(match.awayScore),
+    homeScore: isNullable(match.homeScore) ? null : String(match.homeScore),
+    date: isNullable(match.date) ? null : new Date(match.date),
+    time: isNullable(match.time) ? null : match.time,
+    gameStarted: match.gameStarted
   }
 }
 
-async function getBuiltInTournament(req: Request, res: Response) {
+async function getTournament(req: Request, res: Response) {
   const tournamentId = req?.params.tournamentId
-  const roundId = (req?.query.round || 1) as number
+  const roundId = req?.query.round || 1
+  // const { id, label } = getTableColumns(TOURNAMENT_TABLE)
+  // const { tournamentId, ...rest } = getTableColumns(MATCH_TABLE)
 
   try {
-    const tournament = parseBuiltInTournament(tournamentId)
-    const round = mapBrazilianSerieARound(tournament[roundId - 1])
+    const queryResult = await db
+      .select()
+      .from(TOURNAMENT_TABLE)
+      .leftJoin(MATCH_TABLE, eq(TOURNAMENT_TABLE.id, MATCH_TABLE.tournamentId))
+      .where(
+        and(
+          eq(TOURNAMENT_TABLE.id, tournamentId),
+          eq(MATCH_TABLE.roundId, String(roundId))
+        )
+      )
 
-    return res.status(200).send(round)
+    const { label, id } = queryResult[0].tournament
+    const matches = queryResult.map(row => row.match)
+
+    return res.status(200).send({
+      id,
+      label,
+      matches
+    })
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error)
   }
@@ -109,12 +103,72 @@ async function createTournament(req: Request, res: Response) {
   }
 }
 
+async function createTournamentFromExternalSource(req: Request, res: Response) {
+  try {
+    const tournamentId = req?.params.tournamentId
+    const rounds = parseBuiltInTournament(tournamentId)
+
+    rounds.forEach(async (round: ApiRound) => {
+      const parsedRound = mapRound(round)
+      const matches = parsedRound.matches
+      const roundId = parsedRound.id
+
+      matches.forEach(async match => {
+        console.log('INSERTING ....', isNullable(match.awayScore), match.awayScore)
+
+        await db
+          .insert(MATCH_TABLE)
+          .values(toSQLReadyMatch({ tournamentId, roundId, match }))
+          .returning()
+      })
+    })
+
+    return res.json('OK')
+  } catch (error: any) {
+    return handleInternalServerErrorResponse(res, error)
+  }
+}
+
+async function updateTournamentFromExternalSource(req: Request, res: Response) {
+  try {
+    const tournamentId = req?.params.tournamentId
+    const tournament = parseBuiltInTournament(tournamentId)
+
+    tournament.forEach(async (round: ApiRound) => {
+      const parsedRound = mapRound(round)
+      const matches = parsedRound.matches
+      const roundId = parsedRound.id
+
+      matches.forEach(async match => {
+        console.log('UPDATING ....', match.externalId, new Date(match.date))
+
+        const result = await db
+          .update(MATCH_TABLE)
+          .set(toSQLReadyMatch({ tournamentId, roundId, match }))
+          .where(
+            and(
+              eq(MATCH_TABLE.externalId, String(match.externalId)),
+              eq(MATCH_TABLE.tournamentId, tournamentId)
+            )
+          )
+          .returning()
+
+        console.log('result ....', result[0])
+      })
+    })
+
+    return res.json('OK')
+  } catch (error: any) {
+    return handleInternalServerErrorResponse(res, error)
+  }
+}
+
 const TournamentController = {
   getTournament,
-  // getTournamentMatches,
   getAllTournaments,
   createTournament,
-  getBuiltInTournament
+  updateTournamentFromExternalSource,
+  createTournamentFromExternalSource
 }
 
 export default TournamentController

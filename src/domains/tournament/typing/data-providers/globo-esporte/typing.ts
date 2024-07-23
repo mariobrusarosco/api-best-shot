@@ -1,9 +1,9 @@
-export type globoEsporteApiRound = {
+export type GloboEsporteApiRound = {
   id: number
-  content: globoEsporteApiGame[]
+  content: GloboEsporteApiGame[]
 }
 
-export type globoEsporteApiGame = {
+export type GloboEsporteApiGame = {
   id: number
   data_realizacao: string
   hora_realizacao: string

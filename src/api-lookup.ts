@@ -1,10 +1,7 @@
 import axios from 'axios'
 import fs from 'fs'
-
-type Round = {
-  id: number
-  content: any
-}
+import { TournamentMode } from './domains/tournament/typing/typing'
+import { mapGloboEsportApiRound } from './domains/tournament/typing/data-providers/globo-esporte/api-mapper'
 
 const createFile = (id: string, data: any) => {
   fs.writeFile(`./src/external-data/${id}.json`, JSON.stringify(data), err => {
@@ -68,12 +65,47 @@ const BRASILEIRAO_24 = {
   url: 'https://api.globoesporte.globo.com/tabela/d1a37fa4-e948-43a6-ba53-ab24ab3a45b1/fase/fase-unica-campeonato-brasileiro-2024'
 }
 
-const tournamentCreation = async () => {
-  await createTournamentFile(BRASILEIRAO_24)
-  await createTournamentOnDatabase(BRASILEIRAO_24.id)
+const createTournament = async <T>(targetUrl: string, mode: TournamentMode) => {
+  new Promise(async resolve => {
+    console.log(`[FETCHING DATA ON: ${targetUrl}]`)
+    console.log(`[TOURNAMENT MODE: ${mode}]`)
 
-  await createTournamentFile(PREMIER_LEAGUE_24_25)
-  await createTournamentOnDatabase(PREMIER_LEAGUE_24_25.id)
+    if (mode == 'running-points') {
+      const allRoundsData: T[] = []
+      let ROUND = 38
+
+      while (ROUND <= 38) {
+        console.log(
+          `----- FETCHING DATA FOR ROUND ---- ${targetUrl}/rodada/${ROUND}/jogos`
+        )
+        const responseApiRound = await axios.get(`${targetUrl}/rodada/${ROUND}/jogos`)
+        const dataApiRound = responseApiRound.data
+
+        const mappeedRound = mapGloboEsportApiRound({
+          matches: dataApiRound,
+          roundId: ROUND
+        })
+
+        console.log('----- INSERTING ON DATABASE ---')
+        // console.log(mappeedRound)
+
+        ROUND++
+      }
+
+      // createFile(id, allRoundsData)
+      // console.log('[FETCHING DATA FOR TOURNAMENT]: DONE')
+      resolve(allRoundsData)
+    }
+  })
+}
+
+const tournamentCreation = async () => {
+  // await createTournamentFile(BRASILEIRAO_24)
+  // await createTournamentOnDatabase(BRASILEIRAO_24.id)
+  await createTournament<GloboEsporteApiRound>(BRASILEIRAO_24.url, 'running-points')
+
+  // await createTournamentFile(PREMIER_LEAGUE_24_25)
+  // await createTournamentOnDatabase(PREMIER_LEAGUE_24_25.id)
 }
 
 const tournamentUpdate = async () => {
@@ -85,7 +117,7 @@ const tournamentUpdate = async () => {
 }
 
 const run = async () => {
-  tournamentUpdate()
+  tournamentCreation()
 }
 
 run()

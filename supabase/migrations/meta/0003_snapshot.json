@@ -1,6 +1,6 @@
 {
-  "id": "081b8b8a-98a8-4ac9-8d08-9125d72377e5",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "a88ad94b-af90-43fb-a704-c336ecdd371a",
+  "prevId": "18b7b707-eda7-44e7-86bd-553cd161e689",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -176,6 +176,12 @@
       "name": "match",
       "schema": "",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
         "external_id": {
           "name": "external_id",
           "type": "text",

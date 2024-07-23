@@ -33,25 +33,25 @@ async function createGuess(req: Request, res: Response) {
   const body = req?.body as InsertGuess
 
   try {
-    const result = await db
-      .insert(GUESS_TABLE)
-      .values({
-        awayScore: body.awayScore,
-        homeScore: body.homeScore,
-        memberId: body.memberId,
-        matchId: body.matchId,
-        tournamentId: body.tournamentId
-      })
-      .onConflictDoUpdate({
-        target: [GUESS_TABLE.memberId, GUESS_TABLE.matchId],
-        set: {
-          awayScore: sql`excluded.away_score`,
-          homeScore: sql`excluded.home_score`
-        }
-      })
-      .returning()
+    // const result = await db
+    //   .insert(GUESS_TABLE)
+    //   .values({
+    //     awayScore: body.awayScore,
+    //     homeScore: body.homeScore,
+    //     memberId: body.memberId,
+    //     externalId: body.externalId,
+    //     tournamentId: body.tournamentId
+    //   })
+    //   .onConflictDoUpdate({
+    //     target: [GUESS_TABLE.memberId, GUESS_TABLE.matchId],
+    //     set: {
+    //       awayScore: sql`excluded.away_score`,
+    //       homeScore: sql`excluded.home_score`
+    //     }
+    //   })
+    //   .returning()
 
-    return res.status(200).send(result)
+    return res.status(200).send(null)
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error)
   }

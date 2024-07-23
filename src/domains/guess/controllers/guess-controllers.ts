@@ -16,7 +16,7 @@ async function getMemberGuesses(req: Request, res: Response) {
     const guesses = await db
       .select({
         memberId: GUESS_TABLE.memberId,
-        matchId: toNumber(GUESS_TABLE.matchId),
+        matchId: GUESS_TABLE.matchId,
         tournamentId: GUESS_TABLE.tournamentId,
         homeScore: toNumber(GUESS_TABLE.homeScore),
         awayScore: toNumber(GUESS_TABLE.awayScore)
@@ -42,10 +42,10 @@ async function createGuess(req: Request, res: Response) {
     const result = await db
       .insert(GUESS_TABLE)
       .values({
+        matchId: body.matchId,
         awayScore: body.awayScore,
         homeScore: body.homeScore,
         memberId: body.memberId,
-        matchId: body.matchId,
         tournamentId: body.tournamentId
       })
       .onConflictDoUpdate({

@@ -1,3 +1,4 @@
+import { match } from 'assert'
 import {
   pgTable,
   uuid,
@@ -50,26 +51,6 @@ export const LEAGUE_ROLE_TABLE = pgTable('league_role', {
     .$onUpdate(() => new Date())
 })
 
-// export const LEAGUE_SCORE_TABLE = pgTable(
-//   'league_score',
-//   {
-//     id: uuid('id').defaultRandom(),
-//     leagueId: uuid('league_id').notNull(),
-//     memberId: uuid('member_id').notNull(),
-//     score: numeric('score').notNull(),
-//     createdAt: timestamp('created_at').notNull().defaultNow(),
-//     updatedAt: timestamp('updated_at')
-//       .notNull()
-//       .defaultNow()
-//       .$onUpdate(() => new Date())
-//   },
-//   table => {
-//     return {
-//       pk: primaryKey({ columns: [table.leagueId, table.memberId] })
-//     }
-//   }
-// )
-
 export const TOURNAMENT_EXTERNAL_ID = pgTable('tournament_external_id', {
   tournamentId: uuid('tournament_id').notNull(),
   externalId: text('external_id').notNull().primaryKey(),
@@ -84,8 +65,9 @@ export const TOURNAMENT_EXTERNAL_ID = pgTable('tournament_external_id', {
 export const GUESS_TABLE = pgTable(
   'guess',
   {
+    id: uuid('id').defaultRandom(),
     memberId: uuid('member_id').notNull(),
-    matchId: numeric('match_id').notNull(),
+    matchId: text('match_id').notNull(),
     tournamentId: uuid('tournament_id').notNull(),
     homeScore: numeric('home_score').notNull(),
     awayScore: numeric('away_score').notNull(),
@@ -108,7 +90,6 @@ export type InsertGuess = typeof GUESS_TABLE.$inferInsert
 export const TOURNAMENT_TABLE = pgTable('tournament', {
   id: uuid('id').defaultRandom().primaryKey(),
   label: text('label').unique(),
-  description: text('description').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')
     .notNull()
@@ -119,29 +100,22 @@ export const TOURNAMENT_TABLE = pgTable('tournament', {
 export type InsertTournament = typeof TOURNAMENT_TABLE.$inferInsert
 export type SelectTournament = typeof TOURNAMENT_TABLE.$inferSelect
 
-export const MATCH_TABLE = pgTable(
-  'match',
-  {
-    externalId: numeric('external_id').notNull(),
-    tournamentId: uuid('tournament_id').notNull(),
-    roundId: text('round_id'),
-    date: date('date', { mode: 'date' }),
-    time: text('time'),
-    homeScore: numeric('home_score'),
-    awayScore: numeric('away_score'),
-    homeTeam: text('home_team').notNull(),
-    awayTeam: text('away_team').notNull(),
-    stadium: text('stadium'),
-    gameStarted: boolean('game_started').default(false),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at')
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date())
-  }
-  // table => {
-  //   return {
-  //     pk: primaryKey({ columns: [table.tournamentId, table.roundId] })
-  //   }
-  // }
-)
+export const MATCH_TABLE = pgTable('match', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  externalId: text('external_id').notNull(),
+  tournamentId: uuid('tournament_id').notNull(),
+  roundId: text('round_id'),
+  date: date('date', { mode: 'date' }),
+  time: text('time'),
+  homeScore: numeric('home_score'),
+  awayScore: numeric('away_score'),
+  homeTeam: text('home_team').notNull(),
+  awayTeam: text('away_team').notNull(),
+  stadium: text('stadium'),
+  gameStarted: boolean('game_started').default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date())
+})

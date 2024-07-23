@@ -9,11 +9,11 @@ const TournamentRouting = (app: Express) => {
   tournamentRouter.get('/', TournamentController.getAllTournaments)
   tournamentRouter.get('/:tournamentId', TournamentController.getTournament)
   tournamentRouter.patch(
-    '/:tournamentId/external',
+    '/external',
     TournamentController.updateTournamentFromExternalSource
   )
   tournamentRouter.post(
-    '/:tournamentId/external',
+    '/external',
     TournamentController.createTournamentFromExternalSource
   )
 

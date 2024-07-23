@@ -1,32 +1,21 @@
 import { Request, Response } from 'express'
-import { GlobalErrorMapper } from '../../shared/error-handling/mapper'
 import { ErrorMapper } from '../error-handling/mapper'
-import { eq, and, getTableColumns } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 import {
   InsertTournament,
   MATCH_TABLE,
-  TOURNAMENT_EXTERNAL_ID,
   TOURNAMENT_TABLE
 } from '../../../services/database/schema'
 import db from '../../../services/database'
-import { mapRound, parseBuiltInTournament } from './parse-builtin-tournament'
-import { ApiRound } from '../typing/typing'
 import { isNullable } from '../../../utils'
+import { mapGloboEsportApiRound } from '../typing/data-providers/globo-esporte/api-mapper'
+import axios from 'axios'
 
-const toSQLReadyMatch = ({
-  tournamentId,
-  roundId,
-  match
-}: {
-  tournamentId: string
-  roundId: number
-  match: any
-}) => {
+const toSQLReadyMatch = ({ match }: { match: any }) => {
   return {
+    ...match,
     externalId: String(match.externalId),
-    tournamentId: tournamentId,
-    roundId: String(roundId),
     homeTeam: match.homeTeam,
     awayTeam: match.awayTeam,
     stadium: match.stadium,
@@ -69,7 +58,7 @@ async function getTournament(req: Request, res: Response) {
   }
 }
 
-async function getAllTournaments(req: Request, res: Response) {
+async function getAllTournaments(_: Request, res: Response) {
   try {
     const result = await db.select().from(TOURNAMENT_TABLE)
 
@@ -87,9 +76,7 @@ async function createTournament(req: Request, res: Response) {
   }
 
   try {
-    const result = await db
-      .insert(TOURNAMENT_TABLE)
-      .values({ description: body.description, label: body.label })
+    const result = await db.insert(TOURNAMENT_TABLE).values({ label: body.label })
 
     return res.json(result)
   } catch (error: any) {
@@ -105,23 +92,44 @@ async function createTournament(req: Request, res: Response) {
 
 async function createTournamentFromExternalSource(req: Request, res: Response) {
   try {
-    const tournamentId = req?.params.tournamentId
-    const rounds = parseBuiltInTournament(tournamentId)
+    const { targetUrl, mode, label } = req?.body
 
-    rounds.forEach(async (round: ApiRound) => {
-      const parsedRound = mapRound(round)
-      const matches = parsedRound.matches
-      const roundId = parsedRound.id
+    if (!label) {
+      return res
+        .status(400)
+        .json({ message: 'You must provide a label for a tournament' })
+    }
 
-      matches.forEach(async match => {
-        console.log('INSERTING ....', isNullable(match.awayScore), match.awayScore)
+    const tournamentQuery = await db
+      .insert(TOURNAMENT_TABLE)
+      .values({ label })
+      .returning()
+    const tournament = tournamentQuery[0]
+    if (!tournament) return res.status(400).send('No tournament created')
 
-        await db
-          .insert(MATCH_TABLE)
-          .values(toSQLReadyMatch({ tournamentId, roundId, match }))
-          .returning()
-      })
-    })
+    if (mode == 'running-points') {
+      let ROUND = 1
+
+      while (ROUND <= 38) {
+        console.log(`[FETCHING DATA FOR ROUNDING ${ROUND}]`)
+
+        const responseApiRound = await axios.get(`${targetUrl}/rodada/${ROUND}/jogos`)
+        const dataApiRound = responseApiRound.data
+        const mappeMatches = mapGloboEsportApiRound({
+          matches: dataApiRound,
+          roundId: String(ROUND),
+          tournamentId: tournament.id
+        })
+
+        mappeMatches?.forEach(async match => {
+          const insertValues = toSQLReadyMatch({ match })
+          await db.insert(MATCH_TABLE).values(insertValues).returning()
+          console.log(`[DATA INSERTED FOR MATCH ${match.externalId}]`)
+        })
+
+        ROUND++
+      }
+    }
 
     return res.json('OK')
   } catch (error: any) {
@@ -131,31 +139,42 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
 
 async function updateTournamentFromExternalSource(req: Request, res: Response) {
   try {
-    const tournamentId = req?.params.tournamentId
-    const tournament = parseBuiltInTournament(tournamentId)
+    const { targetUrl, tournamentId, mode } = req?.body
 
-    tournament.forEach(async (round: ApiRound) => {
-      const parsedRound = mapRound(round)
-      const matches = parsedRound.matches
-      const roundId = parsedRound.id
+    if (mode == 'running-points') {
+      let ROUND = 1
 
-      matches.forEach(async match => {
-        console.log('UPDATING ....', match.externalId, new Date(match.date))
+      while (ROUND <= 38) {
+        console.log(`[FETCHING DATA FOR ROUNDING ${ROUND}]`)
 
-        const result = await db
-          .update(MATCH_TABLE)
-          .set(toSQLReadyMatch({ tournamentId, roundId, match }))
-          .where(
-            and(
-              eq(MATCH_TABLE.externalId, String(match.externalId)),
-              eq(MATCH_TABLE.tournamentId, tournamentId)
+        const responseApiRound = await axios.get(`${targetUrl}/rodada/${ROUND}/jogos`)
+        const dataApiRound = responseApiRound.data
+        const mappeMatches = mapGloboEsportApiRound({
+          matches: dataApiRound,
+          roundId: String(ROUND),
+          tournamentId
+        })
+
+        mappeMatches?.forEach(async match => {
+          const updateValues = toSQLReadyMatch({
+            match
+          })
+          await db
+            .update(MATCH_TABLE)
+            .set(updateValues)
+            .where(
+              and(
+                eq(MATCH_TABLE.externalId, String(match.externalId)),
+                eq(MATCH_TABLE.tournamentId, tournamentId)
+              )
             )
-          )
-          .returning()
+            .returning()
+          console.log(`[DATA INSERTED FOR MATCH ${match.externalId}]`)
+        })
 
-        console.log('result ....', result[0])
-      })
-    })
+        ROUND++
+      }
+    }
 
     return res.json('OK')
   } catch (error: any) {

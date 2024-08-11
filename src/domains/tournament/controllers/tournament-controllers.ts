@@ -111,7 +111,7 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
       let ROUND = 1
 
       while (ROUND <= 38) {
-        console.log(`[FETCHING DATA FOR ROUNDING ${ROUND}]`)
+        console.log(`[FETCHING DATA FOR ROUND ${ROUND}]`)
 
         const responseApiRound = await axios.get(`${targetUrl}/rodada/${ROUND}/jogos`)
         const dataApiRound = responseApiRound.data
@@ -145,7 +145,7 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
       let ROUND = 1
 
       while (ROUND <= 38) {
-        console.log(`[FETCHING DATA FOR ROUNDING ${ROUND}]`)
+        console.log(`[FETCHING DATA FOR ROUND ${ROUND}]`)
 
         const responseApiRound = await axios.get(`${targetUrl}/rodada/${ROUND}/jogos`)
         const dataApiRound = responseApiRound.data

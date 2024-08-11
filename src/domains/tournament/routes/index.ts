@@ -17,7 +17,7 @@ const TournamentRouting = (app: Express) => {
     TournamentController.createTournamentFromExternalSource
   )
 
-  app.use(`${process.env.API_VERSION}/tournament`, tournamentRouter)
+  app.use(`${process.env.API_VERSION}/tournaments`, tournamentRouter)
 }
 
 export default TournamentRouting

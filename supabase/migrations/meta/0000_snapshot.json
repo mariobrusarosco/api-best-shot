@@ -1,5 +1,5 @@
 {
-  "id": "081b8b8a-98a8-4ac9-8d08-9125d72377e5",
+  "id": "3ec8a5af-c683-41e8-8cef-6ed523df94cb",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -8,6 +8,13 @@
       "name": "guess",
       "schema": "",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "gen_random_uuid()"
+        },
         "member_id": {
           "name": "member_id",
           "type": "uuid",
@@ -16,7 +23,7 @@
         },
         "match_id": {
           "name": "match_id",
-          "type": "numeric",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -176,6 +183,13 @@
       "name": "match",
       "schema": "",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
         "external_id": {
           "name": "external_id",
           "type": "text",

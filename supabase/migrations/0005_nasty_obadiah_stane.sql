@@ -1,1 +1,0 @@
-ALTER TABLE "guess" ALTER COLUMN "match_id" SET DATA TYPE text;

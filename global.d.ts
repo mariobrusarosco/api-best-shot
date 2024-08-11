@@ -6,6 +6,7 @@ declare global {
       TOKEN_KEY: string
       ACESS_CONTROL_ALLOW_ORIGIN: string
       NODE_ENV: string
+      VITE_BEST_SHOT_API: string
     }
   }
 }

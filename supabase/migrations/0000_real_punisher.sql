@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS "guess" (
+	"id" uuid DEFAULT gen_random_uuid(),
 	"member_id" uuid NOT NULL,
-	"match_id" numeric NOT NULL,
+	"match_id" text NOT NULL,
 	"tournament_id" uuid NOT NULL,
 	"home_score" numeric NOT NULL,
 	"away_score" numeric NOT NULL,
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS "league" (
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "match" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"external_id" text NOT NULL,
 	"tournament_id" uuid NOT NULL,
 	"round_id" text,

@@ -18,14 +18,14 @@ const app = express()
 app.use(express.json())
 
 // console.log(cookieParser())
-console.log('----------', process.env.ACESS_CONTROL_ALLOW_ORIGIN, process.env.NODE_ENV)
+console.log('----------', process.env.ACCESS_CONTROL_ALLOW_ORIGIN, process.env.NODE_ENV)
 // Temp middlewares
 
 app.set('trust proxy', 1)
 app.use(cookieParser() as any)
 
 const corsConfig = {
-  origin: process.env.ACESS_CONTROL_ALLOW_ORIGIN,
+  origin: process.env.ACCESS_CONTROL_ALLOW_ORIGIN,
   credentials: true
 }
 app.use(cors(corsConfig))
@@ -33,7 +33,7 @@ app.options('*', cors(corsConfig))
 
 app.use(logger)
 app.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Origin', process.env.ACESS_CONTROL_ALLOW_ORIGIN)
+  res.header('Access-Control-Allow-Origin', process.env.ACCESS_CONTROL_ALLOW_ORIGIN)
   res.header(
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Origin'

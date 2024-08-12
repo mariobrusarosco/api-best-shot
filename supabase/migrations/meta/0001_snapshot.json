@@ -1,6 +1,6 @@
 {
-  "id": "07fefbcf-5c8d-4254-874f-7d8f890ecf93",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "181cd8d5-5444-49f4-b22f-ad93411d1c5f",
+  "prevId": "07fefbcf-5c8d-4254-874f-7d8f890ecf93",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -379,6 +379,18 @@
         "status": {
           "name": "status",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "home_score": {
+          "name": "home_score",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "away_score": {
+          "name": "away_score",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": false
         },

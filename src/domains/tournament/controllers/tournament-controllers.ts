@@ -4,45 +4,32 @@ import { eq, and } from 'drizzle-orm'
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 import {
   InsertTournament,
-  MATCH_TABLE,
+  TMatch,
   TOURNAMENT_TABLE
 } from '../../../services/database/schema'
 import db from '../../../services/database'
 import { isNullable } from '../../../utils'
 import { mapGloboEsportApiRound } from '../typing/data-providers/globo-esporte/api-mapper'
 import axios from 'axios'
-
-const toSQLReadyMatch = ({ match }: { match: any }) => {
-  return {
-    ...match,
-    externalId: String(match.externalId),
-    homeTeam: match.homeTeam,
-    awayTeam: match.awayTeam,
-    stadium: match.stadium,
-    awayScore: isNullable(match.awayScore) ? null : String(match.awayScore),
-    homeScore: isNullable(match.homeScore) ? null : String(match.homeScore),
-    date: isNullable(match.date) ? null : new Date(match.date),
-    time: isNullable(match.time) ? null : match.time,
-    gameStarted: match.gameStarted
-  }
-}
+import {
+  mapSofaScoreRoundApi,
+  toSQLReady
+} from '../typing/data-providers/sofascore/api-mapper'
+import { SofaScoreRoundApi } from '../typing/data-providers/sofascore/typing'
 
 async function getTournament(req: Request, res: Response) {
   const tournamentId = req?.params.tournamentId
   const roundId = req?.query.round || 1
   // const { id, label } = getTableColumns(TOURNAMENT_TABLE)
-  // const { tournamentId, ...rest } = getTableColumns(MATCH_TABLE)
+  // const { tournamentId, ...rest } = getTableColumns(TMatch)
 
   try {
     const queryResult = await db
       .select()
       .from(TOURNAMENT_TABLE)
-      .leftJoin(MATCH_TABLE, eq(TOURNAMENT_TABLE.id, MATCH_TABLE.tournamentId))
+      .leftJoin(TMatch, eq(TOURNAMENT_TABLE.id, TMatch.tournamentId))
       .where(
-        and(
-          eq(TOURNAMENT_TABLE.id, tournamentId),
-          eq(MATCH_TABLE.roundId, String(roundId))
-        )
+        and(eq(TOURNAMENT_TABLE.id, tournamentId), eq(TMatch.roundId, String(roundId)))
       )
 
     const { label, id } = queryResult[0].tournament
@@ -113,20 +100,16 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
       while (ROUND <= 38) {
         console.log(`[FETCHING DATA FOR ROUND ${ROUND}]`)
 
-        const responseApiRound = await axios.get(`${targetUrl}/rodada/${ROUND}/jogos`)
-        const dataApiRound = responseApiRound.data
-        const mappeMatches = mapGloboEsportApiRound({
-          matches: dataApiRound,
-          roundId: String(ROUND),
-          tournamentId: tournament.id
-        })
+        const responseApiRound = await axios.get(`${targetUrl}/${ROUND}`)
+        const data = responseApiRound.data as SofaScoreRoundApi
+        const mappedMatches = data.events.map(match =>
+          mapSofaScoreRoundApi(match, tournament.id)
+        )
 
-        mappeMatches?.forEach(async match => {
-          const insertValues = toSQLReadyMatch({ match })
-          await db.insert(MATCH_TABLE).values(insertValues).returning()
+        mappedMatches?.forEach(async match => {
+          await db.insert(TMatch).values(toSQLReady({ match })).returning()
           console.log(`[DATA INSERTED FOR MATCH ${match.externalId}]`)
         })
-
         ROUND++
       }
     }
@@ -147,36 +130,33 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
       while (ROUND <= 38) {
         console.log(`[FETCHING DATA FOR ROUND ${ROUND}]`)
 
-        const responseApiRound = await axios.get(`${targetUrl}/rodada/${ROUND}/jogos`)
-        const dataApiRound = responseApiRound.data
-        const mappeMatches = mapGloboEsportApiRound({
-          matches: dataApiRound,
-          roundId: String(ROUND),
-          tournamentId
-        })
+        const responseApiRound = await axios.get(`${targetUrl}/${ROUND}`)
+        const data = responseApiRound.data as SofaScoreRoundApi
+        const mappedMatches = data.events.map(match =>
+          mapSofaScoreRoundApi(match, tournamentId)
+        )
 
-        mappeMatches?.forEach(async match => {
-          const updateValues = toSQLReadyMatch({
+        mappedMatches?.forEach(async match => {
+          const updateValues = toSQLReady({
             match
           })
           await db
-            .update(MATCH_TABLE)
+            .update(TMatch)
             .set(updateValues)
             .where(
               and(
-                eq(MATCH_TABLE.externalId, String(match.externalId)),
-                eq(MATCH_TABLE.tournamentId, tournamentId)
+                eq(TMatch.externalId, String(match.externalId)),
+                eq(TMatch.tournamentId, tournamentId)
               )
             )
             .returning()
-          console.log(`[DATA INSERTED FOR MATCH ${match.externalId}]`)
+          console.log(`[DATA UPDATE FOR MATCH ${match.externalId}]`)
         })
-
         ROUND++
       }
     }
 
-    return res.json('OK')
+    return res.json(false)
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error)
   }

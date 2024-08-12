@@ -10,6 +10,8 @@ import {
   date
 } from 'drizzle-orm/pg-core'
 
+export * from '../../domains/match/schema'
+
 export const MEMBER_TABLE = pgTable('member', {
   id: uuid('id').defaultRandom().primaryKey(),
   firstName: text('first_name').notNull(),
@@ -99,23 +101,3 @@ export const TOURNAMENT_TABLE = pgTable('tournament', {
 
 export type InsertTournament = typeof TOURNAMENT_TABLE.$inferInsert
 export type SelectTournament = typeof TOURNAMENT_TABLE.$inferSelect
-
-export const MATCH_TABLE = pgTable('match', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  externalId: text('external_id').notNull(),
-  tournamentId: uuid('tournament_id').notNull(),
-  roundId: text('round_id'),
-  date: date('date', { mode: 'date' }),
-  time: text('time'),
-  homeScore: numeric('home_score'),
-  awayScore: numeric('away_score'),
-  homeTeam: text('home_team').notNull(),
-  awayTeam: text('away_team').notNull(),
-  stadium: text('stadium'),
-  gameStarted: boolean('game_started').default(false),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at')
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date())
-})

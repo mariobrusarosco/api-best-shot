@@ -1,6 +1,7 @@
 # Folders
 node_modules
 build
+dist
 
 # Files
 error.log

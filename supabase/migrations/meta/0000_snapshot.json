@@ -1,5 +1,5 @@
 {
-  "id": "07fefbcf-5c8d-4254-874f-7d8f890ecf93",
+  "id": "25b5ecad-fbf7-4da6-9542-c29584a1bf68",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -23,7 +23,7 @@
         },
         "match_id": {
           "name": "match_id",
-          "type": "text",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -379,6 +379,18 @@
         "status": {
           "name": "status",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "home_score": {
+          "name": "home_score",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "away_score": {
+          "name": "away_score",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": false
         },

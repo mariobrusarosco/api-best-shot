@@ -69,7 +69,7 @@ export const GUESS_TABLE = pgTable(
   {
     id: uuid('id').defaultRandom(),
     memberId: uuid('member_id').notNull(),
-    matchId: text('match_id').notNull(),
+    matchId: uuid('match_id').notNull(),
     tournamentId: uuid('tournament_id').notNull(),
     homeScore: numeric('home_score').notNull(),
     awayScore: numeric('away_score').notNull(),

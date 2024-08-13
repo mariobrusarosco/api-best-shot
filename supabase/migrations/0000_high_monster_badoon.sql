@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS "guess" (
 	"id" uuid DEFAULT gen_random_uuid(),
 	"member_id" uuid NOT NULL,
-	"match_id" text NOT NULL,
+	"match_id" uuid NOT NULL,
 	"tournament_id" uuid NOT NULL,
 	"home_score" numeric NOT NULL,
 	"away_score" numeric NOT NULL,
@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS "match" (
 	"away_team" text NOT NULL,
 	"date" timestamp with time zone,
 	"status" text,
+	"home_score" numeric,
+	"away_score" numeric,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );

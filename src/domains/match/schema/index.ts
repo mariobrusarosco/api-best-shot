@@ -1,13 +1,4 @@
-import {
-  pgTable,
-  uuid,
-  text,
-  timestamp,
-  numeric,
-  primaryKey,
-  boolean,
-  date
-} from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, numeric } from 'drizzle-orm/pg-core'
 
 export const TMatch = pgTable('match', {
   id: uuid('id').defaultRandom().primaryKey(),

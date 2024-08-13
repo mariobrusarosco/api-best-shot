@@ -1,14 +1,14 @@
-import { SelectGuess } from 'src/services/database/schema'
+import { SelectGuess } from '../../../services/database/schema'
 
 export const SCORE_MAPPER = {
   EXACT_SCORE: 3,
   MATCH_RESULT: 1
 } as const
 
-const hasGuessedExactScore = (guess: SelectGuess, game: any) =>
-  guess.homeScore === game.homeScore && guess.awayScore === game.awayScore
+const hasGuessedExactScore = (guess: SelectGuess, match: any) =>
+  guess.homeScore === match.homeScore && guess.awayScore === match.awayScore
 
-const hasGuessedMatchResult = (guess: SelectGuess, game: any) => {
+const hasGuessedMatchResult = (guess: SelectGuess, match: any) => {
   let guessResult = null
   let matchResult = null
 
@@ -20,9 +20,9 @@ const hasGuessedMatchResult = (guess: SelectGuess, game: any) => {
     guessResult = 'DRAW'
   }
 
-  if (game?.homeScore > game?.awayScore) {
+  if (match?.homeScore > match?.awayScore) {
     matchResult = 'HOME_WIN'
-  } else if (game?.homeScore < game?.awayScore) {
+  } else if (match?.homeScore < match?.awayScore) {
     matchResult = 'AWAY_WIN'
   } else {
     matchResult = 'DRAW'
@@ -31,14 +31,17 @@ const hasGuessedMatchResult = (guess: SelectGuess, game: any) => {
   return guessResult === matchResult
 }
 
-export const analyzeScore = (guess: any, game: any) => {
-  if (!guess) return 0
+type IScore = Record<keyof typeof SCORE_MAPPER | 'TOTAL', number>
 
-  const guessedExactScore = hasGuessedExactScore(guess, game)
-  const guessedMatchResult = hasGuessedMatchResult(guess, game)
+export const analyzeScore = (guess: any, match: any): IScore => {
+  if (!guess) return { EXACT_SCORE: 0, MATCH_RESULT: 0, TOTAL: 0 }
+
+  const EXACT_SCORE = hasGuessedExactScore(guess, match) ? SCORE_MAPPER.EXACT_SCORE : 0
+  const MATCH_RESULT = hasGuessedMatchResult(guess, match) ? SCORE_MAPPER.MATCH_RESULT : 0
 
   return {
-    EXACT_SCORE: guessedExactScore ? SCORE_MAPPER.EXACT_SCORE : 0,
-    MATCH_RESULT: guessedMatchResult ? SCORE_MAPPER.MATCH_RESULT : 0
-  } satisfies Record<keyof typeof SCORE_MAPPER, number>
+    EXACT_SCORE,
+    MATCH_RESULT,
+    TOTAL: EXACT_SCORE + MATCH_RESULT
+  }
 }

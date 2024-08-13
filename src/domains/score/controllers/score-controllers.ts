@@ -3,10 +3,12 @@ import { eq, and, sql, Column } from 'drizzle-orm'
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 import {
   GUESS_TABLE,
-  InsertGuess,
-  LEAGUE_ROLE_TABLE
+  LEAGUE_ROLE_TABLE,
+  MEMBER_TABLE,
+  TMatch
 } from '../../../services/database/schema'
 import db from '../../../services/database'
+import { analyzeScore } from './score-computation'
 
 const toNumber = (col: Column) => {
   return sql<number>`${col}`.mapWith(Number)
@@ -15,51 +17,37 @@ const toNumber = (col: Column) => {
 async function getLeagueScore(req: Request, res: Response) {
   const leagueId = req?.params.leagueId as string
 
-  console.log('---------score', req.params)
   try {
-    const score = await db
+    // TODO subquery???
+    const query = await db
       .select()
-      .from(LEAGUE_ROLE_TABLE)
-      .innerJoin(GUESS_TABLE, eq(LEAGUE_ROLE_TABLE.memberId, GUESS_TABLE.memberId))
+      .from(GUESS_TABLE)
+      .leftJoin(LEAGUE_ROLE_TABLE, eq(GUESS_TABLE.memberId, LEAGUE_ROLE_TABLE.memberId))
+      .leftJoin(TMatch, eq(TMatch.id, GUESS_TABLE.matchId))
+      .leftJoin(MEMBER_TABLE, eq(MEMBER_TABLE.id, GUESS_TABLE.memberId))
       .where(eq(LEAGUE_ROLE_TABLE.leagueId, leagueId))
 
-    return res.status(200).send(score)
-  } catch (error: any) {
-    return handleInternalServerErrorResponse(res, error)
-  }
-}
+    const scoreboard = {} as Record<string, number>
 
-async function createGuess(req: Request, res: Response) {
-  const body = req?.body as InsertGuess
+    query.forEach(row => {
+      const member = row?.member?.nickName as string
+      const guessScore = analyzeScore(row.guess, row.match)
 
-  try {
-    // const result = await db
-    //   .insert(GUESS_TABLE)
-    //   .values({
-    //     awayScore: body.awayScore,
-    //     homeScore: body.homeScore,
-    //     memberId: body.memberId,
-    //     externalId: body.externalId,
-    //     tournamentId: body.tournamentId
-    //   })
-    //   .onConflictDoUpdate({
-    //     target: [GUESS_TABLE.memberId, GUESS_TABLE.matchId],
-    //     set: {
-    //       awayScore: sql`excluded.away_score`,
-    //       homeScore: sql`excluded.home_score`
-    //     }
-    //   })
-    //   .returning()
+      if (scoreboard[member]) {
+        scoreboard[member] += guessScore.TOTAL
+      } else {
+        scoreboard[member] = guessScore.TOTAL
+      }
+    })
 
-    return res.status(200).send(null)
+    return res.status(200).send(scoreboard)
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error)
   }
 }
 
 const GuessController = {
-  getLeagueScore,
-  createGuess
+  getLeagueScore
 }
 
 export default GuessController

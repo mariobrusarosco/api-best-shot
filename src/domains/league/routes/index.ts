@@ -9,7 +9,7 @@ const LeagueRouting = (app: Express) => {
   leagueRouter.get('/', LeagueController.getLeagues)
   leagueRouter.post('/invitation', LeagueController.inviteToLeague)
 
-  app.use(`${process.env.API_VERSION}/league`, leagueRouter)
+  app.use(`${process.env.API_VERSION}/leagues`, leagueRouter)
 }
 
 export default LeagueRouting

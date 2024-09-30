@@ -1,12 +1,12 @@
 {
   "name": "api-best-shot",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "API - Best Shot",
   "main": "index.js",
   "scripts": {
     "build": "rimraf ./dist && tsc",
     "dev": "nodemon -r dotenv/config ./src/index.ts",
-    "serve-prod": "node -r dotenv/config ./dist/src/index.js",
+    "serve-prod": "node -r dotenv/config ./dist/index.js",
     "compile": "tsc ./src --noEmit",
     "scrapper": "tsx watch ./src/scrapper.ts",
     "api-lookup": "tsx watch ./src/api-lookup.ts"

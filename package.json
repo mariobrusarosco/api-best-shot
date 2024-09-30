@@ -1,13 +1,13 @@
 {
   "name": "api-best-shot",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "API - Best Shot",
   "main": "index.js",
   "scripts": {
     "build": "rimraf ./dist && tsc",
     "dev": "nodemon -r dotenv/config ./src/index.ts",
     "serve-prod": "node -r dotenv/config ./dist/src/index.js",
-    "compile": "tsc --noEmit",
+    "compile": "tsc ./src --noEmit",
     "scrapper": "tsx watch ./src/scrapper.ts",
     "api-lookup": "tsx watch ./src/api-lookup.ts"
   },
@@ -44,6 +44,7 @@
     "@types/express": "^4.17.13",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^18.7.13",
+    "cheerio": "^1.0.0",
     "drizzle-kit": "^0.23.0",
     "hbs": "^4.2.0",
     "nodemon": "^2.0.19",

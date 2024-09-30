@@ -1,8 +1,6 @@
 import fs from 'fs'
 import puppeteer, { Page } from 'puppeteer'
 import * as cheerio from 'cheerio'
-import axios from 'axios'
-import { updateTournament } from './domains/tournament/controllers/parse-builtin-tournament'
 
 type Round = {
   id: number
@@ -72,12 +70,11 @@ const startScrapping = async (page: Page) => {
     const rounds = list.find(SELECTORS.roundItem)
     const round = await getRound($)
 
-    let metadata = []
+    let metadata: any[] = []
     rounds.each(function () {
       const el = $(this)
       const gameLocal = el.find(SELECTORS.gameLocal).text()
       const gameHour = el.find(SELECTORS.gameHour).text()
-      const gameDates = el.find(SELECTORS.gameDates).text()
       const homeTeam = el.find(`${SELECTORS.homeTeam} .equipes__sigla`).text()
       const awayTeam = el.find(`${SELECTORS.awayTeam} .equipes__sigla`).text()
 
@@ -90,25 +87,3 @@ const startScrapping = async (page: Page) => {
     currentRound++
   }
 }
-
-const URL = 'https://ge.globo.com/futebol/brasileirao-serie-a/'
-
-const old = async () => {
-  console.log('STARTING SCRAPPER FOR', URL)
-
-  const browser = await puppeteer.launch()
-  const page = await browser.newPage()
-  await page.goto(URL)
-  await page.setViewport({ width: 1400, height: 1024 })
-
-  await goToFirstRound(page)
-
-  const result = await startScrapping(page)
-  createFile()
-
-  await browser.close()
-
-  console.log('finished!')
-}
-
-updateTournament()

@@ -17,10 +17,6 @@ const app = express()
 // JSON Parser Middleware
 app.use(express.json())
 
-// console.log(cookieParser())
-console.log('----------', process.env.ACCESS_CONTROL_ALLOW_ORIGIN, process.env.NODE_ENV)
-// Temp middlewares
-
 app.set('trust proxy', 1)
 app.use(cookieParser() as any)
 
@@ -44,14 +40,12 @@ app.use(function (req, res, next) {
   next()
 })
 
-// Rest routes - temporary place
 TournamentRouting(app)
 AuthRouting(app)
 LeagueRouting(app)
 GuessRouting(app)
 ScoreRouting(app)
 MatchRouting(app)
-// Rest routes - temporary place'
 
 async function startServer() {
   app.listen(PORT, () =>

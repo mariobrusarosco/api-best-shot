@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "API - Best Shot",
   "main": "index.js",
   "scripts": {
@@ -45,7 +45,7 @@
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^18.7.13",
     "cheerio": "^1.0.0",
-    "drizzle-kit": "^0.23.0",
+    "drizzle-kit": "^0.24.2",
     "hbs": "^4.2.0",
     "nodemon": "^2.0.19",
     "rimraf": "^3.0.2",

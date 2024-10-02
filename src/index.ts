@@ -9,6 +9,7 @@ import GuessRouting from './domains/guess/routes'
 import ScoreRouting from './domains/score/routes'
 import AuthRouting from './domains/auth/routes'
 import MatchRouting from './domains/match/routes'
+import accessControl from './domains/shared/middlewares/access-control'
 
 const PORT = process.env.PORT || 9090
 
@@ -28,17 +29,7 @@ app.use(cors(corsConfig))
 app.options('*', cors(corsConfig))
 
 app.use(logger)
-app.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Origin', process.env.ACCESS_CONTROL_ALLOW_ORIGIN)
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Origin'
-  )
-  res.header('Access-Control-Allow-Credentials', 'true')
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS')
-
-  next()
-})
+app.use(accessControl)
 
 TournamentRouting(app)
 AuthRouting(app)

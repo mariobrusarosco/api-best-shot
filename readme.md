@@ -86,6 +86,6 @@ We're using **Railway** to host the project. The url are:
 
 # Swagger
 
-[Postman URL](https://www.postman.com/mario-brusarosco/workspace/mario-brusarosco/collection/2930329-c069887a-c13d-4bee-8bda-e69e3f5b9163)
+[Postman URL](https://documenter.getpostman.com/view/2930329/VUjSGjLU#intro)
 
 ---

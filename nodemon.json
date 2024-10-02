@@ -1,6 +1,0 @@
-{
-  "ignore": ["**/*.{test,spec}*"],
-  "execMap": {
-    "ts": "ts-node"
-  }
-}

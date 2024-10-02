@@ -62,8 +62,17 @@ Now, the **API** is exposed on _http://localhost:9090_
 ## Accessing DB content
 
 ```
-yarn drizze-kit studio
+yarn drizzle-kit studio
 ```
+
+## Creating a Local Member
+
+```
+yarn dev
+yarn drizzle-kit studio
+```
+
+Then access `https://local.drizzle.studio`. Use Studio's UI to create a Member
 
 ## Running a migration
 

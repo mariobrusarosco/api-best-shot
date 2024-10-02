@@ -5,7 +5,7 @@ import AuthController from '../controllers/auth-controllers'
 const AuthRouting = (app: Express) => {
   const memberRouter = express.Router()
 
-  memberRouter.post('/', AuthController.getMember)
+  memberRouter.post('/', AuthController.authenticateUser)
 
   app.use(`${process.env.API_VERSION}/whoami`, memberRouter)
 }

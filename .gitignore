@@ -9,6 +9,7 @@ combined.log
 exceptions.log
 crash.log
 .DS_Store
+*.code-workspace
 
 npm-debug.log
 yarn-error.log

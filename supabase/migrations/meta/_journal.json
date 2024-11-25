@@ -5,8 +5,22 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1723569119339,
-      "tag": "0000_high_monster_badoon",
+      "when": 1731098621612,
+      "tag": "0000_clear_jubilee",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1732553057375,
+      "tag": "0001_closed_shiva",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1732553193946,
+      "tag": "0002_skinny_smasher",
       "breakpoints": true
     }
   ]

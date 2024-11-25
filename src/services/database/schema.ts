@@ -1,14 +1,4 @@
-import { match } from 'assert'
-import {
-  pgTable,
-  uuid,
-  text,
-  timestamp,
-  numeric,
-  primaryKey,
-  boolean,
-  date
-} from 'drizzle-orm/pg-core'
+import { numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 export * from '../../domains/match/schema'
 
@@ -91,6 +81,9 @@ export type InsertGuess = typeof GUESS_TABLE.$inferInsert
 
 export const TOURNAMENT_TABLE = pgTable('tournament', {
   id: uuid('id').defaultRandom().primaryKey(),
+  externalId: text('external_id').unique(),
+  seasonId: text('season_id').notNull(),
+  mode: text('mode').notNull(),
   label: text('label').unique(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')

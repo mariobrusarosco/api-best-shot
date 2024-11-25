@@ -1,16 +1,14 @@
+import axios from 'axios'
+import { and, eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
-import { ErrorMapper } from '../error-handling/mapper'
-import { eq, and } from 'drizzle-orm'
-import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
+import db from '../../../services/database'
 import {
   InsertTournament,
   TMatch,
   TOURNAMENT_TABLE
 } from '../../../services/database/schema'
-import db from '../../../services/database'
-import { isNullable } from '../../../utils'
-import { mapGloboEsportApiRound } from '../typing/data-providers/globo-esporte/api-mapper'
-import axios from 'axios'
+import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
+import { ErrorMapper } from '../error-handling/mapper'
 import {
   mapSofaScoreRoundApi,
   toSQLReady
@@ -32,13 +30,15 @@ async function getTournament(req: Request, res: Response) {
         and(eq(TOURNAMENT_TABLE.id, tournamentId), eq(TMatch.roundId, String(roundId)))
       )
 
-    const { label, id } = queryResult[0].tournament
+    const { label, id, externalId, seasonId } = queryResult[0].tournament
     const matches = queryResult.map(row => row.match)
 
     return res.status(200).send({
       id,
       label,
-      matches
+      matches,
+      externalId,
+      seasonId
     })
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error)
@@ -56,14 +56,17 @@ async function getAllTournaments(_: Request, res: Response) {
 }
 
 async function createTournament(req: Request, res: Response) {
-  const body = req?.body as InsertTournament
+  const { targetUrl, mode, label, seasonId, externalId } =
+    req?.body as InsertTournament & { targetUrl: string }
 
-  if (!body.label) {
+  if (!label) {
     return res.status(400).json({ message: 'You must provide a label for a tournament' })
   }
 
   try {
-    const result = await db.insert(TOURNAMENT_TABLE).values({ label: body.label })
+    const result = await db
+      .insert(TOURNAMENT_TABLE)
+      .values({ label, mode, seasonId, externalId })
 
     return res.json(result)
   } catch (error: any) {
@@ -79,7 +82,8 @@ async function createTournament(req: Request, res: Response) {
 
 async function createTournamentFromExternalSource(req: Request, res: Response) {
   try {
-    const { targetUrl, mode, label } = req?.body
+    const { targetUrl, mode, label, seasonId, externalId } =
+      req?.body as InsertTournament & { targetUrl: string }
 
     if (!label) {
       return res
@@ -89,9 +93,10 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
 
     const tournamentQuery = await db
       .insert(TOURNAMENT_TABLE)
-      .values({ label })
+      .values({ label, externalId, seasonId, mode })
       .returning()
     const tournament = tournamentQuery[0]
+
     if (!tournament) return res.status(400).send('No tournament created')
 
     if (mode == 'running-points') {

@@ -1,6 +1,6 @@
 {
-  "id": "616928a1-b1dd-41b2-862d-138b9d1d1812",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "420dba76-d688-478c-963a-38a34a3e3ad9",
+  "prevId": "616928a1-b1dd-41b2-862d-138b9d1d1812",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -295,6 +295,18 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+        "external_id": {
+          "name": "external_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "season_id": {
+          "name": "season_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "label": {
           "name": "label",
           "type": "text",
@@ -320,6 +332,13 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
+        "tournament_external_id_unique": {
+          "name": "tournament_external_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "external_id"
+          ]
+        },
         "tournament_label_unique": {
           "name": "tournament_label_unique",
           "nullsNotDistinct": false,

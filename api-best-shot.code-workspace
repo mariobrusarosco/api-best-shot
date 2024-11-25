@@ -1,11 +1,13 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "../best-shot"
-		}
-	],
-	"settings": {}
+  "folders": [
+    {
+      "name": "api-best-shot",
+      "path": "."
+    },
+    {
+      "name": "best-shot",
+      "path": "../best-shot"
+    }
+  ],
+  "settings": {}
 }

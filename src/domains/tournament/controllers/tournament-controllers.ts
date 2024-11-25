@@ -113,6 +113,7 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
 
         mappedMatches?.forEach(async match => {
           await db.insert(TMatch).values(toSQLReady({ match })).returning()
+
           console.log(`[DATA INSERTED FOR MATCH ${match.externalId}]`)
         })
         ROUND++

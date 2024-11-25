@@ -2,12 +2,22 @@ export type IMatch = {
   externalId: number
   roundId: number
   tournamentId: string
-  homeTeam: string
-  awayTeam: string
+  home: {
+    id: number
+    name: string
+    shortName: string
+    nameCode: string
+    score: number | null
+  }
+  away: {
+    id: number
+    name: string
+    shortName: string
+    nameCode: string
+    score: number | null
+  }
   date: Date | null
   status?: string
-  awayScore: number | null
-  homeScore: number | null
 }
 
 export type SofaScoreMatchApi = {
@@ -78,7 +88,7 @@ const METADATA = {
     targetUrl:
       'https://www.sofascore.com/api/v1/unique-tournament/325/season/58766/events/round',
     externalId: 325,
-    seasonId: 61642
+    seasonId: 58766
   },
   LALIGA_24_25: {
     targetUrl:

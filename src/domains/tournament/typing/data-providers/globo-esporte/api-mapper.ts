@@ -1,35 +1,9 @@
 import { InsertMatch, TMatch } from '@/domains/match/schema'
-import { SelectTournament } from '@/domains/tournament/schema'
+import { InsertTeam, TTeam } from '@/domains/team/schema'
+import { InsertTournament, TTournament } from '@/domains/tournament/schema'
 import db from '@/services/database'
+import { and, eq } from 'drizzle-orm'
 import { GloboEsporteApiMatch } from './typing'
-
-// export const mapGloboEsportApiRound = ({
-//   matches,
-//   tournamentId,
-//   roundId
-// }: {
-//   matches: GloboEsporteApiMatch[]
-//   tournamentId: string
-//   roundId: string
-// }) => {
-//   if (!matches) return null
-
-//   return matches.map(match => {
-//     return {
-//       externalId: String(match.id),
-//       tournamentId,
-//       roundId,
-//       date: match.data_realizacao,
-//       time: isNullable(match.hora_realizacao) ? '' : match.hora_realizacao,
-//       homeScore: match?.placar_oficial_mandante,
-//       awayScore: match.placar_oficial_visitante,
-//       homeTeam: match.equipes.mandante?.sigla,
-//       awayTeam: match.equipes.visitante?.sigla,
-//       stadium: isNullable(match.sede?.nome_popular) ? null : match.sede?.nome_popular,
-//       gameStarted: isNullable(match.jogo_ja_comecou) ? false : match.jogo_ja_comecou
-//     }
-//   })
-// }
 
 // TODO Use Lodash isNil
 export const isNull = (value: any) => {
@@ -40,54 +14,94 @@ const GLOBO_ESPORTE_API =
   'https://api.globoesporte.globo.com/tabela/:external_id/fase/:mode-:slug/rodada/:round/jogos/'
 
 export const Provider = {
-  getURL: (tournament: SelectTournament, round: number) => {
-    return GLOBO_ESPORTE_API.replace(':external_id', tournament.externalId)
-      .replace(':mode', tournament.mode)
-      .replace(':slug', tournament.slug)
+  getURL: ({
+    externalId,
+    mode,
+    round,
+    slug
+  }: {
+    externalId: string
+    mode: string
+    slug: string
+    round: number
+  }) => {
+    return GLOBO_ESPORTE_API.replace(':external_id', externalId)
+      .replace(':mode', mode)
+      .replace(':slug', slug)
       .replace(':round', String(round))
   },
-  mapRoundFromAPI: ({
-    roundData,
-    roundId,
-    tournamentId
-  }: {
-    tournamentId: string
-    roundId: number
-    roundData: GloboEsporteApiMatch[]
-  }) => {
-    const result = roundData.map(match => {
-      return {
-        externalId: String(match.id),
-        roundId: String(roundId),
-        tournamentId,
-        homeTeamId: String(match.equipes.mandante.id),
-        homeScore: String(match.placar_oficial_mandante ?? ''),
-        awayTeamId: String(match.equipes.visitante.id),
-        awayScore: String(match.placar_oficial_visitante ?? ''),
-        date: isNull(match.data_realizacao) ? null : new Date(match.data_realizacao),
-        time: match.data_realizacao ?? null,
-        status: match.jogo_ja_comecou ? 'started' : 'not-started'
-      } satisfies typeof InsertMatch
-    })
-
-    return result
+  createTournamentOnDatabase: (tournament: InsertTournament) => {
+    return db.insert(TTournament).values(tournament).returning()
   },
-  createMatchOnDatabase: async (parsedMatch: IParsedMatchFromAPI) => {
-    const dataToInsert = {
+  convertMatchToSQL: (parsedMatch: IParsedMatchFromAPI) => {
+    return {
       externalId: String(parsedMatch.externalId),
       roundId: String(parsedMatch.roundId),
       tournamentId: parsedMatch.tournamentId,
-      homeTeamId: String(parsedMatch.teams.home.id),
-      homeScore: String(parsedMatch.teams.home.score ?? ''),
-      awayTeamId: String(parsedMatch.teams.away.id),
-      awayScore: String(parsedMatch.teams.away.score ?? ''),
+      homeTeamId: String(parsedMatch.teams.home.externalId),
+      homeScore:
+        parsedMatch.teams.home.score === null
+          ? null
+          : String(parsedMatch.teams.home.score),
+      awayTeamId: String(parsedMatch.teams.away.externalId),
+      awayScore:
+        parsedMatch.teams.away.score === null
+          ? null
+          : String(parsedMatch.teams.away.score),
       date: parsedMatch.date ? new Date(parsedMatch.date) : null,
       time: parsedMatch.time ?? null,
       stadium: parsedMatch.stadium ?? null,
       status: parsedMatch.status
     } satisfies typeof InsertMatch
+  },
+  createMatchOnDatabase: async (parsedMatch: IParsedMatchFromAPI) => {
+    const dataToInsert = Provider.convertMatchToSQL(parsedMatch)
 
-    return await db.insert(TMatch).values(dataToInsert)
+    return db.insert(TMatch).values(dataToInsert).returning()
+  },
+  updateMatchOnDatabase: async (parsedMatch: IParsedMatchFromAPI) => {
+    const dataToUpdate = Provider.convertMatchToSQL(parsedMatch)
+
+    return await db
+      .update(TMatch)
+      .set(dataToUpdate)
+      .where(and(eq(TMatch.externalId, String(dataToUpdate.externalId))))
+      .returning()
+  },
+  convertTeamToSQL: (
+    team: IParsedMatchFromAPI['teams']['away'] | IParsedMatchFromAPI['teams']['home']
+  ) => {
+    return {
+      name: team.name,
+      externalId: String(team.externalId),
+      shortName: team.shortName,
+      badge: team.badge ?? null
+    } satisfies typeof InsertTeam
+  },
+  createTeamOnDatabase: async (
+    team: IParsedMatchFromAPI['teams']['away'] | IParsedMatchFromAPI['teams']['home']
+  ) => {
+    const dataToInsert = Provider.convertTeamToSQL(team)
+
+    return await db.insert(TTeam).values(dataToInsert)
+  },
+  upsertTeamOnDatabase: async (
+    team: IParsedMatchFromAPI['teams']['away'] | IParsedMatchFromAPI['teams']['home']
+  ) => {
+    const update = Provider.convertTeamToSQL(team)
+
+    return db
+      .insert(TTeam)
+      .values(update)
+      .onConflictDoUpdate({
+        target: TTeam.externalId,
+        set: {
+          name: update.name,
+          shortName: update.shortName,
+          externalId: String(update.externalId),
+          badge: update.badge ?? null
+        }
+      })
   },
   mapData: (dataFromAPI: {
     tournamentId: string
@@ -95,6 +109,7 @@ export const Provider = {
     rawData: GloboEsporteApiMatch[]
   }) => {
     return dataFromAPI.rawData.map(match => {
+      console.log('Mapping match:', match)
       return {
         externalId: String(match.id),
         roundId: String(dataFromAPI.roundId),
@@ -106,15 +121,17 @@ export const Provider = {
         teams: {
           home: {
             score: match.placar_oficial_mandante,
-            id: match.equipes.mandante.id,
+            externalId: match.equipes.mandante.id,
             name: match.equipes.mandante.nome_popular,
-            shortName: match.equipes.mandante.sigla
+            shortName: match.equipes.mandante.sigla,
+            badge: match.equipes.mandante.escudo
           },
           away: {
             score: match.placar_oficial_visitante,
-            id: match.equipes.visitante.id,
+            externalId: match.equipes.visitante.id,
             name: match.equipes.visitante.nome_popular,
-            shortName: match.equipes.visitante.sigla
+            shortName: match.equipes.visitante.sigla,
+            badge: match.equipes.visitante.escudo
           }
         }
       } satisfies IParsedMatchFromAPI
@@ -131,36 +148,22 @@ export type IParsedMatchFromAPI = {
   status: string
   teams: {
     home: {
-      id: number
+      externalId: number
       name: string
       shortName: string
       score: number | null
+      badge: string | null
     }
     away: {
-      id: number
+      externalId: number
       name: string
       shortName: string
       score: number | null
+      badge: string | null
     }
   }
   stadium: string | null
 }
-
-// upsertTeamOnDatabase: async (team: typeof InsertTeam) => {
-//   const parsedTeam = Provider.mapTeamFromAPI(team)
-
-//   return await db
-//     .insert(TTeam)
-//     .values(parsedTeam)
-//     .onConflictDoUpdate({
-//       target: TTeam.externalId,
-//       set: {
-//         name: parsedTeam.name,
-//         shortName: parsedTeam.shortName,
-//         externalId: String(parsedTeam.externalId)
-//       }
-//     })
-// },
 
 const BRASILEIRAO_24 = {
   externalId: 'd1a37fa4-e948-43a6-ba53-ab24ab3a45b1',
@@ -181,8 +184,6 @@ const PREMIER_LEAGUE_24_25 = {
   slug: 'campeonato-ingles-2024-2025',
   label: 'Premier League 24/25'
 }
-
-// https://api.globoesporte.globo.com/tabela/d1a37fa4-e948-43a6-ba53-ab24ab3a45b1/fase/fase-unica-campeonato-brasileiro-2024/rodada/36/jogos/
 
 export type IMatch = {
   externalId: number

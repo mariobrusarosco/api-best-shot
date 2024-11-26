@@ -8,16 +8,10 @@ import { TTeam } from '@/domains/team/schema'
 import { InsertTournament, TTournament } from '@/domains/tournament/schema'
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 import { Provider } from '../typing/data-providers/globo-esporte/api-mapper'
-import { mapSofaScoreRoundApi } from '../typing/data-providers/sofascore/api-mapper'
-import { SofaScoreRoundApi } from '../typing/data-providers/sofascore/typing'
-import { createTournamentOnDatabase } from '../utils'
-import { SQLHelper } from './sql-helper'
 
 async function getTournament(req: Request, res: Response) {
   const tournamentId = req?.params.tournamentId
   const roundId = req?.query.round || 1
-  // const { id, label } = getTableColumns(TTournament)
-  // const { tournamentId, ...rest } = getTableColumns(TMatch)
   const homeTeam = aliasedTable(TTeam, 'homeTeam')
   const awayTeam = aliasedTable(TTeam, 'awayTeam')
 
@@ -41,7 +35,6 @@ async function getTournament(req: Request, res: Response) {
         and(eq(TMatch.roundId, String(roundId)), eq(TMatch.tournamentId, tournamentId))
       )
 
-    console.log('Matches found:', matches.length)
     return res.status(200).send(matches)
   } catch (error: any) {
     console.error('Error fetching matches:', error)
@@ -69,27 +62,21 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
         .json({ message: 'You must provide a label for a tournament' })
     }
 
-    console.log(`[CREATING ${body.label}]`, body)
-
-    const tournamentSQL = SQLHelper.parseTournament(body)
-
-    const [tournament] = await createTournamentOnDatabase(tournamentSQL)
+    const [tournament] = await Provider.createTournamentOnDatabase(body)
 
     if (!tournament) return res.status(400).send('No tournament created')
 
     let ROUND = 1
 
-    while (ROUND <= Number(1)) {
-      const url = Provider.getURL(tournament, ROUND)
-      console.log(`[FETCHING DATA FOR ROUND ${ROUND} at ${url}]`)
+    while (ROUND <= Number(body.rounds)) {
+      const url = Provider.getURL({
+        externalId: body.externalId,
+        slug: body.slug,
+        mode: body.mode,
+        round: ROUND
+      })
 
       const responseApiRound = await axios.get(url)
-      // const round = Provider.mapRoundFromAPI({
-      //   tournamentId: tournament.externalId,
-      //   roundId: ROUND,
-      //   roundData: responseApiRound.data
-      // })
-
       const matches = Provider.mapData({
         tournamentId: tournament.externalId,
         roundId: ROUND,
@@ -97,30 +84,10 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
       })
 
       matches.forEach(async match => {
-        const createdMatch = await Provider.createMatchOnDatabase(match)
-
-        // const homeTeam = Provider.upsertTeamOnDatabase(match.teams.home)
-        // const awayTeam = Provider.upsertTeamOnDatabase(match.teams.away)
-
-        console.log(`[MATCH CREATED]`, createdMatch)
-        // console.log(`[HOME TEAM CREATED ${homeTeam}]`)
-        // console.log(`[AWAY TEAM CREATED ${awayTeam}]`)
+        await Provider.createMatchOnDatabase(match)
+        await Provider.upsertTeamOnDatabase(match.teams.home)
+        await Provider.upsertTeamOnDatabase(match.teams.away)
       })
-
-      //     mappedMatches?.forEach(async match => {
-      //       const matchSQL = SQLHelper.parseMatch(match)
-      //       const createdMatch = await createMatchOnDatabase(matchSQL)
-
-      //       const homeTeamSQL = SQLHelper.parseTeam(matchSQL.home)
-      //       const awayTeamSQL = SQLHelper.parseTeam(matchSQL.away)
-
-      //       const homeTeam = await upsertTeamOnDatabase(homeTeamSQL)
-      //       const awayTeam = await upsertTeamOnDatabase(awayTeamSQL)
-
-      //       console.log(`[DATA INSERTED FOR MATCH ${match.externalId}]`)
-      //       console.log(`[HOME TEAM CREATED ${homeTeam}]`)
-      //       console.log(`[AWAY TEAM CREATED ${awayTeam}]`)
-      //     })
 
       ROUND++
     }
@@ -133,37 +100,34 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
 
 async function updateTournamentFromExternalSource(req: Request, res: Response) {
   try {
-    const { targetUrl, tournamentId, mode } = req?.body
+    const body = req?.body as InsertTournament & { provider: string }
 
-    if (mode == 'running-points') {
-      let ROUND = 1
+    let ROUND = 1
 
-      while (ROUND <= 38) {
-        console.log(`[FETCHING DATA FOR ROUND ${ROUND}]`)
+    while (ROUND <= Number(body.rounds)) {
+      const url = Provider.getURL({
+        externalId: body.externalId,
+        slug: body.slug,
+        mode: body.mode,
+        round: ROUND
+      })
 
-        const responseApiRound = await axios.get(`${targetUrl}/${ROUND}`)
-        const data = responseApiRound.data as SofaScoreRoundApi
-        const mappedMatches = data.events.map(match =>
-          mapSofaScoreRoundApi(match, tournamentId)
-        )
+      const responseApiRound = await axios.get(url)
+      const matches = Provider.mapData({
+        tournamentId: body.externalId,
+        roundId: ROUND,
+        rawData: responseApiRound.data
+      })
 
-        mappedMatches?.forEach(async match => {
-          // const matchToUpdate = SQLHelper.parseMatch(match)
-          // const createdMatch = await Provider.createMatchOnDatabase(matchToUpdate)
-          // console.log(`[DATA UPDATE FOR MATCH ${match.externalId}]`)
-          // const homeTeamSQL = SQLHelper.parseTeam(matchToUpdate.home)
-          // const awayTeamSQL = SQLHelper.parseTeam(matchToUpdate.away)
-          // const homeTeam = await upsertTeamOnDatabase(homeTeamSQL)
-          // const awayTeam = await upsertTeamOnDatabase(awayTeamSQL)
-          // console.log(`[DATA INSERTED FOR MATCH ${match.externalId}]`)
-          // console.log(`[HOME TEAM CREATED ${homeTeam}]`)
-          // console.log(`[AWAY TEAM CREATED ${awayTeam}]`)
-        })
-        ROUND++
-      }
+      matches.forEach(async match => {
+        await Provider.updateMatchOnDatabase(match)
+        await Provider.upsertTeamOnDatabase(match.teams.home)
+        await Provider.upsertTeamOnDatabase(match.teams.away)
+      })
+
+      ROUND++
     }
-
-    return res.json(false)
+    return res.json('OK')
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error)
   }

@@ -1,0 +1,1 @@
+ALTER TABLE "team" ADD CONSTRAINT "team_external_id_unique" UNIQUE("external_id");

@@ -1,9 +1,6 @@
-export type GloboEsporteApiRound = {
-  id: number
-  content: GloboEsporteApiGame[]
-}
+export type GloboEsporteApiRound = GloboEsporteApiMatch[]
 
-export type GloboEsporteApiGame = {
+export type GloboEsporteApiMatch = {
   id: number
   data_realizacao: string
   hora_realizacao: string
@@ -14,11 +11,13 @@ export type GloboEsporteApiGame = {
       id: number
       nome_popular: string
       sigla: string
+      escudo: string
     }
     visitante: {
       id: number
       nome_popular: string
       sigla: string
+      escudo: string
     }
   }
   sede: {

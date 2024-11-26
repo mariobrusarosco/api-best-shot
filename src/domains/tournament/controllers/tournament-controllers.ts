@@ -1,53 +1,57 @@
 import axios from 'axios'
-import { and, eq } from 'drizzle-orm'
+import { aliasedTable, and, eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
 import db from '../../../services/database'
-import {
-  InsertTournament,
-  TMatch,
-  TOURNAMENT_TABLE
-} from '../../../services/database/schema'
+
+import { TMatch } from '@/domains/match/schema'
+import { TTeam } from '@/domains/team/schema'
+import { InsertTournament, TTournament } from '@/domains/tournament/schema'
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
-import { ErrorMapper } from '../error-handling/mapper'
-import {
-  mapSofaScoreRoundApi,
-  toSQLReady
-} from '../typing/data-providers/sofascore/api-mapper'
+import { Provider } from '../typing/data-providers/globo-esporte/api-mapper'
+import { mapSofaScoreRoundApi } from '../typing/data-providers/sofascore/api-mapper'
 import { SofaScoreRoundApi } from '../typing/data-providers/sofascore/typing'
+import { createTournamentOnDatabase } from '../utils'
+import { SQLHelper } from './sql-helper'
 
 async function getTournament(req: Request, res: Response) {
   const tournamentId = req?.params.tournamentId
   const roundId = req?.query.round || 1
-  // const { id, label } = getTableColumns(TOURNAMENT_TABLE)
+  // const { id, label } = getTableColumns(TTournament)
   // const { tournamentId, ...rest } = getTableColumns(TMatch)
+  const homeTeam = aliasedTable(TTeam, 'homeTeam')
+  const awayTeam = aliasedTable(TTeam, 'awayTeam')
 
   try {
-    const queryResult = await db
-      .select()
-      .from(TOURNAMENT_TABLE)
-      .leftJoin(TMatch, eq(TOURNAMENT_TABLE.id, TMatch.tournamentId))
+    const matches = await db
+      .select({
+        matchId: TMatch.id,
+        roundId: TMatch.roundId,
+        tournamentId: TMatch.tournamentId,
+        homeTeamShortName: homeTeam.shortName,
+        awayTeamShortName: awayTeam.shortName,
+        date: TMatch.date,
+        status: TMatch.status,
+        homeScore: TMatch.homeScore,
+        awayScore: TMatch.awayScore
+      })
+      .from(TMatch)
+      .leftJoin(homeTeam, eq(TMatch.homeTeamId, homeTeam.externalId))
+      .leftJoin(awayTeam, eq(TMatch.awayTeamId, awayTeam.externalId))
       .where(
-        and(eq(TOURNAMENT_TABLE.id, tournamentId), eq(TMatch.roundId, String(roundId)))
+        and(eq(TMatch.roundId, String(roundId)), eq(TMatch.tournamentId, tournamentId))
       )
 
-    const { label, id, externalId, seasonId } = queryResult[0].tournament
-    const matches = queryResult.map(row => row.match)
-
-    return res.status(200).send({
-      id,
-      label,
-      matches,
-      externalId,
-      seasonId
-    })
+    console.log('Matches found:', matches.length)
+    return res.status(200).send(matches)
   } catch (error: any) {
+    console.error('Error fetching matches:', error)
     return handleInternalServerErrorResponse(res, error)
   }
 }
 
 async function getAllTournaments(_: Request, res: Response) {
   try {
-    const result = await db.select().from(TOURNAMENT_TABLE)
+    const result = await db.select().from(TTournament)
 
     return res.status(200).send(result)
   } catch (error: any) {
@@ -55,69 +59,70 @@ async function getAllTournaments(_: Request, res: Response) {
   }
 }
 
-async function createTournament(req: Request, res: Response) {
-  const { targetUrl, mode, label, seasonId, externalId } =
-    req?.body as InsertTournament & { targetUrl: string }
-
-  if (!label) {
-    return res.status(400).json({ message: 'You must provide a label for a tournament' })
-  }
-
-  try {
-    const result = await db
-      .insert(TOURNAMENT_TABLE)
-      .values({ label, mode, seasonId, externalId })
-
-    return res.json(result)
-  } catch (error: any) {
-    if (error?.code === ErrorMapper.DUPLICATED_LABEL.postgresErrorCode) {
-      return res
-        .status(ErrorMapper.DUPLICATED_LABEL.status)
-        .send(ErrorMapper.DUPLICATED_LABEL.user)
-    } else {
-      return handleInternalServerErrorResponse(res, error)
-    }
-  }
-}
-
 async function createTournamentFromExternalSource(req: Request, res: Response) {
   try {
-    const { targetUrl, mode, label, seasonId, externalId } =
-      req?.body as InsertTournament & { targetUrl: string }
+    const body = req?.body as InsertTournament & { provider: string }
 
-    if (!label) {
+    if (!body.label) {
       return res
         .status(400)
         .json({ message: 'You must provide a label for a tournament' })
     }
 
-    const tournamentQuery = await db
-      .insert(TOURNAMENT_TABLE)
-      .values({ label, externalId, seasonId, mode })
-      .returning()
-    const tournament = tournamentQuery[0]
+    console.log(`[CREATING ${body.label}]`, body)
+
+    const tournamentSQL = SQLHelper.parseTournament(body)
+
+    const [tournament] = await createTournamentOnDatabase(tournamentSQL)
 
     if (!tournament) return res.status(400).send('No tournament created')
 
-    if (mode == 'running-points') {
-      let ROUND = 1
+    let ROUND = 1
 
-      while (ROUND <= 38) {
-        console.log(`[FETCHING DATA FOR ROUND ${ROUND}]`)
+    while (ROUND <= Number(1)) {
+      const url = Provider.getURL(tournament, ROUND)
+      console.log(`[FETCHING DATA FOR ROUND ${ROUND} at ${url}]`)
 
-        const responseApiRound = await axios.get(`${targetUrl}/${ROUND}`)
-        const data = responseApiRound.data as SofaScoreRoundApi
-        const mappedMatches = data.events.map(match =>
-          mapSofaScoreRoundApi(match, tournament.id)
-        )
+      const responseApiRound = await axios.get(url)
+      // const round = Provider.mapRoundFromAPI({
+      //   tournamentId: tournament.externalId,
+      //   roundId: ROUND,
+      //   roundData: responseApiRound.data
+      // })
 
-        mappedMatches?.forEach(async match => {
-          await db.insert(TMatch).values(toSQLReady({ match })).returning()
+      const matches = Provider.mapData({
+        tournamentId: tournament.externalId,
+        roundId: ROUND,
+        rawData: responseApiRound.data
+      })
 
-          console.log(`[DATA INSERTED FOR MATCH ${match.externalId}]`)
-        })
-        ROUND++
-      }
+      matches.forEach(async match => {
+        const createdMatch = await Provider.createMatchOnDatabase(match)
+
+        // const homeTeam = Provider.upsertTeamOnDatabase(match.teams.home)
+        // const awayTeam = Provider.upsertTeamOnDatabase(match.teams.away)
+
+        console.log(`[MATCH CREATED]`, createdMatch)
+        // console.log(`[HOME TEAM CREATED ${homeTeam}]`)
+        // console.log(`[AWAY TEAM CREATED ${awayTeam}]`)
+      })
+
+      //     mappedMatches?.forEach(async match => {
+      //       const matchSQL = SQLHelper.parseMatch(match)
+      //       const createdMatch = await createMatchOnDatabase(matchSQL)
+
+      //       const homeTeamSQL = SQLHelper.parseTeam(matchSQL.home)
+      //       const awayTeamSQL = SQLHelper.parseTeam(matchSQL.away)
+
+      //       const homeTeam = await upsertTeamOnDatabase(homeTeamSQL)
+      //       const awayTeam = await upsertTeamOnDatabase(awayTeamSQL)
+
+      //       console.log(`[DATA INSERTED FOR MATCH ${match.externalId}]`)
+      //       console.log(`[HOME TEAM CREATED ${homeTeam}]`)
+      //       console.log(`[AWAY TEAM CREATED ${awayTeam}]`)
+      //     })
+
+      ROUND++
     }
 
     return res.json('OK')
@@ -143,20 +148,16 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
         )
 
         mappedMatches?.forEach(async match => {
-          const updateValues = toSQLReady({
-            match
-          })
-          await db
-            .update(TMatch)
-            .set(updateValues)
-            .where(
-              and(
-                eq(TMatch.externalId, String(match.externalId)),
-                eq(TMatch.tournamentId, tournamentId)
-              )
-            )
-            .returning()
-          console.log(`[DATA UPDATE FOR MATCH ${match.externalId}]`)
+          // const matchToUpdate = SQLHelper.parseMatch(match)
+          // const createdMatch = await Provider.createMatchOnDatabase(matchToUpdate)
+          // console.log(`[DATA UPDATE FOR MATCH ${match.externalId}]`)
+          // const homeTeamSQL = SQLHelper.parseTeam(matchToUpdate.home)
+          // const awayTeamSQL = SQLHelper.parseTeam(matchToUpdate.away)
+          // const homeTeam = await upsertTeamOnDatabase(homeTeamSQL)
+          // const awayTeam = await upsertTeamOnDatabase(awayTeamSQL)
+          // console.log(`[DATA INSERTED FOR MATCH ${match.externalId}]`)
+          // console.log(`[HOME TEAM CREATED ${homeTeam}]`)
+          // console.log(`[AWAY TEAM CREATED ${awayTeam}]`)
         })
         ROUND++
       }
@@ -171,7 +172,6 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
 const TournamentController = {
   getTournament,
   getAllTournaments,
-  createTournament,
   updateTournamentFromExternalSource,
   createTournamentFromExternalSource
 }

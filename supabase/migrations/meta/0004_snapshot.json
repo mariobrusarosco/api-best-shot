@@ -1,6 +1,6 @@
 {
-  "id": "015c146f-a3fb-4c30-8412-1acefdccd76b",
-  "prevId": "3d5536ba-1a8d-479a-a0a8-f8e37b3b8ffe",
+  "id": "16b1ab95-2e5f-448d-a623-ca2a8d3392e7",
+  "prevId": "015c146f-a3fb-4c30-8412-1acefdccd76b",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -328,6 +328,12 @@
         "date": {
           "name": "date",
           "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time": {
+          "name": "time",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },

@@ -8,6 +8,7 @@ export type IMatch = {
     shortName: string
     nameCode: string
     score: number | null
+    externalId: number
   }
   away: {
     id: number
@@ -15,6 +16,7 @@ export type IMatch = {
     shortName: string
     nameCode: string
     score: number | null
+    externalId: number
   }
   date: Date | null
   status?: string

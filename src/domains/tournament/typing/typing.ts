@@ -1,9 +1,5 @@
-import {
-  GloboEsporteApiGame,
-  GloboEsporteApiRound
-} from './data-providers/globo-esporte/typing'
+import { GloboEsporteApiRound } from './data-providers/globo-esporte/typing'
 
-// ------------------------------------
 export type TournamentMode = 'kill-kill' | 'running-points'
 
 export type ISqlMatch = {
@@ -19,8 +15,6 @@ export type ISqlMatch = {
   awayTeam: string
   stadium: string
 }
-
-export type ApiGame = GloboEsporteApiGame
 
 export type IRound = {
   id: number

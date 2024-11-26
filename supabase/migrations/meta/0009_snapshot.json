@@ -1,6 +1,6 @@
 {
-  "id": "0c974fa6-da8e-4738-9779-f9c1b0a49b81",
-  "prevId": "fecd30c8-7bd5-431d-979b-92a07dad9662",
+  "id": "fe59388e-5af6-46aa-9dcd-52472c549fec",
+  "prevId": "60c136bb-5809-4784-ae17-3e52912017f1",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -325,27 +325,39 @@
           "primaryKey": false,
           "notNull": true
         },
+        "home_score": {
+          "name": "home_score",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "away_score": {
+          "name": "away_score",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
         "date": {
           "name": "date",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "status": {
-          "name": "status",
+        "time": {
+          "name": "time",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "home_score": {
-          "name": "home_score",
-          "type": "numeric",
+        "stadium": {
+          "name": "stadium",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "away_score": {
-          "name": "away_score",
-          "type": "numeric",
+        "status": {
+          "name": "status",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -367,7 +379,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "match_external_id_unique": {
+          "name": "match_external_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "external_id"
+          ]
+        }
+      }
     },
     "public.team": {
       "name": "team",
@@ -386,17 +406,23 @@
           "primaryKey": false,
           "notNull": true
         },
+        "external_id": {
+          "name": "external_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "short_name": {
           "name": "short_name",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "external_id": {
-          "name": "external_id",
+        "badge": {
+          "name": "badge",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -416,7 +442,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "team_external_id_unique": {
+          "name": "team_external_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "external_id"
+          ]
+        }
+      }
     },
     "public.tournament": {
       "name": "tournament",
@@ -433,7 +467,7 @@
           "name": "external_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "rounds": {
           "name": "rounds",
@@ -441,8 +475,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "season_id": {
-          "name": "season_id",
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "season": {
+          "name": "season",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -453,8 +493,20 @@
           "primaryKey": false,
           "notNull": true
         },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "label": {
           "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logo": {
+          "name": "logo",
           "type": "text",
           "primaryKey": false,
           "notNull": false

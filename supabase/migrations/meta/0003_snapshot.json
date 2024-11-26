@@ -1,6 +1,6 @@
 {
-  "id": "0c974fa6-da8e-4738-9779-f9c1b0a49b81",
-  "prevId": "fecd30c8-7bd5-431d-979b-92a07dad9662",
+  "id": "015c146f-a3fb-4c30-8412-1acefdccd76b",
+  "prevId": "3d5536ba-1a8d-479a-a0a8-f8e37b3b8ffe",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -433,7 +433,7 @@
           "name": "external_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "rounds": {
           "name": "rounds",
@@ -441,8 +441,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "season_id": {
-          "name": "season_id",
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "season": {
+          "name": "season",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -453,8 +459,20 @@
           "primaryKey": false,
           "notNull": true
         },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "label": {
           "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logo": {
+          "name": "logo",
           "type": "text",
           "primaryKey": false,
           "notNull": false

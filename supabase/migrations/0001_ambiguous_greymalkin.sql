@@ -1,0 +1,1 @@
+ALTER TABLE "tournament" ADD COLUMN "rounds" numeric NOT NULL;

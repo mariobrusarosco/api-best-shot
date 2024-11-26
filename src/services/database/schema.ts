@@ -1,6 +1,8 @@
 import { numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 export * from '../../domains/match/schema'
+export * from '../../domains/team/schema'
+export * from '../../domains/tournament/schema'
 
 export const MEMBER_TABLE = pgTable('member', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -78,19 +80,3 @@ export const GUESS_TABLE = pgTable(
 
 export type SelectGuess = typeof GUESS_TABLE.$inferSelect
 export type InsertGuess = typeof GUESS_TABLE.$inferInsert
-
-export const TOURNAMENT_TABLE = pgTable('tournament', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  externalId: text('external_id').unique(),
-  seasonId: text('season_id').notNull(),
-  mode: text('mode').notNull(),
-  label: text('label').unique(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at')
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date())
-})
-
-export type InsertTournament = typeof TOURNAMENT_TABLE.$inferInsert
-export type SelectTournament = typeof TOURNAMENT_TABLE.$inferSelect

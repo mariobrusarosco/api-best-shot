@@ -1,5 +1,5 @@
-import { IMatch, SofaScoreMatchApi } from './typing'
 import { isNullable } from '../../../../../utils'
+import { IMatch, SofaScoreMatchApi } from './typing'
 
 export const mapSofaScoreRoundApi = (
   rawMatch: SofaScoreMatchApi,
@@ -9,23 +9,25 @@ export const mapSofaScoreRoundApi = (
     externalId: rawMatch?.id,
     tournamentId,
     roundId: rawMatch?.roundInfo?.round,
-    homeTeam: rawMatch?.homeTeam?.nameCode,
-    homeScore: rawMatch?.homeScore?.current ?? null,
-    awayTeam: rawMatch?.awayTeam?.nameCode,
-    awayScore: rawMatch?.awayScore?.current ?? null,
+    home: {
+      id: rawMatch?.homeTeam?.id,
+      name: rawMatch?.homeTeam?.name,
+      shortName: rawMatch?.homeTeam?.shortName,
+      nameCode: rawMatch?.homeTeam?.nameCode,
+      score: rawMatch?.homeScore.current ?? null,
+      externalId: rawMatch?.homeTeam?.id
+    },
+    away: {
+      id: rawMatch?.awayTeam?.id,
+      name: rawMatch?.awayTeam?.name,
+      shortName: rawMatch?.awayTeam?.shortName,
+      nameCode: rawMatch?.awayTeam?.nameCode,
+      score: rawMatch?.awayScore.current ?? null,
+      externalId: rawMatch?.awayTeam?.id
+    },
     date: isNullable(rawMatch.startTimestamp)
       ? null
       : new Date(rawMatch.startTimestamp! * 1000),
     status: rawMatch?.status.type ?? ''
-  }
-}
-
-export const toSQLReady = ({ match }: { match: IMatch }) => {
-  return {
-    ...match,
-    externalId: String(match.externalId),
-    roundId: String(match.roundId),
-    awayScore: isNullable(match.awayScore) ? null : String(match.awayScore),
-    homeScore: isNullable(match.homeScore) ? null : String(match.homeScore)
   }
 }

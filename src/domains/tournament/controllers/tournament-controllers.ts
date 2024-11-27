@@ -16,17 +16,32 @@ async function getTournament(req: Request, res: Response) {
   const awayTeam = aliasedTable(TTeam, 'awayTeam')
 
   try {
+    const [tournament] = await db
+      .select()
+      .from(TTournament)
+      .where(eq(TTournament.id, tournamentId))
+
     const matches = await db
       .select({
-        matchId: TMatch.id,
-        roundId: TMatch.roundId,
+        id: TMatch.id,
+        round: TMatch.roundId,
         tournamentId: TMatch.tournamentId,
-        homeTeamShortName: homeTeam.shortName,
-        awayTeamShortName: awayTeam.shortName,
         date: TMatch.date,
         status: TMatch.status,
-        homeScore: TMatch.homeScore,
-        awayScore: TMatch.awayScore
+        home: {
+          id: TMatch.homeTeamId,
+          score: TMatch.homeScore,
+          shortName: homeTeam.shortName,
+          badge: homeTeam.badge,
+          name: homeTeam.name
+        },
+        away: {
+          id: TMatch.awayTeamId,
+          score: TMatch.awayScore,
+          shortName: awayTeam.shortName,
+          badge: awayTeam.badge,
+          name: awayTeam.name
+        }
       })
       .from(TMatch)
       .leftJoin(homeTeam, eq(TMatch.homeTeamId, homeTeam.externalId))
@@ -35,7 +50,10 @@ async function getTournament(req: Request, res: Response) {
         and(eq(TMatch.roundId, String(roundId)), eq(TMatch.tournamentId, tournamentId))
       )
 
-    return res.status(200).send(matches)
+    return res.status(200).send({
+      ...tournament,
+      matches
+    })
   } catch (error: any) {
     console.error('Error fetching matches:', error)
     return handleInternalServerErrorResponse(res, error)
@@ -78,7 +96,7 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
 
       const responseApiRound = await axios.get(url)
       const matches = Provider.mapData({
-        tournamentId: tournament.externalId,
+        tournamentId: tournament.id,
         roundId: ROUND,
         rawData: responseApiRound.data
       })

@@ -1,8 +1,10 @@
+import { GuessInput } from '@/domains/guess/controllers/guess-controllers'
+import { InsertGuess, TGuess } from '@/domains/guess/schema'
 import { InsertMatch, TMatch } from '@/domains/match/schema'
 import { InsertTeam, TTeam } from '@/domains/team/schema'
 import { InsertTournament, TTournament } from '@/domains/tournament/schema'
 import db from '@/services/database'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { GloboEsporteApiMatch } from './typing'
 
 // TODO Use Lodash isNil
@@ -29,6 +31,39 @@ export const Provider = {
       .replace(':mode', mode)
       .replace(':slug', slug)
       .replace(':round', String(round))
+  },
+  mapData: (dataFromAPI: {
+    tournamentId: string
+    roundId: number
+    rawData: GloboEsporteApiMatch[]
+  }) => {
+    return dataFromAPI.rawData.map(match => {
+      return {
+        externalId: String(match.id),
+        roundId: String(dataFromAPI.roundId),
+        tournamentId: dataFromAPI.tournamentId,
+        date: isNull(match.data_realizacao) ? null : new Date(match.data_realizacao),
+        time: match.hora_realizacao ?? null,
+        status: match.jogo_ja_comecou ? 'started' : 'not-started',
+        stadium: isNull(match.sede?.nome_popular) ? null : match.sede?.nome_popular,
+        teams: {
+          home: {
+            score: match.placar_oficial_mandante,
+            externalId: match.equipes.mandante.id,
+            name: match.equipes.mandante.nome_popular,
+            shortName: match.equipes.mandante.sigla,
+            badge: match.equipes.mandante.escudo
+          },
+          away: {
+            score: match.placar_oficial_visitante,
+            externalId: match.equipes.visitante.id,
+            name: match.equipes.visitante.nome_popular,
+            shortName: match.equipes.visitante.sigla,
+            badge: match.equipes.visitante.escudo
+          }
+        }
+      } satisfies IParsedMatchFromAPI
+    })
   },
   createTournamentOnDatabase: (tournament: InsertTournament) => {
     return db.insert(TTournament).values(tournament).returning()
@@ -103,39 +138,26 @@ export const Provider = {
         }
       })
   },
-  mapData: (dataFromAPI: {
-    tournamentId: string
-    roundId: number
-    rawData: GloboEsporteApiMatch[]
-  }) => {
-    return dataFromAPI.rawData.map(match => {
-      console.log('Mapping match:', match)
-      return {
-        externalId: String(match.id),
-        roundId: String(dataFromAPI.roundId),
-        tournamentId: dataFromAPI.tournamentId,
-        date: isNull(match.data_realizacao) ? null : new Date(match.data_realizacao),
-        time: match.hora_realizacao ?? null,
-        status: match.jogo_ja_comecou ? 'started' : 'not-started',
-        stadium: isNull(match.sede?.nome_popular) ? null : match.sede?.nome_popular,
-        teams: {
-          home: {
-            score: match.placar_oficial_mandante,
-            externalId: match.equipes.mandante.id,
-            name: match.equipes.mandante.nome_popular,
-            shortName: match.equipes.mandante.sigla,
-            badge: match.equipes.mandante.escudo
-          },
-          away: {
-            score: match.placar_oficial_visitante,
-            externalId: match.equipes.visitante.id,
-            name: match.equipes.visitante.nome_popular,
-            shortName: match.equipes.visitante.sigla,
-            badge: match.equipes.visitante.escudo
-          }
+  createGuessOnDatabase: async (guess: GuessInput) => {
+    const contentToInsert = {
+      matchId: guess.matchId,
+      memberId: guess.memberId,
+      tournamentId: guess.tournamentId,
+      homeScore: guess.home.score,
+      awayScore: guess.away.score
+    } satisfies InsertGuess
+
+    return await db
+      .insert(TGuess)
+      .values(contentToInsert)
+      .onConflictDoUpdate({
+        target: [TGuess.memberId, TGuess.matchId],
+        set: {
+          awayScore: sql`excluded.away_score`,
+          homeScore: sql`excluded.home_score`
         }
-      } satisfies IParsedMatchFromAPI
-    })
+      })
+      .returning()
   }
 }
 

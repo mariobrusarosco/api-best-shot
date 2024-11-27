@@ -1,13 +1,13 @@
+import { Column, eq, sql } from 'drizzle-orm'
 import { Request, Response } from 'express'
-import { eq, and, sql, Column } from 'drizzle-orm'
-import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
+import db from '../../../services/database'
 import {
-  GUESS_TABLE,
   LEAGUE_ROLE_TABLE,
   MEMBER_TABLE,
+  TGuess,
   TMatch
 } from '../../../services/database/schema'
-import db from '../../../services/database'
+import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 import { analyzeScore } from './score-computation'
 
 const toNumber = (col: Column) => {
@@ -21,10 +21,10 @@ async function getLeagueScore(req: Request, res: Response) {
     // TODO subquery???
     const query = await db
       .select()
-      .from(GUESS_TABLE)
-      .leftJoin(LEAGUE_ROLE_TABLE, eq(GUESS_TABLE.memberId, LEAGUE_ROLE_TABLE.memberId))
-      .leftJoin(TMatch, eq(TMatch.id, GUESS_TABLE.matchId))
-      .leftJoin(MEMBER_TABLE, eq(MEMBER_TABLE.id, GUESS_TABLE.memberId))
+      .from(TGuess)
+      .leftJoin(LEAGUE_ROLE_TABLE, eq(TGuess.memberId, LEAGUE_ROLE_TABLE.memberId))
+      .leftJoin(TMatch, eq(TMatch.id, TGuess.matchId))
+      .leftJoin(MEMBER_TABLE, eq(MEMBER_TABLE.id, TGuess.memberId))
       .where(eq(LEAGUE_ROLE_TABLE.leagueId, leagueId))
 
     const scoreboard = {} as Record<string, number>

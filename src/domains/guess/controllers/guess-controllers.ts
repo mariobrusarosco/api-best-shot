@@ -1,8 +1,9 @@
+import { Provider } from '@/domains/tournament/typing/data-providers/globo-esporte/api-mapper'
+import { and, Column, eq, sql } from 'drizzle-orm'
 import { Request, Response } from 'express'
-import { eq, and, sql, Column } from 'drizzle-orm'
-import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
-import { GUESS_TABLE, InsertGuess } from '../../../services/database/schema'
 import db from '../../../services/database'
+import { TGuess } from '../../../services/database/schema'
+import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 
 const toNumber = (col: Column) => {
   return sql<number>`${col}`.mapWith(Number)
@@ -15,19 +16,14 @@ async function getMemberGuesses(req: Request, res: Response) {
   try {
     const guesses = await db
       .select({
-        memberId: GUESS_TABLE.memberId,
-        matchId: GUESS_TABLE.matchId,
-        tournamentId: GUESS_TABLE.tournamentId,
-        homeScore: toNumber(GUESS_TABLE.homeScore),
-        awayScore: toNumber(GUESS_TABLE.awayScore)
+        memberId: TGuess.memberId,
+        matchId: TGuess.matchId,
+        tournamentId: TGuess.tournamentId,
+        home: { score: TGuess.homeScore },
+        away: { score: TGuess.awayScore }
       })
-      .from(GUESS_TABLE)
-      .where(
-        and(
-          eq(GUESS_TABLE.memberId, memberId),
-          eq(GUESS_TABLE.tournamentId, tournamentId)
-        )
-      )
+      .from(TGuess)
+      .where(and(eq(TGuess.memberId, memberId), eq(TGuess.tournamentId, tournamentId)))
 
     return res.status(200).send(guesses)
   } catch (error: any) {
@@ -35,27 +31,22 @@ async function getMemberGuesses(req: Request, res: Response) {
   }
 }
 
-async function createGuess(req: Request, res: Response) {
-  const body = req?.body as InsertGuess
+export type GuessInput = {
+  matchId: string
+  memberId: string
+  tournamentId: string
+  home: {
+    score: string
+  }
+  away: {
+    score: string
+  }
+}
 
+async function createGuess(req: Request, res: Response) {
   try {
-    const result = await db
-      .insert(GUESS_TABLE)
-      .values({
-        matchId: body.matchId,
-        awayScore: body.awayScore,
-        homeScore: body.homeScore,
-        memberId: body.memberId,
-        tournamentId: body.tournamentId
-      })
-      .onConflictDoUpdate({
-        target: [GUESS_TABLE.memberId, GUESS_TABLE.matchId],
-        set: {
-          awayScore: sql`excluded.away_score`,
-          homeScore: sql`excluded.home_score`
-        }
-      })
-      .returning()
+    const input = req?.body as GuessInput
+    const result = Provider.createGuessOnDatabase(input)
 
     return res.status(200).send(result)
   } catch (error: any) {

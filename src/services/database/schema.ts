@@ -1,5 +1,6 @@
-import { numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
+export * from '../../domains/guess/schema'
 export * from '../../domains/match/schema'
 export * from '../../domains/team/schema'
 export * from '../../domains/tournament/schema'
@@ -55,28 +56,3 @@ export const TOURNAMENT_EXTERNAL_ID = pgTable('tournament_external_id', {
     .defaultNow()
     .$onUpdate(() => new Date())
 })
-
-export const GUESS_TABLE = pgTable(
-  'guess',
-  {
-    id: uuid('id').defaultRandom(),
-    memberId: uuid('member_id').notNull(),
-    matchId: uuid('match_id').notNull(),
-    tournamentId: uuid('tournament_id').notNull(),
-    homeScore: numeric('home_score').notNull(),
-    awayScore: numeric('away_score').notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at')
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date())
-  },
-  table => {
-    return {
-      pk: primaryKey({ columns: [table.matchId, table.memberId] })
-    }
-  }
-)
-
-export type SelectGuess = typeof GUESS_TABLE.$inferSelect
-export type InsertGuess = typeof GUESS_TABLE.$inferInsert

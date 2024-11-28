@@ -1,12 +1,8 @@
+import { TMember } from '@/domains/member/schema'
 import { Column, eq, sql } from 'drizzle-orm'
 import { Request, Response } from 'express'
 import db from '../../../services/database'
-import {
-  LEAGUE_ROLE_TABLE,
-  MEMBER_TABLE,
-  TGuess,
-  TMatch
-} from '../../../services/database/schema'
+import { LEAGUE_ROLE_TABLE, TGuess, TMatch } from '../../../services/database/schema'
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
 import { analyzeScore } from './score-computation'
 
@@ -24,7 +20,7 @@ async function getLeagueScore(req: Request, res: Response) {
       .from(TGuess)
       .leftJoin(LEAGUE_ROLE_TABLE, eq(TGuess.memberId, LEAGUE_ROLE_TABLE.memberId))
       .leftJoin(TMatch, eq(TMatch.id, TGuess.matchId))
-      .leftJoin(MEMBER_TABLE, eq(MEMBER_TABLE.id, TGuess.memberId))
+      .leftJoin(TMember, eq(TMember.id, TGuess.memberId))
       .where(eq(LEAGUE_ROLE_TABLE.leagueId, leagueId))
 
     const scoreboard = {} as Record<string, number>

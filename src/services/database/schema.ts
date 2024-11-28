@@ -2,22 +2,9 @@ import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 export * from '../../domains/guess/schema'
 export * from '../../domains/match/schema'
+export * from '../../domains/member/schema'
 export * from '../../domains/team/schema'
 export * from '../../domains/tournament/schema'
-
-export const MEMBER_TABLE = pgTable('member', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  firstName: text('first_name').notNull(),
-  lastName: text('last_name').notNull(),
-  nickName: text('nick_name').notNull(),
-  email: text('email').notNull().unique(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at')
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date())
-})
-export type SelectMember = typeof MEMBER_TABLE.$inferSelect
 
 export const LEAGUE_TABLE = pgTable('league', {
   id: uuid('id').defaultRandom().primaryKey(),

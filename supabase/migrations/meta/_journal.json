@@ -78,6 +78,13 @@
       "when": 1732653189559,
       "tag": "0010_fine_sphinx",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1732734321773,
+      "tag": "0011_brainy_pyro",
+      "breakpoints": true
     }
   ]
 }

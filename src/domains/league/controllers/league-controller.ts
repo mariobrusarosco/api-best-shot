@@ -1,83 +1,83 @@
-import { Request, Response } from 'express'
-import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
-import { LEAGUE_ROLE_TABLE, LEAGUE_TABLE } from '../../../services/database/schema'
-import db from '../../../services/database'
-import { eq } from 'drizzle-orm'
+import { TLeague, TLeagueRole } from '@/domains/league/schema';
+import { eq } from 'drizzle-orm';
+import { Request, Response } from 'express';
+import db from '../../../services/database';
+import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 
 const getLeagues = async (req: Request, res: Response) => {
-  const memberId = (req?.query?.memberId || '') as string
+  const memberId = (req?.query?.memberId || '') as string;
 
   try {
     const memberLeages = await db
       .select({
-        label: LEAGUE_TABLE.label,
-        description: LEAGUE_TABLE.description,
-        id: LEAGUE_TABLE.id
+        label: TLeague.label,
+        description: TLeague.description,
+        id: TLeague.id,
       })
-      .from(LEAGUE_TABLE)
-      .innerJoin(LEAGUE_ROLE_TABLE, eq(LEAGUE_TABLE.id, LEAGUE_ROLE_TABLE.leagueId))
-      .where(eq(LEAGUE_ROLE_TABLE.memberId, memberId))
+      .from(TLeague)
+      .innerJoin(TLeagueRole, eq(TLeague.id, TLeagueRole.leagueId))
+      .where(eq(TLeagueRole.memberId, memberId));
 
-    return res.status(200).send(memberLeages)
+    return res.status(200).send(memberLeages);
   } catch (error: any) {
-    return handleInternalServerErrorResponse(res, error)
+    return handleInternalServerErrorResponse(res, error);
   }
-}
+};
 
 const createLeague = async (req: Request, res: Response) => {
-  const { label, description, founderId } = req.body
+  const { label, description, founderId } = req.body;
 
   try {
     const query = await db
-      .insert(LEAGUE_TABLE)
+      .insert(TLeague)
       .values({
         label,
         description,
-        founderId
+        founderId,
       })
-      .returning()
+      .returning();
 
-    const league = query.at(0)
+    const league = query.at(0);
 
     if (!league) {
-      return res.status(400).send({ message: 'League not created' })
+      return res.status(400).send({ message: 'League not created' });
     }
 
-    await db.insert(LEAGUE_ROLE_TABLE).values({
+    await db.insert(TLeagueRole).values({
       leagueId: league.id,
       memberId: founderId,
-      role: 'ADMIN'
-    })
+      role: 'ADMIN',
+    });
 
-    return res.status(201).send(league)
+    return res.status(201).send(league);
   } catch (error: any) {
-    return handleInternalServerErrorResponse(res, error)
+    return handleInternalServerErrorResponse(res, error);
   }
-}
+};
 
 const inviteToLeague = async (req: Request, res: Response) => {
-  const { leagueId, guestId } = req.body
+  const { leagueId, guestId } = req.body;
 
   try {
     await db
-      .insert(LEAGUE_ROLE_TABLE)
+      .insert(TLeagueRole)
       .values({
         leagueId,
         memberId: guestId,
-        role: 'GUEST'
+        role: 'GUEST',
       })
-      .returning()
+      .returning();
 
-    return res.status(201).send('user invited to league')
+    return res.status(201).send('user invited to league');
   } catch (error: any) {
-    return handleInternalServerErrorResponse(res, error)
+    return handleInternalServerErrorResponse(res, error);
   }
-}
+};
 
 const LeagueController = {
   getLeagues,
   createLeague,
-  inviteToLeague
-}
+  inviteToLeague,
+};
 
-export default LeagueController
+export default LeagueController;

@@ -1,5 +1,5 @@
 export const SOFA_MATCHES_API =
-  'https://api.globoesporte.globo.com/tabela/:external_id/fase/:mode-:slug/rodada/:round/jogos/';
+  'https://www.sofascore.com/api/v1/:mode/:external_id/season/:season/events/round/:round';
 
 export const SOFA_TOURNAMENT_API =
   'https://api.globoesporte.globo.com/tabela/:external_id/classificacao/';

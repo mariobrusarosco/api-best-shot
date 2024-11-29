@@ -28,6 +28,14 @@ export const ProviderSofa: IApiProvider = {
         .returning();
     },
   },
+  match: {
+    prepareUrl: ({ externalId, mode, round, season }) => {
+      return SOFA_MATCHES_API.replace(':external_id', externalId)
+        .replace(':mode', mode)
+        .replace(':season', season)
+        .replace(':round', String(round));
+    },
+  },
 };
 
 // export const mapSofaScoreRoundApi = (

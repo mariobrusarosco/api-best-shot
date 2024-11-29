@@ -12,14 +12,15 @@ export type IApiProvider = {
     createOnDB: (data: InsertTournament) => Promise<SelectTournament[]>;
     updateOnDB: (data: InsertTournament) => Promise<SelectTournament[]>;
   };
-  // matches: {
-  //   prepareUrl: (data: {
-  //     externalId: string;
-  //     mode: string;
-  //     slug: string;
-  //     round: number;
-  //   }) => string;
-  // };
+  match: {
+    prepareUrl: (data: {
+      externalId: string;
+      mode: string;
+      slug: string;
+      round: number;
+      season: string;
+    }) => string;
+  };
   // match: {
   //   parse: <T>(tournamentRound: TournamentRound<T>) => InsertMatch;
   // };

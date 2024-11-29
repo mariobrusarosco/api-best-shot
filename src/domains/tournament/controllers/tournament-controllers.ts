@@ -89,31 +89,34 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
         .status(ErrorMapper.NO_TOURNAMENT_CREATED.status)
         .json({ message: ErrorMapper.NO_TOURNAMENT_CREATED.user });
 
-    // let ROUND = 1;
+    let ROUND = 1;
 
-    // while (ROUND <= Number(body.rounds)) {
-    //   const url = ApiProvider.getURL({
-    //     externalId: body.externalId,
-    //     slug: body.slug,
-    //     mode: body.mode,
-    //     round: ROUND,
-    //   });
+    while (ROUND <= Number(body.rounds)) {
+      const url = ApiProvider.match.prepareUrl({
+        externalId: body.externalId,
+        slug: body.slug,
+        mode: body.mode,
+        round: ROUND,
+        season: body.season,
+      });
 
-    //   const responseApiRound = await axios.get(url);
-    //   const matches = ApiProvider.mapData({
-    //     tournamentId: tournament.id,
-    //     roundId: ROUND,
-    //     rawData: responseApiRound.data,
-    //   });
+      console.log({ url });
 
-    //   matches.forEach(async match => {
-    //     await Provider.createMatchOnDatabase(match);
-    //     await Provider.upsertTeamOnDatabase(match.teams.home);
-    //     await Provider.upsertTeamOnDatabase(match.teams.away);
-    //   });
+      //   const responseApiRound = await axios.get(url);
+      //   const matches = ApiProvider.mapData({
+      //     tournamentId: tournament.id,
+      //     roundId: ROUND,
+      //     rawData: responseApiRound.data,
+      //   });
 
-    //   ROUND++;
-    // }
+      //   matches.forEach(async match => {
+      //     await Provider.createMatchOnDatabase(match);
+      //     await Provider.upsertTeamOnDatabase(match.teams.home);
+      //     await Provider.upsertTeamOnDatabase(match.teams.away);
+      //   });
+
+      ROUND++;
+    }
 
     return res.json(tournament);
   } catch (error: any) {
@@ -133,31 +136,35 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
         .json({ message: ErrorMapper.NO_TOURNAMENT_UPDATED.user });
     }
 
-    // let ROUND = 1;
+    let ROUND = 1;
 
-    // while (ROUND <= Number(body.rounds)) {
-    //   const url = ApiProvider.getURL({
-    //     externalId: body.externalId,
-    //     slug: body.slug,
-    //     mode: body.mode,
-    //     round: ROUND,
-    //   });
+    while (ROUND <= Number(body.rounds)) {
+      const url = ApiProvider.match.prepareUrl({
+        externalId: body.externalId,
+        slug: body.slug,
+        mode: body.mode,
+        round: ROUND,
+        season: body.season,
+      });
 
-    //   const responseApiRound = await axios.get(url);
-    //   const matches = ApiProvider.mapData({
-    //     tournamentId: body.externalId,
-    //     roundId: ROUND,
-    //     rawData: responseApiRound.data,
-    //   });
+      console.log({ url });
 
-    //   matches.forEach(async match => {
-    //     await ApiProvider.updateMatchOnDatabase(match);
-    //     await ApiProvider.upsertTeamOnDatabase(match.teams.home);
-    //     await ApiProvider.upsertTeamOnDatabase(match.teams.away);
-    //   });
+      //   const responseApiRound = await axios.get(url);
+      //   const matches = ApiProvider.mapData({
+      //     tournamentId: body.externalId,
+      //     roundId: ROUND,
+      //     rawData: responseApiRound.data,
+      //   });
 
-    //   ROUND++;
-    // }
+      //   matches.forEach(async match => {
+      //     await ApiProvider.updateMatchOnDatabase(match);
+      //     await ApiProvider.upsertTeamOnDatabase(match.teams.home);
+      //     await ApiProvider.upsertTeamOnDatabase(match.teams.away);
+      //   });
+
+      ROUND++;
+    }
+
     return res.json(updatedTournament);
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error);

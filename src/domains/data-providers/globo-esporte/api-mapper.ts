@@ -33,13 +33,14 @@ export const ProviderGloboEsporte: IApiProvider = {
         .returning();
     },
   },
-  // matches: {
-  //   prepareUrl: ({ externalId, mode, round, slug }) => {
-  //     return GLOBO_ESPORTE_MATCHES_API.replace(':external_id', externalId)
-  //       .replace(':mode', mode)
-  //       .replace(':slug', slug)
-  //       .replace(':round', String(round));
-  //   },
+  match: {
+    prepareUrl: ({ externalId, mode, round, slug }) => {
+      return GLOBO_ESPORTE_MATCHES_API.replace(':external_id', externalId)
+        .replace(':mode', mode)
+        .replace(':slug', slug)
+        .replace(':round', String(round));
+    },
+  },
 };
 // match: {
 // parse: (round) => {

@@ -2,7 +2,7 @@ import { aliasedTable, and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import db from '../../../services/database';
 
-import { ProviderGloboEsporte } from '@/domains/data-providers/typing/data-providers/globo-esporte/api-mapper';
+import { ProviderGloboEsporte } from '@/domains/data-providers/globo-esporte/api-mapper';
 import { TMatch } from '@/domains/match/schema';
 import { TTeam } from '@/domains/team/schema';
 import { InsertTournament, TTournament } from '@/domains/tournament/schema';
@@ -81,9 +81,7 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
       return;
     }
 
-    const temp = null;
-
-    // const [tournament] = await ApiProvider.createTournamentOnDatabase(body);
+    const [tournament] = await ApiProvider.tournament.createOnDB(body);
 
     // if (!tournament) return res.status(400).send('No tournament created');
 
@@ -113,7 +111,7 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
     //   ROUND++;
     // }
 
-    return res.json(temp);
+    return res.json(tournament);
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error);
   }

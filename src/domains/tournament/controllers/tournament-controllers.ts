@@ -5,6 +5,7 @@ import db from '../../../services/database';
 import { ApiProvider } from '@/domains/data-providers';
 import { TMatch } from '@/domains/match/schema';
 import { TTeam } from '@/domains/team/schema';
+import { ErrorMapper } from '@/domains/tournament/error-handling/mapper';
 import { InsertTournament, TTournament } from '@/domains/tournament/schema';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 
@@ -74,14 +75,19 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
     const body = req?.body as InsertTournament & { provider: string };
 
     if (!body.label) {
-      res.status(400).json({ message: 'You must provide a label for a tournament' });
+      res
+        .status(ErrorMapper.MISSING_LABEL.status)
+        .json({ message: ErrorMapper.MISSING_LABEL.user });
 
       return;
     }
 
     const [tournament] = await ApiProvider.tournament.createOnDB(body);
 
-    // if (!tournament) return res.status(400).send('No tournament created');
+    if (!tournament)
+      return res
+        .status(ErrorMapper.NO_TOURNAMENT_CREATED.status)
+        .json({ message: ErrorMapper.NO_TOURNAMENT_CREATED.user });
 
     // let ROUND = 1;
 
@@ -119,7 +125,13 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
   try {
     const body = req?.body as InsertTournament & { provider: string };
 
-    const tournament = await ApiProvider.tournament.updateOnDB(body);
+    const updatedTournament = await ApiProvider.tournament.updateOnDB(body);
+
+    if (!updatedTournament) {
+      return res
+        .status(ErrorMapper.NO_TOURNAMENT_UPDATED.status)
+        .json({ message: ErrorMapper.NO_TOURNAMENT_UPDATED.user });
+    }
 
     // let ROUND = 1;
 
@@ -146,7 +158,7 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
 
     //   ROUND++;
     // }
-    return res.json(tournament);
+    return res.json(updatedTournament);
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error);
   }

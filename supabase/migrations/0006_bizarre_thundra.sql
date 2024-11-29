@@ -1,1 +1,0 @@
-ALTER TABLE "match" ADD CONSTRAINT "match_external_id_unique" UNIQUE("external_id");

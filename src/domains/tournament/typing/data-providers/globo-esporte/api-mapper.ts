@@ -87,7 +87,7 @@ export const Provider = {
       time: parsedMatch.time ?? null,
       stadium: parsedMatch.stadium ?? null,
       status: parsedMatch.status
-    } satisfies typeof InsertMatch
+    } satisfies InsertMatch
   },
   createMatchOnDatabase: async (parsedMatch: IParsedMatchFromAPI) => {
     const dataToInsert = Provider.convertMatchToSQL(parsedMatch)
@@ -111,7 +111,7 @@ export const Provider = {
       externalId: String(team.externalId),
       shortName: team.shortName,
       badge: team.badge ?? null
-    } satisfies typeof InsertTeam
+    } satisfies InsertTeam
   },
   createTeamOnDatabase: async (
     team: IParsedMatchFromAPI['teams']['away'] | IParsedMatchFromAPI['teams']['home']

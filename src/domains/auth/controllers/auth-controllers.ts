@@ -1,47 +1,47 @@
-import { Utils } from '@/domains/auth/utils'
-import { TMember } from '@/domains/member/schema'
-import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper'
-import { eq } from 'drizzle-orm'
-import { Request, Response } from 'express'
-import db from '../../../services/database'
-import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
+import { Utils } from '@/domains/auth/utils';
+import { TMember } from '@/domains/member/schema';
+import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
+import { eq } from 'drizzle-orm';
+import { Request, Response } from 'express';
+import db from '../../../services/database';
+import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 
 async function authenticateUser(req: Request, res: Response) {
   try {
-    const body = req?.body as { publicId: string }
-    const publicId = body.publicId
+    const body = req?.body as { publicId: string };
+    const publicId = body.publicId;
 
-    const member = await db.select().from(TMember).where(eq(TMember.id, publicId))
+    const member = await db.select().from(TMember).where(eq(TMember.id, publicId));
 
-    if (!member) throw new Error('no user found to authenticate')
+    if (!member) throw new Error('no user found to authenticate');
 
-    const token = Utils.signUserCookieBased(publicId, res)
+    const token = Utils.signUserCookieBased(publicId, res);
 
-    return res.status(200).send(token)
+    return res.status(200).send(token);
   } catch (error: any) {
-    console.error(`[AUTH - POST] ${error}`)
+    console.error(`[AUTH - POST] ${error}`);
 
     return res
-      .status(GlobalErrorMapper.BIG_FIVE_HUNDRED.status)
-      .send(GlobalErrorMapper.BIG_FIVE_HUNDRED.user)
+      .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
+      .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
   }
 }
 
 const getMember = async (req: Request, res: Response) => {
-  const memberId = req?.body?.memberId
+  const memberId = req?.body?.memberId;
 
   try {
-    const member = await db.select().from(TMember).where(eq(TMember.id, memberId))
+    const member = await db.select().from(TMember).where(eq(TMember.id, memberId));
 
-    return res.status(200).send(member[0])
+    return res.status(200).send(member[0]);
   } catch (error: any) {
-    return handleInternalServerErrorResponse(res, error)
+    return handleInternalServerErrorResponse(res, error);
   }
-}
+};
 
 const AuthController = {
   getMember,
-  authenticateUser
-}
+  authenticateUser,
+};
 
-export default AuthController
+export default AuthController;

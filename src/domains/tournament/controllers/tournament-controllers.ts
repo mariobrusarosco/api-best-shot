@@ -8,12 +8,8 @@ import { InsertTournament, TTournament } from '@/domains/tournament/schema';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 
 async function getTournament(req: Request, res: Response) {
-  const tournamentId = req?.params.tournamentId;
-  // const roundId = req?.query.round || 1;
-  // const homeTeam = aliasedTable(TTeam, 'homeTeam');
-  // const awayTeam = aliasedTable(TTeam, 'awayTeam');
-
   try {
+    const tournamentId = req?.params.tournamentId;
     const [tournament] = await db
       .select()
       .from(TTournament)

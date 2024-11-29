@@ -4,12 +4,12 @@ export const TMatch = pgTable('match', {
   id: uuid('id').defaultRandom().primaryKey(),
   externalId: text('external_id').notNull().unique(),
   provider: text('provider').notNull(),
-  tournamentId: uuid('tournament_id').notNull(),
+  tournamentExternalId: text('tournament_id').notNull(),
+  roundId: text('round_id'),
   homeTeamId: text('home_team_id').notNull(),
   awayTeamId: text('away_team_id').notNull(),
   homeScore: numeric('home_score'),
   awayScore: numeric('away_score'),
-  roundId: text('round_id'),
   date: timestamp('date', { withTimezone: true }),
   time: text('time'),
   stadium: text('stadium'),
@@ -22,4 +22,5 @@ export const TMatch = pgTable('match', {
 });
 
 export type InsertMatch = typeof TMatch.$inferInsert;
+export type UpdateMatch = typeof TMatch.$inferSelect;
 export type SelectMatch = typeof TMatch.$inferSelect;

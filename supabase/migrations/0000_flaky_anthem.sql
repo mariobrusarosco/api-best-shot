@@ -1,22 +1,3 @@
-CREATE TABLE IF NOT EXISTS "league_role" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"league_id" uuid NOT NULL,
-	"member_id" uuid NOT NULL,
-	"role" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "league" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"founder_id" uuid NOT NULL,
-	"label" text,
-	"description" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "league_label_unique" UNIQUE("label")
-);
---> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "tournament_external_id" (
 	"tournament_id" uuid NOT NULL,
 	"external_id" text PRIMARY KEY NOT NULL,
@@ -37,11 +18,31 @@ CREATE TABLE IF NOT EXISTS "guess" (
 	CONSTRAINT "guess_match_id_member_id_pk" PRIMARY KEY("match_id","member_id")
 );
 --> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "league" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"founder_id" uuid NOT NULL,
+	"label" text,
+	"description" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "league_label_unique" UNIQUE("label")
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "league_role" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"league_id" uuid NOT NULL,
+	"member_id" uuid NOT NULL,
+	"role" text NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "match" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"external_id" text NOT NULL,
+	"provider" text NOT NULL,
+	"tournament_id" text NOT NULL,
 	"round_id" text,
-	"tournament_id" uuid NOT NULL,
 	"home_team_id" text NOT NULL,
 	"away_team_id" text NOT NULL,
 	"home_score" numeric,
@@ -74,6 +75,7 @@ CREATE TABLE IF NOT EXISTS "team" (
 	"external_id" text NOT NULL,
 	"short_name" text,
 	"badge" text,
+	"provider" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "team_external_id_unique" UNIQUE("external_id")

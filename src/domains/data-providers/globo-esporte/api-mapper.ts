@@ -3,21 +3,14 @@ import {
   GLOBO_ESPORTE_TOURNAMENT_API,
 } from '@/domains/data-providers/globo-esporte/metadata';
 import { IApiProvider } from '@/domains/data-providers/typing';
+import { TMatch } from '@/domains/match/schema';
 import { TTournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
+import { safeDate, safeString } from '@/utils';
+import axios from 'axios';
 import { eq } from 'drizzle-orm';
 
-// TODO Use Lodash isNil
-export const isNull = (value: any) => {
-  return value === null || value === undefined;
-};
-
 export const ProviderGloboEsporte: IApiProvider = {
-  getURL: data =>
-    GLOBO_ESPORTE_MATCHES_API.replace(':external_id', data.externalId)
-      .replace(':mode', data.mode)
-      .replace(':slug', data.slug)
-      .replace(':round', String(data.round)),
   tournament: {
     prepareUrl: ({ externalId }) =>
       GLOBO_ESPORTE_TOURNAMENT_API.replace(':external_id', externalId),
@@ -33,12 +26,52 @@ export const ProviderGloboEsporte: IApiProvider = {
         .returning();
     },
   },
-  match: {
+  rounds: {
     prepareUrl: ({ externalId, mode, round, slug }) => {
       return GLOBO_ESPORTE_MATCHES_API.replace(':external_id', externalId)
         .replace(':mode', mode)
         .replace(':slug', slug)
         .replace(':round', String(round));
+    },
+    fetchRound: async (url: string) => {
+      const response = await axios.get(url);
+
+      return response.data as GloboEsporteMatch[];
+    },
+  },
+  match: {
+    parse: data => {
+      const match = data.match as GloboEsporteMatch;
+      const tournamentExternalId = String(data.tournamentExternalId);
+      const roundId = String(data.roundId);
+
+      return {
+        externalId: String(match.id),
+        provider: 'ge',
+        tournamentExternalId,
+        roundId,
+        homeTeamId: String(match.equipes.mandante.id),
+        homeScore: safeString(match.placar_oficial_mandante),
+        awayTeamId: String(match.equipes.visitante.id),
+        awayScore: safeString(match.placar_oficial_visitante),
+        date: safeDate(match.data_realizacao),
+        time: safeString(match.hora_realizacao),
+        stadium: safeString(match.sede.nome_popular),
+        status: match.jogo_ja_comecou ? 'started' : 'not-started',
+      };
+    },
+    insertMatchesOnDB: async matches => {
+      return db.insert(TMatch).values(matches);
+    },
+    updateMatchesOnDB: async matches => {
+      return await db.transaction(async tx => {
+        for (const match of matches) {
+          await tx
+            .update(TMatch)
+            .set(match)
+            .where(eq(TMatch.externalId, match.externalId));
+        }
+      });
     },
   },
 };
@@ -169,40 +202,33 @@ export const ProviderGloboEsporte: IApiProvider = {
 //     .returning();
 // },
 
-export type IParsedMatchFromAPI = {
-  externalId: string;
-  roundId: string;
-  tournamentId: string;
-  date: Date | null;
-  time: string | null;
-  status: string;
-  teams: {
-    home: {
-      externalId: number;
-      name: string;
-      shortName: string;
-      score: number | null;
-      badge: string | null;
+export type GloboEsporteMatch = {
+  id: number;
+  data_realizacao: string | null;
+  hora_realizacao: string | null;
+  placar_oficial_visitante: number | null;
+  placar_oficial_mandante: number | null;
+  placar_penaltis_visitante: number | null;
+  placar_penaltis_mandante: number | null;
+  equipes: {
+    mandante: {
+      id: number;
+      nome_popular: string;
+      sigla: string;
+      escudo: string;
     };
-    away: {
-      externalId: number;
-      name: string;
-      shortName: string;
-      score: number | null;
-      badge: string | null;
+    visitante: {
+      id: number;
+      nome_popular: string;
+      sigla: string;
+      escudo: string;
     };
   };
-  stadium: string | null;
-};
-
-const BRASILEIRAO_24 = {
-  externalId: 'd1a37fa4-e948-43a6-ba53-ab24ab3a45b1',
-  rounds: 38,
-  provider: 'globo-esporte',
-  season: '24',
-  mode: 'fase-unica',
-  slug: 'campeonato-brasileiro-2024',
-  label: 'brasileirão 24',
+  sede: {
+    nome_popular: string;
+  };
+  transmissao: boolean | null;
+  jogo_ja_comecou: boolean | null;
 };
 
 const PREMIER_LEAGUE_24_25 = {

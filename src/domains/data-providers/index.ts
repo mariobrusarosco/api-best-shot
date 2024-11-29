@@ -5,7 +5,7 @@ import { IApiProvider } from './typing';
 const ACTIVE_PROVIDER = process.env['API_PROVIDER'] as keyof typeof API_PROVIDERS;
 
 const API_PROVIDERS: { [key: string]: IApiProvider } = {
-  'globo-esporte': ProviderGloboEsporte,
+  ge: ProviderGloboEsporte,
   sofa: ProviderSofa,
 };
 

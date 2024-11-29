@@ -128,6 +128,8 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
   try {
     const body = req?.body as InsertTournament & { provider: string };
 
+    console.log({ ApiProvider });
+
     const updatedTournament = await ApiProvider.tournament.updateOnDB(body);
 
     if (!updatedTournament) {

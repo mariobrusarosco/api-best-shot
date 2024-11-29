@@ -5,6 +5,7 @@ import {
 import { IApiProvider } from '@/domains/data-providers/typing';
 import { TTournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
+import { eq } from 'drizzle-orm';
 
 // TODO Use Lodash isNil
 export const isNull = (value: any) => {
@@ -22,6 +23,14 @@ export const ProviderGloboEsporte: IApiProvider = {
       GLOBO_ESPORTE_TOURNAMENT_API.replace(':external_id', externalId),
     createOnDB: async data => {
       return db.insert(TTournament).values(data).returning();
+    },
+    updateOnDB: async data => {
+      const { id: _, ...rest } = data;
+      return db
+        .update(TTournament)
+        .set(rest)
+        .where(eq(TTournament.externalId, data.externalId))
+        .returning();
     },
   },
   // matches: {

@@ -2,13 +2,11 @@ import { aliasedTable, and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import db from '../../../services/database';
 
-import { ProviderGloboEsporte } from '@/domains/data-providers/globo-esporte/api-mapper';
+import { ApiProvider } from '@/domains/data-providers';
 import { TMatch } from '@/domains/match/schema';
 import { TTeam } from '@/domains/team/schema';
 import { InsertTournament, TTournament } from '@/domains/tournament/schema';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
-
-const ApiProvider = ProviderGloboEsporte;
 
 async function getTournament(req: Request, res: Response) {
   const tournamentId = req?.params.tournamentId;
@@ -121,6 +119,8 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
   try {
     const body = req?.body as InsertTournament & { provider: string };
 
+    const tournament = await ApiProvider.tournament.updateOnDB(body);
+
     // let ROUND = 1;
 
     // while (ROUND <= Number(body.rounds)) {
@@ -146,7 +146,7 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
 
     //   ROUND++;
     // }
-    return res.json('OK');
+    return res.json(tournament);
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error);
   }

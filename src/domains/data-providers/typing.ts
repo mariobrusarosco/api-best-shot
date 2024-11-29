@@ -10,6 +10,7 @@ export type IApiProvider = {
   tournament: {
     prepareUrl: (data: { externalId: string }) => string;
     createOnDB: (data: InsertTournament) => Promise<SelectTournament[]>;
+    updateOnDB: (data: InsertTournament) => Promise<SelectTournament[]>;
   };
   // matches: {
   //   prepareUrl: (data: {

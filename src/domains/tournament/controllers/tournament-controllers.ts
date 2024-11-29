@@ -1,59 +1,27 @@
-import { aliasedTable, and, eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import db from '../../../services/database';
 
-import { ApiProvider } from '@/domains/data-providers';
-import { TMatch } from '@/domains/match/schema';
-import { TTeam } from '@/domains/team/schema';
+import { ACTIVE_PROVIDER, ApiProvider } from '@/domains/data-providers';
 import { ErrorMapper } from '@/domains/tournament/error-handling/mapper';
 import { InsertTournament, TTournament } from '@/domains/tournament/schema';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 
 async function getTournament(req: Request, res: Response) {
   const tournamentId = req?.params.tournamentId;
-  const roundId = req?.query.round || 1;
-  const homeTeam = aliasedTable(TTeam, 'homeTeam');
-  const awayTeam = aliasedTable(TTeam, 'awayTeam');
+  // const roundId = req?.query.round || 1;
+  // const homeTeam = aliasedTable(TTeam, 'homeTeam');
+  // const awayTeam = aliasedTable(TTeam, 'awayTeam');
 
   try {
     const [tournament] = await db
       .select()
       .from(TTournament)
-      .where(eq(TTournament.id, tournamentId));
-
-    const matches = await db
-      .select({
-        id: TMatch.id,
-        round: TMatch.roundId,
-        tournamentId: TMatch.tournamentId,
-        date: TMatch.date,
-        status: TMatch.status,
-        home: {
-          id: TMatch.homeTeamId,
-          score: TMatch.homeScore,
-          shortName: homeTeam.shortName,
-          badge: homeTeam.badge,
-          name: homeTeam.name,
-        },
-        away: {
-          id: TMatch.awayTeamId,
-          score: TMatch.awayScore,
-          shortName: awayTeam.shortName,
-          badge: awayTeam.badge,
-          name: awayTeam.name,
-        },
-      })
-      .from(TMatch)
-      .leftJoin(homeTeam, eq(TMatch.homeTeamId, homeTeam.externalId))
-      .leftJoin(awayTeam, eq(TMatch.awayTeamId, awayTeam.externalId))
       .where(
-        and(eq(TMatch.roundId, String(roundId)), eq(TMatch.tournamentId, tournamentId))
+        and(eq(TTournament.id, tournamentId), eq(TTournament.provider, ACTIVE_PROVIDER))
       );
 
-    return res.status(200).send({
-      ...tournament,
-      matches,
-    });
+    return res.status(200).send(tournament);
   } catch (error: any) {
     console.error('Error fetching matches:', error);
     return handleInternalServerErrorResponse(res, error);
@@ -62,7 +30,10 @@ async function getTournament(req: Request, res: Response) {
 
 async function getAllTournaments(_: Request, res: Response) {
   try {
-    const result = await db.select().from(TTournament);
+    const result = await db
+      .select()
+      .from(TTournament)
+      .where(eq(TTournament.provider, ACTIVE_PROVIDER));
 
     return res.status(200).send(result);
   } catch (error: any) {
@@ -127,8 +98,6 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
 async function updateTournamentFromExternalSource(req: Request, res: Response) {
   try {
     const body = req?.body as InsertTournament & { provider: string };
-
-    console.log({ ApiProvider });
 
     const updatedTournament = await ApiProvider.tournament.updateOnDB(body);
 

@@ -1,49 +1,66 @@
-import { TMember } from '@/domains/member/schema'
-import { Column, eq, sql } from 'drizzle-orm'
-import { Request, Response } from 'express'
-import db from '../../../services/database'
-import { LEAGUE_ROLE_TABLE, TGuess, TMatch } from '../../../services/database/schema'
-import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper'
-import { analyzeScore } from './score-computation'
+import { type SelectGuess, TGuess } from '@/domains/guess/schema';
+import { SelectMatch, TMatch } from '@/domains/match/schema';
+import { type SelectMember, TMember } from '@/domains/member/schema';
+import { type SelectTournament, TTournament } from '@/domains/tournament/schema';
+
+import { TLeagueRole } from '@/domains/league/schema';
+import db from '@/services/database';
+import { and, Column, eq, gte, lte, sql } from 'drizzle-orm';
+import { Request, Response } from 'express';
+import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 
 const toNumber = (col: Column) => {
-  return sql<number>`${col}`.mapWith(Number)
+  return sql<number>`${col}`.mapWith(Number);
+};
+
+export interface LeagueScoreQuery {
+  member: SelectMember;
+  match: SelectMatch;
+  guess: SelectGuess;
+  tournament: SelectTournament;
 }
 
 async function getLeagueScore(req: Request, res: Response) {
-  const leagueId = req?.params.leagueId as string
+  const leagueId = req?.params.leagueId as string;
 
   try {
     // TODO subquery???
-    const query = await db
+    const query = (await db
       .select()
       .from(TGuess)
-      .leftJoin(LEAGUE_ROLE_TABLE, eq(TGuess.memberId, LEAGUE_ROLE_TABLE.memberId))
+      .leftJoin(TLeagueRole, eq(TGuess.memberId, TLeagueRole.memberId))
       .leftJoin(TMatch, eq(TMatch.id, TGuess.matchId))
       .leftJoin(TMember, eq(TMember.id, TGuess.memberId))
-      .where(eq(LEAGUE_ROLE_TABLE.leagueId, leagueId))
+      .leftJoin(TTournament, eq(TTournament.id, TGuess.tournamentId))
+      .where(
+        and(
+          eq(TLeagueRole.leagueId, leagueId),
+          gte(TMatch.date, new Date('2024-01-01')),
+          lte(TMatch.date, new Date('2024-12-31'))
+        )
+      )) as LeagueScoreQuery[];
 
-    const scoreboard = {} as Record<string, number>
+    // const serializedScoreboard = createLeaderboard(query);
 
-    query.forEach(row => {
-      const member = row?.member?.nickName as string
-      const guessScore = analyzeScore(row.guess, row.match)
-
-      if (scoreboard[member]) {
-        scoreboard[member] += guessScore.TOTAL
-      } else {
-        scoreboard[member] = guessScore.TOTAL
-      }
-    })
-
-    return res.status(200).send(scoreboard)
+    return res.status(200).send(query);
   } catch (error: any) {
-    return handleInternalServerErrorResponse(res, error)
+    return handleInternalServerErrorResponse(res, error);
+  }
+}
+
+async function getTournamentScore(tournamentId: string, req: Request, res: Response) {
+  try {
+    console.log(tournamentId);
+    return res.status(200).send(null);
+  } catch (error: any) {
+    console.error('[GET] - [GUESS]', error);
+    return handleInternalServerErrorResponse(res, error);
   }
 }
 
 const GuessController = {
-  getLeagueScore
-}
+  getLeagueScore,
+  getTournamentScore,
+};
 
-export default GuessController
+export default GuessController;

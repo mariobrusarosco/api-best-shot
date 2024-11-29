@@ -5,85 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1732624795231,
-      "tag": "0000_flawless_stone_men",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1732626635686,
-      "tag": "0001_ambiguous_greymalkin",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1732631684764,
-      "tag": "0002_solid_dark_phoenix",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1732634378801,
-      "tag": "0003_chubby_human_cannonball",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1732639356589,
-      "tag": "0004_bouncy_mysterio",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1732645323282,
-      "tag": "0005_familiar_paibok",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1732646341424,
-      "tag": "0006_bizarre_thundra",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1732648266930,
-      "tag": "0007_cool_gertrude_yorkes",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1732649452221,
-      "tag": "0008_blushing_marvel_apes",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1732652256906,
-      "tag": "0009_abandoned_risque",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1732653189559,
-      "tag": "0010_fine_sphinx",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1732734321773,
-      "tag": "0011_brainy_pyro",
+      "when": 1732910325891,
+      "tag": "0000_flaky_anthem",
       "breakpoints": true
     }
   ]

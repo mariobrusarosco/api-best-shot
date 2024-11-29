@@ -1,41 +1,28 @@
-import mongoose from 'mongoose'
+import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
-export const LEAGUE_COLLECTION_NAME = 'League'
+export const TLeague = pgTable('league', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  founderId: uuid('founder_id').notNull(),
+  label: text('label').unique(),
+  description: text('description'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
 
-export interface ILeague {
-  label: String
-  description: String
-  flag: String
-  members: String[]
-  admin: String
-  tournament: String
-}
+export type InsertLeague = typeof TLeague.$inferInsert;
+export type SelectLeague = typeof TLeague.$inferSelect;
 
-export const LeagueSchema = new mongoose.Schema({
-  label: {
-    type: String,
-    require: true
-  },
-  description: {
-    type: String,
-    required: true
-  },
-  flag: {
-    type: String, // 'base64://',
-    default: 'https://www.my-flag.com/unknown'
-  },
-  members: {
-    type: [String], // ObjectId. Posible [RELATIONSHIP]
-    required: true
-  },
-  admins: {
-    type: [String],
-    required: true
-  },
-  tournaments: {
-    type: [String],
-    require: true
-  }
-})
-
-export default mongoose.model(LEAGUE_COLLECTION_NAME, LeagueSchema)
+export const TLeagueRole = pgTable('league_role', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  leagueId: uuid('league_id').notNull(),
+  memberId: uuid('member_id').notNull(),
+  role: text('role').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});

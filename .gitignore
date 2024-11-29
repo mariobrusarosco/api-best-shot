@@ -15,5 +15,6 @@ yarn-error.log
 
 .vscode
 
-cypress/screenshots
-cypress/videos
+
+# Environments
+.env

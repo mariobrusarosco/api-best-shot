@@ -6,6 +6,7 @@ export const TTeam = pgTable('team', {
   externalId: text('external_id').unique().notNull(),
   shortName: text('short_name'),
   badge: text('badge'),
+  provider: text('provider').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')
     .notNull()

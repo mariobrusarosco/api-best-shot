@@ -1,4 +1,4 @@
-import { IMatch } from '@/domains/data-providers/globo-esporte/api-mapper';
+import { IMatch } from '@/domains/data-providers/globo-esporte';
 import { isNullable } from '@/utils';
 import { InsertTournament } from '../schema';
 

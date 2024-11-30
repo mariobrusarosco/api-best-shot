@@ -2,7 +2,10 @@ export const SOFA_MATCHES_API =
   'https://www.sofascore.com/api/v1/:mode/:external_id/season/:season/events/round/:round';
 
 export const SOFA_TOURNAMENT_API =
-  'https://api.globoesporte.globo.com/tabela/:external_id/classificacao/';
+  'https://www.sofascore.com/api/v1/:mode/:external_id/season/:season/standings/total';
+
+export const SOFA_TOURNAMENT_STANDINGS_API =
+  'https://www.sofascore.com/api/v1/:mode/:external_id/season/:season/standings/total';
 
 const TOURNAMENTS_METADATA = {
   BRASILEIRAO_24_25: {

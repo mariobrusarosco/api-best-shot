@@ -2,13 +2,14 @@ import {
   GLOBO_ESPORTE_MATCHES_API,
   GLOBO_ESPORTE_TOURNAMENT_API,
 } from '@/domains/data-providers/globo-esporte/metadata';
-import { IApiProvider } from '@/domains/data-providers/typing';
+import { AppStandingsTeam, IApiProvider } from '@/domains/data-providers/typing';
 import { TMatch } from '@/domains/match/schema';
 import { TTournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { safeDate, safeString } from '@/utils';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
+import { GloboEsporteStandings } from './typing';
 
 export const ProviderGloboEsporte: IApiProvider = {
   tournament: {
@@ -18,13 +19,19 @@ export const ProviderGloboEsporte: IApiProvider = {
       return db.insert(TTournament).values(data).returning();
     },
     updateOnDB: async data => {
-      const { id: _, ...rest } = data;
       return db
         .update(TTournament)
-        .set(rest)
+        .set(data)
         .where(eq(TTournament.externalId, data.externalId))
         .returning();
     },
+    fetchStandings: async (url: string) => {
+      const response = await axios.get(url);
+
+      return response.data as GloboEsporteStandings;
+    },
+    parseStandings: (data: GloboEsporteStandings) =>
+      data.classificacao.map(team => ProviderGloboEsporte.team.parseFromStandings(team)),
   },
   rounds: {
     prepareUrl: ({ externalId, mode, round, slug }) => {
@@ -42,12 +49,14 @@ export const ProviderGloboEsporte: IApiProvider = {
   match: {
     parse: data => {
       const match = data.match as GloboEsporteMatch;
+      const tournamentId = data.tournamentId;
       const tournamentExternalId = String(data.tournamentExternalId);
       const roundId = String(data.roundId);
 
       return {
         externalId: String(match.id),
         provider: 'ge',
+        tournamentId,
         tournamentExternalId,
         roundId,
         homeTeamId: String(match.equipes.mandante.id),
@@ -56,7 +65,7 @@ export const ProviderGloboEsporte: IApiProvider = {
         awayScore: safeString(match.placar_oficial_visitante),
         date: safeDate(match.data_realizacao),
         time: safeString(match.hora_realizacao),
-        stadium: safeString(match.sede.nome_popular),
+        stadium: safeString(match?.sede?.nome_popular),
         status: match.jogo_ja_comecou ? 'started' : 'not-started',
       };
     },
@@ -74,77 +83,17 @@ export const ProviderGloboEsporte: IApiProvider = {
       });
     },
   },
+  team: {
+    parseFromStandings: (team: GloboEsporteStandings['classificacao'][number]) =>
+      ({
+        externalId: String(team?.equipe_id),
+        matches: team.vitorias,
+        position: team.ordem,
+        wins: team.vitorias,
+        points: team.pontos,
+      } satisfies AppStandingsTeam),
+  },
 };
-// match: {
-// parse: (round) => {
-//   return round.rawData.map(match => {
-//     return {
-
-// externalId: String(match.id),
-// roundId: String(round.roundId),
-// tournamentId: round.tournamentId,
-// date: isNull(match.data_realizacao) ? null : new Date(match.data_realizacao),
-// time: match.hora_realizacao ?? null,
-// status: match.jogo_ja_comecou ? 'started' : 'not-started',
-// stadium: isNull(match.sede?.nome_popular) ? null : match.sede?.nome_popular,
-// teams: {
-//   home: {
-//     score: match.placar_oficial_mandante,
-//     externalId: match.equipes.mandante.id,
-//     name: match.equipes.mandante.nome_popular,
-//     shortName: match.equipes.mandante.sigla,
-//     badge: match.equipes.mandante.escudo,
-//   },
-//   away: {
-//     score: match.placar_oficial_visitante,
-//     externalId: match.equipes.visitante.id,
-//     name: match.equipes.visitante.nome_popular,
-//     shortName: match.equipes.visitante.sigla,
-//     badge: match.equipes.visitante.escudo,
-//   },
-// },
-//   } satisfies InsertMatch;
-// });
-// },
-// },
-// createTournamentOnDatabase: (tournament: InsertTournament) => {
-//   return db.insert(TTournament).values(tournament).returning();
-// },
-// convertMatchToSQL: (parsedMatch: IParsedMatchFromAPI) => {
-//   return {
-//     externalId: String(parsedMatch.externalId),
-//     roundId: String(parsedMatch.roundId),
-//     tournamentId: parsedMatch.tournamentId,
-//     homeTeamId: String(parsedMatch.teams.home.externalId),
-//     homeScore:
-//       parsedMatch.teams.home.score === null
-//         ? null
-//         : String(parsedMatch.teams.home.score),
-//     awayTeamId: String(parsedMatch.teams.away.externalId),
-//     awayScore:
-//       parsedMatch.teams.away.score === null
-//         ? null
-//         : String(parsedMatch.teams.away.score),
-//     date: parsedMatch.date ? new Date(parsedMatch.date) : null,
-//     time: parsedMatch.time ?? null,
-//     stadium: parsedMatch.stadium ?? null,
-//     status: parsedMatch.status,
-//   } satisfies InsertMatch;
-// },
-// createMatchOnDatabase: async (parsedMatch: IParsedMatchFromAPI) => {
-//   const dataToInsert = Provider.convertMatchToSQL(parsedMatch);
-
-//   return db.insert(TMatch).values(dataToInsert).returning();
-// },
-// updateMatchOnDatabase: async (parsedMatch: IParsedMatchFromAPI) => {
-//   const dataToUpdate = Provider.convertMatchToSQL(parsedMatch);
-
-//   return await db
-//     .update(TMatch)
-//     .set(dataToUpdate)
-//     .where(and(eq(TMatch.externalId, String(dataToUpdate.externalId))))
-//     .returning();
-// },
 // convertTeamToSQL: (
 //   team: IParsedMatchFromAPI['teams']['away'] | IParsedMatchFromAPI['teams']['home']
 // ) => {

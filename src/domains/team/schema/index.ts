@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const TTeam = pgTable('team', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -11,7 +11,7 @@ export const TTeam = pgTable('team', {
   updatedAt: timestamp('updated_at')
     .notNull()
     .defaultNow()
-    .$onUpdate(() => new Date())
-})
+    .$onUpdate(() => new Date()),
+});
 
-export const InsertTeam = TTeam.$inferInsert
+export type InsertTeam = typeof TTeam.$inferInsert;

@@ -1,5 +1,5 @@
 {
-  "id": "aa8cbe2a-38bd-4b00-91b0-febbc3f7d556",
+  "id": "c84c588e-4522-4362-8b77-81095971d815",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -246,6 +246,12 @@
         },
         "tournament_id": {
           "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_external_id": {
+          "name": "tournament_external_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true

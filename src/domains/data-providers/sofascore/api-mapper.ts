@@ -8,8 +8,8 @@ import db from '@/services/database';
 import { safeDate, safeString } from '@/utils';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import { IApiProvider } from '../typing';
-import { SofaScoreMatchApi } from './typing';
+import { AppStandingsTeam, IApiProvider } from '../typing';
+import { SofaScoreMatchApi, SofaScorestandings } from './typing';
 
 export const ProviderSofa: IApiProvider = {
   tournament: {
@@ -19,13 +19,19 @@ export const ProviderSofa: IApiProvider = {
       return db.insert(TTournament).values(data).returning();
     },
     updateOnDB: async data => {
-      const { id: _, ...rest } = data;
       return db
         .update(TTournament)
-        .set(rest)
+        .set(data)
         .where(eq(TTournament.externalId, data.externalId))
         .returning();
     },
+    fetchStandings: async (url: string) => {
+      const response = await axios.get(url);
+
+      return response.data as SofaScorestandings;
+    },
+    parseStandings: (data: SofaScorestandings) =>
+      data.standings[0]['rows']?.map(team => ProviderSofa.team.parseFromStandings(team)),
   },
   rounds: {
     prepareUrl: ({ externalId, mode, round, season }) => {
@@ -37,18 +43,20 @@ export const ProviderSofa: IApiProvider = {
     fetchRound: async (url: string) => {
       const response = await axios.get(url);
 
-      return response.data?.events as SofaScoreMatchApi[];
+      return response.data as SofaScoreMatchApi[];
     },
   },
   match: {
     parse: data => {
       const match = data.match as SofaScoreMatchApi;
+      const tournamentId = data.tournamentId;
       const tournamentExternalId = String(data.tournamentExternalId);
       const roundId = String(data.roundId);
 
       return {
         externalId: String(match.id),
         provider: 'sofa',
+        tournamentId,
         tournamentExternalId,
         roundId,
         homeTeamId: String(match.homeTeam.id),
@@ -59,9 +67,7 @@ export const ProviderSofa: IApiProvider = {
         status: match.status.code !== 0 ? 'started' : 'not-started',
       };
     },
-    insertMatchesOnDB: async matches => {
-      return db.insert(TMatch).values(matches);
-    },
+    insertMatchesOnDB: async matches => {},
     updateMatchesOnDB: async matches => {
       return await db.transaction(async tx => {
         for (const match of matches) {
@@ -72,6 +78,16 @@ export const ProviderSofa: IApiProvider = {
         }
       });
     },
+  },
+  team: {
+    parseFromStandings: (team: SofaScorestandings['standings'][number]['rows'][number]) =>
+      ({
+        externalId: String(team?.id),
+        matches: team.matches,
+        position: team.position,
+        wins: team.wins,
+        points: team.points,
+      } satisfies AppStandingsTeam),
   },
 };
 

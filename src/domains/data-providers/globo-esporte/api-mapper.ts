@@ -18,12 +18,21 @@ export const ProviderGloboEsporte: IApiProvider = {
       return db.insert(TTournament).values(data).returning();
     },
     updateOnDB: async data => {
-      const { id: _, ...rest } = data;
       return db
         .update(TTournament)
-        .set(rest)
+        .set(data)
         .where(eq(TTournament.externalId, data.externalId))
         .returning();
+    },
+    fetchStandings: async (url: string) => {
+      const response = await axios.get(url);
+
+      return response.data as GloboEsporteStandings;
+    },
+    parseStandings: standings => {
+      return {
+        ...standings,
+      };
     },
   },
   rounds: {
@@ -42,12 +51,14 @@ export const ProviderGloboEsporte: IApiProvider = {
   match: {
     parse: data => {
       const match = data.match as GloboEsporteMatch;
+      const tournamentId = data.tournamentId;
       const tournamentExternalId = String(data.tournamentExternalId);
       const roundId = String(data.roundId);
 
       return {
         externalId: String(match.id),
         provider: 'ge',
+        tournamentId,
         tournamentExternalId,
         roundId,
         homeTeamId: String(match.equipes.mandante.id),
@@ -56,7 +67,7 @@ export const ProviderGloboEsporte: IApiProvider = {
         awayScore: safeString(match.placar_oficial_visitante),
         date: safeDate(match.data_realizacao),
         time: safeString(match.hora_realizacao),
-        stadium: safeString(match.sede.nome_popular),
+        stadium: safeString(match?.sede?.nome_popular),
         status: match.jogo_ja_comecou ? 'started' : 'not-started',
       };
     },
@@ -201,6 +212,31 @@ export const ProviderGloboEsporte: IApiProvider = {
 //     })
 //     .returning();
 // },
+
+export type GloboEsporteStandings = {
+  classificacao: {
+    order: number;
+    variacao: number;
+    pontos: number;
+    nome_popular: string;
+    sigla: string;
+    vitorias: number;
+    escudo: string;
+    equipe_id: number;
+    aproveitamento: number;
+    jogos: number;
+    derrotas: number;
+    faixa_classificacao_cor: string;
+    faixa_classificacao: {
+      cor: string;
+    };
+    ultimos_jogos: string[];
+    saldo_gols: number;
+    gols_pro: number;
+    gols_contra: number;
+    empates: number;
+  }[];
+};
 
 export type GloboEsporteMatch = {
   id: number;

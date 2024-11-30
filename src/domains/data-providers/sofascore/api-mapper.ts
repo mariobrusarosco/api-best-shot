@@ -9,7 +9,7 @@ import { safeDate, safeString } from '@/utils';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import { IApiProvider } from '../typing';
-import { SofaScoreMatchApi } from './typing';
+import { SofaScoreMatchApi, SofaScorestandings } from './typing';
 
 export const ProviderSofa: IApiProvider = {
   tournament: {
@@ -25,6 +25,16 @@ export const ProviderSofa: IApiProvider = {
         .set(rest)
         .where(eq(TTournament.externalId, data.externalId))
         .returning();
+    },
+    fetchStandings: async (url: string) => {
+      const response = await axios.get(url);
+
+      return response.data as SofaScorestandings;
+    },
+    parseStandings: standings => {
+      return {
+        ...standings,
+      };
     },
   },
   rounds: {
@@ -43,12 +53,14 @@ export const ProviderSofa: IApiProvider = {
   match: {
     parse: data => {
       const match = data.match as SofaScoreMatchApi;
+      const tournamentId = data.tournamentId;
       const tournamentExternalId = String(data.tournamentExternalId);
       const roundId = String(data.roundId);
 
       return {
         externalId: String(match.id),
         provider: 'sofa',
+        tournamentId,
         tournamentExternalId,
         roundId,
         homeTeamId: String(match.homeTeam.id),

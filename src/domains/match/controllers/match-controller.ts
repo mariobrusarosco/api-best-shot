@@ -63,7 +63,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
       .from(TMatch)
       .where(
         and(
-          eq(TMatch.id, tournamentId),
+          eq(TMatch.tournamentId, tournamentId),
           eq(TMatch.provider, ACTIVE_PROVIDER),
           eq(TMatch.roundId, round)
         )

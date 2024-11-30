@@ -14,4 +14,4 @@ export const TTeam = pgTable('team', {
     .$onUpdate(() => new Date()),
 });
 
-export const InsertTeam = TTeam.$inferInsert;
+export type InsertTeam = typeof TTeam.$inferInsert;

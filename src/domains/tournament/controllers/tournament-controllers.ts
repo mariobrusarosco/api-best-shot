@@ -58,17 +58,8 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
         .status(ErrorMapper.NO_TOURNAMENT_CREATED.status)
         .json({ message: ErrorMapper.NO_TOURNAMENT_CREATED.user });
 
-    // CREATING TOURNAMENT TEAMS
-    const url = ApiProvider.tournament.prepareUrl({
-      externalId: body.externalId,
-    });
-    const standings = await ApiProvider.tournament.fetchStandings(url);
-
-    console.log('-----------', standings);
-
     let ROUND = 1;
-    while (ROUND <= Number(1)) {
-      // while (ROUND <= Number(tournament.rounds)) {
+    while (ROUND <= Number(tournament.rounds)) {
       const url = ApiProvider.rounds.prepareUrl({
         externalId: body.externalId,
         slug: body.slug,
@@ -91,10 +82,6 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
       const createdMatches = await ApiProvider.match.insertMatchesOnDB(matches);
 
       console.log('CREATED MATCHES: ', { createdMatches });
-
-      //     await Provider.upsertTeamOnDatabase(match.teams.home);
-      //     await Provider.upsertTeamOnDatabase(match.teams.away);
-
       ROUND++;
     }
 
@@ -171,3 +158,12 @@ const TournamentController = {
 };
 
 export default TournamentController;
+
+// // CREATING TOURNAMENT TEAMS
+// const url = ApiProvider.tournament.prepareUrl({
+//   externalId: body.externalId,
+// });
+// const apiResponse = await ApiProvider.tournament.fetchStandings(url);
+// const standings = ApiProvider.tournament.parseStandings(apiResponse);
+
+// console.log('-----------', standings);

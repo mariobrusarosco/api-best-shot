@@ -59,7 +59,7 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
         .json({ message: ErrorMapper.NO_TOURNAMENT_CREATED.user });
 
     let ROUND = 1;
-    while (ROUND <= Number(tournament.rounds)) {
+    while (ROUND <= Number(1)) {
       const url = ApiProvider.rounds.prepareUrl({
         externalId: body.externalId,
         slug: body.slug,
@@ -69,7 +69,6 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
       });
 
       const roundOfMatchesFromApi = await ApiProvider.rounds.fetchRound(url);
-
       const matches = roundOfMatchesFromApi.map(rawMatch =>
         ApiProvider.match.parse({
           match: rawMatch,
@@ -80,6 +79,11 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
       );
 
       const createdMatches = await ApiProvider.match.insertMatchesOnDB(matches);
+
+      const standingsUrl = ApiProvider.tournament.prepareUrl({
+        externalId: body.externalId,
+      });
+      const standingsUrl = await ApiProvider.tournament.fetchStandings(stangingsUrl);
 
       console.log('CREATED MATCHES: ', { createdMatches });
       ROUND++;

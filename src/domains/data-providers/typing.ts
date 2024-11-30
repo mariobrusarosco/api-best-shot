@@ -6,11 +6,13 @@ export type IApiProvider = {
     prepareUrl: (data: { externalId: string }) => string;
     createOnDB: (data: InsertTournament) => Promise<SelectTournament[]>;
     updateOnDB: (data: InsertTournament) => Promise<SelectTournament[]>;
-    fetchStandings: (url: string) => Promise<any>;
-    parseStandings: (standings: any) => AppStandingsTeam[];
+    standings: {
+      fetch: (url: string) => Promise<any>;
+      parse: (standings: any) => any;
+    };
   };
   team: {
-    parseFromStandings: (team: any) => AppStandingsTeam;
+    parse: (team: any) => any;
   };
   match: {
     insertMatchesOnDB: (matches: InsertMatch[]) => void;
@@ -40,10 +42,12 @@ export type TournamentRoundFromApi = {
   tournamentId: string | number;
 };
 
-export interface AppStandingsTeam {
-  externalId: string;
-  position: number;
-  matches: number;
-  wins: number;
-  points: number;
+export interface TournamentStanding {
+  teams: {
+    externalId: string;
+    position: number;
+    matches: number;
+    wins: number;
+    points: number;
+  }[];
 }

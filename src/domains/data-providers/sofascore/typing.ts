@@ -61,7 +61,7 @@ export type SofaScoreRoundApi = {
   hasPreviousPage: boolean;
 };
 
-export type SofaScorestandings = {
+export type SofaScorestandingsApi = {
   standings: [
     {
       tournament: {

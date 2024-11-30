@@ -59,7 +59,23 @@ async function getMatchesByTournament(req: Request, res: Response) {
     console.log({ ACTIVE_PROVIDER, round, tournamentId });
 
     const matches = await db
-      .select()
+      .select({
+        id: TMatch.id,
+        stadium: TMatch.stadium,
+        date: TMatch.date,
+        home: {
+          id: TMatch.homeTeamId,
+          score: TMatch.homeScore,
+        },
+        away: {
+          id: TMatch.awayTeamId,
+          score: TMatch.awayScore,
+        },
+        tournament: {
+          id: TMatch.tournamentId,
+          externalId: TMatch.tournamentExternalId,
+        },
+      })
       .from(TMatch)
       .where(
         and(

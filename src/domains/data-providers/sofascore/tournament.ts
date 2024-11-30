@@ -4,7 +4,7 @@ import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import { ProviderSofa } from '.';
 import { IApiProvider } from '../typing';
-import { SOFA_TOURNAMENT_API, SofaScorestandings } from './typing';
+import { SOFA_TOURNAMENT_API, SofaScorestandings, SofaScorestandingsApi } from './typing';
 
 export const tournamentProvider: IApiProvider['tournament'] = {
   prepareUrl: ({ externalId }) => SOFA_TOURNAMENT_API.replace(':external_id', externalId),
@@ -20,9 +20,13 @@ export const tournamentProvider: IApiProvider['tournament'] = {
   },
   fetchStandings: async (url: string) => {
     const response = await axios.get(url);
+    const data = response.data as SofaScorestandingsApi;
 
-    return response.data as SofaScorestandings;
+    return data.standings[0] as SofaScorestandingsApi['standings'][number];
   },
-  parseStandings: (data: SofaScorestandings) =>
-    data.standings[0]['rows']?.map(team => ProviderSofa.team.parseFromStandings(team)),
+  parseStandings: (standings: SofaScorestandings['standings'][number]) => {
+    const teams = standings?.rows.map(ProviderSofa.team.parse);
+
+    return { teams };
+  },
 };

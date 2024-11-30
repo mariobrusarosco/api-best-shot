@@ -1,4 +1,4 @@
-export type SofaScoreMatchApi = {
+export type API_SofaScoreMatch = {
   id: number;
   slug: string;
   roundInfo: {
@@ -56,12 +56,12 @@ export type SofaScoreMatchApi = {
   };
 };
 
-export type SofaScoreRoundApi = {
-  events: SofaScoreMatchApi[];
+export type API_SofaScoreRound = {
+  events: API_SofaScoreMatch[];
   hasPreviousPage: boolean;
 };
 
-export type SofaScorestandings = {
+export type API_SofaScorestandings = {
   standings: [
     {
       tournament: {
@@ -166,13 +166,13 @@ export type SofaScorestandings = {
   ];
 };
 
-export const SOFA_MATCHES_API =
+export const SOFA_MATCHES_URL =
   'https://www.sofascore.com/api/v1/:mode/:external_id/season/:season/events/round/:round';
 
-export const SOFA_TOURNAMENT_API =
+export const SOFA_TOURNAMENT_URL =
   'https://www.sofascore.com/api/v1/:mode/:external_id/season/:season/standings/total';
 
-export const SOFA_TOURNAMENT_STANDINGS_API =
+export const SOFA_TOURNAMENT_STANDINGS_URL =
   'https://www.sofascore.com/api/v1/:mode/:external_id/season/:season/standings/total';
 
 const TOURNAMENTS_METADATA = {

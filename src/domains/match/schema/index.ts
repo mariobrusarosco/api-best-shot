@@ -1,6 +1,6 @@
 import { numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
-export const TMatch = pgTable('match', {
+export const T_Match = pgTable('match', {
   id: uuid('id').defaultRandom().primaryKey(),
   externalId: text('external_id').notNull().unique(),
   provider: text('provider').notNull(),
@@ -22,6 +22,6 @@ export const TMatch = pgTable('match', {
     .$onUpdate(() => new Date()),
 });
 
-export type InsertMatch = typeof TMatch.$inferInsert;
-export type UpdateMatch = typeof TMatch.$inferInsert;
-export type SelectMatch = typeof TMatch.$inferSelect;
+export type DB_InsertMatch = typeof T_Match.$inferInsert;
+export type DB_UpdateMatch = typeof T_Match.$inferInsert;
+export type DB_SelectMatch = typeof T_Match.$inferSelect;

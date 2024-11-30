@@ -1,7 +1,7 @@
 import { type SelectGuess, TGuess } from '@/domains/guess/schema';
-import { SelectMatch, TMatch } from '@/domains/match/schema';
+import { SelectMatch, T_Match } from '@/domains/match/schema';
 import { type SelectMember, TMember } from '@/domains/member/schema';
-import { type SelectTournament, TTournament } from '@/domains/tournament/schema';
+import { type SelectTournament, DB_Tournament } from '@/domains/tournament/schema';
 
 import { TLeagueRole } from '@/domains/league/schema';
 import db from '@/services/database';
@@ -29,14 +29,14 @@ async function getLeagueScore(req: Request, res: Response) {
       .select()
       .from(TGuess)
       .leftJoin(TLeagueRole, eq(TGuess.memberId, TLeagueRole.memberId))
-      .leftJoin(TMatch, eq(TMatch.id, TGuess.matchId))
+      .leftJoin(T_Match, eq(T_Match.id, TGuess.matchId))
       .leftJoin(TMember, eq(TMember.id, TGuess.memberId))
-      .leftJoin(TTournament, eq(TTournament.id, TGuess.tournamentId))
+      .leftJoin(DB_Tournament, eq(DB_Tournament.id, TGuess.tournamentId))
       .where(
         and(
           eq(TLeagueRole.leagueId, leagueId),
-          gte(TMatch.date, new Date('2024-01-01')),
-          lte(TMatch.date, new Date('2024-12-31'))
+          gte(T_Match.date, new Date('2024-01-01')),
+          lte(T_Match.date, new Date('2024-12-31'))
         )
       )) as LeagueScoreQuery[];
 

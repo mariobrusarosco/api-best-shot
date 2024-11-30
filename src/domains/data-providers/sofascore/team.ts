@@ -1,15 +1,19 @@
-import { AppStandingsTeam } from '../typing';
-import { SofaScorestandings } from './typing';
-
-type Team = SofaScorestandings['standings'][number]['rows'][number];
-
 export const teamProvider = {
-  parseFromStandings: (team: Team) =>
+  parseToStandings: (team: API_GloboEsporteTeam) =>
     ({
-      externalId: String(team?.id),
-      matches: team.matches,
-      position: team.position,
-      wins: team.wins,
-      points: team.points,
-    } satisfies AppStandingsTeam),
+      externalId: String(team?.equipe_id),
+      matches: team.vitorias,
+      position: team.ordem,
+      wins: team.vitorias,
+      points: team.pontos,
+    } satisfies TeamOnStandings),
+  parseToDB: (team: API_GloboEsporteTeam) => {
+    return {
+      name: team.nome_popular,
+      externalId: String(team.equipe_id),
+      shortName: team.sigla,
+      badge: team.escudo,
+      provider: 'ge',
+    } satisfies DB_InsertTeam;
+  },
 };

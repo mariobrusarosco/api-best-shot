@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
-export const TTeam = pgTable('team', {
+export const T_Team = pgTable('team', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
   externalId: text('external_id').unique().notNull(),
@@ -14,4 +14,4 @@ export const TTeam = pgTable('team', {
     .$onUpdate(() => new Date()),
 });
 
-export type InsertTeam = typeof TTeam.$inferInsert;
+export type DB_InsertTeam = typeof T_Team.$inferInsert;

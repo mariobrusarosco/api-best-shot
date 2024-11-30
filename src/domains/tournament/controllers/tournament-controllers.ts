@@ -1,22 +1,31 @@
+import { ACTIVE_PROVIDER, ApiProvider } from '@/domains/data-providers';
+import {} from '@/domains/data-providers/typing';
+import { T_Match } from '@/domains/match/schema';
+import { ErrorMapper } from '@/domains/tournament/error-handling/mapper';
+import { DB_InsertTournament, DB_Tournament } from '@/domains/tournament/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import db from '../../../services/database';
-
-import { ACTIVE_PROVIDER, ApiProvider } from '@/domains/data-providers';
-import {} from '@/domains/data-providers/typing';
-import { TMatch } from '@/domains/match/schema';
-import { ErrorMapper } from '@/domains/tournament/error-handling/mapper';
-import { InsertTournament, TTournament } from '@/domains/tournament/schema';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
+
+const TournamentController = {
+  getTournament,
+  getAllTournaments,
+  updateTournamentFromExternalSource,
+  createTournamentFromExternalSource,
+};
 
 async function getTournament(req: Request, res: Response) {
   try {
     const tournamentId = req?.params.tournamentId;
     const [tournament] = await db
       .select()
-      .from(TTournament)
+      .from(DB_Tournament)
       .where(
-        and(eq(TTournament.id, tournamentId), eq(TTournament.provider, ACTIVE_PROVIDER))
+        and(
+          eq(DB_Tournament.id, tournamentId),
+          eq(DB_Tournament.provider, ACTIVE_PROVIDER)
+        )
       );
 
     return res.status(200).send(tournament);
@@ -30,8 +39,8 @@ async function getAllTournaments(_: Request, res: Response) {
   try {
     const result = await db
       .select()
-      .from(TTournament)
-      .where(eq(TTournament.provider, ACTIVE_PROVIDER));
+      .from(DB_Tournament)
+      .where(eq(DB_Tournament.provider, ACTIVE_PROVIDER));
 
     return res.status(200).send(result);
   } catch (error: any) {
@@ -39,53 +48,77 @@ async function getAllTournaments(_: Request, res: Response) {
   }
 }
 
-async function createTournamentFromExternalSource(req: Request, res: Response) {
+async function createTournamentOnDatabase(req: Request, res: Response) {
+  const body = req?.body as DB_InsertTournament;
+
+  if (!body.label) {
+    res
+      .status(ErrorMapper.MISSING_LABEL.status)
+      .json({ message: ErrorMapper.MISSING_LABEL.user });
+
+    return;
+  }
+
+  const [tournament] = await ApiProvider.tournament.createOnDB(body);
+
+  if (!tournament) {
+    res
+      .status(ErrorMapper.NO_TOURNAMENT_CREATED.status)
+      .json({ message: ErrorMapper.NO_TOURNAMENT_CREATED.user });
+    return;
+  }
+
+  return tournament;
+}
+
+async function createTournamentMatchesOnDatabase(tournament: DB_InsertTournament) {
   try {
-    const body = req?.body as InsertTournament & { provider: string };
-
-    if (!body.label) {
-      res
-        .status(ErrorMapper.MISSING_LABEL.status)
-        .json({ message: ErrorMapper.MISSING_LABEL.user });
-
-      return;
-    }
-
-    const [tournament] = await ApiProvider.tournament.createOnDB(body);
-
-    if (!tournament)
-      return res
-        .status(ErrorMapper.NO_TOURNAMENT_CREATED.status)
-        .json({ message: ErrorMapper.NO_TOURNAMENT_CREATED.user });
-
     let ROUND = 1;
-    while (ROUND <= Number(tournament.rounds)) {
-      const url = ApiProvider.rounds.prepareUrl({
-        externalId: body.externalId,
-        slug: body.slug,
-        mode: body.mode,
+
+    while (ROUND <= Number(1)) {
+      const url = ApiProvider.rounds.createUrl({
+        externalId: String(tournament.externalId),
+        slug: tournament.slug,
+        mode: tournament.mode,
         round: ROUND,
-        season: body.season,
+        season: tournament.season,
       });
 
-      const roundOfMatchesFromApi = await ApiProvider.rounds.fetchRound(url);
-
-      const matches = roundOfMatchesFromApi.map(rawMatch =>
-        ApiProvider.match.parse({
+      const rounds = await ApiProvider.rounds.fetch(url);
+      const matches = rounds.map(rawMatch =>
+        ApiProvider.match.parseToDB({
           match: rawMatch,
           roundId: ROUND,
-          tournamentId: tournament.id,
-          tournamentExternalId: body.externalId,
+          tournamentId: String(tournament.id),
+          tournamentExternalId: tournament.externalId,
         })
       );
 
-      const createdMatches = await ApiProvider.match.insertMatchesOnDB(matches);
-
-      console.log('CREATED MATCHES: ', { createdMatches });
-      ROUND++;
+      return ApiProvider.match.insertOnDB(matches);
     }
+  } catch (error: any) {
+    console.log('[CREATING TOURNAMENT MATCHES ON DATABASE]', error);
+  }
+}
 
-    return res.json(tournament);
+async function createTournamentTeams(tournament: DB_InsertTournament) {
+  const standingsUrl = ApiProvider.tournament.createUrl({
+    externalId: tournament.externalId,
+  });
+
+  const standings = await ApiProvider.tournament.standings.fetch(standingsUrl);
+  const { teams } = await ApiProvider.tournament.standings.parse(standings);
+}
+
+async function createTournamentFromExternalSource(req: Request, res: Response) {
+  try {
+    const newTournament = await createTournamentOnDatabase(req, res);
+    if (!newTournament) return;
+
+    await createTournamentMatchesOnDatabase(newTournament);
+    await createTournamentTeams(newTournament);
+
+    return res.json(newTournament);
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error);
   }
@@ -93,7 +126,7 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
 
 async function updateTournamentFromExternalSource(req: Request, res: Response) {
   try {
-    const body = req?.body as InsertTournament & { provider: string };
+    const body = req?.body as DB_InsertTournament & { provider: string };
     const updateQuery = await ApiProvider.tournament.updateOnDB(body);
     const updatedTournament = updateQuery[0];
 
@@ -105,13 +138,13 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
 
     // SELECTS ROUNDS WITH NO SCORE TO AVOID OVERCALLING THE API
     const selectQuery = await db
-      .selectDistinct({ roundId: TMatch.roundId })
-      .from(TMatch)
+      .selectDistinct({ roundId: T_Match.roundId })
+      .from(T_Match)
       .where(
         and(
-          eq(TMatch.tournamentId, updatedTournament.id),
-          isNull(TMatch.homeScore),
-          isNull(TMatch.awayScore)
+          eq(T_Match.tournamentId, updatedTournament.id),
+          isNull(T_Match.homeScore),
+          isNull(T_Match.awayScore)
         )
       );
     const scorelessMatches = new Set(selectQuery.map(round => Number(round.roundId)));
@@ -120,7 +153,7 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
     let ROUND = 1;
     while (ROUND <= Number(updatedTournament.rounds)) {
       if (scorelessMatches.has(ROUND)) {
-        const url = ApiProvider.rounds.prepareUrl({
+        const url = ApiProvider.rounds.createUrl({
           externalId: body.externalId,
           slug: body.slug,
           mode: body.mode,
@@ -129,9 +162,9 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
         });
 
         console.log('FETCHING URL:', url);
-        const roundOfMatchesFromApi = await ApiProvider.rounds.fetchRound(url);
+        const roundOfMatchesFromApi = await ApiProvider.rounds.fetch(url);
         const matches = roundOfMatchesFromApi.map(rawMatch =>
-          ApiProvider.match.parse({
+          ApiProvider.match.parseToDB({
             match: rawMatch,
             roundId: ROUND,
             tournamentId: updatedTournament.id,
@@ -139,7 +172,7 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
           })
         );
 
-        await ApiProvider.match.updateMatchesOnDB(matches);
+        await ApiProvider.match.updateOnDB(matches);
       }
       ROUND++;
     }
@@ -150,20 +183,4 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
   }
 }
 
-const TournamentController = {
-  getTournament,
-  getAllTournaments,
-  updateTournamentFromExternalSource,
-  createTournamentFromExternalSource,
-};
-
 export default TournamentController;
-
-// // CREATING TOURNAMENT TEAMS
-// const url = ApiProvider.tournament.prepareUrl({
-//   externalId: body.externalId,
-// });
-// const apiResponse = await ApiProvider.tournament.fetchStandings(url);
-// const standings = ApiProvider.tournament.parseStandings(apiResponse);
-
-// console.log('-----------', standings);

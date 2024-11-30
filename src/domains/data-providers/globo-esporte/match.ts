@@ -1,13 +1,13 @@
-import { TMatch } from '@/domains/match/schema';
+import { T_Match } from '@/domains/match/schema';
 import db from '@/services/database';
 import { safeDate, safeString } from '@/utils';
 import { eq } from 'drizzle-orm';
 import { IApiProvider } from '../typing';
-import { GloboEsporteApiMatch } from './typing';
+import { API_GloboEsporteMatch } from './typing/api';
 
 export const matchProvider: IApiProvider['match'] = {
-  parse: data => {
-    const match = data.match as GloboEsporteApiMatch;
+  parseToDB: data => {
+    const match = data.match as API_GloboEsporteMatch;
     const tournamentId = data.tournamentId;
     const tournamentExternalId = String(data.tournamentExternalId);
     const roundId = String(data.roundId);
@@ -28,13 +28,16 @@ export const matchProvider: IApiProvider['match'] = {
       status: match.jogo_ja_comecou ? 'started' : 'not-started',
     };
   },
-  insertMatchesOnDB: async matches => {
-    return db.insert(TMatch).values(matches);
+  insertOnDB: async matches => {
+    return db.insert(T_Match).values(matches);
   },
-  updateMatchesOnDB: async matches => {
+  updateOnDB: async matches => {
     return await db.transaction(async tx => {
       for (const match of matches) {
-        await tx.update(TMatch).set(match).where(eq(TMatch.externalId, match.externalId));
+        await tx
+          .update(T_Match)
+          .set(match)
+          .where(eq(T_Match.externalId, match.externalId));
       }
     });
   },

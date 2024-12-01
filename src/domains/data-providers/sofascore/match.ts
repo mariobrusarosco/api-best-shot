@@ -23,7 +23,7 @@ export const matchProvider: IApiProvider['match'] = {
       awayTeamId: String(match.awayTeam.id),
       awayScore: safeString(match.awayScore.current),
       date: safeDate(match.startTimestamp! * 1000),
-      status: match.status.code !== 0 ? 'started' : 'not-started',
+      status: match.status.code === 100 ? 'ended' : 'open',
     };
   },
   insertOnDB: async matches => db.insert(T_Match).values(matches),

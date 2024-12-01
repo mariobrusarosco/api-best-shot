@@ -1,6 +1,6 @@
-import { numeric, pgTable, primaryKey, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { numeric, pgTable, primaryKey, timestamp, uuid } from 'drizzle-orm/pg-core';
 
-export const TGuess = pgTable(
+export const T_Guess = pgTable(
   'guess',
   {
     id: uuid('id').defaultRandom(),
@@ -13,14 +13,14 @@ export const TGuess = pgTable(
     updatedAt: timestamp('updated_at')
       .notNull()
       .defaultNow()
-      .$onUpdate(() => new Date())
+      .$onUpdate(() => new Date()),
   },
   table => {
     return {
-      pk: primaryKey({ columns: [table.matchId, table.memberId] })
-    }
+      pk: primaryKey({ columns: [table.matchId, table.memberId] }),
+    };
   }
-)
+);
 
-export type SelectGuess = typeof TGuess.$inferSelect
-export type InsertGuess = typeof TGuess.$inferInsert
+export type DB_SelectGuess = typeof T_Guess.$inferSelect;
+export type DB_InsertGuess = typeof T_Guess.$inferInsert;

@@ -1,6 +1,6 @@
-import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
-export const TMember = pgTable('member', {
+export const T_Member = pgTable('member', {
   id: uuid('id').defaultRandom().primaryKey(),
   publicId: uuid('public_id').notNull().unique(),
   firstName: text('first_name').notNull(),
@@ -11,7 +11,7 @@ export const TMember = pgTable('member', {
   updatedAt: timestamp('updated_at')
     .notNull()
     .defaultNow()
-    .$onUpdate(() => new Date())
-})
+    .$onUpdate(() => new Date()),
+});
 
-export type SelectMember = typeof TMember.$inferSelect
+export type DB_SelectMember = typeof T_Member.$inferSelect;

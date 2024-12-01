@@ -1,5 +1,5 @@
 import { Utils } from '@/domains/auth/utils';
-import { TMember } from '@/domains/member/schema';
+import { T_Member } from '@/domains/member/schema';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import { eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
@@ -11,7 +11,7 @@ async function authenticateUser(req: Request, res: Response) {
     const body = req?.body as { publicId: string };
     const publicId = body.publicId;
 
-    const member = await db.select().from(TMember).where(eq(TMember.id, publicId));
+    const member = await db.select().from(T_Member).where(eq(T_Member.id, publicId));
 
     if (!member) throw new Error('no user found to authenticate');
 
@@ -31,7 +31,7 @@ const getMember = async (req: Request, res: Response) => {
   const memberId = req?.body?.memberId;
 
   try {
-    const member = await db.select().from(TMember).where(eq(TMember.id, memberId));
+    const member = await db.select().from(T_Member).where(eq(T_Member.id, memberId));
 
     return res.status(200).send(member[0]);
   } catch (error: any) {

@@ -1,5 +1,5 @@
-import { ProviderGloboEsporte } from './globo-esporte/api-mapper';
-import { ProviderSofa } from './sofascore/api-mapper';
+import { ProviderGloboEsporte } from './globo-esporte';
+import { ProviderSofa } from './sofascore';
 import { IApiProvider } from './typing';
 
 export const ACTIVE_PROVIDER = process.env['API_PROVIDER'] || '';

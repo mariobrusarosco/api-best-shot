@@ -1,23 +1,19 @@
-import { type SelectGuess, TGuess } from '@/domains/guess/schema';
-import { SelectMatch, TMatch } from '@/domains/match/schema';
-import { type SelectMember, TMember } from '@/domains/member/schema';
-import { type SelectTournament, TTournament } from '@/domains/tournament/schema';
+import { DB_SelectGuess, T_Guess } from '@/domains/guess/schema';
+import { DB_SelectMatch, T_Match } from '@/domains/match/schema';
+import { DB_SelectMember, T_Member } from '@/domains/member/schema';
+import { DB_SelectTournament, DB_Tournament } from '@/domains/tournament/schema';
 
 import { TLeagueRole } from '@/domains/league/schema';
 import db from '@/services/database';
-import { and, Column, eq, gte, lte, sql } from 'drizzle-orm';
+import { and, eq, gte, lte } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 
-const toNumber = (col: Column) => {
-  return sql<number>`${col}`.mapWith(Number);
-};
-
 export interface LeagueScoreQuery {
-  member: SelectMember;
-  match: SelectMatch;
-  guess: SelectGuess;
-  tournament: SelectTournament;
+  member: DB_SelectMember;
+  match: DB_SelectMatch;
+  guess: DB_SelectGuess;
+  tournament: DB_SelectTournament;
 }
 
 async function getLeagueScore(req: Request, res: Response) {
@@ -27,16 +23,16 @@ async function getLeagueScore(req: Request, res: Response) {
     // TODO subquery???
     const query = (await db
       .select()
-      .from(TGuess)
-      .leftJoin(TLeagueRole, eq(TGuess.memberId, TLeagueRole.memberId))
-      .leftJoin(TMatch, eq(TMatch.id, TGuess.matchId))
-      .leftJoin(TMember, eq(TMember.id, TGuess.memberId))
-      .leftJoin(TTournament, eq(TTournament.id, TGuess.tournamentId))
+      .from(T_Guess)
+      .leftJoin(TLeagueRole, eq(T_Guess.memberId, TLeagueRole.memberId))
+      .leftJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
+      .leftJoin(T_Member, eq(T_Member.id, T_Guess.memberId))
+      .leftJoin(DB_Tournament, eq(DB_Tournament.id, T_Guess.tournamentId))
       .where(
         and(
           eq(TLeagueRole.leagueId, leagueId),
-          gte(TMatch.date, new Date('2024-01-01')),
-          lte(TMatch.date, new Date('2024-12-31'))
+          gte(T_Match.date, new Date('2024-01-01')),
+          lte(T_Match.date, new Date('2024-12-31'))
         )
       )) as LeagueScoreQuery[];
 

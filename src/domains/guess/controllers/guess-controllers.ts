@@ -1,12 +1,8 @@
-import { and, Column, eq, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import db from '../../../services/database';
-import { TGuess } from '../../../services/database/schema';
+import { T_Guess } from '../../../services/database/schema';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
-
-const toNumber = (col: Column) => {
-  return sql<number>`${col}`.mapWith(Number);
-};
 
 async function getMemberGuesses(req: Request, res: Response) {
   const memberId = req?.query.memberId as string;
@@ -15,14 +11,14 @@ async function getMemberGuesses(req: Request, res: Response) {
   try {
     const guesses = await db
       .select({
-        memberId: TGuess.memberId,
-        matchId: TGuess.matchId,
-        tournamentId: TGuess.tournamentId,
-        home: { score: TGuess.homeScore },
-        away: { score: TGuess.awayScore },
+        memberId: T_Guess.memberId,
+        matchId: T_Guess.matchId,
+        tournamentId: T_Guess.tournamentId,
+        home: { score: T_Guess.homeScore },
+        away: { score: T_Guess.awayScore },
       })
-      .from(TGuess)
-      .where(and(eq(TGuess.memberId, memberId), eq(TGuess.tournamentId, tournamentId)));
+      .from(T_Guess)
+      .where(and(eq(T_Guess.memberId, memberId), eq(T_Guess.tournamentId, tournamentId)));
 
     return res.status(200).send(guesses);
   } catch (error: any) {

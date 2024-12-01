@@ -33,7 +33,12 @@ export type API_GloboEsporteMatch = {
   sede: {
     nome_popular: string;
   };
-  transmissao: boolean | null;
+  transmissao: {
+    broadcast: {
+      id: 'ENCERRADA';
+      label: string;
+    };
+  } | null;
   jogo_ja_comecou: boolean | null;
 };
 

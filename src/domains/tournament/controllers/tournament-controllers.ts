@@ -7,7 +7,7 @@ import {
   DB_SelectTournament,
   T_Tournament,
 } from '@/domains/tournament/schema';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import db from '../../../services/database';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
@@ -79,11 +79,12 @@ async function createOrUpdateMatchesOnDatabase(
 
     // SELECTS ROUNDS WITH NO SCORE TO AVOID OVERCALLING THE API
     let ROUND_COUNT = 1;
-    const scorelessMatchesIds = await getScorelessMatches(tournament);
+    const scorelessMatchesIds = await getNonStartedMatches(tournament);
 
     while (ROUND_COUNT <= Number(tournament.rounds)) {
       const shouldFetchRound =
-        scorelessMatchesIds.has(ROUND_COUNT) && action === 'update';
+        action === 'create' ||
+        (scorelessMatchesIds.has(ROUND_COUNT) && action === 'update');
 
       if (shouldFetchRound) {
         console.log('[UPDATING ROUND]', ROUND_COUNT, ' - for: ', tournament.provider);
@@ -117,19 +118,17 @@ async function createOrUpdateMatchesOnDatabase(
   }
 }
 
-async function getScorelessMatches(tournament: DB_SelectTournament) {
+async function getNonStartedMatches(tournament: DB_SelectTournament) {
   const selectQuery = await db
     .selectDistinct({ roundId: T_Match.roundId })
     .from(T_Match)
     .where(
       and(
         eq(T_Match.tournamentExternalId, tournament.externalId),
-        isNull(T_Match.homeScore),
-        isNull(T_Match.awayScore)
+        eq(T_Match.status, 'open')
       )
     );
 
-  console.log({ selectQuery });
   return new Set(selectQuery.map(round => Number(round.roundId)));
 }
 
@@ -143,7 +142,6 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
     const result = await createOrUpdateMatchesOnDatabase(newTournament, 'create');
 
     const teams = await createTeamsOnDatabase(newTournament);
-    console.log('RESULT----', result);
 
     return res.json({ teams, result });
   } catch (error: any) {
@@ -163,7 +161,6 @@ async function updateTournamentFromExternalSource(req: Request, res: Response) {
 
     const result = await createOrUpdateMatchesOnDatabase(updatedTournament, 'update');
 
-    console.log('RESULT----', result);
     return res.json(updatedTournament);
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error);

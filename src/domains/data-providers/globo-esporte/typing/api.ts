@@ -63,3 +63,13 @@ export type API_GloboEsporteTeam = {
 export type API_GloboEsporteStandings = {
   classificacao: API_GloboEsporteTeam[];
 };
+
+const PREMIER_LEAGUE_24_25 = {
+  tournamentId: 'c33769be-62ec-43c6-a633-8c826e14a696',
+  rounds: 38,
+  provider: 'globo-esporte',
+  season: '24/25',
+  mode: 'fase-unica',
+  slug: 'campeonato-ingles-2024-2025',
+  label: 'Premier League 24/25',
+};

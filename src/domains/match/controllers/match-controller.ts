@@ -1,6 +1,6 @@
 import { ACTIVE_PROVIDER } from '@/domains/data-providers';
 import { ErrorMapper } from '@/domains/match/error-handling/mapper';
-import { TMatch } from '@/domains/match/schema';
+import { T_Match } from '@/domains/match/schema';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
@@ -60,28 +60,28 @@ async function getMatchesByTournament(req: Request, res: Response) {
 
     const matches = await db
       .select({
-        id: TMatch.id,
-        stadium: TMatch.stadium,
-        date: TMatch.date,
+        id: T_Match.id,
+        stadium: T_Match.stadium,
+        date: T_Match.date,
         home: {
-          id: TMatch.homeTeamId,
-          score: TMatch.homeScore,
+          id: T_Match.homeTeamId,
+          score: T_Match.homeScore,
         },
         away: {
-          id: TMatch.awayTeamId,
-          score: TMatch.awayScore,
+          id: T_Match.awayTeamId,
+          score: T_Match.awayScore,
         },
         tournament: {
-          id: TMatch.tournamentId,
-          externalId: TMatch.tournamentExternalId,
+          id: T_Match.tournamentId,
+          externalId: T_Match.tournamentExternalId,
         },
       })
-      .from(TMatch)
+      .from(T_Match)
       .where(
         and(
-          eq(TMatch.tournamentId, tournamentId),
-          eq(TMatch.provider, ACTIVE_PROVIDER),
-          eq(TMatch.roundId, round)
+          eq(T_Match.tournamentId, tournamentId),
+          eq(T_Match.provider, ACTIVE_PROVIDER),
+          eq(T_Match.roundId, round)
         )
       );
 

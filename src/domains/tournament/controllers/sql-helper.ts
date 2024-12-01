@@ -1,9 +1,8 @@
-import { IMatch } from '@/domains/data-providers/globo-esporte';
 import { isNullable } from '@/utils';
-import { InsertTournament } from '../schema';
+import { DB_InsertTournament } from '../schema';
 
 export const SQLHelper = {
-  parseMatch: (match: IMatch) => {
+  parseMatch: (match: any) => {
     return {
       ...match,
       externalId: String(match.externalId),
@@ -14,14 +13,14 @@ export const SQLHelper = {
       homeScore: isNullable(match.home.score) ? null : String(match.home.score),
     };
   },
-  parseTeam: (team: IMatch['home'] | IMatch['away']) => {
+  parseTeam: (team: any) => {
     return {
       name: team.name,
       shortName: team.shortName,
       externalId: String(team.externalId),
     };
   },
-  parseTournament: (tournament: InsertTournament) => {
+  parseTournament: (tournament: DB_InsertTournament) => {
     return {
       ...tournament,
       externalId: String(tournament.externalId),

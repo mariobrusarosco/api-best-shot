@@ -1,29 +1,34 @@
-import { TTournament } from '@/domains/tournament/schema';
+import { DB_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import { ProviderGloboEsporte } from '.';
 import { IApiProvider } from '../typing';
-import { GLOBO_ESPORTE_TOURNAMENT_API, GloboEsporteStandings } from './typing';
+import { API_GloboEsporteStandings, GLOBO_ESPORTE_TOURNAMENT_API } from './typing/api';
 
 export const tournamentProvider: IApiProvider['tournament'] = {
-  prepareUrl: ({ externalId }) =>
+  createUrl: ({ externalId }) =>
     GLOBO_ESPORTE_TOURNAMENT_API.replace(':external_id', externalId),
   createOnDB: async data => {
-    return db.insert(TTournament).values(data).returning();
+    return db.insert(DB_Tournament).values(data).returning();
   },
   updateOnDB: async data => {
     return db
-      .update(TTournament)
+      .update(DB_Tournament)
       .set(data)
-      .where(eq(TTournament.externalId, data.externalId))
+      .where(eq(DB_Tournament.externalId, data.externalId))
       .returning();
   },
-  fetchStandings: async (url: string) => {
-    const response = await axios.get(url);
+  standings: {
+    fetch: async (url: string) => {
+      const response = await axios.get(url);
 
-    return response.data as GloboEsporteStandings;
+      return response.data as API_GloboEsporteStandings;
+    },
+    parse: (data: API_GloboEsporteStandings) => ({
+      teams: data.classificacao.map(team =>
+        ProviderGloboEsporte.team.parseToStandings(team)
+      ),
+    }),
   },
-  parseStandings: (data: GloboEsporteStandings) =>
-    data.classificacao.map(team => ProviderGloboEsporte.team.parseFromStandings(team)),
 };

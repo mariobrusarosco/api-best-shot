@@ -1,4 +1,5 @@
-import { DB_Tournament } from '@/domains/tournament/schema';
+import { T_Team } from '@/domains/team/schema';
+import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
@@ -9,14 +10,14 @@ import { API_GloboEsporteStandings, GLOBO_ESPORTE_TOURNAMENT_API } from './typin
 export const tournamentProvider: IApiProvider['tournament'] = {
   createUrl: ({ externalId }) =>
     GLOBO_ESPORTE_TOURNAMENT_API.replace(':external_id', externalId),
-  createOnDB: async data => {
-    return db.insert(DB_Tournament).values(data).returning();
+  insertOnDB: async data => {
+    return db.insert(T_Tournament).values(data).returning();
   },
   updateOnDB: async data => {
     return db
-      .update(DB_Tournament)
+      .update(T_Tournament)
       .set(data)
-      .where(eq(DB_Tournament.externalId, data.externalId))
+      .where(eq(T_Tournament.externalId, data.externalId))
       .returning();
   },
   standings: {
@@ -30,5 +31,13 @@ export const tournamentProvider: IApiProvider['tournament'] = {
         ProviderGloboEsporte.team.parseToStandings(team)
       ),
     }),
+  },
+  teams: {
+    parseToDB: (standings: API_GloboEsporteStandings) => {
+      return standings?.classificacao.map(ProviderGloboEsporte.team.parseToDB);
+    },
+    insertOnDB: async data => {
+      return db.insert(T_Team).values(data).returning();
+    },
   },
 };

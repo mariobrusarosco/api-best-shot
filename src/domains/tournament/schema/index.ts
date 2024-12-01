@@ -1,6 +1,6 @@
 import { numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
-export const DB_Tournament = pgTable('tournament', {
+export const T_Tournament = pgTable('tournament', {
   id: uuid('id').defaultRandom().primaryKey(),
   externalId: text('external_id').notNull().unique(),
   rounds: numeric('rounds').notNull(),
@@ -17,5 +17,5 @@ export const DB_Tournament = pgTable('tournament', {
     .$onUpdate(() => new Date()),
 });
 
-export type DB_InsertTournament = typeof DB_Tournament.$inferInsert;
-export type DB_SelectTournament = typeof DB_Tournament.$inferSelect;
+export type DB_InsertTournament = typeof T_Tournament.$inferInsert;
+export type DB_SelectTournament = typeof T_Tournament.$inferSelect;

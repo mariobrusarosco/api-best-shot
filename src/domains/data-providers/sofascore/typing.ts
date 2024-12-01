@@ -61,7 +61,7 @@ export type API_SofaScoreRound = {
   hasPreviousPage: boolean;
 };
 
-export type API_SofaScorestandings = {
+export type API_SofaScoreStandings = {
   standings: [
     {
       tournament: {
@@ -113,57 +113,57 @@ export type API_SofaScorestandings = {
         text: string;
         id: number;
       };
-      rows: [
-        {
-          team: {
-            name: string;
-            slug: string;
-            shortName: string;
-            gender: string;
-            sport: {
-              name: string;
-              slug: string;
-              id: number;
-            };
-            userCount: number;
-            nameCode: string;
-            disabled: boolean;
-            national: boolean;
-            type: number;
-            id: number;
-            teamColors: {
-              primary: string;
-              secondary: string;
-              text: string;
-            };
-            fieldTranslations: {
-              nameTranslation: {
-                ru: string;
-              };
-              shortNameTranslation: {};
-            };
-          };
-          descriptions: [];
-          promotion: {
-            text: string;
-            id: number;
-          };
-          position: number;
-          matches: number;
-          wins: number;
-          scoresFor: number;
-          scoresAgainst: number;
-          id: number;
-          losses: number;
-          draws: number;
-          points: number;
-          scoreDiffFormatted: string;
-        }
-      ];
+      rows: API_SofascoreStandingTeam[];
       id: number;
       updatedAtTimestamp: number;
     }
   ];
+};
+
+export type API_SofascoreStandingTeam = {
+  team: {
+    name: string;
+    slug: string;
+    shortName: string;
+    gender: string;
+    sport: {
+      name: string;
+      slug: string;
+      id: number;
+    };
+    userCount: number;
+    nameCode: string;
+    disabled: boolean;
+    national: boolean;
+    type: number;
+    id: number;
+    teamColors: {
+      primary: string;
+      secondary: string;
+      text: string;
+    };
+    fieldTranslations: {
+      nameTranslation: {
+        ru: string;
+      };
+      shortNameTranslation: {};
+    };
+  };
+  descriptions: [];
+  promotion: {
+    text: string;
+    id: number;
+  };
+  position: number;
+  matches: number;
+  wins: number;
+  scoresFor: number;
+  scoresAgainst: number;
+  id: number;
+  losses: number;
+  draws: number;
+  points: number;
+  scoreDiffFormatted: string;
 };
 
 export const SOFA_MATCHES_URL =

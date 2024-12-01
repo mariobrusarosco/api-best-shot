@@ -1,7 +1,7 @@
 import { DB_SelectGuess, T_Guess } from '@/domains/guess/schema';
 import { DB_SelectMatch, T_Match } from '@/domains/match/schema';
 import { DB_SelectMember, T_Member } from '@/domains/member/schema';
-import { DB_SelectTournament, DB_Tournament } from '@/domains/tournament/schema';
+import { DB_SelectTournament, T_Tournament } from '@/domains/tournament/schema';
 
 import { TLeagueRole } from '@/domains/league/schema';
 import db from '@/services/database';
@@ -27,7 +27,7 @@ async function getLeagueScore(req: Request, res: Response) {
       .leftJoin(TLeagueRole, eq(T_Guess.memberId, TLeagueRole.memberId))
       .leftJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
       .leftJoin(T_Member, eq(T_Member.id, T_Guess.memberId))
-      .leftJoin(DB_Tournament, eq(DB_Tournament.id, T_Guess.tournamentId))
+      .leftJoin(T_Tournament, eq(T_Tournament.id, T_Guess.tournamentId))
       .where(
         and(
           eq(TLeagueRole.leagueId, leagueId),

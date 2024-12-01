@@ -15,3 +15,5 @@ export const T_Team = pgTable('team', {
 });
 
 export type DB_InsertTeam = typeof T_Team.$inferInsert;
+export type DB_UpdateTeam = typeof T_Team.$inferInsert;
+export type DB_SelectTeam = typeof T_Team.$inferSelect;

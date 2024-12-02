@@ -7,18 +7,6 @@ import db from '../../../services/database';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 import { ErrorMapper } from '../error-handling/mapper';
 
-// const test = (a: any) => {
-//   console.log('--------------', a);
-// };
-
-// const setGuessStatus = (guess, match) => {
-//   if (match.status === 'ended' && guess.homeScore === null && guess.awayScore === null) {
-//     return 'missed';
-//   }
-
-//   return 'avaialable';
-// };
-
 interface IGuessAnalysis {
   id: string;
   matchId: string;
@@ -128,13 +116,21 @@ async function createGuess(req: Request, res: Response) {
   try {
     const memberId = Utils.getAuthenticatedUserId(req, res);
     const input = req?.body as GuessInput;
+    const homeScore = String(input.home.score);
+    const awayScore = String(input.away.score);
 
-    const query = await db.insert(T_Guess).values({
-      awayScore: String(input.away.score),
-      homeScore: String(input.home.score),
-      matchId: input.matchId,
-      memberId,
-    });
+    const query = await db
+      .insert(T_Guess)
+      .values({
+        awayScore,
+        homeScore,
+        matchId: input.matchId,
+        memberId,
+      })
+      .onConflictDoUpdate({
+        target: [T_Guess.matchId, T_Guess.memberId],
+        set: { awayScore, homeScore },
+      });
 
     if (!query) {
       console.error(ErrorMapper.FAILED_GUESS_CRETION.debug);

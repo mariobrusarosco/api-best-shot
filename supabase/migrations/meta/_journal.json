@@ -8,6 +8,34 @@
       "when": 1732920139318,
       "tag": "0000_aspiring_luke_cage",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1733153541497,
+      "tag": "0001_fat_vampiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1733153915403,
+      "tag": "0002_low_scream",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1733154734030,
+      "tag": "0003_sloppy_ink",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1733155893184,
+      "tag": "0004_right_sauron",
+      "breakpoints": true
     }
   ]
 }

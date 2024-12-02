@@ -6,7 +6,6 @@ export const T_Guess = pgTable(
     id: uuid('id').defaultRandom(),
     memberId: uuid('member_id').notNull(),
     matchId: uuid('match_id').notNull(),
-    tournamentId: uuid('tournament_id').notNull(),
     homeScore: numeric('home_score').notNull(),
     awayScore: numeric('away_score').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),

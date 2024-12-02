@@ -3,14 +3,13 @@ import { NextFunction, Request, Response } from 'express';
 import { GlobalErrorMapper } from '../shared/error-handling/mapper';
 import { Utils } from './utils';
 
-const { NODE_ENV } = process.env;
-
 export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const byPassAuth = NODE_ENV === 'demo' || NODE_ENV === 'local-dev';
+    const byPassAuth =
+      process.env['NODE_ENV'] === 'demo' || process.env['NODE_ENV'] === 'local-dev';
     const authCookie = Utils.getUserCookie(req);
 
-    console.log('----authCookie----', authCookie);
+    console.log({ byPassAuth }, '----authCookie----', authCookie);
 
     if (byPassAuth) {
       const member = Utils.decodeMemberToken(authCookie) as AuthCookieContent;

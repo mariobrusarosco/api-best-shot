@@ -1,3 +1,5 @@
+import { AuthMiddleware } from '@/domains/auth/middleware';
+import GuessController from '@/domains/guess/controllers/guess-controllers';
 import MatchController from '@/domains/match/controllers/match-controller';
 import type { Express } from 'express';
 import express from 'express';
@@ -19,6 +21,12 @@ const TournamentRouting = (app: Express) => {
   tournamentRouter.get(
     '/:tournamentId/matches/:round',
     MatchController.getMatchesByTournament
+  );
+
+  tournamentRouter.get(
+    '/:tournamentId/guess',
+    AuthMiddleware,
+    GuessController.getMemberGuesses
   );
 
   app.use(`${process.env.API_VERSION}/tournaments`, tournamentRouter);

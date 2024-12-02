@@ -1,3 +1,4 @@
+import { Utils } from '@/domains/auth/utils';
 import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import db from '../../../services/database';
@@ -5,10 +6,10 @@ import { T_Guess } from '../../../services/database/schema';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 
 async function getMemberGuesses(req: Request, res: Response) {
-  const memberId = req?.query.memberId as string;
-  const tournamentId = req?.query.tournamentId as string;
-
   try {
+    const memberId = Utils.getAuthenticatedUserId(req, res);
+    const tournamentId = req.params.tournamentId as string;
+
     const guesses = await db
       .select({
         memberId: T_Guess.memberId,

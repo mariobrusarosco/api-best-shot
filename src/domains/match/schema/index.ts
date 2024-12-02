@@ -1,7 +1,7 @@
 import { numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Match = pgTable('match', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: uuid('id').notNull().defaultRandom().primaryKey(),
   externalId: text('external_id').notNull().unique(),
   provider: text('provider').notNull(),
   tournamentId: uuid('tournament_id').notNull(),

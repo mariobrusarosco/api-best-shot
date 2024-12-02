@@ -3,7 +3,7 @@ import { numeric, pgTable, primaryKey, timestamp, uuid } from 'drizzle-orm/pg-co
 export const T_Guess = pgTable(
   'guess',
   {
-    id: uuid('id').defaultRandom(),
+    id: uuid('id').notNull().defaultRandom(),
     memberId: uuid('member_id').notNull(),
     matchId: uuid('match_id').notNull(),
     homeScore: numeric('home_score').notNull(),

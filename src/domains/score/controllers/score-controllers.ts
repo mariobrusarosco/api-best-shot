@@ -27,7 +27,7 @@ async function getLeagueScore(req: Request, res: Response) {
       .leftJoin(TLeagueRole, eq(T_Guess.memberId, TLeagueRole.memberId))
       .leftJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
       .leftJoin(T_Member, eq(T_Member.id, T_Guess.memberId))
-      .leftJoin(T_Tournament, eq(T_Tournament.id, T_Guess.tournamentId))
+      .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
       .where(
         and(
           eq(TLeagueRole.leagueId, leagueId),

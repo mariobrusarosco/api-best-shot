@@ -1,6 +1,7 @@
 import { DB_SelectGuess } from '@/domains/guess/schema';
 import { DB_SelectMatch } from '@/domains/match/schema';
 import { toNumberOrNull, toNumberOrZero } from '@/utils';
+import { GUESS_STATUS, GUESS_STATUSES } from '../typing';
 
 export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const endedMatch = match.status === 'ended';
@@ -15,7 +16,7 @@ export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) =
 };
 
 const generateExpiredGuess = (guess: DB_SelectGuess) => {
-  const guessOutcome = 'expired';
+  const guessOutcome = GUESS_STATUSES.CORRECT;
   const points = null;
   const value = null;
 
@@ -33,12 +34,13 @@ const generateExpiredGuess = (guess: DB_SelectGuess) => {
       points,
     },
     fullMatch: { guessOutcome, points },
+    status: guessOutcome,
     total: 0,
   } satisfies IGuessAnalysis;
 };
 
 const generateOpenGuess = (guess: DB_SelectGuess) => {
-  const guessOutcome = 'waiting_for_score';
+  const guessOutcome = GUESS_STATUSES.OPEN;
   const points = null;
 
   return {
@@ -56,6 +58,7 @@ const generateOpenGuess = (guess: DB_SelectGuess) => {
     },
     fullMatch: { guessOutcome, points },
     total: 0,
+    status: guessOutcome,
   } satisfies IGuessAnalysis;
 };
 
@@ -82,8 +85,8 @@ const generateFinalizedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) =>
   const POINTS_FOR_MATCH = 2;
   const POINTS_FOR_TEAM = 1;
   const POINTS_FOR_MISS = 0;
-  const CORRECT_GUESS = 'correct_guess';
-  const INCORRECT_GUESS = 'incorrect_guess';
+  const CORRECT_GUESS = GUESS_STATUSES.CORRECT;
+  const INCORRECT_GUESS = GUESS_STATUSES.INCORRECT;
   const hasGuessedHome =
     toNumberOrNull(guess.homeScore) === toNumberOrNull(match.homeScore);
   const hasGuessedAway =
@@ -116,6 +119,7 @@ const generateFinalizedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) =>
     away,
     fullMatch,
     total,
+    status: GUESS_STATUSES.FINALIZED,
   } satisfies IGuessAnalysis;
 };
 
@@ -123,14 +127,19 @@ interface IGuessAnalysis {
   id: string;
   matchId: string;
   home: {
-    guessOutcome: string;
+    guessOutcome: GUESS_STATUS;
     value: number | null;
     points: number | null;
   };
-  away: { guessOutcome: string; value: number | null; points: number | null };
+  away: {
+    guessOutcome: GUESS_STATUS;
+    value: number | null;
+    points: number | null;
+  };
   fullMatch: {
-    guessOutcome: string;
+    guessOutcome: GUESS_STATUS;
     points: number | null;
   };
   total: number | null;
+  status: GUESS_STATUS;
 }

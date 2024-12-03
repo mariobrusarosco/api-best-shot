@@ -15,25 +15,36 @@ const GuessController = {
   runGuessAnalysis,
 };
 
+async function getMatchesWithNullGuess(
+  memberId: string,
+  tournamentId: string,
+  round: string
+) {
+  const rows = await db
+    .select()
+    .from(T_Match)
+    .leftJoin(
+      T_Guess,
+      and(eq(T_Match.id, T_Guess.matchId), eq(T_Guess.memberId, memberId))
+    )
+    .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundId, round)));
+
+  return rows.filter(row => row.guess === null);
+}
+
 async function getMemberGuesses(req: Request, res: Response) {
   try {
     const memberId = Utils.getAuthenticatedUserId(req, res);
     const tournamentId = req.params.tournamentId as string;
     const query = req.query as { round: string };
 
-    const rows = await db
-      .select()
-      .from(T_Match)
-      .leftJoin(
-        T_Guess,
-        and(eq(T_Match.id, T_Guess.matchId), eq(T_Guess.memberId, memberId))
-      )
-      .where(
-        and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundId, query?.round))
-      );
+    const matchesWithNullGuess = await getMatchesWithNullGuess(
+      memberId,
+      tournamentId,
+      query?.round
+    );
 
-    const rowsWithoutGuess = rows.filter(row => row.guess === null);
-    const newGuessesToInsert = rowsWithoutGuess.map(row => {
+    const newGuessesToInsert = matchesWithNullGuess.map(row => {
       return {
         matchId: row.match.id,
         memberId,
@@ -46,7 +57,7 @@ async function getMemberGuesses(req: Request, res: Response) {
       await db.insert(T_Guess).values(newGuessesToInsert);
     }
 
-    const newRows = await db
+    const guesses = await db
       .select()
       .from(T_Guess)
       .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
@@ -57,10 +68,9 @@ async function getMemberGuesses(req: Request, res: Response) {
           eq(T_Guess.memberId, memberId)
         )
       );
+    const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
 
-    const mapped = newRows.map(row => runGuessAnalysis(row.guess, row.match));
-
-    return res.status(200).send(mapped);
+    return res.status(200).send(parsedGuesses);
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error);
   }

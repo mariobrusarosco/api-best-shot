@@ -3,12 +3,11 @@ import { numeric, pgTable, primaryKey, timestamp, uuid } from 'drizzle-orm/pg-co
 export const T_Guess = pgTable(
   'guess',
   {
-    id: uuid('id').defaultRandom(),
+    id: uuid('id').notNull().defaultRandom(),
     memberId: uuid('member_id').notNull(),
     matchId: uuid('match_id').notNull(),
-    tournamentId: uuid('tournament_id').notNull(),
-    homeScore: numeric('home_score').notNull(),
-    awayScore: numeric('away_score').notNull(),
+    homeScore: numeric('home_score'),
+    awayScore: numeric('away_score'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .notNull()

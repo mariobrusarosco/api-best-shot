@@ -25,7 +25,7 @@ export const matchProvider: IApiProvider['match'] = {
       date: safeDate(match.data_realizacao),
       time: safeString(match.hora_realizacao),
       stadium: safeString(match?.sede?.nome_popular),
-      status: match.transmissao?.broadcast?.id === 'ENCERRADA' ? 'ended' : 'open',
+      status: match.jogo_ja_comecou === true ? 'ended' : 'open',
     };
   },
   insertOnDB: async matches => {

@@ -1,14 +1,15 @@
-import express from 'express'
-import type { Express } from 'express'
-import GuessController from '../controllers/guess-controllers'
+import { AuthMiddleware } from '@/domains/auth/middleware';
+import type { Express } from 'express';
+import express from 'express';
+import GuessController from '../controllers/guess-controllers';
 
 const GuessRouting = (app: Express) => {
-  const guessRouter = express.Router()
+  const guessRouter = express.Router();
 
-  guessRouter.post('/', GuessController.createGuess)
-  guessRouter.get('/', GuessController.getMemberGuesses)
+  guessRouter.post('/', GuessController.createGuess);
+  guessRouter.get('/', GuessController.getMemberGuesses);
 
-  app.use(`${process.env.API_VERSION}/guess`, guessRouter)
-}
+  app.use(`${process.env.API_VERSION}/guess`, AuthMiddleware, guessRouter);
+};
 
-export default GuessRouting
+export default GuessRouting;

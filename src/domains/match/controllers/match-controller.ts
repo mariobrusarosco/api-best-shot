@@ -1,3 +1,4 @@
+import { Utils } from '@/domains/auth/utils';
 import { ACTIVE_PROVIDER } from '@/domains/data-providers';
 import { ErrorMapper } from '@/domains/match/error-handling/mapper';
 import { T_Match } from '@/domains/match/schema';
@@ -9,6 +10,7 @@ import { Request, Response } from 'express';
 
 async function getMatchesByTournament(req: Request, res: Response) {
   try {
+    const memberId = Utils.getAuthenticatedUserId(req, res);
     const { round, tournamentId } = req?.params as {
       tournamentId: string;
       round: string;

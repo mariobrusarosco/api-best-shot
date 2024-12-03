@@ -12,7 +12,8 @@ export const GUESS_STATUSES = {
   EXPIRED: 'expired',
   CORRECT: 'correct',
   INCORRECT: 'incorrect',
-  OPEN: 'open',
+  NOT_STARTED: 'not-started',
+  WAITING_FOR_GAME: 'waiting_for_game',
   FINALIZED: 'finalized',
 } as const;
 

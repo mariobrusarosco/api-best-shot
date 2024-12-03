@@ -4,19 +4,20 @@ import { toNumberOrNull, toNumberOrZero } from '@/utils';
 import { GUESS_STATUS, GUESS_STATUSES } from '../typing';
 
 export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
-  const endedMatch = match.status === 'ended';
-  const openMatch = match.status === 'open';
   const hasNullGuesses = guess.homeScore === null || guess.awayScore === null;
-  const guessExpired = endedMatch && hasNullGuesses;
+  const guessExpired = match.status === 'ended' && hasNullGuesses;
+  const notStartedGuess = match.status === 'open' && hasNullGuesses;
+  const waitingForGame = match.status === 'open' && !hasNullGuesses;
 
   if (guessExpired) return generateExpiredGuess(guess);
-  if (openMatch) return generateOpenGuess(guess);
+  if (notStartedGuess) return generateNotStartedGuess(guess);
+  if (waitingForGame) return generateWaitingForGameGuess(guess);
 
   return generateFinalizedGuess(guess, match);
 };
 
 const generateExpiredGuess = (guess: DB_SelectGuess) => {
-  const guessOutcome = GUESS_STATUSES.CORRECT;
+  const status = GUESS_STATUSES.EXPIRED;
   const points = null;
   const value = null;
 
@@ -24,41 +25,74 @@ const generateExpiredGuess = (guess: DB_SelectGuess) => {
     id: guess.id,
     matchId: guess.matchId,
     home: {
-      guessOutcome,
+      status,
       value,
       points,
     },
     away: {
-      guessOutcome,
+      status,
       value,
       points,
     },
-    fullMatch: { guessOutcome, points },
-    status: guessOutcome,
+    fullMatch: { status, points },
+    status: status,
     total: 0,
   } satisfies IGuessAnalysis;
 };
 
-const generateOpenGuess = (guess: DB_SelectGuess) => {
-  const guessOutcome = GUESS_STATUSES.OPEN;
+const generateNotStartedGuess = (guess: DB_SelectGuess) => {
+  const status = GUESS_STATUSES.NOT_STARTED;
+  const points = null;
+  const value = null;
+
+  return {
+    id: guess.id,
+    matchId: guess.matchId,
+    home: {
+      status,
+      value,
+      points,
+    },
+    away: {
+      status,
+      value,
+      points,
+    },
+    fullMatch: { status, points },
+    total: 0,
+    status: status,
+  } satisfies IGuessAnalysis;
+};
+
+const generateWaitingForGameGuess = (guess: DB_SelectGuess) => {
+  const homeGuessScore = guess.homeScore !== null;
+  const awayGuessScore = guess.awayScore !== null;
+  const mainStatus =
+    homeGuessScore && homeGuessScore
+      ? GUESS_STATUSES.WAITING_FOR_GAME
+      : GUESS_STATUSES.NOT_STARTED;
   const points = null;
 
   return {
     id: guess.id,
     matchId: guess.matchId,
     home: {
-      guessOutcome,
+      status: homeGuessScore
+        ? GUESS_STATUSES.WAITING_FOR_GAME
+        : GUESS_STATUSES.NOT_STARTED,
       value: toNumberOrNull(guess.homeScore),
       points,
     },
     away: {
-      guessOutcome,
+      status: awayGuessScore
+        ? GUESS_STATUSES.WAITING_FOR_GAME
+        : GUESS_STATUSES.NOT_STARTED,
       value: toNumberOrNull(guess.awayScore),
       points,
     },
-    fullMatch: { guessOutcome, points },
+    fullMatch: { status: mainStatus, points },
     total: 0,
-    status: guessOutcome,
+    status: mainStatus,
   } satisfies IGuessAnalysis;
 };
 
@@ -94,19 +128,19 @@ const generateFinalizedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) =>
   const matchOutcome = hasGuessedMatchOutcome(guess, match);
 
   const home = {
-    guessOutcome: hasGuessedHome ? CORRECT_GUESS : INCORRECT_GUESS,
+    status: hasGuessedHome ? CORRECT_GUESS : INCORRECT_GUESS,
     value: toNumberOrNull(guess.homeScore),
     points: hasGuessedHome ? POINTS_FOR_TEAM : POINTS_FOR_MISS,
   };
 
   const away = {
-    guessOutcome: hasGuessedAway ? CORRECT_GUESS : INCORRECT_GUESS,
+    status: hasGuessedAway ? CORRECT_GUESS : INCORRECT_GUESS,
     value: toNumberOrNull(guess.awayScore),
     points: hasGuessedAway ? POINTS_FOR_TEAM : POINTS_FOR_MISS,
   };
 
   const fullMatch = {
-    guessOutcome: matchOutcome ? CORRECT_GUESS : INCORRECT_GUESS,
+    status: matchOutcome ? CORRECT_GUESS : INCORRECT_GUESS,
     points: matchOutcome ? POINTS_FOR_MATCH : POINTS_FOR_MISS,
   };
 
@@ -127,17 +161,17 @@ interface IGuessAnalysis {
   id: string;
   matchId: string;
   home: {
-    guessOutcome: GUESS_STATUS;
+    status: GUESS_STATUS;
     value: number | null;
     points: number | null;
   };
   away: {
-    guessOutcome: GUESS_STATUS;
+    status: GUESS_STATUS;
     value: number | null;
     points: number | null;
   };
   fullMatch: {
-    guessOutcome: GUESS_STATUS;
+    status: GUESS_STATUS;
     points: number | null;
   };
   total: number | null;

@@ -8,7 +8,7 @@ export type IApiProviderV2 = {
     // fetchRounds: () => void;
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
     createOnDatabase: (data: DB_InsertTournament) => Promise<DB_InsertTournament>;
-    // update: () => void;
+    updateOnDatabase: (data: DB_InsertTournament) => Promise<DB_InsertTournament>;
   };
 };
 

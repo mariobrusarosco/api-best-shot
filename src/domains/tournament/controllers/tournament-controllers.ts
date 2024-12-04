@@ -199,7 +199,7 @@ async function createOrUpdateMatchesOnDatabase(
         console.log('[UPDATING ROUND]', ROUND_COUNT, ' - for: ', tournament.provider);
         const url = ApiProvider.rounds.createUrl({
           externalId: String(tournament.externalId),
-          slug: tournament.slug,
+          slug: '',
           mode: tournament.mode,
           round: ROUND_COUNT,
           season: tournament.season,

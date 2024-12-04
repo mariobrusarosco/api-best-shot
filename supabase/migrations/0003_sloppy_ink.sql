@@ -1,1 +1,0 @@
-ALTER TABLE "guess" DROP COLUMN IF EXISTS "round";

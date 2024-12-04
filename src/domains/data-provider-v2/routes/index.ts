@@ -5,7 +5,7 @@ import express from 'express';
 const DataProviderRouting = (app: Express) => {
   const dataProviderRouter = express.Router();
 
-  dataProviderRouter.post('/tournaments', TournamentControllerv2.createTournament);
+  dataProviderRouter.post('/tournaments', TournamentControllerv2.setupTournament);
 
   app.use(`${process.env.API_VERSION}/data-provider`, dataProviderRouter);
 };

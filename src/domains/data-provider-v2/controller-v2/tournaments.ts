@@ -42,7 +42,7 @@ const updateTournament = async (req: TournamentRequest, res: Response) => {
   }
 };
 
-export const TournamentControllerv2 = {
+export const TournamentProviderController = {
   setupTournament,
   updateTournament,
 };

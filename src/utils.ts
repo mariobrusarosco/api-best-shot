@@ -23,11 +23,7 @@ export const toNumberOrZero = (val: string | null | undefined) => {
   return Number(val);
 };
 
-export async function fetchAndStoreAssetFromApi({
-  url,
-  custom,
-  filename,
-}: {
+export async function fetchAndStoreAssetFromApi(payload: {
   custom?: {
     base64: string;
     contentType: string;
@@ -36,8 +32,6 @@ export async function fetchAndStoreAssetFromApi({
   filename: string;
 }) {
   try {
-    const createCustomImage = custom?.base64 && custom?.contentType;
-
     const s3 = new S3Client({
       region: 'us-east-1',
       credentials: {
@@ -45,36 +39,37 @@ export async function fetchAndStoreAssetFromApi({
         secretAccessKey: process.env['AWS_SECRET_ACCESS_KEY']!,
       },
     });
+    let Key = null,
+      Bucket = process.env['AWS_BUCKET_NAME'],
+      Body = null,
+      ContentType = null;
 
-    if (createCustomImage) {
-      const fileData = Buffer.from(custom.base64, 'base64');
-      const ext = mime.extension(custom.contentType);
+    const customImage = payload.custom?.base64 && payload.custom?.contentType;
+    if (customImage) {
+      const ext = mime.extension(payload.custom?.contentType);
 
-      const command = new PutObjectCommand({
-        Bucket: process.env['AWS_BUCKET_NAME'],
-        Key: `${filename}.${ext}`,
-        Body: fileData,
-        ContentType: custom.contentType,
-      });
-      await s3.send(command);
-      console.log(`Custom File uploaded successfully: ${filename}.${ext}`);
-      return;
+      Body = Buffer.from(payload.custom?.base64 || '', 'base64');
+      ContentType = payload.custom?.contentType;
+      Key = `data-providers/assets/${payload.filename}.${ext}`;
+    } else {
+      const response = await axios.get(payload?.url, { responseType: 'arraybuffer' });
+      const ext = mime.extension(response.headers['content-type']);
+
+      Body = Buffer.from(response.data);
+      ContentType = response.headers['content-type'];
+      Key = `data-providers/assets/${payload?.filename}.${ext}`;
     }
 
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    const contentType = response.headers['content-type'];
-    const fileData = Buffer.from(response.data);
-    const ext = mime.extension(contentType);
-
-    const command = new PutObjectCommand({
-      Bucket: process.env['AWS_BUCKET_NAME'],
-      Key: `${filename}.${ext}`,
-      Body: fileData,
-      ContentType: contentType,
-    });
-    await s3.send(command);
-    console.log(`File uploaded successfully: ${filename}.${ext}`);
-    return false;
+    const uploadOutcome = await s3.send(
+      new PutObjectCommand({
+        Bucket,
+        Key,
+        ContentType,
+        Body,
+      })
+    );
+    console.log(`File uploaded successfully: ${Key}`);
+    return uploadOutcome;
   } catch (error) {
     console.error('[ERROR WHEN FETCHING AND STORING A NEW TOURNAMENT LOGO]: ', error);
   }

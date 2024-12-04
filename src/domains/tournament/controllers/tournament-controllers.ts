@@ -23,7 +23,7 @@ async function createAndSyncTeamsLogosOnStorage(
   req: Request,
   teams: Awaited<ReturnType<typeof createTeamsOnDatabase>>
 ) {
-  return Promise.all(
+  return await Promise.all(
     teams.map(team =>
       fetchAndStoreAssetFromApi({
         url: team.badge || '',
@@ -47,7 +47,6 @@ async function createAndSyncTournamentLogoOnStorage(
     };
   }
 ) {
-  console.log({ body });
   return await fetchAndStoreAssetFromApi({
     filename: tournament.externalId,
     url: body.logoUrl,

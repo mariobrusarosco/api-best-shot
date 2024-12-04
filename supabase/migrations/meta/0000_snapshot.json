@@ -1,5 +1,5 @@
 {
-  "id": "c3ae94ea-ad9c-4ae3-b084-959cfa6e1fab",
+  "id": "da17e876-86d0-4e61-b991-7cdfb15b8586",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -442,8 +442,8 @@
         "id": {
           "name": "id",
           "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
+          "primaryKey": false,
+          "notNull": false,
           "default": "gen_random_uuid()"
         },
         "external_id": {
@@ -492,7 +492,7 @@
           "name": "label",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "logo": {
           "name": "logo",
@@ -517,68 +517,11 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "tournament_external_id_unique": {
-          "name": "tournament_external_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "external_id"
-          ]
-        },
-        "tournament_label_unique": {
-          "name": "tournament_label_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "label"
-          ]
-        }
-      }
-    },
-    "public.tournament_external": {
-      "name": "tournament_external",
-      "schema": "",
-      "columns": {
-        "tournament_id": {
-          "name": "tournament_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "external_id": {
-          "name": "external_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "provider": {
-          "name": "provider",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
       "compositePrimaryKeys": {
-        "tournament_external_tournament_id_external_id_pk": {
-          "name": "tournament_external_tournament_id_external_id_pk",
+        "tournament_provider_external_id_pk": {
+          "name": "tournament_provider_external_id_pk",
           "columns": [
-            "tournament_id",
+            "provider",
             "external_id"
           ]
         }

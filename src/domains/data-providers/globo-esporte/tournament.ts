@@ -8,8 +8,6 @@ import { IApiProvider } from '../typing';
 import { API_GloboEsporteStandings, GLOBO_ESPORTE_TOURNAMENT_API } from './typing/api';
 
 export const tournamentProvider: IApiProvider['tournament'] = {
-  createUrl: ({ externalId }) =>
-    GLOBO_ESPORTE_TOURNAMENT_API.replace(':external_id', externalId),
   insertOnDB: async data => {
     return db.insert(T_Tournament).values(data).returning();
   },
@@ -21,6 +19,8 @@ export const tournamentProvider: IApiProvider['tournament'] = {
       .returning();
   },
   standings: {
+    createUrl: ({ externalId }) =>
+      GLOBO_ESPORTE_TOURNAMENT_API.replace(':external_id', externalId),
     fetch: async (url: string) => {
       const response = await axios.get(url);
 

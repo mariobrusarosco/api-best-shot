@@ -5,10 +5,10 @@ import { TeamOnStandings } from '../tournament/typing';
 
 export type IApiProvider = {
   tournament: {
-    createUrl: (data: { externalId: string; mode: string; season: string }) => string;
     insertOnDB: (data: DB_InsertTournament) => Promise<DB_SelectTournament[]>;
     updateOnDB: (data: DB_InsertTournament) => Promise<DB_SelectTournament[]>;
     standings: {
+      createUrl: (data: { externalId: string; mode: string; season: string }) => string;
       fetch: (url: string) => Promise<any>;
       parse: (standings: any) => {
         teams: TeamOnStandings[];

@@ -8,10 +8,11 @@ import { IApiProvider } from '../typing';
 import { API_SofaScoreStandings, SOFA_TOURNAMENT_URL } from './typing';
 
 export const tournamentProvider: IApiProvider['tournament'] = {
-  createUrl: data =>
-    SOFA_TOURNAMENT_URL.replace(':external_id', data.externalId)
-      .replace(':mode', data.mode)
-      .replace(':season', data.season),
+  // createLogoUrl: data =>
+  //   SOFA_TOURNAMENT_LOGO_URL.replace(':external_id', data.externalId).replace(
+  //     ':mode',
+  //     data.mode
+  //   ),
   insertOnDB: async data => {
     return db.insert(T_Tournament).values(data).returning();
   },
@@ -23,6 +24,10 @@ export const tournamentProvider: IApiProvider['tournament'] = {
       .returning();
   },
   standings: {
+    createUrl: data =>
+      SOFA_TOURNAMENT_URL.replace(':external_id', data.externalId)
+        .replace(':mode', data.mode)
+        .replace(':season', data.season),
     fetch: async (url: string) => {
       const response = await axios.get(url);
       const data = response.data as API_SofaScoreStandings;

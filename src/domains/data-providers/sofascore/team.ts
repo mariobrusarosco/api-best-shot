@@ -19,7 +19,7 @@ export const teamProvider: IApiProvider['team'] = {
       name: data.team.name,
       externalId: String(data.team.id),
       shortName: data.team.nameCode,
-      badge: null,
+      badge: '',
       provider: 'sofa',
     } satisfies DB_InsertTeam;
   },

@@ -5,7 +5,7 @@ export const T_Team = pgTable('team', {
   name: text('name').notNull(),
   externalId: text('external_id').unique().notNull(),
   shortName: text('short_name'),
-  badge: text('badge'),
+  badge: text('badge').notNull(),
   provider: text('provider').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')

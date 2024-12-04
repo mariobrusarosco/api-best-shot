@@ -5,42 +5,42 @@ import { Response } from 'express';
 import { ApiProviderV2 } from '..';
 import { TeamsRequest } from '../interface';
 
-const { fetchTeamsFromStandings } = ApiProviderV2.teams;
+const {
+  fetchTeamsFromStandings,
+  mapTeamsFromStandings,
+  createOnDatabase,
+  updateOnDatabase,
+} = ApiProviderV2.teams;
 
 const setupTeams = async (req: TeamsRequest, res: Response) => {
   try {
     const standings = await fetchTeamsFromStandings(req);
+    const mappedTeams = await mapTeamsFromStandings(standings);
+    const query = await createOnDatabase(mappedTeams);
 
-    // const mappedTeams = await mapTeamsFromStandings(standings)
-
-    // const query = await createOnDatabase({ ...req.body, logo });
-
-    res.status(200).send(standings);
+    res.status(200).send(query);
   } catch (error: any) {
-    console.error('[ERROR] - createTournament', error);
+    console.error('[ERROR] - SetupTeams', error);
 
     handleInternalServerErrorResponse(res, error);
   }
 };
 
-// // const updateTournament = async (req: TournamentRequest, res: Response) => {
-// //   try {
-// //     const logo = await fetchAndStoreLogo({
-// //       logoPngBase64: req.body.logoPngBase64,
-// //       logoUrl: req.body.logoUrl,
-// //       id: req.body.externalId,
-// //     });
+const updateTeams = async (req: TeamsRequest, res: Response) => {
+  try {
+    const standings = await fetchTeamsFromStandings(req);
+    const mappedTeams = await mapTeamsFromStandings(standings);
+    const query = await updateOnDatabase(mappedTeams);
 
-// //     const query = await updateOnDatabase({ ...req.body, logo });
+    res.status(200).send(query);
+  } catch (error: any) {
+    console.error('[ERROR] - updateTeams', error);
 
-// //     res.status(200).send(query);
-// //   } catch (error: any) {
-// //     console.error('[ERROR] - createTournament', error);
+    handleInternalServerErrorResponse(res, error);
+  }
+};
 
-// //     handleInternalServerErrorResponse(res, error);
-// //   }
-// // };
-
-export const ControllerTeamsProvider = {
+export const TeamsDataController = {
   setupTeams,
+  updateTeams,
 };

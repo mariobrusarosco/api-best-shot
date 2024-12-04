@@ -1,6 +1,6 @@
+import { DB_InsertTeam } from '@/services/database/schema';
 import { FetchAndStoreAssetPayload } from '@/utils';
 import { type Request } from 'express';
-import { API_GloboEsporteStandings } from '../data-providers/globo-esporte/typing/api';
 import { DB_InsertTournament } from '../tournament/schema';
 
 export type IApiProviderV2 = {
@@ -10,11 +10,11 @@ export type IApiProviderV2 = {
     updateOnDatabase: (data: DB_InsertTournament) => Promise<DB_InsertTournament>;
   };
   teams: {
-    // fetchAndStoreLogo: (data: ) => Promise<any>;
-    fetchTeamsFromStandings: (req: TeamsRequest) => Promise<API_GloboEsporteStandings>;
-    // mapTeamsFromStandings: (standings: any) => Promise<DB_InsertTeam[]>;
-    // createOnDatabase: (data: DB_InsertTeam) => Promise<DB_InsertTeam>;
-    // updateOnDatabase: (data: DB_InsertTeam) => Promise<DB_InsertTeam>;
+    fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
+    fetchTeamsFromStandings: (req: TeamsRequest) => Promise<any>;
+    mapTeamsFromStandings: (standings: any) => Promise<DB_InsertTeam[]>;
+    createOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[]>;
+    updateOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[] | undefined>;
   };
 };
 

@@ -29,8 +29,8 @@ async function createAndSyncTeamsLogosOnStorage(
         url: team.badge || '',
         filename: team.externalId,
         custom: {
-          base64: req?.body.base64,
-          contentType: req?.body.contentType,
+          base64: req?.body?.base64,
+          contentType: req?.body?.contentType,
         },
       })
     )
@@ -52,8 +52,8 @@ async function createAndSyncTournamentLogoOnStorage(
     filename: tournament.externalId,
     url: body.logoUrl,
     custom: {
-      base64: body.custom.base64,
-      contentType: body.custom.contentType,
+      base64: body.custom?.base64,
+      contentType: body.custom?.contentType,
     },
   });
 }
@@ -64,13 +64,13 @@ async function createTournamentFromExternalSource(req: Request, res: Response) {
     if (!tournament) return;
     await createAndSyncTournamentLogoOnStorage(tournament, req.body);
 
-    // const createdTeams = await createTeamsOnDatabase(tournament);
-    // const uploadedTeamLogos = await createAndSyncTeamsLogosOnStorage(req, createdTeams);
-    // const createdMtaches = await createOrUpdateMatchesOnDatabase(tournament, 'create');
+    const createdTeams = await createTeamsOnDatabase(tournament);
+    const uploadedTeamLogos = await createAndSyncTeamsLogosOnStorage(req, createdTeams);
+    const createdMtaches = await createOrUpdateMatchesOnDatabase(tournament, 'create');
 
-    // console.log('[LOG] - [createdTeams]', createdTeams);
-    // console.log('[LOG] - [uploadedTeamLogos]', uploadedTeamLogos);
-    // console.log('[LOG] - [createdMtaches]', createdMtaches);
+    console.log('[LOG] - [createdTeams]', createdTeams);
+    console.log('[LOG] - [uploadedTeamLogos]', uploadedTeamLogos);
+    console.log('[LOG] - [createdMtaches]', createdMtaches);
     res.status(200).send('success');
   } catch (error: any) {
     console.error('[ERROR] - ', error);

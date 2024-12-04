@@ -29,7 +29,8 @@ const signUserCookieBased = (publicId: string, res: Response) => {
     );
     res.cookie(process.env['MEMBER_PUBLIC_ID_COOKIE'] || '', token, {
       httpOnly: true,
-      secure: process.env['NODE_ENV'] === 'production',
+      secure: process.env['NODE_ENV'] !== 'local-dev',
+      sameSite: 'none',
     });
 
     return token;

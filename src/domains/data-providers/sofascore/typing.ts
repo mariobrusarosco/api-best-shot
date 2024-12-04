@@ -172,8 +172,8 @@ export const SOFA_MATCHES_URL =
 export const SOFA_TOURNAMENT_URL =
   'https://www.sofascore.com/api/v1/:mode/:external_id/season/:season/standings/total';
 
-export const SOFA_TOURNAMENT_STANDINGS_URL =
-  'https://www.sofascore.com/api/v1/:mode/:external_id/season/:season/standings/total';
+export const SOFA_TOURNAMENT_LOGO_URL =
+  'https://img.sofascore.com/api/v1/:mode/:external_id/image/dark';
 
 const TOURNAMENTS_METADATA = {
   BRASILEIRAO_24_25: {

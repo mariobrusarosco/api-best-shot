@@ -1,1 +1,0 @@
-ALTER TABLE "guess" ADD COLUMN "round" text;

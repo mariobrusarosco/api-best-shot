@@ -1,5 +1,4 @@
-import { Utils } from '@/domains/auth/utils';
-import { ACTIVE_PROVIDER } from '@/domains/data-providers';
+import { ACTIVE_API_PROVIDER } from '@/domains/data-provider-v2';
 import { ErrorMapper } from '@/domains/match/error-handling/mapper';
 import { T_Match } from '@/domains/match/schema';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
@@ -10,7 +9,6 @@ import { Request, Response } from 'express';
 
 async function getMatchesByTournament(req: Request, res: Response) {
   try {
-    const memberId = Utils.getAuthenticatedUserId(req, res);
     const { round, tournamentId } = req?.params as {
       tournamentId: string;
       round: string;
@@ -41,7 +39,6 @@ async function getMatchesByTournament(req: Request, res: Response) {
         },
         tournament: {
           id: T_Match.tournamentId,
-          externalId: T_Match.tournamentExternalId,
         },
       })
       .from(T_Match)
@@ -50,7 +47,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
       .where(
         and(
           eq(T_Match.tournamentId, tournamentId),
-          eq(T_Match.provider, ACTIVE_PROVIDER),
+          eq(T_Match.provider, ACTIVE_API_PROVIDER),
           eq(T_Match.roundId, round)
         )
       );

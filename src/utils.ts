@@ -74,3 +74,55 @@ export async function fetchAndStoreAssetFromApi(payload: {
     console.error('[ERROR WHEN FETCHING AND STORING A NEW TOURNAMENT LOGO]: ', error);
   }
 }
+
+export type FetchAndStoreAssetPayload = {
+  logoUrl?: string;
+  logoPngBase64?: string;
+  id: string;
+};
+
+export async function fetchAndStoreAssetFromApiNew(payload: FetchAndStoreAssetPayload) {
+  try {
+    const s3 = new S3Client({
+      region: 'us-east-1',
+      credentials: {
+        accessKeyId: process.env['AWS_ACCESS_KEY_ID']!,
+        secretAccessKey: process.env['AWS_SECRET_ACCESS_KEY']!,
+      },
+    });
+    let Key = null,
+      Bucket = process.env['AWS_BUCKET_NAME'],
+      Body = null,
+      ContentType = null;
+
+    if (payload.logoPngBase64) {
+      Body = Buffer.from(payload.logoPngBase64 || '', 'base64');
+      ContentType = 'image/png';
+      Key = `data-providers/${payload.id}.png`;
+    } else {
+      const response = await axios.get(payload.logoUrl || '', {
+        responseType: 'arraybuffer',
+      });
+      const ext = mime.extension(response.headers['content-type']);
+
+      Body = Buffer.from(response.data);
+      ContentType = response.headers['content-type'];
+      Key = `data-providers/${payload?.id}.${ext}`;
+    }
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket,
+        Key,
+        ContentType,
+        Body,
+        CacheControl: 'max-age=15768000, public',
+        Expires: new Date(Date.now() + 15768000 * 1000),
+      })
+    );
+    console.log(`File uploaded successfully: ${Key}`);
+    return Key;
+  } catch (error) {
+    console.error('[ERROR WHEN FETCHING AND STORING A NEW TOURNAMENT LOGO]: ', error);
+  }
+}

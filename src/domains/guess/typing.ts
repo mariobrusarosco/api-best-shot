@@ -1,4 +1,5 @@
 export type GuessInput = {
+  id: string;
   matchId: string;
   home: {
     score: number;

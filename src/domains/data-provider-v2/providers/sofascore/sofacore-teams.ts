@@ -17,7 +17,7 @@ export const SofascoreTeams: IApiProviderV2['teams'] = {
   mapTeamsFromStandings: async (standings: API_SofaScoreStandings) => {
     const promises = standings?.standings[0]['rows']?.map(async team => {
       const badge = await SofascoreTeams.fetchAndStoreLogo({
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         logoUrl: SOFA_TEAN_LOGO_URL.replace(':id', String(team.team.id)),
       });
 
@@ -50,3 +50,6 @@ export const SofascoreTeams: IApiProviderV2['teams'] = {
     });
   },
 };
+function uuidv4(): string {
+  throw new Error('Function not implemented.');
+}

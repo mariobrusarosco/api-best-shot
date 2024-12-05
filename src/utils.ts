@@ -116,6 +116,8 @@ export async function fetchAndStoreAssetFromApiNew(payload: FetchAndStoreAssetPa
         Key,
         ContentType,
         Body,
+        CacheControl: 'max-age=15768000, public',
+        Expires: new Date(Date.now() + 15768000 * 1000),
       })
     );
     console.log(`File uploaded successfully: ${Key}`);

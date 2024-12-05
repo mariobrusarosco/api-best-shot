@@ -1,5 +1,5 @@
 import { IApiProviderV2 } from '../../interface';
-import { GloboEsporteMatches } from './globo-esport-matches';
+import { GloboEsporteMatches } from './globo-esporte-matches';
 import { GloboEsporteTeams } from './globo-esporte-teams';
 import { GloboEsporteTournament } from './globo-esporte-tournament';
 

@@ -6,11 +6,10 @@ import { getTournamentById } from '@/domains/tournament/utils';
 import db from '@/services/database';
 import { eq } from 'drizzle-orm';
 import { Response } from 'express';
-import { ApiProviderSofascore } from '..';
+import { ApiProvider } from '..';
 import { MatchesRequest } from '../interface';
 
-// const Api = ApiProviderGloboEsporte.matches;
-const Api = ApiProviderSofascore.matches;
+const Api = ApiProvider?.matches;
 
 const setupMatches = async (req: MatchesRequest, res: Response) => {
   try {

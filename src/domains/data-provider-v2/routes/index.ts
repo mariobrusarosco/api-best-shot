@@ -1,8 +1,8 @@
 import type { Express } from 'express';
 import express from 'express';
-import { MatchesDataController } from '../controller-v2/macthes';
-import { TeamsDataController } from '../controller-v2/teams';
-import { TournamentDataController } from '../controller-v2/tournaments';
+import { MatchesDataController } from '../controller/macthes';
+import { TeamsDataController } from '../controller/teams';
+import { TournamentDataController } from '../controller/tournaments';
 
 const DataProviderRouting = (app: Express) => {
   const dataProviderRouter = express.Router();

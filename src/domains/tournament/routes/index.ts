@@ -9,20 +9,11 @@ const TournamentRouting = (app: Express) => {
   const tournamentRouter = express.Router();
 
   tournamentRouter.get('/', TournamentController.getAllTournaments);
-  tournamentRouter.patch(
-    '/external',
-    TournamentController.updateTournamentFromExternalSource
-  );
-  tournamentRouter.post(
-    '/external',
-    TournamentController.createTournamentFromExternalSource
-  );
   tournamentRouter.get('/:tournamentId', TournamentController.getTournament);
   tournamentRouter.get(
     '/:tournamentId/matches/:round',
     MatchController.getMatchesByTournament
   );
-
   tournamentRouter.get(
     '/:tournamentId/guess',
     AuthMiddleware,

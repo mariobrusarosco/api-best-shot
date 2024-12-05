@@ -1,10 +1,9 @@
 import { TournamentRequest } from '@/domains/data-provider-v2/interface';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { type Response } from 'express';
-import { ApiProviderSofascore } from '..';
+import { ApiProvider } from '..';
 
-// const Api = ApiProviderGloboEsporte.tournament;
-const Api = ApiProviderSofascore.tournament;
+const Api = ApiProvider.tournament;
 
 const setupTournament = async (req: TournamentRequest, res: Response) => {
   try {

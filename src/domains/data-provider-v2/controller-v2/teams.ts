@@ -2,11 +2,11 @@
 
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { Response } from 'express';
-import { ApiProviderGloboEsporte } from '..';
+import { ApiProviderSofascore } from '..';
 import { TeamsRequest } from '../interface';
 
-const Api = ApiProviderGloboEsporte.teams;
-// const Api = ApiProviderSofa.teams;
+// const Api = ApiProviderGloboEsporte.teams;
+const Api = ApiProviderSofascore.teams;
 
 const setupTeams = async (req: TeamsRequest, res: Response) => {
   try {

@@ -227,15 +227,12 @@ async function createOrUpdateMatchesOnDatabase(
   }
 }
 
-async function getNonStartedMatches(tournament: DB_SelectTournament) {
+export async function getNonStartedMatches(tournament: DB_SelectTournament) {
   const selectQuery = await db
     .selectDistinct({ roundId: T_Match.roundId })
     .from(T_Match)
     .where(
-      and(
-        eq(T_Match.tournamentExternalId, tournament.externalId),
-        eq(T_Match.status, 'open')
-      )
+      and(eq(T_Match.tournamentId, tournament.id as string), eq(T_Match.status, 'open'))
     );
 
   return new Set(selectQuery.map(round => Number(round.roundId)));

@@ -5,7 +5,6 @@ export const T_Match = pgTable('match', {
   externalId: text('external_id').notNull().unique(),
   provider: text('provider').notNull(),
   tournamentId: uuid('tournament_id').notNull(),
-  tournamentExternalId: text('tournament_external_id').notNull(),
   roundId: text('round_id'),
   homeTeamId: text('home_team_id').notNull(),
   awayTeamId: text('away_team_id').notNull(),
@@ -15,6 +14,7 @@ export const T_Match = pgTable('match', {
   time: text('time'),
   stadium: text('stadium'),
   status: text('status'),
+  tournamentMatch: text('tournament_match'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')
     .notNull()

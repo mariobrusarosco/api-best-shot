@@ -1,16 +1,17 @@
 import { TournamentRequest } from '@/domains/data-provider-v2/interface';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { type Response } from 'express';
+import { ApiProviderSofascore } from '..';
 
-const Api = ApiProviderGloboEsporte.tournament;
-// const Api = ApiProviderSofa.tournament;
+// const Api = ApiProviderGloboEsporte.tournament;
+const Api = ApiProviderSofascore.tournament;
 
 const setupTournament = async (req: TournamentRequest, res: Response) => {
   try {
     const logo = await Api.fetchAndStoreLogo({
       logoPngBase64: req.body.logoPngBase64,
       logoUrl: req.body.logoUrl,
-      id: req.body.externalId,
+      id: crypto.randomUUID(),
     });
 
     const query = await Api.createOnDatabase({ ...req.body, logo });

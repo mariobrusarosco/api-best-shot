@@ -1,10 +1,10 @@
-import { API_GloboEsporteStandings } from '@/domains/data-providers/globo-esporte/typing/api';
 import { DB_InsertTeam, T_Team } from '@/domains/team/schema';
 import db from '@/services/database';
 import { fetchAndStoreAssetFromApiNew } from '@/utils';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import { IApiProviderV2, TeamsRequest } from '../../interface';
+import { API_GloboEsporteStandings } from './typing';
 
 export const GloboEsporteTeams: IApiProviderV2['teams'] = {
   fetchTeamsFromStandings: async (req: TeamsRequest) => {

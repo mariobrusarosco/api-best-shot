@@ -1,5 +1,5 @@
 {
-  "id": "da17e876-86d0-4e61-b991-7cdfb15b8586",
+  "id": "63999ae5-104f-4690-93c7-17e8817b6a7f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -54,7 +54,29 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "unique_guess": {
+          "name": "unique_guess",
+          "columns": [
+            {
+              "expression": "match_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "member_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "guess_match_id_member_id_pk": {
@@ -202,12 +224,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "tournament_external_id": {
-          "name": "tournament_external_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
         "round_id": {
           "name": "round_id",
           "type": "text",
@@ -258,6 +274,12 @@
         },
         "status": {
           "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tournament_match": {
+          "name": "tournament_match",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -399,7 +421,7 @@
           "name": "badge",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "provider": {
           "name": "provider",
@@ -469,6 +491,13 @@
           "type": "numeric",
           "primaryKey": false,
           "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
         },
         "provider": {
           "name": "provider",

@@ -1,4 +1,11 @@
-import { numeric, pgTable, primaryKey, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  numeric,
+  pgTable,
+  primaryKey,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 export const T_Guess = pgTable(
   'guess',
@@ -17,6 +24,7 @@ export const T_Guess = pgTable(
   table => {
     return {
       pk: primaryKey({ columns: [table.matchId, table.memberId] }),
+      uniqueGuess: uniqueIndex('unique_guess').on(table.matchId, table.memberId),
     };
   }
 );

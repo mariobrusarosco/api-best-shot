@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS "match" (
 	"external_id" text NOT NULL,
 	"provider" text NOT NULL,
 	"tournament_id" uuid NOT NULL,
-	"tournament_external_id" text NOT NULL,
 	"round_id" text,
 	"home_team_id" text NOT NULL,
 	"away_team_id" text NOT NULL,
@@ -43,6 +42,7 @@ CREATE TABLE IF NOT EXISTS "match" (
 	"time" text,
 	"stadium" text,
 	"status" text,
+	"tournament_match" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "match_external_id_unique" UNIQUE("external_id")
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS "team" (
 	"name" text NOT NULL,
 	"external_id" text NOT NULL,
 	"short_name" text,
-	"badge" text,
+	"badge" text NOT NULL,
 	"provider" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS "tournament" (
 	"standings_url" text NOT NULL,
 	"rounds_url" text NOT NULL,
 	"rounds" numeric NOT NULL,
+	"slug" text DEFAULT '' NOT NULL,
 	"provider" text NOT NULL,
 	"season" text NOT NULL,
 	"mode" text NOT NULL,
@@ -88,3 +89,5 @@ CREATE TABLE IF NOT EXISTS "tournament" (
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "tournament_provider_external_id_pk" PRIMARY KEY("provider","external_id")
 );
+--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "unique_guess" ON "guess" USING btree ("match_id","member_id");

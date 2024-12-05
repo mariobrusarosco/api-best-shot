@@ -81,19 +81,22 @@ async function createGuess(req: Request, res: Response) {
     const memberId = Utils.getAuthenticatedUserId(req, res);
     const input = req?.body as GuessInput;
 
+    console.log(req.body);
+
     const homeScore = String(input.home.score);
     const awayScore = String(input.away.score);
 
     const query = await db
       .insert(T_Guess)
       .values({
+        id: input.id,
         awayScore,
         homeScore,
         matchId: input.matchId,
         memberId,
       })
       .onConflictDoUpdate({
-        target: [T_Guess.matchId, T_Guess.memberId],
+        target: [T_Guess.memberId, T_Guess.matchId],
         set: { awayScore: String(input.away.score), homeScore: String(input.home.score) },
       });
 
@@ -107,7 +110,7 @@ async function createGuess(req: Request, res: Response) {
 
     res.status(200).send(query);
   } catch (error: any) {
-    console.log('[GUESS] [CREATING GUESS]');
+    console.error('[ERROR] [GUESS] [CREATING GUESS]');
     return handleInternalServerErrorResponse(res, error);
   }
 }

@@ -1,4 +1,4 @@
-import { DB_InsertTeam } from '@/services/database/schema';
+import { DB_InsertMatch, DB_InsertTeam } from '@/services/database/schema';
 import { FetchAndStoreAssetPayload } from '@/utils';
 import { type Request } from 'express';
 import { DB_InsertTournament } from '../tournament/schema';
@@ -16,6 +16,10 @@ export type IApiProviderV2 = {
     createOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[]>;
     updateOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[] | undefined>;
   };
+  matches: {
+    fetchRound: (url: string, round: number) => Promise<any>;
+    mapRound: (round: any, roundId: string, tournamentId: string) => DB_InsertMatch[];
+  };
 };
 
 export type TournamentRequest = Request<null, null, PayloadTournament>;
@@ -29,6 +33,7 @@ export type PayloadTournament = {
   provider: string;
   season: string;
   mode: string;
+  slug: string;
   logoUrl?: string;
   logoPngBase64?: string;
 };
@@ -36,4 +41,10 @@ export type PayloadTournament = {
 export type TeamsRequest = Request<null, null, TeamsPayload>;
 export type TeamsPayload = {
   standingsUrl: string;
+};
+
+export type MatchesRequest = Request<null, null, MatchesPayload>;
+export type MatchesPayload = {
+  tournamentId: string;
+  roundsUrl: string;
 };

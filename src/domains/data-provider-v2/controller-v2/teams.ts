@@ -2,21 +2,17 @@
 
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { Response } from 'express';
-import { ApiProviderV2 } from '..';
+import { ApiProviderGloboEsporte } from '..';
 import { TeamsRequest } from '../interface';
 
-const {
-  fetchTeamsFromStandings,
-  mapTeamsFromStandings,
-  createOnDatabase,
-  updateOnDatabase,
-} = ApiProviderV2.teams;
+const Api = ApiProviderGloboEsporte.teams;
+// const Api = ApiProviderSofa.teams;
 
 const setupTeams = async (req: TeamsRequest, res: Response) => {
   try {
-    const standings = await fetchTeamsFromStandings(req);
-    const mappedTeams = await mapTeamsFromStandings(standings);
-    const query = await createOnDatabase(mappedTeams);
+    const standings = await Api.fetchTeamsFromStandings(req);
+    const mappedTeams = await Api.mapTeamsFromStandings(standings);
+    const query = await Api.createOnDatabase(mappedTeams);
 
     res.status(200).send(query);
   } catch (error: any) {
@@ -28,9 +24,9 @@ const setupTeams = async (req: TeamsRequest, res: Response) => {
 
 const updateTeams = async (req: TeamsRequest, res: Response) => {
   try {
-    const standings = await fetchTeamsFromStandings(req);
-    const mappedTeams = await mapTeamsFromStandings(standings);
-    const query = await updateOnDatabase(mappedTeams);
+    const standings = await Api.fetchTeamsFromStandings(req);
+    const mappedTeams = await Api.mapTeamsFromStandings(standings);
+    const query = await Api.updateOnDatabase(mappedTeams);
 
     res.status(200).send(query);
   } catch (error: any) {

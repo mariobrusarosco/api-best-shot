@@ -1,4 +1,4 @@
-import { API_GloboEsporteStandings } from '@/domains/data-providers/globo-esporte/typing/api';
+import { API_SofaScoreStandings } from '@/domains/data-providers/sofascore/typing';
 import { DB_InsertTeam, T_Team } from '@/domains/team/schema';
 import db from '@/services/database';
 import { fetchAndStoreAssetFromApiNew } from '@/utils';
@@ -6,25 +6,27 @@ import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import { IApiProviderV2, TeamsRequest } from '../../interface';
 
-export const GloboEsporteTeams: IApiProviderV2['teams'] = {
+const SOFA_TEAN_LOGO_URL = 'https://img.sofascore.com/api/v1/team/:id/image/';
+
+export const SofascoreTeams: IApiProviderV2['teams'] = {
   fetchTeamsFromStandings: async (req: TeamsRequest) => {
     const response = await axios.get(req.body.standingsUrl);
 
-    return response.data as API_GloboEsporteStandings;
+    return response.data as API_SofaScoreStandings;
   },
-  mapTeamsFromStandings: async (standings: API_GloboEsporteStandings) => {
-    const promises = standings?.classificacao.map(async team => {
-      const badge = await GloboEsporteTeams.fetchAndStoreLogo({
-        id: String(team.equipe_id),
-        logoUrl: team?.escudo || '',
+  mapTeamsFromStandings: async (standings: API_SofaScoreStandings) => {
+    const promises = standings?.standings[0]['rows']?.map(async team => {
+      const badge = await SofascoreTeams.fetchAndStoreLogo({
+        id: String(team.team.id),
+        logoUrl: SOFA_TEAN_LOGO_URL.replace(':id', String(team.team.id)),
       });
 
       return {
-        name: team.nome_popular,
-        externalId: String(team.equipe_id),
-        shortName: team.sigla,
+        name: team.team.name,
+        externalId: String(team.team.id),
+        shortName: team.team.nameCode,
         badge,
-        provider: 'ge',
+        provider: 'sofa',
       } satisfies DB_InsertTeam;
     });
 

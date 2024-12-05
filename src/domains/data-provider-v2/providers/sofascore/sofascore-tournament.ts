@@ -4,7 +4,7 @@ import { fetchAndStoreAssetFromApiNew } from '@/utils';
 import { and, eq } from 'drizzle-orm';
 import { IApiProviderV2 } from '../../interface';
 
-export const GloboEsporteTournament: IApiProviderV2['tournament'] = {
+export const SofascoreTournament: IApiProviderV2['tournament'] = {
   createOnDatabase: async (data): Promise<DB_InsertTournament> => {
     const [tournament] = await db.insert(T_Tournament).values(data).returning();
 

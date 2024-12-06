@@ -11,7 +11,7 @@ const setupTournament = async (req: TournamentRequest, res: Response) => {
     const logo = await Api.fetchAndStoreLogo({
       logoPngBase64: req.body.logoPngBase64,
       logoUrl: req.body.logoUrl,
-      id: uuidv4(),
+      filename: `team-${uuidv4()}`,
     });
 
     const query = await Api.createOnDatabase({ ...req.body, logo });
@@ -29,7 +29,7 @@ const updateTournament = async (req: TournamentRequest, res: Response) => {
     const logo = await Api.fetchAndStoreLogo({
       logoPngBase64: req.body.logoPngBase64,
       logoUrl: req.body.logoUrl,
-      id: req.body.externalId,
+      filename: `tournament-${uuidv4()}`,
     });
 
     const query = await Api.updateOnDatabase({ ...req.body, logo });

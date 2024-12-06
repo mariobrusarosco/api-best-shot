@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
-export const TLeague = pgTable('league', {
+export const T_League = pgTable('league', {
   id: uuid('id').defaultRandom().primaryKey(),
   founderId: uuid('founder_id').notNull(),
   label: text('label').unique(),
@@ -12,10 +12,10 @@ export const TLeague = pgTable('league', {
     .$onUpdate(() => new Date()),
 });
 
-export type InsertLeague = typeof TLeague.$inferInsert;
-export type SelectLeague = typeof TLeague.$inferSelect;
+export type InsertLeague = typeof T_League.$inferInsert;
+export type SelectLeague = typeof T_League.$inferSelect;
 
-export const TLeagueRole = pgTable('league_role', {
+export const T_LeagueRole = pgTable('league_role', {
   id: uuid('id').defaultRandom().primaryKey(),
   leagueId: uuid('league_id').notNull(),
   memberId: uuid('member_id').notNull(),

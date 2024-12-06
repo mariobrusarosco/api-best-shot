@@ -108,9 +108,23 @@ const getLeague = async (req: Request, res: Response) => {
     const query = await db
       .select()
       .from(T_LeagueRole)
+      .innerJoin(T_League, eq(T_League.id, leagueId))
+      .innerJoin(T_Member, eq(T_Member.id, T_LeagueRole.memberId))
       .where(and(eq(T_LeagueRole.leagueId, leagueId)));
 
-    res.status(200).send(query);
+    const participants = query.map(row => ({
+      role: row.league_role.role,
+      nickName: row.member.nickName,
+    }));
+
+    const league = {
+      id: query[0].league.id,
+      label: query[0].league.label,
+      description: query[0].league.description,
+      participants,
+    };
+
+    res.status(200).send(league);
   } catch (error: any) {
     console.error('[ERROR] - [inviteToLeague] ', error);
     handleInternalServerErrorResponse(res, error);

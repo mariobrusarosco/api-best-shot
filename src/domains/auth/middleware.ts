@@ -15,7 +15,7 @@ export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) 
       const member = Utils.decodeMemberToken(authCookie) as AuthCookieContent;
 
       req.authenticatedUser = {
-        publicId: member.publicId || '',
+        id: member.id || '',
         nickName: member.nickName,
       };
     }

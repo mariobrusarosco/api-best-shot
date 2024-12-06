@@ -78,7 +78,7 @@ export async function fetchAndStoreAssetFromApi(payload: {
 export type FetchAndStoreAssetPayload = {
   logoUrl?: string;
   logoPngBase64?: string;
-  id: string;
+  filename: string;
 };
 
 export async function fetchAndStoreAssetFromApiNew(payload: FetchAndStoreAssetPayload) {
@@ -98,7 +98,7 @@ export async function fetchAndStoreAssetFromApiNew(payload: FetchAndStoreAssetPa
     if (payload.logoPngBase64) {
       Body = Buffer.from(payload.logoPngBase64 || '', 'base64');
       ContentType = 'image/png';
-      Key = `data-providers/${payload.id}.png`;
+      Key = `data-providers/${payload.filename}.png`;
     } else {
       const response = await axios.get(payload.logoUrl || '', {
         responseType: 'arraybuffer',
@@ -107,7 +107,7 @@ export async function fetchAndStoreAssetFromApiNew(payload: FetchAndStoreAssetPa
 
       Body = Buffer.from(response.data);
       ContentType = response.headers['content-type'];
-      Key = `data-providers/${payload?.id}.${ext}`;
+      Key = `data-providers/${payload?.filename}.${ext}`;
     }
 
     await s3.send(

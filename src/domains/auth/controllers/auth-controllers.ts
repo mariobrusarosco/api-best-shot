@@ -11,11 +11,14 @@ async function authenticateUser(req: Request, res: Response) {
     const body = req?.body as { publicId: string };
     const publicId = body.publicId;
 
-    const member = await db.select().from(T_Member).where(eq(T_Member.id, publicId));
+    const [member] = await db
+      .select()
+      .from(T_Member)
+      .where(eq(T_Member.publicId, publicId));
 
     if (!member) throw new Error('no user found to authenticate');
 
-    const token = Utils.signUserCookieBased(publicId, res);
+    const token = Utils.signUserCookieBased({ memberId: member.id, res });
 
     return res.status(200).send(token);
   } catch (error: any) {
@@ -31,9 +34,9 @@ const getMember = async (req: Request, res: Response) => {
   const memberId = req?.body?.memberId;
 
   try {
-    const member = await db.select().from(T_Member).where(eq(T_Member.id, memberId));
+    const [member] = await db.select().from(T_Member).where(eq(T_Member.id, memberId));
 
-    return res.status(200).send(member[0]);
+    return res.status(200).send(member);
   } catch (error: any) {
     return handleInternalServerErrorResponse(res, error);
   }

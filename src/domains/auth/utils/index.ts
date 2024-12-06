@@ -13,11 +13,11 @@ const decodeMemberToken = (token: string) => {
 const getUserCookie = (req: CustomRequest) =>
   req.cookies[process.env['MEMBER_PUBLIC_ID_COOKIE'] || ''] || null;
 
-const signUserCookieBased = (publicId: string, res: Response) => {
+const signUserCookieBased = ({ memberId, res }: { memberId: string; res: Response }) => {
   try {
-    if (!res || !publicId || !process.env['JWT_SECRET']) return null;
+    if (!res || !memberId || !process.env['JWT_SECRET']) return null;
 
-    const token = jwt.sign({ publicId }, process.env['JWT_SECRET'], {
+    const token = jwt.sign({ id: memberId }, process.env['JWT_SECRET'], {
       expiresIn: '3d',
     });
 
@@ -41,7 +41,7 @@ const signUserCookieBased = (publicId: string, res: Response) => {
 
 const getAuthenticatedUserId = (req: Request, res: Response) => {
   try {
-    return req.authenticatedUser?.publicId;
+    return req.authenticatedUser?.id;
   } catch (e) {
     res
       .status(GlobalErrorMapper.NOT_AUTHORIZED.status)

@@ -3,7 +3,7 @@ import { DB_SelectMatch, T_Match } from '@/domains/match/schema';
 import { DB_SelectMember, T_Member } from '@/domains/member/schema';
 import { DB_SelectTournament, T_Tournament } from '@/domains/tournament/schema';
 
-import { TLeagueRole } from '@/domains/league/schema';
+import { T_LeagueRole } from '@/domains/league/schema';
 import db from '@/services/database';
 import { and, eq, gte, lte } from 'drizzle-orm';
 import { Request, Response } from 'express';
@@ -24,13 +24,13 @@ async function getLeagueScore(req: Request, res: Response) {
     const query = (await db
       .select()
       .from(T_Guess)
-      .leftJoin(TLeagueRole, eq(T_Guess.memberId, TLeagueRole.memberId))
+      .leftJoin(T_LeagueRole, eq(T_Guess.memberId, T_LeagueRole.memberId))
       .leftJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
       .leftJoin(T_Member, eq(T_Member.id, T_Guess.memberId))
       .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
       .where(
         and(
-          eq(TLeagueRole.leagueId, leagueId),
+          eq(T_LeagueRole.leagueId, leagueId),
           gte(T_Match.date, new Date('2024-01-01')),
           lte(T_Match.date, new Date('2024-12-31'))
         )

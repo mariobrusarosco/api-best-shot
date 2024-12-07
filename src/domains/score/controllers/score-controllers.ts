@@ -3,8 +3,6 @@ import { DB_SelectMatch, T_Match } from '@/domains/match/schema';
 import { DB_SelectMember, T_Member } from '@/domains/member/schema';
 import { DB_SelectTournament, T_Tournament } from '@/domains/tournament/schema';
 
-import { Utils } from '@/domains/auth/utils';
-import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { T_LeagueRole } from '@/domains/league/schema';
 import db from '@/services/database';
 import { and, eq, gte, lte } from 'drizzle-orm';
@@ -46,29 +44,8 @@ async function getLeagueScore(req: Request, res: Response) {
   }
 }
 
-async function getTournamentScore(req: Request, res: Response) {
-  try {
-    const memberId = Utils.getAuthenticatedUserId(req, res);
-    const { tournamentId } = req?.params as { tournamentId: string };
-
-    const guesses = await db
-      .select()
-      .from(T_Guess)
-      .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
-      .where(and(eq(T_Guess.memberId, memberId), eq(T_Match.tournamentId, tournamentId)));
-
-    const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
-
-    return res.status(200).send(parsedGuesses);
-  } catch (error: any) {
-    console.error('[GET] - [GUESS]', error);
-    return handleInternalServerErrorResponse(res, error);
-  }
-}
-
 const ScoreController = {
   getLeagueScore,
-  getTournamentScore,
 };
 
 export default ScoreController;

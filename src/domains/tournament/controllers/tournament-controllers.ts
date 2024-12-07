@@ -1,4 +1,7 @@
+import { Utils } from '@/domains/auth/utils';
 import { ACTIVE_API_PROVIDER } from '@/domains/data-provider-v2';
+import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
+import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
 import { DB_SelectTournament, T_Tournament } from '@/domains/tournament/schema';
 import { and, eq } from 'drizzle-orm';
@@ -9,6 +12,8 @@ import { handleInternalServerErrorResponse } from '../../shared/error-handling/h
 const TournamentController = {
   getTournament,
   getAllTournaments,
+  getTournamentScore,
+  setupTournament,
 };
 
 async function getTournament(req: Request, res: Response) {
@@ -44,9 +49,73 @@ async function getAllTournaments(_: Request, res: Response) {
   }
 }
 
+async function getTournamentScore(req: Request, res: Response) {
+  try {
+    const memberId = Utils.getAuthenticatedUserId(req, res);
+    const { tournamentId } = req?.params as { tournamentId: string };
+
+    const guesses = await db
+      .select()
+      .from(T_Guess)
+      .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
+      .where(and(eq(T_Guess.memberId, memberId), eq(T_Match.tournamentId, tournamentId)));
+
+    const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
+
+    return res.status(200).send(parsedGuesses);
+  } catch (error: any) {
+    console.error('[GET] - [GUESS]', error);
+    return handleInternalServerErrorResponse(res, error);
+  }
+}
+
+async function setupTournament(req: Request, res: Response) {
+  try {
+    const memberId = Utils.getAuthenticatedUserId(req, res);
+    const { tournamentId } = req.params as { tournamentId: string };
+    const matches = await db
+      .select()
+      .from(T_Match)
+      .where(eq(T_Match.tournamentId, tournamentId));
+
+    const guessesToInsert = matches.map(row => {
+      return {
+        matchId: row.id,
+        memberId,
+        awayScore: null,
+        homeScore: null,
+      } satisfies DB_InsertGuess;
+    });
+
+    await db.insert(T_Guess).values(guessesToInsert);
+
+    res.status(200).send('SUCCESS');
+  } catch (error: any) {
+    console.error('[ERROR] [TOURNAMENT] [setupTournament]');
+    return handleInternalServerErrorResponse(res, error);
+  }
+}
+
 // ----------------------------------------------------------------
 
-export async function getNonStartedMatches(tournament: DB_SelectTournament) {
+async function queryMatchesWithNullGuess(
+  memberId: string,
+  tournamentId: string,
+  round: string
+) {
+  const rows = await db
+    .select()
+    .from(T_Match)
+    .leftJoin(
+      T_Guess,
+      and(eq(T_Match.id, T_Guess.matchId), eq(T_Guess.memberId, memberId))
+    )
+    .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundId, round)));
+
+  return rows.filter(row => row.guess === null);
+}
+
+async function getNonStartedMatches(tournament: DB_SelectTournament) {
   const selectQuery = await db
     .selectDistinct({ roundId: T_Match.roundId })
     .from(T_Match)

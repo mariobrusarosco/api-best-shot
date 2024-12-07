@@ -1,7 +1,7 @@
 import { Utils } from '@/domains/auth/utils';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { ErrorMapper } from '@/domains/guess/error-handling/mapper';
-import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
+import { T_Guess } from '@/domains/guess/schema';
 import { GuessInput } from '@/domains/guess/typing';
 import { T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
@@ -13,24 +13,8 @@ const GuessController = {
   createGuess,
   getMemberGuesses,
   runGuessAnalysis,
+  setupTournamentGuesses,
 };
-
-async function getMatchesWithNullGuess(
-  memberId: string,
-  tournamentId: string,
-  round: string
-) {
-  const rows = await db
-    .select()
-    .from(T_Match)
-    .leftJoin(
-      T_Guess,
-      and(eq(T_Match.id, T_Guess.matchId), eq(T_Guess.memberId, memberId))
-    )
-    .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundId, round)));
-
-  return rows.filter(row => row.guess === null);
-}
 
 async function getMemberGuesses(req: Request, res: Response) {
   try {
@@ -38,24 +22,16 @@ async function getMemberGuesses(req: Request, res: Response) {
     const tournamentId = req.params.tournamentId as string;
     const query = req.query as { round: string };
 
-    const matchesWithNullGuess = await getMatchesWithNullGuess(
-      memberId,
-      tournamentId,
-      query?.round
-    );
+    // const matchesWithNullGuess = await queryMatchesWithNullGuess(
+    //   memberId,
+    //   tournamentId,
+    //   query?.round
+    // );
 
-    const newGuessesToInsert = matchesWithNullGuess.map(row => {
-      return {
-        matchId: row.match.id,
-        memberId,
-        awayScore: null,
-        homeScore: null,
-      } satisfies DB_InsertGuess;
-    });
-
-    if (newGuessesToInsert.length > 0) {
-      await db.insert(T_Guess).values(newGuessesToInsert);
-    }
+    // // if (matchesWithNullGuess.length > 0) {
+    //   console.log('matchesWithNullGuess', matchesWithNullGuess.length);
+    //   return res.status(200).send([]);
+    // }
 
     const guesses = await db
       .select()
@@ -114,5 +90,7 @@ async function createGuess(req: Request, res: Response) {
     return handleInternalServerErrorResponse(res, error);
   }
 }
+
+async function setupTournamentGuesses(req: Request, res: Response) {}
 
 export default GuessController;

@@ -3,7 +3,7 @@ import { ACTIVE_API_PROVIDER } from '@/domains/data-provider-v2';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
-import { DB_SelectTournament, T_Tournament } from '@/domains/tournament/schema';
+import { T_Tournament } from '@/domains/tournament/schema';
 import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import db from '../../../services/database';
@@ -113,17 +113,6 @@ async function queryMatchesWithNullGuess(
     .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundId, round)));
 
   return rows.filter(row => row.guess === null);
-}
-
-async function getNonStartedMatches(tournament: DB_SelectTournament) {
-  const selectQuery = await db
-    .selectDistinct({ roundId: T_Match.roundId })
-    .from(T_Match)
-    .where(
-      and(eq(T_Match.tournamentId, tournament.id as string), eq(T_Match.status, 'open'))
-    );
-
-  return new Set(selectQuery.map(round => Number(round.roundId)));
 }
 
 export default TournamentController;

@@ -1,6 +1,7 @@
 import { Utils } from '@/domains/auth/utils';
 import { T_League, T_LeagueRole } from '@/domains/league/schema';
 import { T_Member } from '@/domains/member/schema';
+import { PerformanceController } from '@/domains/performance/controller';
 import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
@@ -117,11 +118,14 @@ const getLeague = async (req: Request, res: Response) => {
       nickName: row.member.nickName,
     }));
 
+    const performance = await PerformanceController.getLeaguePerformance(leagueId);
+
     const league = {
       id: query[0].league.id,
       label: query[0].league.label,
       description: query[0].league.description,
       participants,
+      performance,
     };
 
     res.status(200).send(league);
@@ -131,11 +135,19 @@ const getLeague = async (req: Request, res: Response) => {
   }
 };
 
+const updateLeaguePerformance = async (req: Request, res: Response) => {
+  const { leagueId } = req.params;
+  const perf = await PerformanceController.updateLeaguePerformance(leagueId);
+
+  return res.status(200).send(perf);
+};
+
 const LeagueController = {
   getLeagues,
   createLeague,
   inviteToLeague,
   getLeague,
+  updateLeaguePerformance,
 };
 
 export default LeagueController;

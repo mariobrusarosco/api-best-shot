@@ -11,6 +11,7 @@ const LeagueRouting = (app: Express) => {
   leagueRouter.post('/invitation', LeagueController.inviteToLeague);
 
   leagueRouter.get('/:leagueId', LeagueController.getLeague);
+  leagueRouter.post('/:leagueId/performance', LeagueController.updateLeaguePerformance);
 
   app.use(`${process.env.API_VERSION}/leagues`, AuthMiddleware, leagueRouter);
 };

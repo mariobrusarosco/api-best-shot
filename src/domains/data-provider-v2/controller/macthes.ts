@@ -1,10 +1,9 @@
 import { T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { getNonStartedMatches } from '@/domains/tournament/controllers/tournament-controllers';
 import { DB_SelectTournament } from '@/domains/tournament/schema';
 import { getTournamentById } from '@/domains/tournament/utils';
 import db from '@/services/database';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { Response } from 'express';
 import { ApiProvider } from '..';
 import { MatchesRequest } from '../interface';
@@ -81,4 +80,15 @@ const createMatchesForEachRound = async (tournament: DB_SelectTournament) => {
 
     ROUND_COUNT++;
   }
+};
+
+const getNonStartedMatches = async (tournament: DB_SelectTournament) => {
+  const selectQuery = await db
+    .selectDistinct({ roundId: T_Match.roundId })
+    .from(T_Match)
+    .where(
+      and(eq(T_Match.tournamentId, tournament.id as string), eq(T_Match.status, 'open'))
+    );
+
+  return new Set(selectQuery.map(round => Number(round.roundId)));
 };

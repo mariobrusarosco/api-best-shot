@@ -3,7 +3,6 @@ import db from '@/services/database';
 import { fetchAndStoreAssetFromApiNew } from '@/utils';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
 import { IApiProviderV2, TeamsRequest } from '../../interface';
 import { API_GloboEsporteStandings } from './typing';
 
@@ -16,7 +15,7 @@ export const GloboEsporteTeams: IApiProviderV2['teams'] = {
   mapTeamsFromStandings: async (standings: API_GloboEsporteStandings) => {
     const promises = standings?.classificacao.map(async team => {
       const badge = await GloboEsporteTeams.fetchAndStoreLogo({
-        filename: `team-${uuidv4()}`,
+        filename: `team-${team.equipe_id}`,
         logoUrl: team?.escudo || '',
       });
 

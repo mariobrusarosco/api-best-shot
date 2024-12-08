@@ -1,8 +1,8 @@
-name: Watch for Matches
+name: Updating Tournament Matches on Database
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Runs every day at midnight
+    - cron: '1 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -10,21 +10,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Define Tournaments and Make API Calls
+        env:
+          COOKIE: ${{ secrets.API_COOKIE_DEMO }}
+          TOURNAMENT_IDS: ${{ secrets.TOURNAMENT_IDS_DEMO }}
+        run: |
+          IFS=',' read -r -a TOURNAMENTS <<< "$TOURNAMENT_IDS_DEMO"
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+          API_URL="https://api-best-shot-demo.mariobrusarosco.com/api/v1/data-provider/matches/"
 
-      - name: Install dependencies
-        # TODO: Cache the dependencies
-        run: yarn
+          curl -X PATCH "$API_URL" \
+            -H "Content-Type: application/json" \
+            -H "Cookie: $COOKIE" \
+            -d "{\"tournamentId\":\"f2adbfb7-d8e5-4500-8395-d313cd4b0896\"}"
 
-      - name: Compile Data Providers Scripts
-        run: yarn compile-data-providers
+          for TOURNAMENT in $TOURNAMENTS
+          do
+            echo "Calling API for tournament $TOURNAMENT"
+            curl -X PATCH "$API_URL" \
+              -H "Content-Type: application/json" \
+              -H "Cookie: $COOKIE" \
+              -d "{\"tournamentId\":\"$TOURNAMENT\"}"
 
-      - name: Run watch-for-matches script
-        run: node ./dist/services/data-providers/update-tournaments-matches.js
-
+            echo "Waiting 30 minutes before next call..."
+            sleep $((30 * 60))
+          done

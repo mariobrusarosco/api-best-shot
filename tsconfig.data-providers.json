@@ -1,8 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "include": ["src/services/data-providers/**/*.ts"],
-  "compilerOptions": {
-    "outDir": "./dist/services/data-providers",
-    "rootDir": "src/services/data-providers"
-  }
-}

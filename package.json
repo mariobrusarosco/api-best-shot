@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "description": "API - Best Shot",
   "main": "index.js",
   "scripts": {
@@ -8,6 +8,7 @@
     "dev": "ts-node-dev -r tsconfig-paths/register ./src/index.ts",
     "serve-prod": "node -r dotenv/config ./dist/index.js",
     "compile": "tsc ./src --noEmit",
+    "compile-data-providers": "tsc --project tsconfig.data-providers.json && tsc-alias",
     "scrapper": "tsx watch ./src/scrapper.ts",
     "api-lookup": "tsx watch ./src/api-lookup.ts"
   },

@@ -1,0 +1,30 @@
+name: Watch for Matches
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight
+  workflow_dispatch:
+
+jobs:
+  watch-for-matches:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        # TODO: Cache the dependencies
+        run: yarn
+
+      - name: Compile Data Providers Scripts
+        run: yarn compile-data-providers
+
+      - name: Run watch-for-matches script
+        run: node ./dist/services/data-providers/update-tournaments-matches.js
+

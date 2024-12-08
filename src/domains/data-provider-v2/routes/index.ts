@@ -1,6 +1,6 @@
 import type { Express } from 'express';
 import express from 'express';
-import { MatchesDataController } from '../controller/macthes';
+import { MatchesDataController } from '../controller/matches';
 import { TeamsDataController } from '../controller/teams';
 import { TournamentDataController } from '../controller/tournaments';
 

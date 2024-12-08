@@ -1,7 +1,6 @@
 import { TournamentRequest } from '@/domains/data-provider-v2/interface';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { type Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 import { ApiProvider } from '..';
 
 const Api = ApiProvider.tournament;
@@ -11,7 +10,7 @@ const setupTournament = async (req: TournamentRequest, res: Response) => {
     const logo = await Api.fetchAndStoreLogo({
       logoPngBase64: req.body.logoPngBase64,
       logoUrl: req.body.logoUrl,
-      filename: `team-${uuidv4()}`,
+      filename: `tournament-${req.body.externalId}`,
     });
 
     const query = await Api.createOnDatabase({ ...req.body, logo });
@@ -29,7 +28,7 @@ const updateTournament = async (req: TournamentRequest, res: Response) => {
     const logo = await Api.fetchAndStoreLogo({
       logoPngBase64: req.body.logoPngBase64,
       logoUrl: req.body.logoUrl,
-      filename: `tournament-${uuidv4()}`,
+      filename: `tournament-${req.body.externalId}`,
     });
 
     const query = await Api.updateOnDatabase({ ...req.body, logo });

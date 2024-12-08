@@ -1,3 +1,4 @@
+import { AuthMiddleware } from '@/domains/auth/middleware';
 import type { Express } from 'express';
 import express from 'express';
 import { MatchesDataController } from '../controller/matches';
@@ -17,7 +18,7 @@ const DataProviderRouting = (app: Express) => {
   dataProviderRouter.post('/matches', MatchesDataController.setupMatches);
   dataProviderRouter.patch('/matches', MatchesDataController.updateMatches);
 
-  app.use(`${process.env.API_VERSION}/data-provider`, dataProviderRouter);
+  app.use(`${process.env.API_VERSION}/data-provider`, AuthMiddleware, dataProviderRouter);
 };
 
 export default DataProviderRouting;

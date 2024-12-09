@@ -13,25 +13,28 @@ jobs:
       - name: Define Tournaments and Make API Calls
         env:
           COOKIE: ${{ secrets.API_COOKIE_DEMO }}
-          TOURNAMENT_IDS: ${{ secrets.TOURNAMENT_IDS_DEMO }}
+          TOURNAMENT_IDS: ${{ vars.TOURNAMENT_IDS_DEMO }}
         run: |
-          IFS=',' read -r -a TOURNAMENTS <<< "$TOURNAMENT_IDS_DEMO"
+          echo "Raw TOURNAMENT_IDS: $TOURNAMENT_IDS"
 
-          API_URL="https://api-best-shot-demo.mariobrusarosco.com/api/v1/data-provider/matches/"
+          # Set comma as delimiter
+          IFS=','
 
-          curl -X PATCH "$API_URL" \
-            -H "Content-Type: application/json" \
-            -H "Cookie: $COOKIE" \
-            -d "{\"tournamentId\":\"f2adbfb7-d8e5-4500-8395-d313cd4b0896\"}"
-
-          for TOURNAMENT in $TOURNAMENTS
+          # Loop over each tournament ID
+          for TOURNAMENT in $TOURNAMENT_IDS
           do
-            echo "Calling API for tournament $TOURNAMENT"
-            curl -X PATCH "$API_URL" \
-              -H "Content-Type: application/json" \
-              -H "Cookie: $COOKIE" \
-              -d "{\"tournamentId\":\"$TOURNAMENT\"}"
+            TOURNAMENT=$(echo "$TOURNAMENT" | xargs)
+            echo "Processing tournament $TOURNAMENT"
+            echo "{\"tournamentId\":\"$TOURNAMENT\"}"
+            echo "${COOKIE}"
 
-            echo "Waiting 30 minutes before next call..."
+            TOURNAMENT=$(echo "$TOURNAMENT" | xargs)
+
+            curl -X PATCH "https://api-best-shot-demo.mariobrusarosco.com/api/v1/data-provider/matches/" \
+              -H "Content-Type: application/json" \
+              -H "Cookie: ${COOKIE}" \
+              -d "{\"tournamentId\":\"${TOURNAMENT}\"}"
+
+            echo "Waiting 30 minutes before the next call..."
             sleep $((30 * 60))
           done

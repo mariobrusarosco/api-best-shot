@@ -1,3 +1,5 @@
+import { ApiProvider } from '@/domains/data-provider-v2';
+import { MatchesRequest } from '@/domains/data-provider-v2/interface';
 import { T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { DB_SelectTournament } from '@/domains/tournament/schema';
@@ -5,8 +7,7 @@ import { getTournamentById } from '@/domains/tournament/utils';
 import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
 import { Response } from 'express';
-import { ApiProvider } from '..';
-import { MatchesRequest } from '../interface';
+
 
 const Api = ApiProvider?.matches;
 

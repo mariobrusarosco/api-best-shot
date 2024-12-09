@@ -3,7 +3,6 @@ import db from '@/services/database';
 import { fetchAndStoreAssetFromApiNew } from '@/utils';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
 import { IApiProviderV2, TeamsRequest } from '../../interface';
 import { API_SofaScoreStandings } from './typing';
 const SOFA_TEAN_LOGO_URL = 'https://img.sofascore.com/api/v1/team/:id/image/';
@@ -17,7 +16,7 @@ export const SofascoreTeams: IApiProviderV2['teams'] = {
   mapTeamsFromStandings: async (standings: API_SofaScoreStandings) => {
     const promises = standings?.standings[0]['rows']?.map(async team => {
       const badge = await SofascoreTeams.fetchAndStoreLogo({
-        filename: `team-${uuidv4()}`,
+        filename: `team-${team.team.id}`,
         logoUrl: SOFA_TEAN_LOGO_URL.replace(':id', String(team.team.id)),
       });
 

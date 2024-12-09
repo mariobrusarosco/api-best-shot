@@ -40,7 +40,7 @@ export const T_TournamentPerformance = pgTable(
   {
     id: uuid('id').notNull().defaultRandom(),
     memberId: uuid('member_id').notNull(),
-    tournamentId: uuid('league_id').notNull(),
+    tournamentId: uuid('tournamentId_id').notNull(),
     points: numeric('points'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')

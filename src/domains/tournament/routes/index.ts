@@ -1,6 +1,7 @@
 import { AuthMiddleware } from '@/domains/auth/middleware';
 import GuessController from '@/domains/guess/controllers/guess-controllers';
 import MatchController from '@/domains/match/controllers/match-controller';
+import { PerformanceController } from '@/domains/performance/controller';
 import type { Express } from 'express';
 import express from 'express';
 import TournamentController from '../controllers/tournament-controllers';
@@ -27,7 +28,12 @@ const TournamentRouting = (app: Express) => {
   tournamentRouter.get(
     '/:tournamentId/performance',
     AuthMiddleware,
-    TournamentController.getTournamentScore
+    PerformanceController.getTournamentPerformance
+  );
+  tournamentRouter.patch(
+    '/:tournamentId/performance',
+    AuthMiddleware,
+    PerformanceController.updateTournamentPerformance
   );
 
   tournamentRouter.post(

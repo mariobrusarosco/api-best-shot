@@ -1,3 +1,5 @@
+import { ApiProvider } from '@/domains/data-provider-v2';
+import { MatchesRequest } from '@/domains/data-provider-v2/interface';
 import { T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { DB_SelectTournament } from '@/domains/tournament/schema';
@@ -5,8 +7,7 @@ import { getTournamentById } from '@/domains/tournament/utils';
 import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
 import { Response } from 'express';
-import { ApiProvider } from '..';
-import { MatchesRequest } from '../interface';
+
 
 const Api = ApiProvider?.matches;
 
@@ -82,7 +83,7 @@ const createMatchesForEachRound = async (tournament: DB_SelectTournament) => {
   }
 };
 
-async function getNonStartedMatches(tournament: DB_SelectTournament) {
+const getNonStartedMatches = async (tournament: DB_SelectTournament) => {
   const selectQuery = await db
     .selectDistinct({ roundId: T_Match.roundId })
     .from(T_Match)
@@ -91,4 +92,4 @@ async function getNonStartedMatches(tournament: DB_SelectTournament) {
     );
 
   return new Set(selectQuery.map(round => Number(round.roundId)));
-}
+};

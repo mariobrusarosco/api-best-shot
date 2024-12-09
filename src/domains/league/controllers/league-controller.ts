@@ -1,6 +1,7 @@
 import { Utils } from '@/domains/auth/utils';
 import { T_League, T_LeagueRole } from '@/domains/league/schema';
 import { T_Member } from '@/domains/member/schema';
+import { T_LeaguePerformance } from '@/domains/performance/schema';
 import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
@@ -54,7 +55,11 @@ const createLeague = async (req: Request, res: Response) => {
       memberId,
       role: 'ADMIN',
     });
-
+    await db.insert(T_LeaguePerformance).values({
+      leagueId: league.id,
+      memberId,
+      points: String(0),
+    });
     return res.status(201).send(league);
   } catch (error: any) {
     console.error('[ERROR] - [createLeague] ', error);
@@ -85,6 +90,12 @@ const inviteToLeague = async (req: Request, res: Response) => {
         role: 'GUEST',
       })
       .returning();
+
+    await db.insert(T_LeaguePerformance).values({
+      leagueId,
+      memberId: guestId,
+      points: String(0),
+    });
 
     return res.status(201).send('user invited to league');
   } catch (error: any) {
@@ -126,16 +137,24 @@ const getLeague = async (req: Request, res: Response) => {
 
     res.status(200).send(league);
   } catch (error: any) {
-    console.error('[ERROR] - [inviteToLeague] ', error);
+    console.error('[ERROR] - [getLeague] ', error);
     handleInternalServerErrorResponse(res, error);
   }
 };
+
+// const updateLeaguePerformance = async (req: Request, res: Response) => {
+//   const { leagueId } = req.params;
+//   const perf = await PerformanceController.updateLeaguePerformance(leagueId);
+
+//   return res.status(200).send(perf);
+// };
 
 const LeagueController = {
   getLeagues,
   createLeague,
   inviteToLeague,
   getLeague,
+  // updateLeaguePerformance,
 };
 
 export default LeagueController;

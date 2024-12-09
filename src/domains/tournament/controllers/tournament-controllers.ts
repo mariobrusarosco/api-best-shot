@@ -3,6 +3,7 @@ import { ACTIVE_API_PROVIDER } from '@/domains/data-provider-v2';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
+import { T_TournamentPerformance } from '@/domains/performance/schema';
 import { T_Tournament } from '@/domains/tournament/schema';
 import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
@@ -62,12 +63,21 @@ async function getTournamentScore(req: Request, res: Response) {
 
     const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
 
-    return res.status(200).send(parsedGuesses);
+    return res.status(200).send({
+      details: parsedGuesses,
+      points: getTotalPoints(parsedGuesses),
+    });
   } catch (error: any) {
     console.error('[GET] - [GUESS]', error);
     return handleInternalServerErrorResponse(res, error);
   }
 }
+
+const getTotalPoints = (guesses?: ReturnType<typeof runGuessAnalysis>[]) => {
+  if (!performance) return null;
+
+  return guesses?.reduce((acc, value) => acc + value.total, 0);
+};
 
 async function setupTournament(req: Request, res: Response) {
   try {
@@ -88,6 +98,11 @@ async function setupTournament(req: Request, res: Response) {
     });
 
     await db.insert(T_Guess).values(guessesToInsert);
+    await db.insert(T_TournamentPerformance).values({
+      memberId,
+      tournamentId,
+      points: String(0),
+    });
 
     res.status(200).send('SUCCESS');
   } catch (error: any) {

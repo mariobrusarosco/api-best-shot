@@ -8,6 +8,12 @@ export const isNullable = (value: any) => {
 
 export const safeDate = (date: any) =>
   date === null || date === undefined ? null : new Date(date);
+
+export const safeISODate = (date: any) => {
+  console.log(date, typeof date, new Date(date), typeof new Date(date));
+  return date === null || date === undefined ? null : new Date(date).toISOString();
+};
+
 export const safeString = (str: any) =>
   str === null || str === undefined ? null : String(str);
 

@@ -1,3 +1,4 @@
+import { DB_InsertMatch } from '@/domains/match/schema';
 import { safeDate, safeString } from '@/utils';
 import axios from 'axios';
 import { IApiProviderV2 } from '../../interface';
@@ -26,8 +27,17 @@ export const GloboEsporteMatches: IApiProviderV2['matches'] = {
         date: safeDate(match.data_realizacao),
         time: safeString(match.hora_realizacao),
         stadium: safeString(match?.sede?.nome_popular),
-        status: match.jogo_ja_comecou === true ? 'ended' : 'open',
-      };
+        status: getMatchStatus(match),
+      } as DB_InsertMatch;
     });
   },
+};
+
+const getMatchStatus = (match: API_GloboEsporteRound[number]) => {
+  const matchHasNoPlayStatus = match.jogo_ja_comecou === null;
+  const matchHasNoDate = match.data_realizacao === null;
+
+  if (matchHasNoDate && matchHasNoPlayStatus) return 'not-defined';
+  if (match.jogo_ja_comecou === true) return 'ended';
+  return 'open';
 };

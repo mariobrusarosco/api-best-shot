@@ -1,5 +1,5 @@
 import { DB_InsertMatch } from '@/domains/match/schema';
-import { safeDate, safeString } from '@/utils';
+import { safeISODate, safeString } from '@/utils';
 import axios from 'axios';
 import { IApiProviderV2 } from '../../interface';
 import { API_SofaScoreRound } from './typing';
@@ -23,9 +23,18 @@ export const SofascoreMatches: IApiProviderV2['matches'] = {
         homeScore: safeString(match.homeScore.current),
         awayTeamId: String(match.awayTeam.id),
         awayScore: safeString(match.awayScore.current),
-        date: safeDate(match.startTimestamp! * 1000),
-        status: match.status.code === 100 ? 'ended' : 'open',
+        date: safeISODate(match.startTimestamp! * 1000),
+        status: getMatchStatus(match),
       } as DB_InsertMatch;
     });
   },
+};
+
+const getMatchStatus = (match: API_SofaScoreRound['events'][number]) => {
+  const matchWasPostponed = match.status.code === 60;
+  const matcheEnded = match.status.code === 100;
+
+  if (matchWasPostponed) return 'not-defined';
+  if (matcheEnded) return 'ended';
+  return 'open';
 };

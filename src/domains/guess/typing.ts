@@ -16,6 +16,7 @@ export const GUESS_STATUSES = {
   NOT_STARTED: 'not-started',
   WAITING_FOR_GAME: 'waiting_for_game',
   FINALIZED: 'finalized',
+  PAUSED: 'paused',
 } as const;
 
 export type GUESS_STATUS = (typeof GUESS_STATUSES)[keyof typeof GUESS_STATUSES];

@@ -10,7 +10,7 @@ export const T_Match = pgTable('match', {
   awayTeamId: text('away_team_id').notNull(),
   homeScore: numeric('home_score'),
   awayScore: numeric('away_score'),
-  date: timestamp('date', { withTimezone: true }),
+  date: timestamp('date'),
   time: text('time'),
   stadium: text('stadium'),
   status: text('status'),

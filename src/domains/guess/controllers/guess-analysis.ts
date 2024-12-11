@@ -1,14 +1,19 @@
 import { DB_SelectGuess } from '@/domains/guess/schema';
 import { DB_SelectMatch } from '@/domains/match/schema';
 import { toNumberOrNull, toNumberOrZero } from '@/utils';
+import { isPast } from 'date-fns';
 import { GUESS_STATUS, GUESS_STATUSES } from '../typing';
 
 export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const hasNullGuesses = guess.homeScore === null || guess.awayScore === null;
-  const guessExpired = match.status === 'ended' && hasNullGuesses;
+  const hasLostTimeWindowToGuess = isPast(match.date || '') && match.status !== 'paused';
+  console.log({ match });
+  const guessPaused = match.status === 'not-defined';
+  const guessExpired = hasNullGuesses && hasLostTimeWindowToGuess;
   const notStartedGuess = match.status === 'open' && hasNullGuesses;
   const waitingForGame = match.status === 'open' && !hasNullGuesses;
 
+  if (guessPaused) return generatePausedGuess(guess);
   if (guessExpired) return generateExpiredGuess(guess);
   if (notStartedGuess) return generateNotStartedGuess(guess);
   if (waitingForGame) return generateWaitingForGameGuess(guess);
@@ -37,6 +42,30 @@ const generateExpiredGuess = (guess: DB_SelectGuess) => {
     fullMatch: { status, points },
     status: status,
     total: 0,
+  } satisfies IGuessAnalysis;
+};
+
+const generatePausedGuess = (guess: DB_SelectGuess) => {
+  const status = GUESS_STATUSES.PAUSED;
+  const points = null;
+  const value = null;
+
+  return {
+    id: guess.id,
+    matchId: guess.matchId,
+    home: {
+      status,
+      value,
+      points,
+    },
+    away: {
+      status,
+      value,
+      points,
+    },
+    fullMatch: { status, points },
+    total: 0,
+    status: status,
   } satisfies IGuessAnalysis;
 };
 

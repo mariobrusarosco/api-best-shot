@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS "match" (
 	"away_team_id" text NOT NULL,
 	"home_score" numeric,
 	"away_score" numeric,
-	"date" timestamp with time zone,
+	"date" timestamp,
 	"time" text,
 	"stadium" text,
 	"status" text,

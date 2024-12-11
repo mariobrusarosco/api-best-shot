@@ -5,7 +5,7 @@ import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
 import { T_TournamentPerformance } from '@/domains/performance/schema';
 import { T_Tournament } from '@/domains/tournament/schema';
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import db from '../../../services/database';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
@@ -30,7 +30,22 @@ async function getTournament(req: Request, res: Response) {
         )
       );
 
-    return res.status(200).send(tournament);
+    const [query] = await db
+      .select({
+        roundId: T_Match.roundId,
+      })
+      .from(T_Match)
+      .where(eq(T_Match.tournamentId, tournamentId)) // Filter by tournament
+      .groupBy(T_Match.roundId)
+      .having(
+        sql`COUNT(*) = SUM(CASE WHEN ${T_Match.homeScore} IS NULL AND ${T_Match.awayScore} IS NULL THEN 1 ELSE 0 END)`
+      )
+      .orderBy(asc(T_Match.roundId))
+      .limit(1);
+
+    const starterRound = query.roundId ?? '1';
+
+    return res.status(200).send({ ...tournament, starterRound });
   } catch (error: any) {
     console.error('Error fetching matches:', error);
     return handleInternalServerErrorResponse(res, error);

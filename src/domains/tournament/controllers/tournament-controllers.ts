@@ -35,7 +35,7 @@ async function getTournament(req: Request, res: Response) {
         roundId: T_Match.roundId,
       })
       .from(T_Match)
-      .where(eq(T_Match.tournamentId, tournamentId)) // Filter by tournament
+      .where(eq(T_Match.tournamentId, tournamentId))
       .groupBy(T_Match.roundId)
       .having(
         sql`COUNT(*) = SUM(CASE WHEN ${T_Match.homeScore} IS NULL AND ${T_Match.awayScore} IS NULL THEN 1 ELSE 0 END)`
@@ -43,7 +43,7 @@ async function getTournament(req: Request, res: Response) {
       .orderBy(asc(T_Match.roundId))
       .limit(1);
 
-    const starterRound = query.roundId ?? '1';
+    const starterRound = query?.roundId ?? '1';
 
     return res.status(200).send({ ...tournament, starterRound });
   } catch (error: any) {

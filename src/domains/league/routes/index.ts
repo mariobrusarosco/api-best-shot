@@ -12,6 +12,7 @@ const LeagueRouting = (app: Express) => {
   leagueRouter.post('/invitation', LeagueController.inviteToLeague);
 
   leagueRouter.get('/:leagueId', LeagueController.getLeague);
+  leagueRouter.patch('/:leagueId/tournaments', LeagueController.updateLeagueTournaments);
 
   leagueRouter.get('/:leagueId/performance', PerformanceController.getLeaguePerformance);
   leagueRouter.patch(

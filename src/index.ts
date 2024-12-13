@@ -8,6 +8,7 @@ import DataProviderRouting from './domains/data-provider-v2/routes';
 import GuessRouting from './domains/guess/routes';
 import LeagueRouting from './domains/league/routes';
 import MatchRouting from './domains/match/routes';
+import MemberRouting from './domains/member/routes';
 import ScoreRouting from './domains/score/routes';
 import accessControl from './domains/shared/middlewares/access-control';
 import TournamentRouting from './domains/tournament/routes';
@@ -39,6 +40,7 @@ GuessRouting(app);
 ScoreRouting(app);
 MatchRouting(app);
 DataProviderRouting(app);
+MemberRouting(app);
 
 async function startServer() {
   app.listen(PORT, () =>

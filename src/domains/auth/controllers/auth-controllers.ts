@@ -4,7 +4,6 @@ import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import { eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import db from '../../../services/database';
-import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 
 async function authenticateUser(req: Request, res: Response) {
   try {
@@ -30,20 +29,7 @@ async function authenticateUser(req: Request, res: Response) {
   }
 }
 
-const getMember = async (req: Request, res: Response) => {
-  const memberId = req?.body?.memberId;
-
-  try {
-    const [member] = await db.select().from(T_Member).where(eq(T_Member.id, memberId));
-
-    return res.status(200).send(member);
-  } catch (error: any) {
-    return handleInternalServerErrorResponse(res, error);
-  }
-};
-
 const AuthController = {
-  getMember,
   authenticateUser,
 };
 

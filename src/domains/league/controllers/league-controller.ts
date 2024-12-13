@@ -1,9 +1,10 @@
 import { Utils } from '@/domains/auth/utils';
-import { T_League, T_LeagueRole } from '@/domains/league/schema';
+import { T_League, T_LeagueRole, T_LeagueTournament } from '@/domains/league/schema';
 import { T_Member } from '@/domains/member/schema';
 import { T_LeaguePerformance } from '@/domains/performance/schema';
+import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 import { ErrorMapper } from '../error-handling/mapper';
@@ -106,6 +107,7 @@ const inviteToLeague = async (req: Request, res: Response) => {
 
 const getLeague = async (req: Request, res: Response) => {
   try {
+    const memberId = Utils.getAuthenticatedUserId(req, res);
     const { leagueId } = req.params;
     const isParticipant = await isLeagueParticipant(req, res, leagueId);
 
@@ -116,45 +118,77 @@ const getLeague = async (req: Request, res: Response) => {
       return;
     }
 
-    const query = await db
+    const mainQuery = await db
       .select()
       .from(T_LeagueRole)
       .innerJoin(T_League, eq(T_League.id, leagueId))
       .innerJoin(T_Member, eq(T_Member.id, T_LeagueRole.memberId))
       .where(and(eq(T_LeagueRole.leagueId, leagueId)));
 
-    const participants = query.map(row => ({
+    const participants = mainQuery.map(row => ({
       role: row.league_role.role,
       nickName: row.member.nickName,
     }));
 
-    const league = {
-      id: query[0].league.id,
-      label: query[0].league.label,
-      description: query[0].league.description,
-      participants,
+    const memberRole = mainQuery.find(row => row.league_role.memberId === memberId);
+    const permissions = {
+      edit: memberRole?.league_role.role === 'ADMIN',
+      invite: memberRole?.league_role.role === 'ADMIN',
+      delete: memberRole?.league_role.role === 'ADMIN',
     };
 
-    res.status(200).send(league);
+    const tournamentsQuery = await db
+      .select()
+      .from(T_LeagueTournament)
+      .leftJoin(T_Tournament, eq(T_LeagueTournament.tournamentId, T_Tournament.id))
+      .where(
+        and(
+          eq(T_LeagueTournament.leagueId, leagueId),
+          eq(T_LeagueTournament.status, 'tracked')
+        )
+      );
+
+    const tournaments = tournamentsQuery.map(row => row.tournament);
+
+    const leagueWithParticipantsAndTournaments = {
+      id: mainQuery[0].league.id,
+      label: mainQuery[0].league.label,
+      description: mainQuery[0].league.description,
+      permissions,
+      participants,
+      tournaments,
+    };
+
+    res.status(200).send(leagueWithParticipantsAndTournaments);
   } catch (error: any) {
     console.error('[ERROR] - [getLeague] ', error);
     handleInternalServerErrorResponse(res, error);
   }
 };
 
-// const updateLeaguePerformance = async (req: Request, res: Response) => {
-//   const { leagueId } = req.params;
-//   const perf = await PerformanceController.updateLeaguePerformance(leagueId);
+const updateLeagueTournaments = async (req: Request, res: Response) => {
+  const { updateInput } = req.body;
 
-//   return res.status(200).send(perf);
-// };
+  const query = await db
+    .insert(T_LeagueTournament)
+    .values(updateInput)
+    .onConflictDoUpdate({
+      target: [T_LeagueTournament.leagueId, T_LeagueTournament.tournamentId],
+      set: {
+        status: sql`excluded.status`,
+      },
+    })
+    .returning();
+
+  return res.status(200).send(query);
+};
 
 const LeagueController = {
   getLeagues,
   createLeague,
   inviteToLeague,
   getLeague,
-  // updateLeaguePerformance,
+  updateLeagueTournaments,
 };
 
 export default LeagueController;

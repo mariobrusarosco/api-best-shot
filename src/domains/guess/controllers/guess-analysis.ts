@@ -7,7 +7,6 @@ import { GUESS_STATUS, GUESS_STATUSES } from '../typing';
 export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const hasNullGuesses = guess.homeScore === null || guess.awayScore === null;
   const hasLostTimeWindowToGuess = isPast(match.date || '') && match.status !== 'paused';
-  console.log({ match });
   const guessPaused = match.status === 'not-defined';
   const guessExpired = hasNullGuesses && hasLostTimeWindowToGuess;
   const notStartedGuess = match.status === 'open' && hasNullGuesses;

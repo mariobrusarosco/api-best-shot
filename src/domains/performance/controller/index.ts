@@ -41,7 +41,6 @@ const getLeaguePerformance = async (req: Request, res: Response) => {
 const updateLeaguePerformance = async (req: Request, res: Response) => {
   try {
     const { leagueId } = req?.params as { leagueId: string };
-
     const leagueRolesQuery = await db
       .select()
       .from(T_LeagueRole)
@@ -117,7 +116,7 @@ const updateTournamentPerformance = async (req: Request, res: Response) => {
     // QUery
     const parsedGuesses = await queryMemberTournamentGuesses(memberId, tournamentId);
     // Update
-    const updated = await updatePerformanceOnDatabase(
+    const updated = await updateTournamentPerformanceOnDatabase(
       memberId,
       tournamentId,
       parsedGuesses
@@ -156,7 +155,7 @@ const getTotalPoints = (guesses?: ReturnType<typeof runGuessAnalysis>[]) => {
   return guesses?.reduce((acc, value) => acc + value.total, 0);
 };
 
-const updateAllTournamentsForMember = async (memberId: string) => {
+export const updateAllTournamentsForMember = async (memberId: string) => {
   const tournamentPerformances = await db
     .select()
     .from(T_TournamentPerformance)
@@ -169,7 +168,7 @@ const updateAllTournamentsForMember = async (memberId: string) => {
       performance.tournamentId
     );
     // Update
-    const [updated] = await updatePerformanceOnDatabase(
+    const [updated] = await updateTournamentPerformanceOnDatabase(
       performance.memberId,
       performance.tournamentId,
       parsedGuesses
@@ -184,7 +183,7 @@ const updateAllTournamentsForMember = async (memberId: string) => {
   return updateResult;
 };
 
-const updatePerformanceOnDatabase = async (
+const updateTournamentPerformanceOnDatabase = async (
   memberId: string,
   tournamentId: string,
   parsedGuesses: Awaited<ReturnType<typeof queryMemberTournamentGuesses>>
@@ -195,7 +194,11 @@ const updatePerformanceOnDatabase = async (
     points: String(getTotalPoints(parsedGuesses)),
   };
 
-  console.log('updatePerformanceOnDatabase -----------', memberId, tournamentId);
+  console.log(
+    'updateTournamentPerformanceOnDatabase -----------',
+    memberId,
+    tournamentId
+  );
 
   return await db
     .update(T_TournamentPerformance)
@@ -207,6 +210,44 @@ const updatePerformanceOnDatabase = async (
       )
     )
     .returning();
+};
+
+export const updateAllLeaguesForMember = async (memberId: string) => {
+  const leagues = await db
+    .select()
+    .from(T_LeagueRole)
+    // .leftJoin(
+    //   T_LeaguePerformance,
+    //   eq(T_LeaguePerformance.leagueId, T_LeagueRole.leagueId)
+    // )
+    .where(eq(T_LeagueRole.memberId, memberId));
+
+  const promises = leagues.map(async leagueMember => {
+    const updatedData = await updateAllTournamentsForMember(leagueMember.memberId);
+
+    const totalPoints = updatedData.reduce(
+      (leaguePoitns, performance) => (leaguePoitns += Number(performance.points)),
+      0
+    );
+
+    console.log('RESULT updateAllLeaguesForMember-- totalPoints', totalPoints);
+    return db
+      .update(T_LeaguePerformance)
+      .set({
+        leagueId: leagueMember.leagueId,
+        memberId: leagueMember.memberId,
+        points: String(totalPoints),
+      })
+      .where(
+        and(
+          eq(T_LeaguePerformance.memberId, leagueMember.memberId),
+          eq(T_LeaguePerformance.leagueId, leagueMember.leagueId)
+        )
+      )
+      .returning();
+  });
+
+  return Promise.all(promises);
 };
 
 /// AUX

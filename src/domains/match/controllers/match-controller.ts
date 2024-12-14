@@ -40,6 +40,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
         tournament: {
           id: T_Match.tournamentId,
         },
+        status: T_Match.status,
       })
       .from(T_Match)
       .leftJoin(homeTeam, eq(T_Match.homeTeamId, homeTeam.externalId))

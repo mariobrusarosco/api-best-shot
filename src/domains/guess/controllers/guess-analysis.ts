@@ -12,22 +12,23 @@ export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) =
   const notStartedGuess = match.status === 'open' && hasNullGuesses;
   const waitingForGame = match.status === 'open' && !hasNullGuesses;
 
-  if (guessPaused) return generatePausedGuess(guess);
-  if (guessExpired) return generateExpiredGuess(guess);
-  if (notStartedGuess) return generateNotStartedGuess(guess);
-  if (waitingForGame) return generateWaitingForGameGuess(guess);
+  if (guessPaused) return generatePausedGuess(guess, match);
+  if (guessExpired) return generateExpiredGuess(guess, match);
+  if (notStartedGuess) return generateNotStartedGuess(guess, match);
+  if (waitingForGame) return generateWaitingForGameGuess(guess, match);
 
   return generateFinalizedGuess(guess, match);
 };
 
-const generateExpiredGuess = (guess: DB_SelectGuess) => {
+const generateExpiredGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const status = GUESS_STATUSES.EXPIRED;
   const points = null;
   const value = null;
 
   return {
     id: guess.id,
-    matchId: guess.matchId,
+    matchId: match.id,
+    matchDate: match.date,
     home: {
       status,
       value,
@@ -44,14 +45,15 @@ const generateExpiredGuess = (guess: DB_SelectGuess) => {
   } satisfies IGuessAnalysis;
 };
 
-const generatePausedGuess = (guess: DB_SelectGuess) => {
+const generatePausedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const status = GUESS_STATUSES.PAUSED;
   const points = null;
   const value = null;
 
   return {
     id: guess.id,
-    matchId: guess.matchId,
+    matchId: match.id,
+    matchDate: match.date,
     home: {
       status,
       value,
@@ -68,14 +70,15 @@ const generatePausedGuess = (guess: DB_SelectGuess) => {
   } satisfies IGuessAnalysis;
 };
 
-const generateNotStartedGuess = (guess: DB_SelectGuess) => {
+const generateNotStartedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const status = GUESS_STATUSES.NOT_STARTED;
   const points = null;
   const value = null;
 
   return {
     id: guess.id,
-    matchId: guess.matchId,
+    matchId: match.id,
+    matchDate: match.date,
     home: {
       status,
       value,
@@ -92,7 +95,7 @@ const generateNotStartedGuess = (guess: DB_SelectGuess) => {
   } satisfies IGuessAnalysis;
 };
 
-const generateWaitingForGameGuess = (guess: DB_SelectGuess) => {
+const generateWaitingForGameGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const homeGuessScore = guess.homeScore !== null;
   const awayGuessScore = guess.awayScore !== null;
   const mainStatus =
@@ -103,7 +106,8 @@ const generateWaitingForGameGuess = (guess: DB_SelectGuess) => {
 
   return {
     id: guess.id,
-    matchId: guess.matchId,
+    matchId: match.id,
+    matchDate: match.date,
     home: {
       status: homeGuessScore
         ? GUESS_STATUSES.WAITING_FOR_GAME
@@ -176,7 +180,8 @@ const generateFinalizedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) =>
 
   return {
     id: guess.id,
-    matchId: guess.matchId,
+    matchId: match.id,
+    matchDate: match.date,
     home,
     away,
     fullMatch,
@@ -188,6 +193,7 @@ const generateFinalizedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) =>
 interface IGuessAnalysis {
   id: string;
   matchId: string;
+  matchDate: Date | null;
   home: {
     status: GUESS_STATUS;
     value: number | null;

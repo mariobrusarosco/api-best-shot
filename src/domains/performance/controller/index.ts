@@ -171,7 +171,8 @@ const getMatchGuessesForTournament = async (tournamentId: string, memberId: stri
     .select()
     .from(T_Guess)
     .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
-    .where(and(eq(T_Guess.memberId, memberId), eq(T_Match.tournamentId, tournamentId)));
+    .where(and(eq(T_Guess.memberId, memberId), eq(T_Match.tournamentId, tournamentId)))
+    .orderBy(T_Match.date);
 
   return guesses;
 };

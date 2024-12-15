@@ -39,6 +39,7 @@ const getMemberPerformance = async (req: Request, res: Response) => {
 
     const tournamentsPerformance = await db
       .select({
+        tourmamentId: T_Tournament.id,
         points: T_TournamentPerformance.points,
         name: T_Tournament.label,
         badge: T_Tournament.logo,
@@ -59,9 +60,9 @@ const getMemberPerformance = async (req: Request, res: Response) => {
 
     return res.status(200).send({
       tournaments: {
-        all: tournamentsPerformance,
-        best: tournamentsPerformance.at(0),
-        worst: tournamentsPerformance.at(-1) || tournamentsPerformance.at(0),
+        all: tournamentsPerformance || [],
+        best: tournamentsPerformance.at(0) || [],
+        worst: tournamentsPerformance.at(-1) || tournamentsPerformance.at(0) || [],
       },
       mainLeague: {
         all: mainLeague,

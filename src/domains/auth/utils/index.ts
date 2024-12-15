@@ -18,15 +18,9 @@ const signUserCookieBased = ({ memberId, res }: { memberId: string; res: Respons
     if (!res || !memberId || !process.env['JWT_SECRET']) return null;
 
     const token = jwt.sign({ id: memberId }, process.env['JWT_SECRET'], {
-      expiresIn: '3d',
+      expiresIn: '30d',
     });
 
-    console.log(
-      '--  [][][] JWT_SECRET ========',
-      process.env['JWT_SECRET'],
-      process.env['MEMBER_PUBLIC_ID_COOKIE'],
-      token
-    );
     res.cookie(process.env['MEMBER_PUBLIC_ID_COOKIE'] || '', token, {
       httpOnly: true,
       secure: true,

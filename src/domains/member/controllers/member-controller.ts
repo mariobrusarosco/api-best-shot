@@ -1,4 +1,5 @@
 import { Utils } from '@/domains/auth/utils';
+import { T_League } from '@/domains/league/schema';
 import { T_Member } from '@/domains/member/schema';
 import { updateAllLeaguesForMember } from '@/domains/performance/controller';
 import {
@@ -50,9 +51,15 @@ const getMemberPerformance = async (req: Request, res: Response) => {
       .orderBy(desc(T_TournamentPerformance.points));
 
     const mainLeague = await db
-      .select()
+      .selectDistinct({
+        leagueId: T_League.id,
+        points: T_LeaguePerformance.points,
+        name: T_League.label,
+      })
       .from(T_LeaguePerformance)
-      .where(eq(T_LeaguePerformance.memberId, memberId));
+      .innerJoin(T_League, eq(T_League.id, T_LeaguePerformance.leagueId))
+      .where(eq(T_LeaguePerformance.memberId, memberId))
+      .orderBy(desc(T_LeaguePerformance.points));
     // .leftJoin(T_LeaguePerformance, eq(T_LeaguePerformance.memberId, memberId))
     // .where(
     //   and(eq(T_LeagueRole.memberId, memberId), eq(T_LeagueRole.memberId, memberId))
@@ -61,15 +68,13 @@ const getMemberPerformance = async (req: Request, res: Response) => {
     return res.status(200).send({
       tournaments: {
         all: tournamentsPerformance || [],
-        best: tournamentsPerformance.at(0) || [],
-        worst: tournamentsPerformance.at(-1) || tournamentsPerformance.at(0) || [],
+        best: tournamentsPerformance.at(0) || null,
+        worst: tournamentsPerformance.at(-1) || tournamentsPerformance.at(0) || null,
       },
-      mainLeague: {
+      leagues: {
         all: mainLeague,
-        leader: { name: 'adsa', points: 0 },
-        you: {
-          points: 0,
-        },
+        best: mainLeague.at(0) || null,
+        worst: mainLeague.at(-1) || mainLeague.at(0) || null,
       },
     });
   } catch (error: any) {

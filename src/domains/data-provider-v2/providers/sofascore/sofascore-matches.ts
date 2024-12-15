@@ -1,8 +1,14 @@
 import { DB_InsertMatch } from '@/domains/match/schema';
-import { safeISODate, safeString } from '@/utils';
+import { safeString } from '@/utils';
 import axios from 'axios';
 import { IApiProviderV2 } from '../../interface';
 import { API_SofaScoreRound } from './typing';
+
+const safeSofaDate = (date: any) => {
+  console.log(date, typeof date, new Date(date), typeof new Date(date));
+
+  return date === null || date === undefined ? null : new Date(date);
+};
 
 export const SofascoreMatches: IApiProviderV2['matches'] = {
   fetchRound: async (url, round) => {
@@ -23,7 +29,7 @@ export const SofascoreMatches: IApiProviderV2['matches'] = {
         homeScore: safeString(match.homeScore.current),
         awayTeamId: String(match.awayTeam.id),
         awayScore: safeString(match.awayScore.current),
-        date: safeISODate(match.startTimestamp! * 1000),
+        date: safeSofaDate(match.startTimestamp! * 1000),
         status: getMatchStatus(match),
       } as DB_InsertMatch;
     });

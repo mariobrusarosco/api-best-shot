@@ -11,6 +11,7 @@ export const safeDate = (date: any) =>
 
 export const safeISODate = (date: any) => {
   console.log(date, typeof date, new Date(date), typeof new Date(date));
+
   return date === null || date === undefined ? null : new Date(date).toISOString();
 };
 

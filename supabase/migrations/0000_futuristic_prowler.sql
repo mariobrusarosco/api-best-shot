@@ -1,3 +1,23 @@
+CREATE TABLE IF NOT EXISTS "match" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"external_id" text NOT NULL,
+	"provider" text NOT NULL,
+	"tournament_id" uuid NOT NULL,
+	"round_id" text,
+	"home_team_id" text NOT NULL,
+	"away_team_id" text NOT NULL,
+	"home_score" numeric,
+	"away_score" numeric,
+	"date" timestamp,
+	"time" text,
+	"stadium" text,
+	"status" text,
+	"tournament_match" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "match_external_id_unique" UNIQUE("external_id")
+);
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "guess" (
 	"id" uuid DEFAULT gen_random_uuid() NOT NULL,
 	"member_id" uuid NOT NULL,
@@ -28,24 +48,14 @@ CREATE TABLE IF NOT EXISTS "league_role" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "match" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"external_id" text NOT NULL,
-	"provider" text NOT NULL,
+CREATE TABLE IF NOT EXISTS "league_tournament" (
+	"id" uuid DEFAULT gen_random_uuid(),
+	"league_id" uuid NOT NULL,
 	"tournament_id" uuid NOT NULL,
-	"round_id" text,
-	"home_team_id" text NOT NULL,
-	"away_team_id" text NOT NULL,
-	"home_score" numeric,
-	"away_score" numeric,
-	"date" timestamp,
-	"time" text,
-	"stadium" text,
 	"status" text,
-	"tournament_match" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "match_external_id_unique" UNIQUE("external_id")
+	CONSTRAINT "league_tournament_league_id_tournament_id_pk" PRIMARY KEY("league_id","tournament_id")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "member" (
@@ -82,7 +92,7 @@ CREATE TABLE IF NOT EXISTS "tournament_performance" (
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "team" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid DEFAULT gen_random_uuid(),
 	"name" text NOT NULL,
 	"external_id" text NOT NULL,
 	"short_name" text,
@@ -90,6 +100,7 @@ CREATE TABLE IF NOT EXISTS "team" (
 	"provider" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "team_provider_external_id_pk" PRIMARY KEY("provider","external_id"),
 	CONSTRAINT "team_external_id_unique" UNIQUE("external_id")
 );
 --> statement-breakpoint
@@ -111,5 +122,6 @@ CREATE TABLE IF NOT EXISTS "tournament" (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "unique_guess" ON "guess" USING btree ("match_id","member_id");--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "unique_tournament" ON "league_tournament" USING btree ("league_id","tournament_id");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "unique_league_perfomance" ON "league_performance" USING btree ("member_id","league_id");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "unique_tournament_perfomance" ON "tournament_performance" USING btree ("member_id","tournamentId_id");

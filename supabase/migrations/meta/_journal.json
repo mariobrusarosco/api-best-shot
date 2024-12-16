@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1733950726637,
-      "tag": "0000_glorious_abomination",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1734097956938,
-      "tag": "0001_next_baron_zemo",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1734180863940,
-      "tag": "0002_cool_red_ghost",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1734181088348,
-      "tag": "0003_parallel_radioactive_man",
+      "when": 1734347793062,
+      "tag": "0000_futuristic_prowler",
       "breakpoints": true
     }
   ]

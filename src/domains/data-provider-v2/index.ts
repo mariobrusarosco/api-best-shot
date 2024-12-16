@@ -8,3 +8,5 @@ export const ApiProvider =
     ge: ApiProviderGloboEsporte,
     sofa: ApiProviderSofascore,
   }[ACTIVE_API_PROVIDER] || ApiProviderSofascore;
+
+console.log({ ACTIVE_API_PROVIDER });

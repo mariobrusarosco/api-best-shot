@@ -1,9 +1,126 @@
 {
-  "id": "12837873-975f-4464-9b40-fd24f393e881",
+  "id": "4950b4c8-75af-43df-abc9-774c9bb21c42",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.match": {
+      "name": "match",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "external_id": {
+          "name": "external_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_id": {
+          "name": "round_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "home_team_id": {
+          "name": "home_team_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "away_team_id": {
+          "name": "away_team_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "home_score": {
+          "name": "home_score",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "away_score": {
+          "name": "away_score",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date": {
+          "name": "date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time": {
+          "name": "time",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stadium": {
+          "name": "stadium",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tournament_match": {
+          "name": "tournament_match",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "match_external_id_unique": {
+          "name": "match_external_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "external_id"
+          ]
+        }
+      }
+    },
     "public.guess": {
       "name": "guess",
       "schema": "",
@@ -195,26 +312,20 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.match": {
-      "name": "match",
+    "public.league_tournament": {
+      "name": "league_tournament",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
           "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
+          "primaryKey": false,
+          "notNull": false,
           "default": "gen_random_uuid()"
         },
-        "external_id": {
-          "name": "external_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "provider": {
-          "name": "provider",
-          "type": "text",
+        "league_id": {
+          "name": "league_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -224,62 +335,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "round_id": {
-          "name": "round_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "home_team_id": {
-          "name": "home_team_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "away_team_id": {
-          "name": "away_team_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "home_score": {
-          "name": "home_score",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "away_score": {
-          "name": "away_score",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "date": {
-          "name": "date",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "time": {
-          "name": "time",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "stadium": {
-          "name": "stadium",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "status": {
           "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "tournament_match": {
-          "name": "tournament_match",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -299,18 +356,40 @@
           "default": "now()"
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "match_external_id_unique": {
-          "name": "match_external_id_unique",
-          "nullsNotDistinct": false,
+      "indexes": {
+        "unique_tournament": {
+          "name": "unique_tournament",
           "columns": [
-            "external_id"
+            {
+              "expression": "league_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tournament_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "league_tournament_league_id_tournament_id_pk": {
+          "name": "league_tournament_league_id_tournament_id_pk",
+          "columns": [
+            "league_id",
+            "tournament_id"
           ]
         }
-      }
+      },
+      "uniqueConstraints": {}
     },
     "public.member": {
       "name": "member",
@@ -553,8 +632,8 @@
         "id": {
           "name": "id",
           "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
+          "primaryKey": false,
+          "notNull": false,
           "default": "gen_random_uuid()"
         },
         "name": {
@@ -604,7 +683,15 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "team_provider_external_id_pk": {
+          "name": "team_provider_external_id_pk",
+          "columns": [
+            "provider",
+            "external_id"
+          ]
+        }
+      },
       "uniqueConstraints": {
         "team_external_id_unique": {
           "name": "team_external_id_unique",

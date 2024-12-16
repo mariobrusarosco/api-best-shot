@@ -13,7 +13,7 @@ export const T_Match = pgTable('match', {
   date: timestamp('date'),
   time: text('time'),
   stadium: text('stadium'),
-  status: text('status'),
+  status: text('status').notNull(),
   tournamentMatch: text('tournament_match'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')

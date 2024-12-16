@@ -11,12 +11,15 @@ import { Request, Response } from 'express';
 import db from '../../../services/database';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
 
-const _getMemberPerformance = async (req: Request, res: Response) => {
+const getTournamentPerformanceForMember = async (req: Request, res: Response) => {
   try {
     const tournamentId = req?.params.tournamentId;
     const memberId = Utils.getAuthenticatedUserId(req, res);
 
-    const query = await DB_Performance.queryTournamentPerformance(memberId, tournamentId);
+    const query = await DB_Performance.queryPerformanceForTournament(
+      memberId,
+      tournamentId
+    );
 
     return res.status(200).send(query);
   } catch (error: any) {
@@ -30,7 +33,7 @@ const TournamentController = {
   getAllTournaments,
   getTournamentScore,
   setupTournament,
-  _getMemberPerformance,
+  getTournamentPerformanceForMember,
 };
 
 async function getTournament(req: Request, res: Response) {

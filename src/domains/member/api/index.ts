@@ -1,14 +1,10 @@
 import { Utils } from '@/domains/auth/utils';
-import { T_Member } from '@/domains/member/schema';
-import {
-  DB_SelectLeaguePerformance,
-  DB_SelectTournamentPerformance,
-} from '@/domains/performance/schema';
+import { DB_Performance } from '@/domains/performance/database';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { DB_SelectTournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
+import { T_Member } from '../schema';
 
 const getMember = async (req: Request, res: Response) => {
   const memberId = Utils.getAuthenticatedUserId(req, res);
@@ -26,20 +22,23 @@ const getMember = async (req: Request, res: Response) => {
   }
 };
 
-const getBestAndWorstPerformance = (
-  performance:
-    | DB_SelectLeaguePerformance[]
-    | {
-        tournament_performance: DB_SelectTournamentPerformance;
-        tournament: DB_SelectTournament | null;
-      }[]
-) => {
-  const best = performance?.at(0);
-  const worst = performance.at(-1);
+const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
+  try {
+    const memberId = Utils.getAuthenticatedUserId(req, res);
 
-  return { best, worst };
+    const memberTournaments = await DB_Performance.queryPerformanceOfAllMemberTournaments(
+      memberId
+    );
+    // const query = await DB_Performance.queryTournamentPerformance(memberId, tournamentId);
+
+    return res.status(200).send(memberTournaments);
+  } catch (error: any) {
+    console.error('Error fetching matches:', error);
+    return handleInternalServerErrorResponse(res, error);
+  }
 };
 
-export const MemberController = {
+export const API_Member = {
+  getGeneralTournamentPerformance,
   getMember,
 };

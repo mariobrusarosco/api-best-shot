@@ -1,13 +1,13 @@
 import { AuthMiddleware } from '@/domains/auth/middleware';
 import type { Express } from 'express';
 import express from 'express';
-import { MemberController } from '../controllers/member-controller';
+import { API_Member } from '../api';
 
 const MemberRouting = (app: Express) => {
   const memberRouter = express.Router();
 
-  memberRouter.get('/performance', MemberController.getMemberPerformance);
-  memberRouter.get('/', MemberController.getMember);
+  memberRouter.get('/performance', API_Member.getGeneralTournamentPerformance);
+  memberRouter.get('/', API_Member.getMember);
 
   app.use(`${process.env.API_VERSION}/member`, AuthMiddleware, memberRouter);
 };

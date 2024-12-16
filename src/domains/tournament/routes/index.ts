@@ -4,6 +4,7 @@ import MatchController from '@/domains/match/controllers/match-controller';
 import { PerformanceController } from '@/domains/performance/controller';
 import type { Express } from 'express';
 import express from 'express';
+import { API_Tournament } from '../api';
 import TournamentController from '../controllers/tournament-controllers';
 
 const TournamentRouting = (app: Express) => {
@@ -28,7 +29,7 @@ const TournamentRouting = (app: Express) => {
   tournamentRouter.get(
     '/:tournamentId/performance',
     AuthMiddleware,
-    TournamentController._getMemberPerformance
+    API_Tournament.getTournamentPerformanceForMember
   );
   tournamentRouter.patch(
     '/:tournamentId/performance',

@@ -28,7 +28,7 @@ const TournamentRouting = (app: Express) => {
   tournamentRouter.get(
     '/:tournamentId/performance',
     AuthMiddleware,
-    PerformanceController.getTournamentPerformance
+    TournamentController._getMemberPerformance
   );
   tournamentRouter.patch(
     '/:tournamentId/performance',

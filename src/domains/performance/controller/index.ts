@@ -5,8 +5,9 @@ import { T_LeagueRole, T_LeagueTournament } from '@/domains/league/schema';
 import { T_Match } from '@/domains/match/schema';
 import { T_Member } from '@/domains/member/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { type Request, Response } from 'express';
 import {
   DB_InsertTournamentPerformance,
@@ -29,29 +30,29 @@ const getLeaguePerformance = async (req: Request, res: Response) => {
       .orderBy(desc(T_LeaguePerformance.points))
       .limit(10);
 
-    // const leagueTournaments = await db
-    //   .select()
-    //   .from(T_LeagueTournament)
-    //   .where(
-    //     and(
-    //       eq(T_LeagueTournament.leagueId, leagueId),
-    //       eq(T_LeagueTournament.status, 'tracked')
-    //     )
-    //   );
-    // const leagueMembers = await db
-    //   .select()
-    //   .from(T_LeagueRole)
-    //   .where(eq(T_LeagueRole.leagueId, leagueId));
+    const leagueMembersSubquery = db
+      .select({
+        memberId: T_LeagueRole.memberId,
+      })
+      .from(T_LeagueRole)
+      .where(eq(T_LeagueRole.leagueId, leagueId));
 
-    // const parsedGuesses = await Promise.all(
-    //   leagueMembers.map(async member =>
-    //     queryMemberTournamentGuesses(member.id, '756b9604-51b2-4ff3-a2f2-ac4c973cd63d')
-    //   )
-    // );
+    // Main query combining the subquery
+    const byTournaments = await db
+      .select({
+        tournamentId: T_Tournament.label,
+        tournamentLogo: T_Tournament.logo,
+        member: T_TournamentPerformance.memberId,
+        points: T_TournamentPerformance.points,
+      })
+      .from(T_TournamentPerformance)
+      .leftJoin(T_Tournament, eq(T_Tournament.id, T_TournamentPerformance.tournamentId))
+      .where(inArray(T_TournamentPerformance.memberId, leagueMembersSubquery));
 
     return res.status(200).send({
       performances: performances,
-      lastUpdatedAt: new Date(),
+      byTournaments: byTournaments,
+      // lastUpdatedAt: new Date(),
     });
   } catch (error: any) {
     throw error;

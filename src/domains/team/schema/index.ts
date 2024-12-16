@@ -5,7 +5,7 @@ export const T_Team = pgTable(
   {
     id: uuid('id').defaultRandom(),
     name: text('name').notNull(),
-    externalId: text('external_id').unique().notNull(),
+    externalId: text('external_id').notNull(),
     shortName: text('short_name'),
     badge: text('badge').notNull(),
     provider: text('provider').notNull(),

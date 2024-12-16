@@ -4,6 +4,7 @@ import { GuessUtils } from '@/domains/guess/utils';
 import { T_Match } from '@/domains/match/schema';
 import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
+import _ from 'lodash';
 
 const queryTournamentPerformance = async (memberId: string, tournamentId: string) => {
   const guesses = await db
@@ -15,7 +16,7 @@ const queryTournamentPerformance = async (memberId: string, tournamentId: string
   const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
 
   //@ts-ignore
-  const guessesByStatus = Object.groupBy(parsedGuesses, ({ status }) => status);
+  const guessesByStatus = _.groupBy(parsedGuesses, ({ status }) => status);
   const guessesByStatusQty = (
     Object.entries(guessesByStatus) as [string, any[]][]
   ).reduce((acc, [key, body]) => ({ ...acc, [key]: body?.length }), {});

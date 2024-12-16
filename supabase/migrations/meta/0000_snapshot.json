@@ -1,5 +1,5 @@
 {
-  "id": "4950b4c8-75af-43df-abc9-774c9bb21c42",
+  "id": "246884e8-b934-466a-a4b9-bc3ae3876b7c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -692,15 +692,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "team_external_id_unique": {
-          "name": "team_external_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "external_id"
-          ]
-        }
-      }
+      "uniqueConstraints": {}
     },
     "public.tournament": {
       "name": "tournament",

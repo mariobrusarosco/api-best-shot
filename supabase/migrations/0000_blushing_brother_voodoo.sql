@@ -100,8 +100,7 @@ CREATE TABLE IF NOT EXISTS "team" (
 	"provider" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "team_provider_external_id_pk" PRIMARY KEY("provider","external_id"),
-	CONSTRAINT "team_external_id_unique" UNIQUE("external_id")
+	CONSTRAINT "team_provider_external_id_pk" PRIMARY KEY("provider","external_id")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "tournament" (

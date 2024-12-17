@@ -1,26 +1,43 @@
 import { DB_SelectGuess } from '@/domains/guess/schema';
 import { DB_SelectMatch } from '@/domains/match/schema';
 import { toNumberOrNull, toNumberOrZero } from '@/utils';
-import { isPast } from 'date-fns';
+import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import utc from 'dayjs/plugin/utc';
 import { GUESS_STATUS, GUESS_STATUSES } from '../typing';
+
+dayjs.extend(utc);
+dayjs.extend(isSameOrAfter);
 
 export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const hasNullGuesses = guess.homeScore === null || guess.awayScore === null;
-  const hasLostTimeWindowToGuess = isPast(match.date || '') && match.status !== 'paused';
+  const hasLostTimewindoToGuess = dayjs().utc().isSameOrAfter(dayjs.utc(match.date));
+  console.log('[TEST --------------]', "[IS UTC]' ", dayjs().utc().isUTC(), {
+    hasLostTimewindoToGuess,
+  });
   const guessPaused = match.status === 'not-defined';
-  const guessExpired = hasNullGuesses && hasLostTimeWindowToGuess;
+  const guessExpired = hasNullGuesses && hasLostTimewindoToGuess;
   const notStartedGuess = match.status === 'open' && hasNullGuesses;
   const waitingForGame = match.status === 'open' && !hasNullGuesses;
 
-  if (guessPaused) return generatePausedGuess(guess, match);
-  if (guessExpired) return generateExpiredGuess(guess, match);
-  if (notStartedGuess) return generateNotStartedGuess(guess, match);
-  if (waitingForGame) return generateWaitingForGameGuess(guess, match);
+  if (guessPaused) return generatePausedGuess(guess, match, { hasLostTimewindoToGuess });
+  if (guessExpired)
+    return generateExpiredGuess(guess, match, { hasLostTimewindoToGuess });
+  if (notStartedGuess)
+    return generateNotStartedGuess(guess, match, { hasLostTimewindoToGuess });
+  if (waitingForGame)
+    return generateWaitingForGameGuess(guess, match, { hasLostTimewindoToGuess });
 
-  return generateFinalizedGuess(guess, match);
+  return generateFinalizedGuess(guess, match, { hasLostTimewindoToGuess });
 };
 
-const generateExpiredGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
+const generateExpiredGuess = (
+  guess: DB_SelectGuess,
+  match: DB_SelectMatch,
+  options: {
+    hasLostTimewindoToGuess: boolean;
+  }
+) => {
   const status = GUESS_STATUSES.EXPIRED;
   const points = null;
   const value = null;
@@ -42,10 +59,17 @@ const generateExpiredGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
     fullMatch: { status, points },
     status: status,
     total: 0,
+    ...options,
   } satisfies IGuessAnalysis;
 };
 
-const generatePausedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
+const generatePausedGuess = (
+  guess: DB_SelectGuess,
+  match: DB_SelectMatch,
+  options: {
+    hasLostTimewindoToGuess: boolean;
+  }
+) => {
   const status = GUESS_STATUSES.PAUSED;
   const points = null;
   const value = null;
@@ -67,10 +91,17 @@ const generatePausedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
     fullMatch: { status, points },
     total: 0,
     status: status,
+    ...options,
   } satisfies IGuessAnalysis;
 };
 
-const generateNotStartedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
+const generateNotStartedGuess = (
+  guess: DB_SelectGuess,
+  match: DB_SelectMatch,
+  options: {
+    hasLostTimewindoToGuess: boolean;
+  }
+) => {
   const status = GUESS_STATUSES.NOT_STARTED;
   const points = null;
   const value = null;
@@ -92,10 +123,17 @@ const generateNotStartedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) =
     fullMatch: { status, points },
     total: 0,
     status: status,
+    ...options,
   } satisfies IGuessAnalysis;
 };
 
-const generateWaitingForGameGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
+const generateWaitingForGameGuess = (
+  guess: DB_SelectGuess,
+  match: DB_SelectMatch,
+  options: {
+    hasLostTimewindoToGuess: boolean;
+  }
+) => {
   const homeGuessScore = guess.homeScore !== null;
   const awayGuessScore = guess.awayScore !== null;
   const mainStatus =
@@ -125,29 +163,17 @@ const generateWaitingForGameGuess = (guess: DB_SelectGuess, match: DB_SelectMatc
     fullMatch: { status: mainStatus, points },
     total: 0,
     status: mainStatus,
+    hasLostTimewindoToGuess: false,
   } satisfies IGuessAnalysis;
 };
 
-const hasGuessedMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
-  let guessPrediction = null;
-  let matchOutcome = null;
-  const homeGuess = toNumberOrZero(guess.homeScore);
-  const homeMatch = toNumberOrZero(match.homeScore);
-  const awayGuess = toNumberOrZero(guess.awayScore);
-  const awayMatch = toNumberOrZero(match.awayScore);
-
-  if (homeGuess > awayGuess) guessPrediction = 'HOME_WIN';
-  else if (homeGuess < homeGuess) guessPrediction = 'AWAY_WIN';
-  else guessPrediction = 'DRAW';
-
-  if (homeMatch > awayMatch) matchOutcome = 'HOME_WIN';
-  else if (homeMatch < awayMatch) matchOutcome = 'AWAY_WIN';
-  else matchOutcome = 'DRAW';
-
-  return guessPrediction === matchOutcome;
-};
-
-const generateFinalizedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
+const generateFinalizedGuess = (
+  guess: DB_SelectGuess,
+  match: DB_SelectMatch,
+  options: {
+    hasLostTimewindoToGuess: boolean;
+  }
+) => {
   const POINTS_FOR_MATCH = 2;
   const POINTS_FOR_TEAM = 1;
   const POINTS_FOR_MISS = 0;
@@ -187,7 +213,27 @@ const generateFinalizedGuess = (guess: DB_SelectGuess, match: DB_SelectMatch) =>
     fullMatch,
     total,
     status: GUESS_STATUSES.FINALIZED,
+    hasLostTimewindoToGuess: true,
   } satisfies IGuessAnalysis;
+};
+
+const hasGuessedMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
+  let guessPrediction = null;
+  let matchOutcome = null;
+  const homeGuess = toNumberOrZero(guess.homeScore);
+  const homeMatch = toNumberOrZero(match.homeScore);
+  const awayGuess = toNumberOrZero(guess.awayScore);
+  const awayMatch = toNumberOrZero(match.awayScore);
+
+  if (homeGuess > awayGuess) guessPrediction = 'HOME_WIN';
+  else if (homeGuess < homeGuess) guessPrediction = 'AWAY_WIN';
+  else guessPrediction = 'DRAW';
+
+  if (homeMatch > awayMatch) matchOutcome = 'HOME_WIN';
+  else if (homeMatch < awayMatch) matchOutcome = 'AWAY_WIN';
+  else matchOutcome = 'DRAW';
+
+  return guessPrediction === matchOutcome;
 };
 
 interface IGuessAnalysis {
@@ -210,4 +256,5 @@ interface IGuessAnalysis {
   };
   total: number | null;
   status: GUESS_STATUS;
+  hasLostTimewindoToGuess: boolean;
 }

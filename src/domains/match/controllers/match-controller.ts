@@ -4,8 +4,14 @@ import { T_Match } from '@/domains/match/schema';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import { T_Team } from '@/domains/team/schema';
 import db from '@/services/database';
-import { aliasedTable, and, eq } from 'drizzle-orm';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import { aliasedTable, and, eq, sql } from 'drizzle-orm';
 import { Request, Response } from 'express';
+
+dayjs.extend(relativeTime);
+
+const defineTimebox = (matchDate: string) => dayjs(matchDate).fromNow();
 
 async function getMatchesByTournament(req: Request, res: Response) {
   try {
@@ -41,6 +47,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
           id: T_Match.tournamentId,
         },
         status: T_Match.status,
+        timebox: sql<string>`${T_Match.date}`.mapWith(defineTimebox),
       })
       .from(T_Match)
       .leftJoin(homeTeam, eq(T_Match.homeTeamId, homeTeam.externalId))

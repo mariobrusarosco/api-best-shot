@@ -19,4 +19,10 @@ declare global {
   }
 }
 
+declare module 'dayjs' {
+  interface Dayjs {
+    fromNow();
+  }
+}
+
 export {};

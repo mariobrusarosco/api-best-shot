@@ -13,10 +13,10 @@ export const SofascoreTeams: IApiProviderV2['teams'] = {
 
     return response.data as API_SofaScoreStandings;
   },
-  mapTeamsFromStandings: async (standings: API_SofaScoreStandings) => {
+  mapTeamsFromStandings: async (standings: API_SofaScoreStandings, provider) => {
     const promises = standings?.standings[0]['rows']?.map(async team => {
       const badge = await SofascoreTeams.fetchAndStoreLogo({
-        filename: `team-${team.team.id}`,
+        filename: `team-${provider}-${team.team.id}`,
         logoUrl: SOFA_TEAN_LOGO_URL.replace(':id', String(team.team.id)),
       });
 

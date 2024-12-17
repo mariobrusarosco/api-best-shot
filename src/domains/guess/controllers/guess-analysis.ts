@@ -12,9 +12,7 @@ dayjs.extend(isSameOrAfter);
 export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const hasNullGuesses = guess.homeScore === null || guess.awayScore === null;
   const hasLostTimewindoToGuess = dayjs().utc().isSameOrAfter(dayjs.utc(match.date));
-  console.log('[TEST --------------]', "[IS UTC]' ", dayjs().utc().isUTC(), {
-    hasLostTimewindoToGuess,
-  });
+
   const guessPaused = match.status === 'not-defined';
   const guessExpired = hasNullGuesses && hasLostTimewindoToGuess;
   const notStartedGuess = match.status === 'open' && hasNullGuesses;

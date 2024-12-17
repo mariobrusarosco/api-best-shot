@@ -12,10 +12,10 @@ export const GloboEsporteTeams: IApiProviderV2['teams'] = {
 
     return response.data as API_GloboEsporteStandings;
   },
-  mapTeamsFromStandings: async (standings: API_GloboEsporteStandings) => {
+  mapTeamsFromStandings: async (standings: API_GloboEsporteStandings, provider) => {
     const promises = standings?.classificacao.map(async team => {
       const badge = await GloboEsporteTeams.fetchAndStoreLogo({
-        filename: `team-${team.equipe_id}`,
+        filename: `team-${provider}-${team.equipe_id}`,
         logoUrl: team?.escudo || '',
       });
 

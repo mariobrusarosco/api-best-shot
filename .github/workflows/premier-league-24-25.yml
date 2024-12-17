@@ -1,0 +1,23 @@
+name: Updating PREMIER LEAGUE Matches on Database
+
+on:
+  schedule:
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+
+jobs:
+  watch-for-matches:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Define Tournaments and Make API Calls
+        env:
+          COOKIE: ${{ secrets.API_COOKIE_DEMO }}
+          TOURNAMENT_IDS: ${{ vars.TOURNAMENT_IDS_DEMO }}
+        run: |
+          curl -X PATCH "https://api-best-shot-demo.mariobrusarosco.com/api/v1/data-provider/matches/" \
+            -H "Content-Type: application/json" \
+            -H "Cookie: ${COOKIE}" \
+            -d "{\"tournamentId\":\"ec4f2212-e09a-4a2e-8691-df96a166cc85\"}"
+
+          echo "TOURNAMENT PREMIER LEAGUE: ec4f2212-e09a-4a2e-8691-df96a166cc85"

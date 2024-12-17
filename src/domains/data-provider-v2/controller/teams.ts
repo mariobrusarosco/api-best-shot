@@ -10,7 +10,7 @@ const Api = ApiProvider.teams;
 const setupTeams = async (req: TeamsRequest, res: Response) => {
   try {
     const standings = await Api.fetchTeamsFromStandings(req);
-    const mappedTeams = await Api.mapTeamsFromStandings(standings);
+    const mappedTeams = await Api.mapTeamsFromStandings(standings, req.body.provider);
     const query = await Api.createOnDatabase(mappedTeams);
 
     res.status(200).send(query);
@@ -24,7 +24,7 @@ const setupTeams = async (req: TeamsRequest, res: Response) => {
 const updateTeams = async (req: TeamsRequest, res: Response) => {
   try {
     const standings = await Api.fetchTeamsFromStandings(req);
-    const mappedTeams = await Api.mapTeamsFromStandings(standings);
+    const mappedTeams = await Api.mapTeamsFromStandings(standings, req.body.provider);
     const query = await Api.updateOnDatabase(mappedTeams);
 
     res.status(200).send(query);

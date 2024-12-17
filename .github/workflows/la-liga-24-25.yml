@@ -1,0 +1,23 @@
+name: Updating LA LIGA Matches on Database
+
+on:
+  schedule:
+    - cron: '0 22 * * *'
+  workflow_dispatch:
+
+jobs:
+  watch-for-matches:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Define Tournaments and Make API Calls
+        env:
+          COOKIE: ${{ secrets.API_COOKIE_DEMO }}
+          TOURNAMENT_IDS: ${{ vars.TOURNAMENT_IDS_DEMO }}
+        run: |
+          curl -X PATCH "https://api-best-shot-demo.mariobrusarosco.com/api/v1/data-provider/matches/" \
+            -H "Content-Type: application/json" \
+            -H "Cookie: ${COOKIE}" \
+            -d "{\"tournamentId\":\"5cdb7dac-9b38-4cf7-bd0a-a4abc1db89bf\"}"
+
+          echo "TOURNAMENT LA LIGA: 5cdb7dac-9b38-4cf7-bd0a-a4abc1db89bf"

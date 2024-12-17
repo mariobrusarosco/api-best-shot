@@ -1,0 +1,23 @@
+name: Updating BUNDESLIGA Matches on Database
+
+on:
+  schedule:
+    - cron: '30 12 * * *'
+  workflow_dispatch:
+
+jobs:
+  watch-for-matches:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Define Tournaments and Make API Calls
+        env:
+          COOKIE: ${{ secrets.API_COOKIE_DEMO }}
+          TOURNAMENT_IDS: ${{ vars.TOURNAMENT_IDS_DEMO }}
+        run: |
+          curl -X PATCH "https://api-best-shot-demo.mariobrusarosco.com/api/v1/data-provider/matches/" \
+            -H "Content-Type: application/json" \
+            -H "Cookie: ${COOKIE}" \
+            -d "{\"tournamentId\":\"5d3ae1a5-7a66-4aba-a997-ebeb68822d72\"}"
+
+          echo "TOURNAMENT BUNDESLIGA: 5d3ae1a5-7a66-4aba-a997-ebeb68822d72"

@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "4.13.0",
+  "version": "4.14.0",
   "description": "API - Best Shot",
   "scripts": {
     "build": "rimraf ./dist && tsc && tsc-alias",
@@ -8,7 +8,8 @@
     "serve-prod": "node -r dotenv/config ./dist/index.js",
     "compile": "tsc ./src --noEmit",
     "scrapper": "tsx watch ./src/scrapper.ts",
-    "api-lookup": "tsx watch ./src/api-lookup.ts"
+    "api-lookup": "tsx watch ./src/api-lookup.ts",
+    "run-scheduler": "node -r dotenv/config ./dist/services/data-provider-scheduling/index.js"
   },
   "author": "Mario Brusarosco",
   "license": "ISC",
@@ -23,6 +24,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.703.0",
     "@types/lodash": "^4.17.13",
+    "@types/node-cron": "^3.0.11",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
@@ -36,6 +38,7 @@
     "lodash": "^4.17.21",
     "mime-types": "^2.1.35",
     "mongoose": "^6.5.4",
+    "node-cron": "^3.0.3",
     "postgres": "^3.4.4",
     "puppeteer": "^22.12.1",
     "tsconfig-paths": "^4.2.0",

@@ -10,7 +10,7 @@ const setupTournament = async (req: TournamentRequest, res: Response) => {
     const logo = await Api.fetchAndStoreLogo({
       logoPngBase64: req.body.logoPngBase64,
       logoUrl: req.body.logoUrl,
-      filename: `tournament-${req.body.externalId}`,
+      filename: `tournament-${req.body.provider}-${req.body.externalId}`,
     });
 
     const query = await Api.createOnDatabase({ ...req.body, logo });
@@ -28,7 +28,7 @@ const updateTournament = async (req: TournamentRequest, res: Response) => {
     const logo = await Api.fetchAndStoreLogo({
       logoPngBase64: req.body.logoPngBase64,
       logoUrl: req.body.logoUrl,
-      filename: `tournament-${req.body.externalId}`,
+      filename: `tournament-${req.body.provider}-${req.body.externalId}`,
     });
 
     const query = await Api.updateOnDatabase({ ...req.body, logo });

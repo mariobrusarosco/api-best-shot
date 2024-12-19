@@ -7,7 +7,7 @@ import { T_Member } from '@/domains/member/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { type Request, Response } from 'express';
 import {
   DB_InsertTournamentPerformance,
@@ -19,17 +19,6 @@ const getLeaguePerformance = async (req: Request, res: Response) => {
   try {
     const { leagueId } = req?.params as { leagueId: string };
 
-    const performances = await db
-      .select({
-        name: T_Member.nickName,
-        points: T_LeaguePerformance.points,
-      })
-      .from(T_LeaguePerformance)
-      .leftJoin(T_Member, eq(T_Member.id, T_LeaguePerformance.memberId))
-      .where(and(eq(T_LeaguePerformance.leagueId, leagueId)))
-      .orderBy(desc(T_LeaguePerformance.points))
-      .limit(10);
-
     const leagueMembersSubquery = db
       .select({
         memberId: T_LeagueRole.memberId,
@@ -38,22 +27,45 @@ const getLeaguePerformance = async (req: Request, res: Response) => {
       .where(eq(T_LeagueRole.leagueId, leagueId));
 
     // Main query combining the subquery
-    const byTournaments = await db
+    const query = await db
       .select({
-        tournamentId: T_Tournament.label,
-        tournamentLogo: T_Tournament.logo,
-        member: T_TournamentPerformance.memberId,
+        id: T_Tournament.label,
+        logo: T_Tournament.logo,
+        member: T_Member.nickName,
         points: T_TournamentPerformance.points,
       })
       .from(T_TournamentPerformance)
       .leftJoin(T_Tournament, eq(T_Tournament.id, T_TournamentPerformance.tournamentId))
+      .leftJoin(T_Member, eq(T_Member.id, T_TournamentPerformance.memberId))
       .where(inArray(T_TournamentPerformance.memberId, leagueMembersSubquery));
 
-    return res.status(200).send({
-      performances: performances,
-      byTournaments: byTournaments,
-      // lastUpdatedAt: new Date(),
-    });
+    // TODO Move this to a helper file
+    const performances = query.reduce<
+      Record<
+        string,
+        { id: string; logo: string; members: { member: string; points: string }[] }
+      >
+    >((acc, tournament) => {
+      const id = tournament.id || '';
+      const logo = tournament.logo || '';
+      const points = tournament.points || '';
+      const member = tournament.member || '';
+
+      if (id && !acc[id]) {
+        acc[id] = {
+          id,
+          logo: logo,
+          members: [],
+        };
+      }
+
+      if (tournament.member && tournament.points) {
+        acc[id].members.push({ member: member as string, points: points as string });
+      }
+      return acc;
+    }, {});
+
+    return res.status(200).send(Object.values(performances));
   } catch (error: any) {
     throw error;
   }

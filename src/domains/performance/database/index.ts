@@ -85,7 +85,6 @@ const queryPerformanceForTournament = async (memberId: string, tournamentId: str
 
   const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
 
-  //@ts-ignore
   const guessesByStatus = _.groupBy(parsedGuesses, ({ status }) => status);
   const guessesByStatusQty = (
     Object.entries(guessesByStatus) as [string, any[]][]

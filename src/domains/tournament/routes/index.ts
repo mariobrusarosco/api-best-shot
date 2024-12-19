@@ -37,6 +37,12 @@ const TournamentRouting = (app: Express) => {
     PerformanceController.updateTournamentPerformance
   );
 
+  tournamentRouter.get(
+    '/:tournamentId/standings',
+    AuthMiddleware,
+    API_Tournament.getTournamentStandings
+  );
+
   tournamentRouter.post(
     '/:tournamentId/setup',
     AuthMiddleware,

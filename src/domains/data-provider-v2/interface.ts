@@ -1,13 +1,30 @@
 import { DB_InsertMatch, DB_InsertTeam } from '@/services/database/schema';
 import { FetchAndStoreAssetPayload } from '@/utils';
 import { type Request } from 'express';
-import { DB_InsertTournament } from '../tournament/schema';
+import { DB_InsertTournament, DB_InsertTournamentStandings } from '../tournament/schema';
 
 export type IApiProviderV2 = {
   tournament: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
     createOnDatabase: (data: DB_InsertTournament) => Promise<DB_InsertTournament>;
     updateOnDatabase: (data: DB_InsertTournament) => Promise<DB_InsertTournament>;
+  };
+  standings: {
+    fetchStandings: (req: StandingsRequest) => Promise<{
+      standings: any;
+      tournamentId: string;
+    }>;
+    // fetchStandingsForm?: (req: StandingsRequest) => Promise<any>;
+    mapStandings: (
+      standings: any,
+      tournamenId: string
+    ) => Promise<DB_InsertTournamentStandings[]>;
+    createOnDatabase: (
+      standings: DB_InsertTournamentStandings[]
+    ) => Promise<DB_InsertTournamentStandings[]>;
+    updateOnDatabase: (
+      standings: DB_InsertTournamentStandings[]
+    ) => Promise<DB_InsertTournamentStandings[] | undefined>;
   };
   teams: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
@@ -48,4 +65,9 @@ export type MatchesRequest = Request<null, null, MatchesPayload>;
 export type MatchesPayload = {
   tournamentId: string;
   roundsUrl: string;
+};
+
+export type StandingsRequest = Request<{ tournamentId: string }, null, StandingsPayload>;
+export type StandingsPayload = {
+  standingsUrl: string;
 };

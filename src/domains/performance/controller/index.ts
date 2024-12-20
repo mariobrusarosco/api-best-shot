@@ -7,7 +7,7 @@ import { T_Member } from '@/domains/member/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { type Request, Response } from 'express';
 import {
   DB_InsertTournamentPerformance,
@@ -26,6 +26,18 @@ const getLeaguePerformance = async (req: Request, res: Response) => {
       .from(T_LeagueRole)
       .where(eq(T_LeagueRole.leagueId, leagueId));
 
+    const leagueTournamentsSubquery = db
+      .select({
+        tournamentId: T_LeagueTournament.tournamentId,
+      })
+      .from(T_LeagueTournament)
+      .where(
+        and(
+          eq(T_LeagueTournament.leagueId, leagueId),
+          eq(T_LeagueTournament.status, 'tracked')
+        )
+      );
+
     // Main query combining the subquery
     const query = await db
       .select({
@@ -37,9 +49,15 @@ const getLeaguePerformance = async (req: Request, res: Response) => {
       .from(T_TournamentPerformance)
       .leftJoin(T_Tournament, eq(T_Tournament.id, T_TournamentPerformance.tournamentId))
       .leftJoin(T_Member, eq(T_Member.id, T_TournamentPerformance.memberId))
-      .where(inArray(T_TournamentPerformance.memberId, leagueMembersSubquery));
+      .where(
+        and(
+          inArray(T_TournamentPerformance.memberId, leagueMembersSubquery),
+          inArray(T_TournamentPerformance.tournamentId, leagueTournamentsSubquery)
+        )
+      )
+      .orderBy(desc(sql`cast(${T_TournamentPerformance.points} as integer)`));
 
-    // TODO Move this to a helper file
+    // // TODO Move this to a helper file
     const performances = query.reduce<
       Record<
         string,

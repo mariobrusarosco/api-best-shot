@@ -11,29 +11,35 @@ dayjs.extend(isSameOrAfter);
 
 export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const hasNullGuesses = guess.homeScore === null || guess.awayScore === null;
-  const hasLostTimewindoToGuess = dayjs().utc().isSameOrAfter(dayjs.utc(match.date));
+  const hasLostTimewindowToGuess = dayjs()
+    .utc()
+    .isSameOrAfter(dayjs.utc(match.date).toDate());
+
+  console.log('now', dayjs().utc().toISOString());
+  console.log('match', dayjs.utc(match.date).toISOString());
+  console.log({ hasLostTimewindowToGuess, guess, match });
 
   const guessPaused = match.status === 'not-defined';
-  const guessExpired = hasNullGuesses && hasLostTimewindoToGuess;
+  const guessExpired = hasNullGuesses && hasLostTimewindowToGuess;
   const notStartedGuess = match.status === 'open' && hasNullGuesses;
   const waitingForGame = match.status === 'open' && !hasNullGuesses;
 
-  if (guessPaused) return generatePausedGuess(guess, match, { hasLostTimewindoToGuess });
+  if (guessPaused) return generatePausedGuess(guess, match, { hasLostTimewindowToGuess });
   if (guessExpired)
-    return generateExpiredGuess(guess, match, { hasLostTimewindoToGuess });
+    return generateExpiredGuess(guess, match, { hasLostTimewindowToGuess });
   if (notStartedGuess)
-    return generateNotStartedGuess(guess, match, { hasLostTimewindoToGuess });
+    return generateNotStartedGuess(guess, match, { hasLostTimewindowToGuess });
   if (waitingForGame)
-    return generateWaitingForGameGuess(guess, match, { hasLostTimewindoToGuess });
+    return generateWaitingForGameGuess(guess, match, { hasLostTimewindowToGuess });
 
-  return generateFinalizedGuess(guess, match, { hasLostTimewindoToGuess });
+  return generateFinalizedGuess(guess, match, { hasLostTimewindowToGuess });
 };
 
 const generateExpiredGuess = (
   guess: DB_SelectGuess,
   match: DB_SelectMatch,
   options: {
-    hasLostTimewindoToGuess: boolean;
+    hasLostTimewindowToGuess: boolean;
   }
 ) => {
   const status = GUESS_STATUSES.EXPIRED;
@@ -65,7 +71,7 @@ const generatePausedGuess = (
   guess: DB_SelectGuess,
   match: DB_SelectMatch,
   options: {
-    hasLostTimewindoToGuess: boolean;
+    hasLostTimewindowToGuess: boolean;
   }
 ) => {
   const status = GUESS_STATUSES.PAUSED;
@@ -97,7 +103,7 @@ const generateNotStartedGuess = (
   guess: DB_SelectGuess,
   match: DB_SelectMatch,
   options: {
-    hasLostTimewindoToGuess: boolean;
+    hasLostTimewindowToGuess: boolean;
   }
 ) => {
   const status = GUESS_STATUSES.NOT_STARTED;
@@ -129,15 +135,10 @@ const generateWaitingForGameGuess = (
   guess: DB_SelectGuess,
   match: DB_SelectMatch,
   options: {
-    hasLostTimewindoToGuess: boolean;
+    hasLostTimewindowToGuess: boolean;
   }
 ) => {
-  const homeGuessScore = guess.homeScore !== null;
-  const awayGuessScore = guess.awayScore !== null;
-  const mainStatus =
-    homeGuessScore && homeGuessScore
-      ? GUESS_STATUSES.WAITING_FOR_GAME
-      : GUESS_STATUSES.NOT_STARTED;
+  const status = GUESS_STATUSES.WAITING_FOR_GAME;
   const points = null;
 
   return {
@@ -145,23 +146,19 @@ const generateWaitingForGameGuess = (
     matchId: match.id,
     matchDate: match.date,
     home: {
-      status: homeGuessScore
-        ? GUESS_STATUSES.WAITING_FOR_GAME
-        : GUESS_STATUSES.NOT_STARTED,
+      status,
       value: toNumberOrNull(guess.homeScore),
       points,
     },
     away: {
-      status: awayGuessScore
-        ? GUESS_STATUSES.WAITING_FOR_GAME
-        : GUESS_STATUSES.NOT_STARTED,
+      status,
       value: toNumberOrNull(guess.awayScore),
       points,
     },
-    fullMatch: { status: mainStatus, points },
+    fullMatch: { status, points },
     total: 0,
-    status: mainStatus,
-    hasLostTimewindoToGuess: false,
+    status,
+    ...options,
   } satisfies IGuessAnalysis;
 };
 
@@ -169,7 +166,7 @@ const generateFinalizedGuess = (
   guess: DB_SelectGuess,
   match: DB_SelectMatch,
   options: {
-    hasLostTimewindoToGuess: boolean;
+    hasLostTimewindowToGuess: boolean;
   }
 ) => {
   const POINTS_FOR_MATCH = 2;
@@ -211,7 +208,7 @@ const generateFinalizedGuess = (
     fullMatch,
     total,
     status: GUESS_STATUSES.FINALIZED,
-    hasLostTimewindoToGuess: true,
+    ...options,
   } satisfies IGuessAnalysis;
 };
 
@@ -254,5 +251,5 @@ interface IGuessAnalysis {
   };
   total: number | null;
   status: GUESS_STATUS;
-  hasLostTimewindoToGuess: boolean;
+  hasLostTimewindowToGuess: boolean;
 }

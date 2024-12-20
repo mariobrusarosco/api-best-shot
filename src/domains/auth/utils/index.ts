@@ -21,6 +21,7 @@ const signUserCookieBased = ({ memberId, res }: { memberId: string; res: Respons
       expiresIn: '30d',
     });
 
+    res.clearCookie(process.env['MEMBER_PUBLIC_ID_COOKIE'] || '');
     res.cookie(process.env['MEMBER_PUBLIC_ID_COOKIE'] || '', token, {
       httpOnly: true,
       secure: true,

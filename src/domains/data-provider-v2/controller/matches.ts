@@ -12,7 +12,9 @@ const Api = ApiProvider?.matches;
 
 const setupMatches = async (req: MatchesRequest, res: Response) => {
   try {
-    const [tournament] = await getTournamentById(req.body.tournamentId);
+    const { tournamentId } = req.params as { tournamentId: string };
+    const [tournament] = await getTournamentById(tournamentId);
+
     const result = await createMatchesForEachRound(tournament);
 
     return res.status(200).send(result);
@@ -25,10 +27,11 @@ const setupMatches = async (req: MatchesRequest, res: Response) => {
 
 const updateMatches = async (req: MatchesRequest, res: Response) => {
   try {
-    console.log('REQ', req.body);
-    const [tournament] = await getTournamentById(req.body.tournamentId);
+    const { tournamentId, round } = req.params as { tournamentId: string; round: number };
 
-    const result = await updateMatchesForEachRound(tournament);
+    const [tournament] = await getTournamentById(tournamentId);
+    const result = await updateMatchesOfRound(tournament, round || 1);
+
     return res.status(200).send(result);
   } catch (error: any) {
     console.error('[ERROR] - updateMatches', error);
@@ -75,6 +78,17 @@ const updateMatchesForEachRound = async (tournament: DB_SelectTournament) => {
 
     ROUND_COUNT++;
   }
+};
+
+const updateMatchesOfRound = async (tournament: DB_SelectTournament, roundId: number) => {
+  const round = await Api.fetchRound(tournament.roundsUrl, roundId);
+  const matches = Api.mapRound(round, String(roundId), String(tournament.id));
+
+  await db.transaction(async tx => {
+    for (const match of matches) {
+      await tx.update(T_Match).set(match).where(eq(T_Match.externalId, match.externalId));
+    }
+  });
 };
 
 const createMatchesForEachRound = async (tournament: DB_SelectTournament) => {

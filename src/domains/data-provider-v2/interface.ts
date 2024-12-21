@@ -61,11 +61,7 @@ export type TeamsPayload = {
   provider: string;
 };
 
-export type MatchesRequest = Request<null, null, MatchesPayload>;
-export type MatchesPayload = {
-  tournamentId: string;
-  roundsUrl: string;
-};
+export type MatchesRequest = Request<{ tournamentId: string; round: number }, null, null>;
 
 export type StandingsRequest = Request<{ tournamentId: string }, null, StandingsPayload>;
 export type StandingsPayload = {

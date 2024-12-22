@@ -36,7 +36,8 @@ export const SofascoreTeams: IApiProviderV2['teams'] = {
 
     return assetPath ? `https://${process.env['AWS_CLOUDFRONT_URL']}/${assetPath}` : '';
   },
-  createOnDatabase: async teams => await db.insert(T_Team).values(teams).returning(),
+  createOnDatabase: async teams =>
+    await db.insert(T_Team).values(teams).onConflictDoNothing().returning(),
   updateOnDatabase: async teams => {
     return await db.transaction(async tx => {
       for (const team of teams) {

@@ -60,7 +60,9 @@ const mapMatchesToDailySchedule = (
 
   matches.forEach(({ tournamentId, tournamentLabel, round, date }) => {
     const utcDate = dayjs(date).utc();
-    const SCHEDULE_ID = `${tournamentLabel}_${utcDate.format('MM_DD_HH_mm_YYYY')}`;
+    const SCHEDULE_ID = `${tournamentLabel}_${utcDate.format('YYYY_MM_DD_HH_mm')}`
+      .toLowerCase()
+      .replace(/\s/gi, '');
 
     if (!SCHEDULES.has(SCHEDULE_ID)) {
       SCHEDULES.set(SCHEDULE_ID, {

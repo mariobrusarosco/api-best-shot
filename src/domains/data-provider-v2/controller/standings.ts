@@ -27,6 +27,8 @@ const updateStandings = async (req: StandingsRequest, res: Response) => {
     const mappedStandings = await Api.mapStandings(standings, tournamentId);
     const query = await Api.updateOnDatabase(mappedStandings);
 
+    console.error('[STANDINGS] - updateStandings', tournamentId);
+
     res.status(200).send(query);
   } catch (error: any) {
     console.error('[ERROR] - updateStandings', error);

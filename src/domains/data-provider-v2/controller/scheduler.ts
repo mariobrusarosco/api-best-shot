@@ -1,12 +1,9 @@
-import { T_Match } from '@/domains/match/schema';
+import { queryCurrentDayMatchesOnDatabase } from '@/domains/match/queries';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { T_Tournament } from '@/domains/tournament/schema';
-import db from '@/services/database';
 import { CreateScheduleCommand, SchedulerClient } from '@aws-sdk/client-scheduler';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
-import { asc, eq, sql } from 'drizzle-orm';
 import { Request, Response } from 'express';
 dayjs.extend(utc);
 dayjs.extend(isToday);
@@ -33,32 +30,12 @@ const run = async (req: Request, res: Response) => {
   }
 };
 
-const queryCurrentDayMatchesOnDatabase = async () => {
-  const startOfDay = dayjs().utc().startOf('day').toDate().toISOString();
-  const endOfDay = dayjs().utc().endOf('day').toDate().toISOString();
-
-  return db
-    .selectDistinct({
-      tournamentId: T_Match.tournamentId,
-      tournamentLabel: T_Tournament.label,
-      standingsUrl: T_Tournament.standingsUrl,
-      roundsUrl: T_Tournament.roundsUrl,
-      match: T_Match.id,
-      date: T_Match.date,
-      round: T_Match.roundId,
-    })
-    .from(T_Match)
-    .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
-    .where(sql`date >= ${startOfDay} AND date <= ${endOfDay}`)
-    .orderBy(asc(T_Match.date));
-};
-
 const mapMatchesToDailySchedule = (
   matches: Awaited<ReturnType<typeof queryCurrentDayMatchesOnDatabase>>
 ) => {
   const SCHEDULES = new Map();
 
-  matches.forEach(({ tournamentId, tournamentLabel, round, date }) => {
+  matches.forEach(({ tournamentId, tournamentLabel, roundId, date }) => {
     const utcDate = dayjs(date).utc();
     const SCHEDULE_ID = `${tournamentLabel}_${utcDate.format('YYYY_MM_DD_HH_mm')}`
       .toLowerCase()
@@ -68,8 +45,9 @@ const mapMatchesToDailySchedule = (
       SCHEDULES.set(SCHEDULE_ID, {
         tournamentIdToUpdate: tournamentId,
         tournamentLabelToUpdate: tournamentLabel,
-        roundToUpdate: round ?? '',
+        roundToUpdate: roundId ?? '',
         cron: toCronFormat(utcDate),
+        startDate: utcDate.toDate(),
         id: SCHEDULE_ID,
       });
     }
@@ -103,6 +81,7 @@ const scheduleTournamentStandingsUpdateCronJob = async (schedule: ISchedule) => 
   const params = {
     Name: `standings_${schedule.id}`,
     ScheduleExpression: schedule.cron,
+    StartDate: schedule.startDate,
     Target: {
       Arn: 'arn:aws:lambda:us-east-1:905418297381:function:update-tournament-standings-demo',
       RoleArn:
@@ -128,9 +107,11 @@ const scheduleTournamentRoundUpdateCronJob = async (schedule: ISchedule) => {
     schedule.tournamentIdToUpdate
   ).replace('[round]', schedule.roundToUpdate);
 
+  console.log({ roundsUrl });
   const params = {
     Name: `round_${schedule.id}`,
     ScheduleExpression: schedule.cron,
+    StartDate: schedule.startDate,
     Target: {
       Arn: 'arn:aws:lambda:us-east-1:905418297381:function:update-tournament-round-demo',
       RoleArn:
@@ -153,6 +134,7 @@ const scheduleTournamentRoundUpdateCronJob = async (schedule: ISchedule) => {
 type ISchedule = {
   id: string;
   cron: string;
+  startDate: Date;
   tournamentIdToUpdate: string;
   tournamentLabelToUpdate: string;
   roundToUpdate: string;

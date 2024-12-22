@@ -2,11 +2,12 @@ import { Utils } from '@/domains/auth/utils';
 import { ACTIVE_API_PROVIDER } from '@/domains/data-provider-v2';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
+import { queryCurrentDayMatchesOnDatabase } from '@/domains/match/queries';
 import { T_Match } from '@/domains/match/schema';
 import { DB_Performance } from '@/domains/performance/database';
 import { T_TournamentPerformance } from '@/domains/performance/schema';
 import { T_Tournament } from '@/domains/tournament/schema';
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import db from '../../../services/database';
 import { handleInternalServerErrorResponse } from '../../shared/error-handling/httpResponsesHelper';
@@ -49,20 +50,9 @@ async function getTournament(req: Request, res: Response) {
         )
       );
 
-    const [query] = await db
-      .select({
-        roundId: T_Match.roundId,
-      })
-      .from(T_Match)
-      .where(eq(T_Match.tournamentId, tournamentId))
-      .groupBy(T_Match.roundId)
-      .having(
-        sql`COUNT(*) = SUM(CASE WHEN ${T_Match.homeScore} IS NULL AND ${T_Match.awayScore} IS NULL THEN 1 ELSE 0 END)`
-      )
-      .orderBy(asc(T_Match.roundId))
-      .limit(1);
-
-    const starterRound = query?.roundId ?? '1';
+    const currentDayMatches = await queryCurrentDayMatchesOnDatabase({ tournamentId });
+    console.log({ currentDayMatches });
+    const starterRound = currentDayMatches[0].roundId ?? '1';
 
     return res.status(200).send({ ...tournament, starterRound });
   } catch (error: any) {

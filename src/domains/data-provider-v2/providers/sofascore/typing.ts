@@ -164,6 +164,17 @@ export type API_SofascoreStandingTeam = {
   scoreDiffFormatted: string;
 };
 
+export type API_SofaScoreRounds = {
+  currentRound: {
+    round: number;
+  };
+  rounds: {
+    round: number;
+    name?: string;
+    slug?: string;
+  }[];
+};
+
 export const SOFA_MATCHES_URL =
   'https://www.sofascore.com/api/v1/:mode/:external_id/season/:season/events/round/:round';
 

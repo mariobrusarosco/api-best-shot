@@ -3,7 +3,6 @@ import type { Express } from 'express';
 import express from 'express';
 import { MatchesDataController } from '../controller/matches';
 import { SchedulerController } from '../controller/scheduler';
-import { StandingsDataController } from '../controller/standings';
 import { TeamsDataController } from '../controller/teams';
 import { TournamentDataController } from '../controller/tournaments';
 
@@ -12,7 +11,10 @@ const DataProviderRouting = (app: Express) => {
 
   // TOURNAMENTS
   dataProviderRouter.post('/tournaments', TournamentDataController.setupTournament);
-  dataProviderRouter.patch('/tournaments', TournamentDataController.updateTournament);
+  dataProviderRouter.patch(
+    '/tournaments/:tournamentId',
+    TournamentDataController.updateTournament
+  );
   // TEAMS
   // dataProviderRouter.post(
   //   '/tournaments/:tournamentId/teams',
@@ -33,14 +35,14 @@ const DataProviderRouting = (app: Express) => {
   );
 
   // STANDINGS
-  dataProviderRouter.post(
-    '/tournaments/:tournamentId/standings',
-    StandingsDataController.setupStandings
-  );
-  dataProviderRouter.patch(
-    '/tournaments/:tournamentId/standings',
-    StandingsDataController.updateStandings
-  );
+  // dataProviderRouter.post(
+  //   '/tournaments/:tournamentId/standings',
+  //   StandingsDataController.setupStandings
+  // );
+  // dataProviderRouter.patch(
+  //   '/tournaments/:tournamentId/standings',
+  //   StandingsDataController.updateStandings
+  // );
 
   // SCHEDULER
   dataProviderRouter.post('/scheduler', SchedulerController.run);

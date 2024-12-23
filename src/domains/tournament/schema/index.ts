@@ -73,7 +73,7 @@ export const T_TournamentRound = pgTable(
   {
     id: uuid('id').defaultRandom(),
     tournamentId: text('tournament_id').notNull(),
-    order: text('round').notNull(),
+    order: text('order').notNull(),
     label: text('label').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')

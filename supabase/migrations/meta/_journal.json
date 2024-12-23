@@ -8,6 +8,20 @@
       "when": 1734962553413,
       "tag": "0000_lyrical_killer_shrike",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1734967743829,
+      "tag": "0001_blue_gateway",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1734973913082,
+      "tag": "0002_medical_firebird",
+      "breakpoints": true
     }
   ]
 }

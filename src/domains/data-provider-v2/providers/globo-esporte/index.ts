@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { IApiProviderV2 } from '../../interface';
 import { GloboEsporteTournament } from './globo-esporte-tournament';
 

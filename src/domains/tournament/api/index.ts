@@ -54,9 +54,20 @@ const getTournament = async (req: Request, res: Response) => {
     const nearestMatch = await MatchQueries.nearestMatchOnDatabase({
       tournamentId,
     });
-    const starterRound = nearestMatch.roundId || 1;
+    const starterRound = nearestMatch?.roundId || 1;
 
     return res.status(200).send({ ...tournament, starterRound });
+  } catch (error: any) {
+    console.error('Error fetching matches:', error);
+    return handleInternalServerErrorResponse(res, error);
+  }
+};
+
+const getAllTournaments = async (_: Request, res: Response) => {
+  try {
+    const tournaments = await TournamentQueries.allTournaments();
+
+    return res.status(200).send(tournaments);
   } catch (error: any) {
     console.error('Error fetching matches:', error);
     return handleInternalServerErrorResponse(res, error);
@@ -67,4 +78,5 @@ export const API_Tournament = {
   getTournamentPerformanceForMember,
   getTournamentStandings,
   getTournament,
+  getAllTournaments,
 };

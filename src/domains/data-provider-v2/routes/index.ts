@@ -2,7 +2,7 @@ import { AuthMiddleware } from '@/domains/auth/middleware';
 import type { Express } from 'express';
 import express from 'express';
 import { MatchesDataController } from '../controller/matches';
-import { SchedulerController } from '../controller/scheduler';
+import { Scheduler } from '../controller/scheduler';
 import { TeamsDataController } from '../controller/teams';
 import { TournamentDataController } from '../controller/tournaments';
 
@@ -45,7 +45,7 @@ const DataProviderRouting = (app: Express) => {
   // );
 
   // SCHEDULER
-  dataProviderRouter.post('/scheduler', SchedulerController.run);
+  dataProviderRouter.post('/scheduler', Scheduler.run);
   app.use(`${process.env.API_VERSION}/data-provider`, AuthMiddleware, dataProviderRouter);
 };
 

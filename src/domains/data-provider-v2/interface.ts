@@ -6,6 +6,7 @@ import {
   DB_InsertTournamentRound,
   DB_SelectTournament,
   DB_SelectTournamentRound,
+  DB_UpdateTournamentRound,
 } from '../tournament/schema';
 import { API_SofaScoreRounds } from './providers/sofascore/typing';
 
@@ -69,7 +70,6 @@ export type PayloadTournament = {
   season: string;
   mode: 'regular-season-only' | 'regular-season-and-knockout' | 'knockout-only';
   label: string;
-  // rounds: string;
   logoUrl?: string;
   logoPngBase64?: string;
 };

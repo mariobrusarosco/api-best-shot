@@ -1,5 +1,6 @@
 import { MatchQueries } from '@/domains/match/queries';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { DB_SelectTournament } from '@/domains/tournament/schema';
 import { CreateScheduleCommand, SchedulerClient } from '@aws-sdk/client-scheduler';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
@@ -127,6 +128,42 @@ const scheduleTournamentRoundUpdateCronJob = async (schedule: ISchedule) => {
   console.log(`Schedule created: ${response.ScheduleArn}`);
 };
 
+const tournamentUpdateRecurrence = async (tournament: DB_SelectTournament) => {
+  if (tournament.mode === 'regular-season-only') {
+    return null;
+  }
+
+  const startDate = dayjs().add(2, 'minute');
+  const endDate = startDate.add(1, 'day');
+  const apiUrl = `${process.env.API_DOMAIN}/data-provider/tournaments/${tournament.id}/rounds`;
+
+  const params = {
+    Name: `tournament-round-update-${tournament.label.replace(/\s/gi, '-')}`,
+    ScheduleExpression: 'rate(2 minutes)',
+    ScheduleExpressionTimezone: 'America/Sao_Paulo',
+    StartDate: startDate.toDate(),
+    EndDate: endDate.toDate(),
+    Target: {
+      Arn: 'arn:aws:lambda:us-east-1:905418297381:function:tournament-rounds-checker-demo',
+      RoleArn:
+        'arn:aws:iam::905418297381:role/service-role/Amazon_EventBridge_Scheduler_LAMBDA_b425d46da9',
+      Input: JSON.stringify({ apiUrl }),
+    },
+    FlexibleTimeWindow: {
+      // Mode: // five minuts
+      Mode: 'OFF' as const,
+      // MaximumWindowInMinutes: 5,
+    },
+    ActionAfterCompletion: undefined,
+    GroupName: 'tournament-rounds-checker',
+  };
+
+  const command = new CreateScheduleCommand(params);
+  const response = await client.send(command);
+
+  return response.ScheduleArn;
+};
+
 type ISchedule = {
   id: string;
   cron: string;
@@ -136,4 +173,4 @@ type ISchedule = {
   roundToUpdate: string;
 };
 
-export const SchedulerController = { run };
+export const Scheduler = { run, tournamentUpdateRecurrence };

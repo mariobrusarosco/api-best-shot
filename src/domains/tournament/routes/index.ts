@@ -11,7 +11,7 @@ const TournamentRouting = (app: Express) => {
   const tournamentRouter = express.Router();
 
   tournamentRouter.get('/', TournamentController.getAllTournaments);
-  tournamentRouter.get('/:tournamentId', TournamentController.getTournament);
+  tournamentRouter.get('/:tournamentId', API_Tournament.getTournament);
   tournamentRouter.get(
     '/:tournamentId/matches/:round',
     MatchController.getMatchesByTournament

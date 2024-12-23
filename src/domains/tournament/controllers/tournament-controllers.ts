@@ -3,11 +3,9 @@ import { ACTIVE_API_PROVIDER } from '@/domains/data-provider-v2';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
 
-import { MatchQueries } from '@/domains/match/queries';
 import { T_Match } from '@/domains/match/schema';
 import { DB_Performance } from '@/domains/performance/database';
 import { T_TournamentPerformance } from '@/domains/performance/schema';
-import { TournamentQueries } from '@/domains/tournament/queries';
 import { T_Tournament } from '@/domains/tournament/schema';
 import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
@@ -32,28 +30,11 @@ const getTournamentPerformanceForMember = async (req: Request, res: Response) =>
 };
 
 const TournamentController = {
-  getTournament,
   getAllTournaments,
   getTournamentScore,
   setupTournament,
   getTournamentPerformanceForMember,
 };
-
-async function getTournament(req: Request, res: Response) {
-  try {
-    const tournamentId = req?.params.tournamentId;
-    const tournament = await TournamentQueries.tournament(tournamentId);
-    const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase({
-      tournamentId,
-    });
-    const starterRound = currentDayMatches[0]?.roundId ?? '1';
-
-    return res.status(200).send({ ...tournament, starterRound });
-  } catch (error: any) {
-    console.error('Error fetching matches:', error);
-    return handleInternalServerErrorResponse(res, error);
-  }
-}
 
 async function getAllTournaments(_: Request, res: Response) {
   try {

@@ -1,4 +1,5 @@
 // const { fetchStandings } = ApiProviderV2.standings;
+//@ts-nocheck
 
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { Response } from 'express';

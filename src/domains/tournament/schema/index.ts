@@ -1,4 +1,4 @@
-import { numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Tournament = pgTable(
   'tournament',
@@ -6,14 +6,14 @@ export const T_Tournament = pgTable(
     id: uuid('id').defaultRandom(),
     externalId: text('external_id').notNull(),
     standingsUrl: text('standings_url').notNull(),
+    roundUrl: text('round_url').notNull().default(''),
     roundsUrl: text('rounds_url').notNull(),
-    rounds: numeric('rounds').notNull(),
     slug: text('slug').notNull().default(''),
     provider: text('provider').notNull(),
     season: text('season').notNull(),
     mode: text('mode').notNull(),
     label: text('label').notNull(),
-    logo: text('logo'),
+    logo: text('logo').notNull().default(''),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .notNull()
@@ -27,7 +27,7 @@ export const T_Tournament = pgTable(
   }
 );
 
-export type DB_InsertTournament = typeof T_Tournament.$inferInsert;
+export type DB_InsertTournament = Omit<typeof T_Tournament.$inferInsert, 'id'>;
 export type DB_UpdateTournament = typeof T_Tournament.$inferInsert;
 export type DB_SelectTournament = typeof T_Tournament.$inferSelect;
 
@@ -67,3 +67,29 @@ export const T_TournamentStandings = pgTable(
 export type DB_InsertTournamentStandings = typeof T_TournamentStandings.$inferInsert;
 export type DB_UpdateTournamentStandings = typeof T_TournamentStandings.$inferInsert;
 export type DB_SelectTournamentStandings = typeof T_TournamentStandings.$inferSelect;
+
+export const T_TournamentRound = pgTable(
+  'tournament_round',
+  {
+    id: uuid('id').defaultRandom(),
+    tournamentId: text('tournament_id').notNull(),
+    order: text('round').notNull(),
+    label: text('label').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  table => {
+    return {
+      pk: primaryKey({
+        columns: [table.tournamentId, table.order],
+      }),
+    };
+  }
+);
+
+export type DB_InsertTournamentRound = typeof T_TournamentRound.$inferInsert;
+export type DB_UpdateTournamentRound = typeof T_TournamentRound.$inferInsert;
+export type DB_SelectTournamentRound = typeof T_TournamentRound.$inferSelect;

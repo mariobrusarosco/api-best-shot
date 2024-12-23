@@ -14,10 +14,10 @@ const DataProviderRouting = (app: Express) => {
   dataProviderRouter.post('/tournaments', TournamentDataController.setupTournament);
   dataProviderRouter.patch('/tournaments', TournamentDataController.updateTournament);
   // TEAMS
-  dataProviderRouter.post(
-    '/tournaments/:tournamentId/teams',
-    TeamsDataController.setupTeams
-  );
+  // dataProviderRouter.post(
+  //   '/tournaments/:tournamentId/teams',
+  //   TeamsDataController.setupTeams
+  // );
   dataProviderRouter.patch(
     '/tournaments/:tournamentId/teams',
     TeamsDataController.updateTeams

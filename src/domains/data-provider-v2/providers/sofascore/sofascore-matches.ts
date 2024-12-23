@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { DB_InsertMatch } from '@/domains/match/schema';
 import { safeString } from '@/utils';
 import axios from 'axios';

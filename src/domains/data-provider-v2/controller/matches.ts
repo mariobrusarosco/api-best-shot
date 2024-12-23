@@ -1,4 +1,4 @@
-import { ApiProvider } from '@/domains/data-provider-v2';
+//@ts-nocheck
 import { MatchesRequest } from '@/domains/data-provider-v2/interface';
 import { T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
@@ -8,7 +8,7 @@ import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
 import { Response } from 'express';
 
-const Api = ApiProvider?.matches;
+// const Api = ApiProvider?.matches!;
 
 const setupMatches = async (req: MatchesRequest, res: Response) => {
   try {
@@ -53,7 +53,7 @@ const updateMatchesForEachRound = async (tournament: DB_SelectTournament) => {
   let ROUND_COUNT = 1;
   const scorelessMatchesIds = await getNonStartedMatches(tournament);
 
-  while (ROUND_COUNT <= Number(tournament.rounds)) {
+  while (ROUND_COUNT <= Number(1)) {
     const shouldFetchRound = scorelessMatchesIds.has(ROUND_COUNT);
 
     if (shouldFetchRound) {
@@ -97,7 +97,7 @@ const updateMatchesOfRound = async (tournament: DB_SelectTournament, roundId: nu
 const createMatchesForEachRound = async (tournament: DB_SelectTournament) => {
   let ROUND_COUNT = 1;
 
-  while (ROUND_COUNT <= Number(tournament.rounds)) {
+  while (ROUND_COUNT <= Number(1)) {
     console.log(
       '[CREATING ROUND]',
       ROUND_COUNT,

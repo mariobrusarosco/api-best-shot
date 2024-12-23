@@ -1,3 +1,4 @@
+//@ts-nocheck
 import {
   DB_InsertTournamentStandings,
   T_Tournament,

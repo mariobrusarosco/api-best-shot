@@ -5,7 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { IApiProviderV2 } from '../../interface';
 
 export const SofascoreTournament: IApiProviderV2['tournament'] = {
-  createOnDatabase: async (data): Promise<DB_InsertTournament> => {
+  createOnDatabase: async data => {
     const [tournament] = await db.insert(T_Tournament).values(data).returning();
 
     return tournament;

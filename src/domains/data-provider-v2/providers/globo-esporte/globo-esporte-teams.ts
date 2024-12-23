@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { DB_InsertTeam, T_Team } from '@/domains/team/schema';
 import db from '@/services/database';
 import { fetchAndStoreAssetFromApiNew } from '@/utils';

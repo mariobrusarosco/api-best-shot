@@ -15,6 +15,7 @@ const client = new SchedulerClient({ region: 'us-east-1' });
 const run = async (req: Request, res: Response) => {
   try {
     const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase();
+    console.log({ currentDayMatches });
     const dailySchedule = mapMatchesToDailySchedule(currentDayMatches);
 
     dailySchedule.forEach(async schedule => {
@@ -62,14 +63,9 @@ const toCronFormat = (date: ReturnType<typeof dayjs>) => {
     throw new Error('Invalid date');
   }
 
-  const minutes = d.minute();
-  const hours = d.hour();
-  const dayOfMonth = d.date();
-  const month = d.month() + 1;
-  const dayOfWeek = '?';
-  const year = d.year();
-
-  return `cron(${minutes} ${hours} ${dayOfMonth} ${month} ${dayOfWeek} ${year})`;
+  return `cron(${d.minute()} ${d.hour()} ${d.date()} ${
+    d.month() + 1
+  } ${'?'} ${d.year()})`;
 };
 
 const scheduleTournamentStandingsUpdateCronJob = async (schedule: ISchedule) => {

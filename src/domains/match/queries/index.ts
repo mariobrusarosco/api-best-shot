@@ -7,9 +7,7 @@ import { asc, eq, sql } from 'drizzle-orm';
 dayjs.extend(utc);
 dayjs.extend(isToday);
 
-export const queryCurrentDayMatchesOnDatabase = async (filter?: {
-  tournamentId?: string;
-}) => {
+const currentDayMatchesOnDatabase = async (filter?: { tournamentId?: string }) => {
   const startOfDay = dayjs().utc().startOf('day').toDate().toISOString();
   const endOfDay = dayjs().utc().endOf('day').toDate().toISOString();
 
@@ -33,4 +31,8 @@ export const queryCurrentDayMatchesOnDatabase = async (filter?: {
     .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
     .where(whereClause)
     .orderBy(asc(T_Match.date));
+};
+
+export const MatchQueries = {
+  currentDayMatchesOnDatabase,
 };

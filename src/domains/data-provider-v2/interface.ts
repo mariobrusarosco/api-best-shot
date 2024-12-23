@@ -28,7 +28,7 @@ export type IApiProviderV2 = {
   };
   teams: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
-    fetchTeamsFromStandings: (req: TeamsRequest) => Promise<any>;
+    fetchTeamsFromStandings: (tournamentId: string) => Promise<any>;
     mapTeamsFromStandings: (standings: any, provider: string) => Promise<DB_InsertTeam[]>;
     createOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[]>;
     updateOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[] | undefined>;
@@ -55,11 +55,7 @@ export type PayloadTournament = {
   logoPngBase64?: string;
 };
 
-export type TeamsRequest = Request<null, null, TeamsPayload>;
-export type TeamsPayload = {
-  standingsUrl: string;
-  provider: string;
-};
+export type TeamsRequest = Request<{ tournamentId: string }, null, null>;
 
 export type MatchesRequest = Request<{ tournamentId: string; round: number }, null, null>;
 

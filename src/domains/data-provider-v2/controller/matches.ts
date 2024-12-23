@@ -2,8 +2,8 @@ import { ApiProvider } from '@/domains/data-provider-v2';
 import { MatchesRequest } from '@/domains/data-provider-v2/interface';
 import { T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { TournamentQueries } from '@/domains/tournament/queries';
 import { DB_SelectTournament } from '@/domains/tournament/schema';
-import { getTournamentById } from '@/domains/tournament/utils';
 import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
 import { Response } from 'express';
@@ -13,7 +13,8 @@ const Api = ApiProvider?.matches;
 const setupMatches = async (req: MatchesRequest, res: Response) => {
   try {
     const { tournamentId } = req.params as { tournamentId: string };
-    const [tournament] = await getTournamentById(tournamentId);
+    const tournament = await TournamentQueries.tournament(tournamentId);
+    if (!tournament) throw new Error('Tournament not found');
 
     const result = await createMatchesForEachRound(tournament);
 
@@ -29,7 +30,9 @@ const updateMatches = async (req: MatchesRequest, res: Response) => {
   try {
     const { tournamentId, round } = req.params as { tournamentId: string; round: number };
 
-    const [tournament] = await getTournamentById(tournamentId);
+    const tournament = await TournamentQueries.tournament(tournamentId);
+    if (!tournament) throw new Error('Tournament not found');
+
     const result = await updateMatchesOfRound(tournament, round || 1);
 
     return res.status(200).send(result);

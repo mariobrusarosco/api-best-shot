@@ -3,27 +3,30 @@ import db from '@/services/database';
 import { fetchAndStoreAssetFromApiNew } from '@/utils';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import { IApiProviderV2, TeamsRequest } from '../../interface';
+import { IApiProviderV2 } from '../../interface';
 import { API_SofaScoreStandings } from './typing';
 const SOFA_TEAN_LOGO_URL = 'https://img.sofascore.com/api/v1/team/:id/image/';
 
 export const SofascoreTeams: IApiProviderV2['teams'] = {
-  fetchTeamsFromStandings: async (req: TeamsRequest) => {
-    const response = await axios.get(req.body.standingsUrl);
+  fetchTeamsFromStandings: async (standingsUrl: string) => {
+    const response = await axios.get(standingsUrl);
 
     return response.data as API_SofaScoreStandings;
   },
-  mapTeamsFromStandings: async (standings: API_SofaScoreStandings, provider) => {
-    const promises = standings?.standings[0]['rows']?.map(async team => {
-      const badge = await SofascoreTeams.fetchAndStoreLogo({
-        filename: `team-${provider}-${team.team.id}`,
-        logoUrl: SOFA_TEAN_LOGO_URL.replace(':id', String(team.team.id)),
-      });
+  mapTeamsFromStandings: async (data: API_SofaScoreStandings, provider) => {
+    const standings = data?.standings;
+    const groupOfTeams = standings.map(groupOfTeams => groupOfTeams.rows);
+    const allTournamentTeams = groupOfTeams.flat();
 
+    const promises = allTournamentTeams.map(async ({ team }) => {
+      const badge = await SofascoreTeams.fetchAndStoreLogo({
+        filename: `team-${provider}-${team.id}`,
+        logoUrl: SOFA_TEAN_LOGO_URL.replace(':id', String(team.id)),
+      });
       return {
-        name: team.team.name,
-        externalId: String(team.team.id),
-        shortName: team.team.nameCode,
+        name: team.name,
+        externalId: String(team.id),
+        shortName: team.nameCode,
         badge,
         provider: 'sofa',
       } satisfies DB_InsertTeam;

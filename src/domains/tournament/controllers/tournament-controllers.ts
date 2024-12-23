@@ -2,10 +2,12 @@ import { Utils } from '@/domains/auth/utils';
 import { ACTIVE_API_PROVIDER } from '@/domains/data-provider-v2';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
-import { queryCurrentDayMatchesOnDatabase } from '@/domains/match/queries';
+
+import { MatchQueries } from '@/domains/match/queries';
 import { T_Match } from '@/domains/match/schema';
 import { DB_Performance } from '@/domains/performance/database';
 import { T_TournamentPerformance } from '@/domains/performance/schema';
+import { TournamentQueries } from '@/domains/tournament/queries';
 import { T_Tournament } from '@/domains/tournament/schema';
 import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
@@ -40,19 +42,11 @@ const TournamentController = {
 async function getTournament(req: Request, res: Response) {
   try {
     const tournamentId = req?.params.tournamentId;
-    const [tournament] = await db
-      .select()
-      .from(T_Tournament)
-      .where(
-        and(
-          eq(T_Tournament.id, tournamentId),
-          eq(T_Tournament.provider, ACTIVE_API_PROVIDER)
-        )
-      );
-
-    const currentDayMatches = await queryCurrentDayMatchesOnDatabase({ tournamentId });
-    console.log({ currentDayMatches });
-    const starterRound = currentDayMatches[0].roundId ?? '1';
+    const tournament = await TournamentQueries.tournament(tournamentId);
+    const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase({
+      tournamentId,
+    });
+    const starterRound = currentDayMatches[0]?.roundId ?? '1';
 
     return res.status(200).send({ ...tournament, starterRound });
   } catch (error: any) {

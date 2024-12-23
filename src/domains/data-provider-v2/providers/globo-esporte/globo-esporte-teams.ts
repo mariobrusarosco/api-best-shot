@@ -3,12 +3,12 @@ import db from '@/services/database';
 import { fetchAndStoreAssetFromApiNew } from '@/utils';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import { IApiProviderV2, TeamsRequest } from '../../interface';
+import { IApiProviderV2 } from '../../interface';
 import { API_GloboEsporteStandings } from './typing';
 
 export const GloboEsporteTeams: IApiProviderV2['teams'] = {
-  fetchTeamsFromStandings: async (req: TeamsRequest) => {
-    const response = await axios.get(req.body.standingsUrl);
+  fetchTeamsFromStandings: async (standingsUrl: string) => {
+    const response = await axios.get(standingsUrl);
 
     return response.data as API_GloboEsporteStandings;
   },

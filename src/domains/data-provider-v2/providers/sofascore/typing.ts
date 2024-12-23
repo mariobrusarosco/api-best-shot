@@ -62,11 +62,27 @@ export type API_SofaScoreRound = {
 };
 
 export type API_SofaScoreStandings = {
-  standings: [
-    {
-      tournament: {
+  standings: {
+    tournament: {
+      name: string;
+      slug: string;
+      category: {
         name: string;
         slug: string;
+        sport: {
+          name: string;
+          slug: string;
+          id: number;
+        };
+        id: number;
+        flag: string;
+        alpha2: string;
+      };
+      uniqueTournament: {
+        name: string;
+        slug: string;
+        primaryColorHex: string;
+        secondaryColorHex: string;
         category: {
           name: string;
           slug: string;
@@ -79,45 +95,27 @@ export type API_SofaScoreStandings = {
           flag: string;
           alpha2: string;
         };
-        uniqueTournament: {
-          name: string;
-          slug: string;
-          primaryColorHex: string;
-          secondaryColorHex: string;
-          category: {
-            name: string;
-            slug: string;
-            sport: {
-              name: string;
-              slug: string;
-              id: number;
-            };
-            id: number;
-            flag: string;
-            alpha2: string;
-          };
-          userCount: number;
-          hasPerformanceGraphFeature: boolean;
-          id: number;
-          displayInverseHomeAwayTeams: boolean;
-        };
-        priority: number;
-        isGroup: boolean;
-        isLive: boolean;
+        userCount: number;
+        hasPerformanceGraphFeature: boolean;
         id: number;
+        displayInverseHomeAwayTeams: boolean;
       };
-      type: string;
-      name: string;
-      descriptions: [];
-      tieBreakingRule: {
-        text: string;
-        id: number;
-      };
-      rows: API_SofascoreStandingTeam[];
+      priority: number;
+      isGroup: boolean;
+      isLive: boolean;
       id: number;
-      updatedAtTimestamp: number;
-    }
-  ];
+    };
+    type: string;
+    name: string;
+    descriptions: [];
+    tieBreakingRule: {
+      text: string;
+      id: number;
+    };
+    rows: API_SofascoreStandingTeam[];
+    id: number;
+    updatedAtTimestamp: number;
+  }[];
 };
 
 export type API_SofascoreStandingTeam = {

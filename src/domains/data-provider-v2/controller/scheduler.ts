@@ -1,4 +1,4 @@
-import { queryCurrentDayMatchesOnDatabase } from '@/domains/match/queries';
+import { MatchQueries } from '@/domains/match/queries';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { CreateScheduleCommand, SchedulerClient } from '@aws-sdk/client-scheduler';
 import dayjs from 'dayjs';
@@ -14,7 +14,7 @@ const client = new SchedulerClient({ region: 'us-east-1' });
 
 const run = async (req: Request, res: Response) => {
   try {
-    const currentDayMatches = await queryCurrentDayMatchesOnDatabase();
+    const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase();
     const dailySchedule = mapMatchesToDailySchedule(currentDayMatches);
 
     dailySchedule.forEach(async schedule => {
@@ -31,7 +31,7 @@ const run = async (req: Request, res: Response) => {
 };
 
 const mapMatchesToDailySchedule = (
-  matches: Awaited<ReturnType<typeof queryCurrentDayMatchesOnDatabase>>
+  matches: Awaited<ReturnType<typeof MatchQueries.currentDayMatchesOnDatabase>>
 ) => {
   const SCHEDULES = new Map();
 

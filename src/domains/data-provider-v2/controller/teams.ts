@@ -1,6 +1,5 @@
-// const { fetchStandings } = ApiProviderV2.standings;
-
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { TournamentQueries } from '@/domains/tournament/queries';
 import { Response } from 'express';
 import { ApiProvider } from '..';
 import { TeamsRequest } from '../interface';
@@ -9,8 +8,13 @@ const Api = ApiProvider.teams;
 
 const setupTeams = async (req: TeamsRequest, res: Response) => {
   try {
-    const standings = await Api.fetchTeamsFromStandings(req);
-    const mappedTeams = await Api.mapTeamsFromStandings(standings, req.body.provider);
+    const tournamenId = req.params.tournamentId;
+    const tournament = await TournamentQueries.tournament(tournamenId);
+
+    if (!tournament) throw new Error('Tournament not found');
+
+    const standings = await Api.fetchTeamsFromStandings(tournament.standingsUrl);
+    const mappedTeams = await Api.mapTeamsFromStandings(standings, tournament.provider);
     const query = await Api.createOnDatabase(mappedTeams);
 
     res.status(200).send(query);
@@ -23,8 +27,13 @@ const setupTeams = async (req: TeamsRequest, res: Response) => {
 
 const updateTeams = async (req: TeamsRequest, res: Response) => {
   try {
-    const standings = await Api.fetchTeamsFromStandings(req);
-    const mappedTeams = await Api.mapTeamsFromStandings(standings, req.body.provider);
+    const tournamenId = req.params.tournamentId;
+    const tournament = await TournamentQueries.tournament(tournamenId);
+
+    if (!tournament) throw new Error('Tournament not found');
+
+    const standings = await Api.fetchTeamsFromStandings(tournament.standingsUrl);
+    const mappedTeams = await Api.mapTeamsFromStandings(standings, tournament.provider);
     const query = await Api.updateOnDatabase(mappedTeams);
 
     res.status(200).send(query);

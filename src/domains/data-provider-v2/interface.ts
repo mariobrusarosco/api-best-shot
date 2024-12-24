@@ -24,12 +24,6 @@ export type IApiProviderV2 = {
       data: API_SofaScoreRounds,
       tournamentId: string
     ) => DB_InsertTournamentRound[] | DB_UpdateTournamentRound[];
-    createRoundsOnDatabase: (
-      rounds: DB_InsertTournamentRound[]
-    ) => Promise<DB_SelectTournamentRound[]>;
-    updateRoundsOnDatabase: (
-      rounds: DB_InsertTournamentRound[]
-    ) => Promise<DB_SelectTournamentRound[] | undefined>;
   };
   standings: {
     fetchStandings: (baseUrl: string) => Promise<any>;
@@ -50,18 +44,26 @@ export type IApiProviderV2 = {
     mapTeamsFromStandings: (standings: any, provider: string) => Promise<DB_InsertTeam[]>;
     createOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[]>;
     updateOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[] | undefined>;
-    fetchTeamsFromAvailableRounds: (
-      rounds: DB_SelectTournamentRound[],
-      baseUrl: string
-    ) => Promise<any>;
-    mapTeamsFromAvailableRounds: (
-      data: any,
-      provider: string
-    ) => Promise<DB_InsertTeam[]>;
   };
   matches: {
     fetchRound: (url: string, round: number) => Promise<any>;
     mapRound: (round: any, roundId: string, tournamentId: string) => DB_InsertMatch[];
+  };
+  rounds: {
+    fetchAvailableRounds: (
+      // rounds: DB_SelectTournamentRound[],
+      baseUrl: string
+    ) => Promise<API_SofaScoreRounds>;
+    mapAvailableRounds: (
+      data: API_SofaScoreRounds,
+      tournamentId: string
+    ) => Promise<any[]>;
+    createOnDatabase: (
+      rounds: DB_InsertTournamentRound[]
+    ) => Promise<DB_SelectTournamentRound[]>;
+    updateOnDatabase: (
+      rounds: DB_InsertTournamentRound[]
+    ) => Promise<DB_SelectTournamentRound[] | undefined>;
   };
 };
 

@@ -8,6 +8,7 @@ import { fetchAndStoreAssetFromApiNew } from '@/utils';
 import axios from 'axios';
 import { and, eq } from 'drizzle-orm';
 import { IApiProviderV2 } from '../../interface';
+import { API_SofaScoreRounds } from './typing';
 
 export const SofascoreTournament: IApiProviderV2['tournament'] = {
   createOnDatabase: async data => {
@@ -42,30 +43,9 @@ export const SofascoreTournament: IApiProviderV2['tournament'] = {
   },
   mapRoundsToInsert: (data, tournamentId) => {
     return data.rounds.map(round => {
-      const identifyRoundType = round.slug ? 'knockout' : 'season';
-      let parsedRound = {} as DB_InsertTournamentRound;
+      const mappedRound = identifyTypeAndMapRound(round, tournamentId);
 
-      if (identifyRoundType === 'knockout') {
-        parsedRound = {
-          tournamentId,
-          slug: round.slug!,
-          order: String(round.round),
-          label: round.name!,
-          type: identifyRoundType,
-        };
-      }
-
-      if (identifyRoundType === 'season') {
-        parsedRound = {
-          tournamentId,
-          slug: String(round.round),
-          order: String(round.round),
-          label: String(round.round),
-          type: identifyRoundType,
-        };
-      }
-
-      return parsedRound;
+      return mappedRound;
     });
   },
   createRoundsOnDatabase: async roundsToInsert => {
@@ -88,4 +68,39 @@ export const SofascoreTournament: IApiProviderV2['tournament'] = {
       }
     });
   },
+};
+
+const identifyTypeAndMapRound = (
+  round: API_SofaScoreRounds['rounds'][number],
+  tournamentId: string
+) => {
+  if (round?.prefix) {
+    return {
+      tournamentId,
+      slug: round.slug!,
+      order: `0${round.round}`,
+      knockoutId: `${round.round}`,
+      label: round.name!,
+      type: 'special-knockout',
+      prefix: round.prefix,
+    } satisfies DB_InsertTournamentRound;
+  }
+
+  if (round?.slug) {
+    return {
+      tournamentId,
+      slug: round.slug!,
+      order: `0${round.round}`,
+      knockoutId: String(round.round),
+      label: round.name!,
+      type: 'knockout',
+    } satisfies DB_InsertTournamentRound;
+  }
+
+  return {
+    tournamentId,
+    order: `${round.round}`,
+    label: `${round.round}`,
+    type: 'season',
+  } satisfies DB_InsertTournamentRound;
 };

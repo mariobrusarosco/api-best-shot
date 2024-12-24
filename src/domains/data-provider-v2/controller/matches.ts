@@ -10,19 +10,15 @@ import { Response } from 'express';
 
 // const Api = ApiProvider?.matches!;
 
-const setupMatches = async (req: MatchesRequest, res: Response) => {
+const setupMatches = async (tournamentId: string) => {
   try {
-    const { tournamentId } = req.params as { tournamentId: string };
-    const tournament = await TournamentQueries.tournament(tournamentId);
-    if (!tournament) throw new Error('Tournament not found');
-
     const result = await createMatchesForEachRound(tournament);
 
     return res.status(200).send(result);
   } catch (error: any) {
-    console.error('[ERROR] - setupMatches', error);
-
-    handleInternalServerErrorResponse(res, error);
+    console.error('[ERROR] - setupMatches for tournament:', tournamentId);
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
   }
 };
 

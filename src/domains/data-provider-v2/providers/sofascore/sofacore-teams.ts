@@ -53,16 +53,25 @@ export const SofascoreTeams: IApiProviderV2['teams'] = {
     });
   },
   fetchTeamsFromAvailableRounds: async (allAvailableRounds, baseUrl) => {
+    console.log({ allAvailableRounds });
     const allTeams = allAvailableRounds.map(async round => {
       let urlToFetch = '';
 
+      console.log({ ROUND: round });
+
       if (round.type === 'knockout') {
-        urlToFetch = `${baseUrl}/events/round/${round.order}/slug/${round.slug}`;
+        urlToFetch = `${baseUrl}/events/round/${round.knockoutId}/slug/${round.slug}`;
+      }
+
+      if (round.type === 'special-knockout') {
+        urlToFetch = `${baseUrl}/events/round/${round.knockoutId}/slug/${round.slug}/prefix/${round.prefix}`;
       }
 
       if (round.type === 'season') {
-        urlToFetch = `${baseUrl}/season/rounds/${round.order}`;
+        urlToFetch = `${baseUrl}/events/round/${round.order}`;
       }
+
+      console.log({ URL_TO_FETCH: urlToFetch });
 
       const response = await axios.get(urlToFetch);
 

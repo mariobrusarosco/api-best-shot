@@ -40,6 +40,14 @@ const setupTournament = async (req: TournamentRequest, res: Response) => {
     }
 
     // CREATE TOURNAMENT MATCHES
+    // if (tournament.mode === 'regular-season-only') {
+    //   const standings = await MatchesDataController.setupMatches(
+    //     tournament.baseUrl,
+    //     tournament.id!
+    //   );
+
+    //   console.log('CREATED STANDINGS', standings);
+    // }
 
     res.status(200).send({ teams, rounds });
   } catch (error: any) {

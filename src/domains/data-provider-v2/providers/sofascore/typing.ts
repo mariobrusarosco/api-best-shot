@@ -172,6 +172,7 @@ export type API_SofaScoreRounds = {
     round: number;
     name?: string;
     slug?: string;
+    prefix?: string;
   }[];
 };
 

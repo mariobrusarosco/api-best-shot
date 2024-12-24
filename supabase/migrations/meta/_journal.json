@@ -50,6 +50,27 @@
       "when": 1734996502037,
       "tag": "0006_marvelous_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1735046835166,
+      "tag": "0007_nifty_iceman",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1735047591210,
+      "tag": "0008_tense_talkback",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1735047654990,
+      "tag": "0009_cooing_kingpin",
+      "breakpoints": true
     }
   ]
 }

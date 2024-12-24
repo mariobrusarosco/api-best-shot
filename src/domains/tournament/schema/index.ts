@@ -73,7 +73,9 @@ export const T_TournamentRound = pgTable(
     tournamentId: text('tournament_id').notNull(),
     order: text('order').notNull(),
     label: text('label').notNull(),
-    slug: text('slug').notNull(),
+    slug: text('slug').default(''),
+    knockoutId: text('knockout_id').default(''),
+    prefix: text('prefix').default(''),
     type: text('type').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')

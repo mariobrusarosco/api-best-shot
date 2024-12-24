@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { DB_InsertTournament, T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { fetchAndStoreAssetFromApiNew } from '@/utils';

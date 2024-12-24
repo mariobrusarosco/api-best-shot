@@ -10,7 +10,7 @@ import TournamentController from '../controllers/tournament-controllers';
 const TournamentRouting = (app: Express) => {
   const tournamentRouter = express.Router();
 
-  tournamentRouter.get('/', TournamentController.getAllTournaments);
+  tournamentRouter.get('/', API_Tournament.getAllTournaments);
   tournamentRouter.get('/:tournamentId', API_Tournament.getTournament);
   tournamentRouter.get(
     '/:tournamentId/matches/:round',

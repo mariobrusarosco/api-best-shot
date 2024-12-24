@@ -1,6 +1,6 @@
 {
-  "id": "f1fc510a-c419-4b32-a855-7363aad63517",
-  "prevId": "246884e8-b934-466a-a4b9-bc3ae3876b7c",
+  "id": "529e08b0-8c5c-41cb-bcc7-e1bb0949ab27",
+  "prevId": "f3d7eb7e-77e0-4f66-a55f-21faa7d2ffa8",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -717,15 +717,16 @@
           "primaryKey": false,
           "notNull": true
         },
+        "round_url": {
+          "name": "round_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
         "rounds_url": {
           "name": "rounds_url",
           "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "rounds": {
-          "name": "rounds",
-          "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
@@ -764,7 +765,8 @@
           "name": "logo",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "''"
         },
         "created_at": {
           "name": "created_at",
@@ -794,6 +796,63 @@
       },
       "uniqueConstraints": {}
     },
+    "public.tournament_round": {
+      "name": "tournament_round",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "gen_random_uuid()"
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round": {
+          "name": "round",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "tournament_round_tournament_id_round_pk": {
+          "name": "tournament_round_tournament_id_round_pk",
+          "columns": [
+            "tournament_id",
+            "round"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
     "public.tournament_standings": {
       "name": "tournament_standings",
       "schema": "",
@@ -814,7 +873,7 @@
         "tournament_id": {
           "name": "tournament_id",
           "type": "text",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true
         },
         "order": {
@@ -906,7 +965,16 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "tournament_standings_team_external_id_provider_tournament_id_pk": {
+          "name": "tournament_standings_team_external_id_provider_tournament_id_pk",
+          "columns": [
+            "team_external_id",
+            "provider",
+            "tournament_id"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     }
   },

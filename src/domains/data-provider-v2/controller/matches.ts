@@ -1,127 +1,104 @@
-import { ApiProvider } from '@/domains/data-provider-v2';
-import { MatchesRequest } from '@/domains/data-provider-v2/interface';
 import { T_Match } from '@/domains/match/schema';
-import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { TournamentQueries } from '@/domains/tournament/queries';
-import { DB_SelectTournament } from '@/domains/tournament/schema';
+import {
+  DB_SelectTournament,
+  DB_SelectTournamentRound,
+} from '@/domains/tournament/schema';
 import db from '@/services/database';
-import { and, eq } from 'drizzle-orm';
-import { Response } from 'express';
+import { sleep } from '@/utils';
+import axios from 'axios';
+import { SofascoreMatches } from '../providers/sofascore/sofascore-matches';
 
-const Api = ApiProvider?.matches;
+// const setupMatches = async (tournamentId: string) => {
+//   try {
+//     const result = await createMatchesForEachRound(tournament);
 
-const setupMatches = async (req: MatchesRequest, res: Response) => {
+//     return res.status(200).send(result);
+//   } catch (error: any) {
+//     console.error('[ERROR] - setupMatches for tournament:', tournamentId);
+//     console.error('[URL] - ', error.config.url);
+//     console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+//   }
+// };
+
+// const updateMatchesOfRound = async (tournament: DB_SelectTournament, roundId: number) => {
+//   const fetchedMatches = await SofascoreMatches.fetchRoundMatches(
+//     tournament.baseUrl,
+//     roundId
+//   );
+//   const mappedMatches = SofascoreMatches.mapRoundMatches(
+//     fetchedMatches,
+//     String(roundId),
+//     String(tournament.id)
+//   );
+
+//   await db.transaction(async tx => {
+//     for (const match of mappedMatches) {
+//       await tx.update(T_Match).set(match).where(eq(T_Match.externalId, match.externalId));
+//     }
+//   });
+// };
+
+const createMatchesOfRound = async (
+  tournamentId: string,
+  round: DB_SelectTournamentRound
+) => {
   try {
-    const { tournamentId } = req.params as { tournamentId: string };
     const tournament = await TournamentQueries.tournament(tournamentId);
     if (!tournament) throw new Error('Tournament not found');
 
-    const result = await createMatchesForEachRound(tournament);
+    console.log('round', round);
 
-    return res.status(200).send(result);
+    // Fetch round
+
+    // const fetchedMatches = await SofascoreMatches.fetchRoundMatches(
+    //   tournament.id!,
+    //   roundId || '1'
+    // );
+    // const parsedMatches = SofascoreMatches.mapRoundMatches(
+    //   fetchedMatches,
+    //   roundId,
+    //   tournament.id!
+    // );
+
+    return [];
   } catch (error: any) {
-    console.error('[ERROR] - setupMatches', error);
-
-    handleInternalServerErrorResponse(res, error);
+    console.error('[ERROR] - createMatchesOfRound for tournament:', tournamentId);
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
   }
 };
 
-const updateMatches = async (req: MatchesRequest, res: Response) => {
-  try {
-    const { tournamentId, round } = req.params as { tournamentId: string; round: number };
-
-    const tournament = await TournamentQueries.tournament(tournamentId);
-    if (!tournament) throw new Error('Tournament not found');
-
-    const result = await updateMatchesOfRound(tournament, round || 1);
-
-    return res.status(200).send(result);
-  } catch (error: any) {
-    console.error('[ERROR] - updateMatches', error);
-
-    handleInternalServerErrorResponse(res, error);
-  }
+export const MatchesController = {
+  // setupMatches,
+  // updateMatchesOfRound,
+  createMatchesOfRound,
 };
 
-export const MatchesDataController = {
-  setupMatches,
-  updateMatches,
-};
+const setup = async (newTournament: DB_SelectTournament) => {
+  const allTournamentsRounds = await TournamentQueries.allTournamentRounds(
+    newTournament.id!
+  );
 
-const updateMatchesForEachRound = async (tournament: DB_SelectTournament) => {
-  // SELECTS ROUNDS WITH NO SCORE TO AVOID OVERCALLING THE API
-  let ROUND_COUNT = 1;
-  const scorelessMatchesIds = await getNonStartedMatches(tournament);
+  for (const round of allTournamentsRounds || []) {
+    await sleep(3000);
+    console.log('FETCHING - round.providerUrl:', round.providerUrl);
 
-  while (ROUND_COUNT <= Number(tournament.rounds)) {
-    const shouldFetchRound = scorelessMatchesIds.has(ROUND_COUNT);
+    const roundResponse = await axios.get(round.providerUrl);
+    const roundData = roundResponse.data;
 
-    if (shouldFetchRound) {
-      console.log(
-        '[UPDATING ROUND]',
-        ROUND_COUNT,
-        ' - for: ',
-        tournament?.provider,
-        '--- tournament:',
-        tournament.label
-      );
-
-      const round = await Api.fetchRound(tournament.roundsUrl, ROUND_COUNT);
-      const matches = Api.mapRound(round, String(ROUND_COUNT), String(tournament.id));
-
-      await db.transaction(async tx => {
-        for (const match of matches) {
-          await tx
-            .update(T_Match)
-            .set(match)
-            .where(eq(T_Match.externalId, match.externalId));
-        }
-      });
-    }
-
-    ROUND_COUNT++;
-  }
-};
-
-const updateMatchesOfRound = async (tournament: DB_SelectTournament, roundId: number) => {
-  const round = await Api.fetchRound(tournament.roundsUrl, roundId);
-  const matches = Api.mapRound(round, String(roundId), String(tournament.id));
-
-  await db.transaction(async tx => {
-    for (const match of matches) {
-      await tx.update(T_Match).set(match).where(eq(T_Match.externalId, match.externalId));
-    }
-  });
-};
-
-const createMatchesForEachRound = async (tournament: DB_SelectTournament) => {
-  let ROUND_COUNT = 1;
-
-  while (ROUND_COUNT <= Number(tournament.rounds)) {
-    console.log(
-      '[CREATING ROUND]',
-      ROUND_COUNT,
-      ' - for: ',
-      tournament?.provider,
-      '--- tournament:',
-      tournament.label
+    const matches = SofascoreMatches.mapRoundMatches(
+      roundData,
+      round.id!,
+      newTournament.id!
     );
 
-    const round = await Api.fetchRound(tournament.roundsUrl, ROUND_COUNT);
-    const matches = Api.mapRound(round, String(ROUND_COUNT), String(tournament.id));
-    await db.insert(T_Match).values(matches);
-
-    ROUND_COUNT++;
+    await db.insert(T_Match).values(matches).returning();
   }
+
+  return 'OK';
 };
 
-const getNonStartedMatches = async (tournament: DB_SelectTournament) => {
-  const selectQuery = await db
-    .selectDistinct({ roundId: T_Match.roundId })
-    .from(T_Match)
-    .where(
-      and(eq(T_Match.tournamentId, tournament.id as string), eq(T_Match.status, 'open'))
-    );
-
-  return new Set(selectQuery.map(round => Number(round.roundId)));
+export const MatchDataController = {
+  setup,
 };

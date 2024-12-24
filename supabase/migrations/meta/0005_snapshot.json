@@ -1,6 +1,6 @@
 {
-  "id": "c9c5c1d2-f5b4-479a-bb7f-39b33a1f4c3f",
-  "prevId": "529e08b0-8c5c-41cb-bcc7-e1bb0949ab27",
+  "id": "015c4f6f-8ebb-475a-a170-d3356e140eb1",
+  "prevId": "3ea02746-cd23-435f-ad81-13b2c655e8bc",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -717,12 +717,17 @@
           "primaryKey": false,
           "notNull": true
         },
+        "base_url": {
+          "name": "base_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "round_url": {
           "name": "round_url",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": "''"
+          "notNull": true
         },
         "rounds_url": {
           "name": "rounds_url",
@@ -821,6 +826,18 @@
         },
         "label": {
           "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
           "type": "text",
           "primaryKey": false,
           "notNull": true

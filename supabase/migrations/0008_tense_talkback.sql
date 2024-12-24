@@ -1,0 +1,1 @@
+ALTER TABLE "tournament_round" ADD COLUMN "prefix" text DEFAULT '';

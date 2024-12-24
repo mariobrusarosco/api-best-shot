@@ -1,5 +1,4 @@
 import { Utils } from '@/domains/auth/utils';
-import { ACTIVE_API_PROVIDER } from '@/domains/data-provider-v2';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
 
@@ -41,7 +40,7 @@ async function getAllTournaments(_: Request, res: Response) {
     const result = await db
       .select()
       .from(T_Tournament)
-      .where(eq(T_Tournament.provider, ACTIVE_API_PROVIDER));
+      .where(eq(T_Tournament.provider, 'sofa'));
 
     return res.status(200).send(result);
   } catch (error: any) {

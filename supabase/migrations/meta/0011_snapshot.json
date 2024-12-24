@@ -1,6 +1,6 @@
 {
-  "id": "c9c5c1d2-f5b4-479a-bb7f-39b33a1f4c3f",
-  "prevId": "529e08b0-8c5c-41cb-bcc7-e1bb0949ab27",
+  "id": "d8d05841-3895-4745-9456-7f4beb6b972f",
+  "prevId": "25418d92-f367-4e1a-87c5-2cb80776e61b",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -711,21 +711,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "standings_url": {
-          "name": "standings_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "round_url": {
-          "name": "round_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "rounds_url": {
-          "name": "rounds_url",
+        "base_url": {
+          "name": "base_url",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -821,6 +808,40 @@
         },
         "label": {
           "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "''"
+        },
+        "knockout_id": {
+          "name": "knockout_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "''"
+        },
+        "prefix": {
+          "name": "prefix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "''"
+        },
+        "provider_url": {
+          "name": "provider_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "type": {
+          "name": "type",
           "type": "text",
           "primaryKey": false,
           "notNull": true

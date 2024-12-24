@@ -1,50 +1,125 @@
-import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { TournamentQueries } from '@/domains/tournament/queries';
-import { Response } from 'express';
-import { ApiProvider } from '..';
-import { TeamsRequest } from '../interface';
+import { DB_SelectTournament } from '@/domains/tournament/schema';
+import { SofascoreTeams } from '../providers/sofascore/sofacore-teams';
 
-const Api = ApiProvider.teams;
-
-const setupTeams = async (req: TeamsRequest, res: Response) => {
+const setup = async (newTournament: DB_SelectTournament) => {
   try {
-    const tournamenId = req.params.tournamentId;
-    const tournament = await TournamentQueries.tournament(tournamenId);
+    let regularSeasonTeams,
+      knockoutSeasonTeams = null;
 
+    const tournament = await TournamentQueries.tournament(newTournament.id!);
     if (!tournament) throw new Error('Tournament not found');
 
-    const standings = await Api.fetchTeamsFromStandings(tournament.standingsUrl);
-    const mappedTeams = await Api.mapTeamsFromStandings(standings, tournament.provider);
-    const query = await Api.createOnDatabase(mappedTeams);
+    const tournamentMode = tournament.mode;
+    console.log('[TOURNAMENT SETUP] - START');
+    console.log('[TOURNAMENT SETUP] - MODE:', tournamentMode);
+    console.log('[TOURNAMENT SETUP] - LABEL:', tournament.label);
 
-    res.status(200).send(query);
+    if (tournamentMode === 'regular-season-only') {
+      regularSeasonTeams = await setupRegularSeasonTeams(
+        tournament.baseUrl,
+        tournament.provider
+      );
+    }
+
+    if (tournamentMode === 'regular-season-and-knockout') {
+      const tournamentAllRounds = await TournamentQueries.allTournamentRounds(
+        tournament.id!
+      );
+      const hasRegularSeasonRound = tournamentAllRounds?.some(
+        round => round.type === 'regular-season'
+      );
+
+      if (hasRegularSeasonRound) {
+        regularSeasonTeams = await setupRegularSeasonTeams(
+          tournament.baseUrl,
+          tournament.provider
+        );
+      }
+
+      knockoutSeasonTeams = await setupKnockoutSeasonTeams(
+        tournament.baseUrl,
+        tournament.provider,
+        tournament.id!
+      );
+    }
+
+    if (tournamentMode === 'knockout-only') {
+      knockoutSeasonTeams = await setupKnockoutSeasonTeams(
+        tournament.baseUrl,
+        tournament.provider,
+        tournament.id!
+      );
+    }
+
+    console.log(regularSeasonTeams, knockoutSeasonTeams);
   } catch (error: any) {
     console.error('[ERROR] - SetupTeams', error);
-
-    handleInternalServerErrorResponse(res, error);
   }
 };
 
-const updateTeams = async (req: TeamsRequest, res: Response) => {
+const setupRegularSeasonTeams = async (baseUrl: string, provider: string) => {
   try {
-    const tournamenId = req.params.tournamentId;
-    const tournament = await TournamentQueries.tournament(tournamenId);
+    console.log('[TOURNAMENT SETUP] - REGULAR SEASON TEAMS:', baseUrl, ' --- ', provider);
 
-    if (!tournament) throw new Error('Tournament not found');
+    const regularSeasonTeams = await SofascoreTeams.fetchTeamsFromStandings(baseUrl);
+    const mappedRegularSeasonTeams = await SofascoreTeams.mapTeamsFromStandings(
+      regularSeasonTeams,
+      provider
+    );
+    const query = await SofascoreTeams.createOnDatabase(mappedRegularSeasonTeams);
 
-    const standings = await Api.fetchTeamsFromStandings(tournament.standingsUrl);
-    const mappedTeams = await Api.mapTeamsFromStandings(standings, tournament.provider);
-    const query = await Api.updateOnDatabase(mappedTeams);
-
-    res.status(200).send(query);
+    return query;
   } catch (error: any) {
-    console.error('[ERROR] - updateTeams', error);
+    console.error('[ERROR] - setupRegularSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
 
-    handleInternalServerErrorResponse(res, error);
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM STANDINGS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
+  }
+};
+
+const setupKnockoutSeasonTeams = async (
+  baseUrl: string,
+  provider: string,
+  tournamentId: string
+) => {
+  try {
+    console.log('[TOURNAMENT SETUP] - KNOCKOUT TEAMS:', baseUrl, ' --- ', provider);
+
+    const knockoutRoundsTeams = await SofascoreTeams.fetchTeamsFromKnockoutRounds(
+      tournamentId
+    );
+    const mappedKnockoutRoundsTeams = await SofascoreTeams.mapTeamsFromKnockoutRounds(
+      knockoutRoundsTeams,
+      provider
+    );
+
+    const query = await SofascoreTeams.createOnDatabase(mappedKnockoutRoundsTeams);
+
+    return query;
+  } catch (error: any) {
+    console.error('[ERROR] - setupKnockoutSeasonTeams', error);
+    console.error('[URL] - ', error.config?.url);
+    console.error(
+      '[STATUS] - ',
+      error?.response?.status,
+      ' - ',
+      error.response?.statusText
+    );
+
+    if (error.response?.status === 404) {
+      console.error(
+        `[TEAMS FROM KNOCKOUT ROUNDS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
   }
 };
 
 export const TeamsDataController = {
-  setupTeams,
-  updateTeams,
+  setup,
 };

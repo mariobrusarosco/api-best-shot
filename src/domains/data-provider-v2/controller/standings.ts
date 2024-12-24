@@ -1,39 +1,44 @@
-// const { fetchStandings } = ApiProviderV2.standings;
+import { SofascoreStandings } from '../providers/sofascore/sofascore-standings';
 
-import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { Response } from 'express';
-import { ApiProvider } from '..';
-import { StandingsRequest } from '../interface';
+const Api = SofascoreStandings;
 
-const Api = ApiProvider.standings;
-
-const setupStandings = async (req: StandingsRequest, res: Response) => {
+const setupStandings = async (baseUrl: string, tournamentId: string) => {
   try {
-    const { standings, tournamentId } = await Api.fetchStandings(req);
-    const mappedTeams = await Api.mapStandings(standings, tournamentId);
-    const query = await Api.createOnDatabase(mappedTeams);
+    const standings = await Api.fetchStandings(baseUrl);
+    const mappedStandings = await Api.mapStandings(standings, tournamentId);
+    const query = await Api.createOnDatabase(mappedStandings);
 
-    res.status(200).send(query);
+    return query;
   } catch (error: any) {
-    console.error('[ERROR] - setupStandings', error);
+    console.error('[ERROR] - setupStandings');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
 
-    handleInternalServerErrorResponse(res, error);
+    if (error.response.status === 404) {
+      console.error(
+        `[STANDINGS] - tournament: ${tournamentId} does not have a standings in place`
+      );
+    }
   }
 };
 
-const updateStandings = async (req: StandingsRequest, res: Response) => {
+const updateStandings = async (baseUrl: string, tournamentId: string) => {
   try {
-    const { standings, tournamentId } = await Api.fetchStandings(req);
+    const standings = await Api.fetchStandings(baseUrl);
     const mappedStandings = await Api.mapStandings(standings, tournamentId);
     const query = await Api.updateOnDatabase(mappedStandings);
 
-    console.error('[STANDINGS] - updateStandings', tournamentId);
-
-    res.status(200).send(query);
+    return query;
   } catch (error: any) {
-    console.error('[ERROR] - updateStandings', error);
+    console.error('[ERROR] - setupStandings');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
 
-    handleInternalServerErrorResponse(res, error);
+    if (error.response.status === 404) {
+      console.error(
+        `[STANDINGS] - tournament: ${tournamentId} does not have a standings in place`
+      );
+    }
   }
 };
 

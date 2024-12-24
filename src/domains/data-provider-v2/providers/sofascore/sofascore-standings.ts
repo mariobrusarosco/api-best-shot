@@ -18,7 +18,7 @@ export const SofascoreStandings: IApiProviderV2['standings'] = {
       .from(T_Tournament)
       .where(eq(T_Tournament.id, tournamentId));
 
-    const response = await axios.get(tournament.standingsUrl);
+    const response = await axios.get(tournament.baseUrl);
 
     return {
       standings: response.data as API_SofaScoreStandings,

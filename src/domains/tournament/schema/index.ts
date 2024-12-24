@@ -5,9 +5,7 @@ export const T_Tournament = pgTable(
   {
     id: uuid('id').defaultRandom(),
     externalId: text('external_id').notNull(),
-    standingsUrl: text('standings_url').notNull(),
-    roundUrl: text('round_url').notNull().default(''),
-    roundsUrl: text('rounds_url').notNull(),
+    baseUrl: text('base_url').notNull(),
     slug: text('slug').notNull().default(''),
     provider: text('provider').notNull(),
     season: text('season').notNull(),
@@ -75,6 +73,8 @@ export const T_TournamentRound = pgTable(
     tournamentId: text('tournament_id').notNull(),
     order: text('order').notNull(),
     label: text('label').notNull(),
+    slug: text('slug').notNull(),
+    type: text('type').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .notNull()

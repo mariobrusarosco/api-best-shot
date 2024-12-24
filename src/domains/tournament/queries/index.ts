@@ -25,6 +25,9 @@ const tournament = async (tournamenId: string) => {
         id: T_Tournament.id,
         label: T_Tournament.label,
         logo: T_Tournament.logo,
+        baseUrl: T_Tournament.baseUrl,
+        provider: T_Tournament.provider,
+        mode: T_Tournament.mode,
       })
       .from(T_Tournament)
       .where(
@@ -36,6 +39,7 @@ const tournament = async (tournamenId: string) => {
     const rounds = await db
       .select({
         label: T_TournamentRound.label,
+        slug: T_TournamentRound.slug,
       })
       .from(T_TournamentRound)
       .where(eq(T_TournamentRound.tournamentId, tournamenId));
@@ -46,7 +50,19 @@ const tournament = async (tournamenId: string) => {
   }
 };
 
+const allAvailableRounds = async (tournamenId: string) => {
+  try {
+    return db
+      .select()
+      .from(T_TournamentRound)
+      .where(eq(T_TournamentRound.tournamentId, tournamenId));
+  } catch (error: any) {
+    console.error('[TournamentQueries] - [allAvailableRounds]', error);
+  }
+};
+
 export const TournamentQueries = {
   allTournaments,
   tournament,
+  allAvailableRounds,
 };

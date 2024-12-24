@@ -1,6 +1,5 @@
 import {
   DB_InsertTournamentRound,
-  DB_UpdateTournamentRound,
   T_Tournament,
   T_TournamentRound,
 } from '@/domains/tournament/schema';
@@ -35,18 +34,39 @@ export const SofascoreTournament: IApiProviderV2['tournament'] = {
 
     return `https://${process.env['AWS_CLOUDFRONT_URL']}/${assetPath}`;
   },
-  fetchRounds: async (roundsUrl: string) => {
-    const response = await axios.get(roundsUrl);
+  fetchRounds: async (baseUrl: string) => {
+    const response = await axios.get(`${baseUrl}/rounds`);
     const data = response.data;
 
     return data;
   },
   mapRoundsToInsert: (data, tournamentId) => {
-    return data.rounds.map((round: any, index) => ({
-      tournamentId,
-      order: String(index + 1),
-      label: round.name || round.round,
-    })) satisfies DB_InsertTournamentRound[] | DB_UpdateTournamentRound[];
+    return data.rounds.map(round => {
+      const identifyRoundType = round.slug ? 'knockout' : 'season';
+      let parsedRound = {} as DB_InsertTournamentRound;
+
+      if (identifyRoundType === 'knockout') {
+        parsedRound = {
+          tournamentId,
+          slug: round.slug!,
+          order: String(round.round),
+          label: round.name!,
+          type: identifyRoundType,
+        };
+      }
+
+      if (identifyRoundType === 'season') {
+        parsedRound = {
+          tournamentId,
+          slug: String(round.round),
+          order: String(round.round),
+          label: String(round.round),
+          type: identifyRoundType,
+        };
+      }
+
+      return parsedRound;
+    });
   },
   createRoundsOnDatabase: async roundsToInsert => {
     const rounds = await db.insert(T_TournamentRound).values(roundsToInsert).returning();
@@ -59,8 +79,12 @@ export const SofascoreTournament: IApiProviderV2['tournament'] = {
         return await tx
           .update(T_TournamentRound)
           .set(round)
-          .where(eq(T_TournamentRound.order, round.order))
-          .returning();
+          .where(
+            and(
+              eq(T_TournamentRound.order, round.order),
+              eq(T_TournamentRound.tournamentId, round.tournamentId)
+            )
+          );
       }
     });
   },

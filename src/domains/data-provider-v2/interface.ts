@@ -17,7 +17,7 @@ export type IApiProviderV2 = {
       data: PayloadTournament & { logo: string }
     ) => Promise<DB_SelectTournament>;
     updateOnDatabase: (data: DB_InsertTournament) => Promise<DB_SelectTournament>;
-    fetchRounds: (roundsUrl: string) => Promise<API_SofaScoreRounds>;
+    fetchRounds: (baseUrl: string) => Promise<API_SofaScoreRounds>;
     mapRoundsToInsert: (
       data: API_SofaScoreRounds,
       tournamentId: string
@@ -51,6 +51,14 @@ export type IApiProviderV2 = {
     mapTeamsFromStandings: (standings: any, provider: string) => Promise<DB_InsertTeam[]>;
     createOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[]>;
     updateOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[] | undefined>;
+    fetchTeamsFromAvailableRounds: (
+      rounds: DB_SelectTournamentRound[],
+      baseUrl: string
+    ) => Promise<any>;
+    mapTeamsFromAvailableRounds: (
+      data: any,
+      provider: string
+    ) => Promise<DB_InsertTeam[]>;
   };
   // matches: {
   //   fetchRound: (url: string, round: number) => Promise<any>;
@@ -62,9 +70,7 @@ export type TournamentRequest = Request<null, null, PayloadTournament>;
 
 export type PayloadTournament = {
   externalId: string;
-  standingsUrl: string;
-  roundUrl: string;
-  roundsUrl: string;
+  baseUrl: string;
   slug: string;
   provider: string;
   season: string;

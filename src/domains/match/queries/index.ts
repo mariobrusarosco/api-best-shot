@@ -21,8 +21,7 @@ const currentDayMatchesOnDatabase = async (filter?: { tournamentId?: string }) =
     .selectDistinct({
       tournamentId: T_Match.tournamentId,
       tournamentLabel: T_Tournament.label,
-      standingsUrl: T_Tournament.standingsUrl,
-      roundsUrl: T_Tournament.roundsUrl,
+      baseUrl: T_Tournament.baseUrl,
       match: T_Match.id,
       date: T_Match.date,
       roundId: T_Match.roundId,

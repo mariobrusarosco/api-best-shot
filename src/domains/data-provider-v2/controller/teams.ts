@@ -66,7 +66,15 @@ const setupRegularSeasonTeams = async (baseUrl: string, provider: string) => {
 
     return query;
   } catch (error: any) {
-    console.error('[ERROR] - setupRegularSeasonTeams', error);
+    console.error('[ERROR] - setupRegularSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM STANDINGS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
   }
 };
 
@@ -78,7 +86,15 @@ const updateRegularSeasonTeams = async (baseUrl: string, provider: string) => {
 
     return query;
   } catch (error: any) {
-    console.error('[ERROR] - updateRegularSeasonTeams', error);
+    console.error('[ERROR] - updateRegularSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM STANDINGS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
   }
 };
 
@@ -103,7 +119,15 @@ const setupKnockoutSeasonTeams = async (
 
     return query;
   } catch (error: any) {
-    console.error('[ERROR] - setupKnockoutSeasonTeams', error);
+    console.error('[ERROR] - setupKnockoutSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM KNOCKOUT ROUNDS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
   }
 };
 
@@ -128,7 +152,15 @@ const updateKnockoutSeasonTeams = async (
 
     return query;
   } catch (error: any) {
-    console.error('[ERROR] - updateKnockoutSeasonTeams', error);
+    console.error('[ERROR] - updateKnockoutSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM KNOCKOUT ROUNDS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
   }
 };
 
@@ -153,7 +185,15 @@ const setupRegularAndKnockoutSeasonTeams = async (
 
     return query;
   } catch (error: any) {
-    console.error('[ERROR] - setupRegularAndKnockoutSeasonTeams', error);
+    console.error('[ERROR] - setupRegularAndKnockoutSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM KNOCKOUT ROUNDS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
   }
 };
 
@@ -178,7 +218,15 @@ const updateRegularAndKnockoutSeasonTeams = async (
 
     return query;
   } catch (error: any) {
-    console.error('[ERROR] - updateRegularAndKnockoutSeasonTeams', error);
+    console.error('[ERROR] - updateRegularAndKnockoutSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM KNOCKOUT ROUNDS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
   }
 };
 

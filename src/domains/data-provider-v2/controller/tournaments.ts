@@ -2,6 +2,7 @@ import { TournamentRequest } from '@/domains/data-provider-v2/interface';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { type Response } from 'express';
 import { SofascoreTournament } from '../providers/sofascore/sofascore-tournament';
+import { StandingsDataController } from './standings';
 import { TeamsDataController } from './teams';
 
 const Api = SofascoreTournament;
@@ -28,9 +29,19 @@ const setupTournament = async (req: TournamentRequest, res: Response) => {
     // TEAMS CREATION
     const teams = await TeamsDataController.setupTeams(tournament.id!);
 
-    // ROUNDS CREATION
+    // CREATE TOURNAMENT STANDINGS
+    if (tournament.mode === 'regular-season-only') {
+      const standings = await StandingsDataController.setupStandings(
+        tournament.baseUrl,
+        tournament.id!
+      );
 
-    res.status(200).send(teams);
+      console.log('CREATED STANDINGS', standings);
+    }
+
+    // CREATE TOURNAMENT MATCHES
+
+    res.status(200).send({ teams, rounds });
   } catch (error: any) {
     console.error('[ERROR] - createTournament', error);
 
@@ -50,10 +61,11 @@ const updateTournament = async (req: TournamentRequest, res: Response) => {
     // UPDATE TOURNAMENT ROUNDS
     const rounds = await Api.fetchRounds(tournament.baseUrl);
     const roundsToUpdate = Api.mapRoundsToInsert(rounds, tournament.id!);
-    console.log('ROUNDS TO UPDATE', roundsToUpdate);
     const roundsUpdated = await Api.updateRoundsOnDatabase(roundsToUpdate);
 
     // UPDATE TOURNAMENT STANDINGS
+
+    // UPDATE TOURNAMENT MATCHES
 
     res.status(200).send(roundsUpdated);
   } catch (error: any) {

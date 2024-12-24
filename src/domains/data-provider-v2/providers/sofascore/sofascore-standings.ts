@@ -1,34 +1,21 @@
 //@ts-nocheck
 import {
   DB_InsertTournamentStandings,
-  T_Tournament,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import { IApiProviderV2, StandingsRequest } from '../../interface';
+import { IApiProviderV2 } from '../../interface';
 import { API_SofaScoreStandings } from './typing';
 
 export const SofascoreStandings: IApiProviderV2['standings'] = {
-  fetchStandings: async (req: StandingsRequest) => {
-    const tournamentId = req.params.tournamentId;
-    const [tournament] = await db
-      .select()
-      .from(T_Tournament)
-      .where(eq(T_Tournament.id, tournamentId));
+  fetchStandings: async (baseUrl: string) => {
+    const response = await axios.get(`${baseUrl}/standings/total`);
 
-    const response = await axios.get(tournament.baseUrl);
-
-    return {
-      standings: response.data as API_SofaScoreStandings,
-      tournamentId,
-    };
+    return response.data as API_SofaScoreStandings;
   },
   mapStandings: async (standings: API_SofaScoreStandings, tournamentId) => {
-    // console.log('Sofa....', standings);
-    console.log('TOURNAMENT_ID', tournamentId);
-
     const promises = standings?.standings[0]['rows']?.map(async team => {
       return {
         teamExternalId: String(team.team.id),

@@ -1,9 +1,11 @@
 import { FetchAndStoreAssetPayload } from '@/utils';
 import { type Request } from 'express';
+import { DB_InsertMatch } from '../match/schema';
 import { DB_InsertTeam } from '../team/schema';
 import {
   DB_InsertTournament,
   DB_InsertTournamentRound,
+  DB_InsertTournamentStandings,
   DB_SelectTournament,
   DB_SelectTournamentRound,
   DB_UpdateTournamentRound,
@@ -29,22 +31,19 @@ export type IApiProviderV2 = {
       rounds: DB_InsertTournamentRound[]
     ) => Promise<DB_SelectTournamentRound[] | undefined>;
   };
-  // standings: {
-  //   fetchStandings: (req: StandingsRequest) => Promise<{
-  //     standings: any;
-  //     tournamentId: string;
-  //   }>;
-  //   mapStandings: (
-  //     standings: any,
-  //     tournamenId: string
-  //   ) => Promise<DB_InsertTournamentStandings[]>;
-  //   createOnDatabase: (
-  //     standings: DB_InsertTournamentStandings[]
-  //   ) => Promise<DB_InsertTournamentStandings[]>;
-  //   updateOnDatabase: (
-  //     standings: DB_InsertTournamentStandings[]
-  //   ) => Promise<DB_InsertTournamentStandings[] | undefined>;
-  // };
+  standings: {
+    fetchStandings: (baseUrl: string) => Promise<any>;
+    mapStandings: (
+      standings: any,
+      tournamentId: string
+    ) => Promise<DB_InsertTournamentStandings[]>;
+    createOnDatabase: (
+      standings: DB_InsertTournamentStandings[]
+    ) => Promise<DB_InsertTournamentStandings[]>;
+    updateOnDatabase: (
+      standings: DB_InsertTournamentStandings[]
+    ) => Promise<DB_InsertTournamentStandings[] | undefined>;
+  };
   teams: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
     fetchTeamsFromStandings: (tournamentId: string) => Promise<any>;
@@ -60,10 +59,10 @@ export type IApiProviderV2 = {
       provider: string
     ) => Promise<DB_InsertTeam[]>;
   };
-  // matches: {
-  //   fetchRound: (url: string, round: number) => Promise<any>;
-  //   mapRound: (round: any, roundId: string, tournamentId: string) => DB_InsertMatch[];
-  // };
+  matches: {
+    fetchRound: (url: string, round: number) => Promise<any>;
+    mapRound: (round: any, roundId: string, tournamentId: string) => DB_InsertMatch[];
+  };
 };
 
 export type TournamentRequest = Request<null, null, PayloadTournament>;

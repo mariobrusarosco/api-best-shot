@@ -2,8 +2,6 @@ import { TournamentRequest } from '@/domains/data-provider-v2/interface';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { type Response } from 'express';
 import { SofascoreTournament } from '../providers/sofascore/sofascore-tournament';
-import { StandingsDataController } from './standings';
-import { TeamsDataController } from './teams';
 
 const Api = SofascoreTournament;
 
@@ -18,26 +16,26 @@ const setupTournament = async (req: TournamentRequest, res: Response) => {
     const tournament = await Api.createOnDatabase({ ...req.body, logo });
     if (!tournament) throw new Error('Tournament not created');
 
-    // CREATE TOURNAMENT ROUNDS
-    // const schedule = await Scheduler.tournamentUpdateRecurrence(tournament);
-    const rounds = await Api.fetchRounds(tournament.baseUrl);
-    const roundsToInsert = Api.mapRoundsToInsert(rounds, tournament.id!);
-    const roundsInserted = await Api.createRoundsOnDatabase(roundsToInsert);
+    // // CREATE TOURNAMENT ROUNDS
+    // // const schedule = await Scheduler.tournamentUpdateRecurrence(tournament);
+    // const rounds = await Api.fetchRounds(tournament.baseUrl);
+    // const roundsToInsert = Api.mapRoundsToInsert(rounds, tournament.id!);
+    // const roundsInserted = await Api.createRoundsOnDatabase(roundsToInsert);
 
-    console.log('ROUNDS', roundsInserted);
+    // console.log('ROUNDS', roundsInserted);
 
-    // TEAMS CREATION
-    const teams = await TeamsDataController.setupTeams(tournament.id!);
+    // // TEAMS CREATION
+    // const teams = await TeamsDataController.setupTeams(tournament.id!);
 
-    // CREATE TOURNAMENT STANDINGS
-    if (tournament.mode === 'regular-season-only') {
-      const standings = await StandingsDataController.setupStandings(
-        tournament.baseUrl,
-        tournament.id!
-      );
+    // // CREATE TOURNAMENT STANDINGS
+    // if (tournament.mode === 'regular-season-only') {
+    //   const standings = await StandingsDataController.setupStandings(
+    //     tournament.baseUrl,
+    //     tournament.id!
+    //   );
 
-      console.log('CREATED STANDINGS', standings);
-    }
+    //   console.log('CREATED STANDINGS', standings);
+    // }
 
     // CREATE TOURNAMENT MATCHES
     // if (tournament.mode === 'regular-season-only') {
@@ -49,7 +47,7 @@ const setupTournament = async (req: TournamentRequest, res: Response) => {
     //   console.log('CREATED STANDINGS', standings);
     // }
 
-    res.status(200).send({ teams, rounds });
+    return tournament;
   } catch (error: any) {
     console.error('[ERROR] - createTournament', error);
 
@@ -83,7 +81,7 @@ const updateTournament = async (req: TournamentRequest, res: Response) => {
   }
 };
 
-export const TournamentDataController = {
+export const TournamentController = {
   setupTournament,
   updateTournament,
 };

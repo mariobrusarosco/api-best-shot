@@ -90,7 +90,7 @@ const updateMatchesOfRound = async (tournament: DB_SelectTournament, roundId: nu
   });
 };
 
-const createMatchesForEachRound = async (tournament: DB_SelectTournament) => {
+const createMatchesForEachRound = async (tournamentId: string) => {
   let ROUND_COUNT = 1;
 
   while (ROUND_COUNT <= Number(1)) {

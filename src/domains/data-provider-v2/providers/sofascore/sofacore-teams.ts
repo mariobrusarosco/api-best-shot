@@ -1,10 +1,10 @@
 import { DB_InsertTeam, T_Team } from '@/domains/team/schema';
+import { TournamentQueries } from '@/domains/tournament/queries';
 import db from '@/services/database';
-import { fetchAndStoreAssetFromApiNew } from '@/utils';
+import { sleep } from '@/utils';
 import axios from 'axios';
-import { eq } from 'drizzle-orm';
 import { IApiProviderV2 } from '../../interface';
-import { API_SofaScoreStandings } from './typing';
+import { API_SofaScoreRound, API_SofaScoreStandings } from './typing';
 const SOFA_TEAM_LOGO_URL = 'https://img.sofascore.com/api/v1/team/:id/image/';
 
 export const SofascoreTeams: IApiProviderV2['teams'] = {
@@ -19,101 +19,92 @@ export const SofascoreTeams: IApiProviderV2['teams'] = {
     const allTournamentTeams = groupOfTeams.flat();
 
     const promises = allTournamentTeams.map(async ({ team }) => {
-      const badge = await SofascoreTeams.fetchAndStoreLogo({
-        filename: `team-${provider}-${team.id}`,
-        logoUrl: SOFA_TEAM_LOGO_URL.replace(':id', String(team.id)),
-      });
+      // const badge = await SofascoreTeams.fetchAndStoreLogo({
+      //   filename: `team-${provider}-${team.id}`,
+      //   logoUrl: SOFA_TEAM_LOGO_URL.replace(':id', String(team.id)),
+      // });
       return {
         name: team.name,
         externalId: String(team.id),
         shortName: team.nameCode,
-        badge,
+        badge: 'temp',
         provider: 'sofa',
       } satisfies DB_InsertTeam;
     });
 
     return Promise.all(promises);
   },
-  fetchAndStoreLogo: async data => {
-    const assetPath = await fetchAndStoreAssetFromApiNew(data);
+  // fetchAndStoreLogo: async data => {
+  //   const assetPath = await fetchAndStoreAssetFromApiNew(data);
 
-    return assetPath ? `https://${process.env['AWS_CLOUDFRONT_URL']}/${assetPath}` : '';
-  },
+  //   return assetPath ? `https://${process.env['AWS_CLOUDFRONT_URL']}/${assetPath}` : '';
+  // },
   createOnDatabase: async teams =>
     await db.insert(T_Team).values(teams).onConflictDoNothing().returning(),
-  updateOnDatabase: async teams => {
-    return await db.transaction(async tx => {
-      for (const team of teams) {
-        return await tx
-          .update(T_Team)
-          .set(team)
-          .where(eq(T_Team.externalId, team.externalId))
-          .returning();
-      }
-    });
+  // updateOnDatabase: async teams => {
+  //   return await db.transaction(async tx => {
+  //     for (const team of teams) {
+  //       return await tx
+  //         .update(T_Team)
+  //         .set(team)
+  //         .where(eq(T_Team.externalId, team.externalId))
+  //         .returning();
+  //     }
+  //   });
+  // },
+  fetchTeamsFromKnockoutRounds: async tournamentId => {
+    const allTournamentsRounds = await TournamentQueries.allTournamentRounds(
+      tournamentId
+    );
+
+    let rounds = [];
+
+    for (const round of allTournamentsRounds || []) {
+      await sleep(3000);
+      console.log('FETCHING - round.providerUrl:', round.providerUrl);
+
+      const roundResponse = await axios.get(round.providerUrl);
+      const roundData = roundResponse.data;
+
+      rounds.push(roundData);
+    }
+
+    return rounds as API_SofaScoreRound[];
   },
-  fetchTeamsFromAvailableRounds: async (allAvailableRounds, baseUrl) => {
-    console.log({ allAvailableRounds });
-    const allTeams = allAvailableRounds.map(async round => {
-      let urlToFetch = '';
+  mapTeamsFromKnockoutRounds: async (knockoutRounds, provider) => {
+    const matches = knockoutRounds.map(round => round.events).flat();
 
-      console.log({ ROUND: round });
+    const promises = matches.map(async (match: any) => {
+      const homeTeam = match.homeTeam;
+      // const homeTeamBadge = await SofascoreTeams.fetchAndStoreLogo({
+      //   filename: `team-${provider}-${homeTeam.id}`,
+      //   logoUrl: SOFA_TEAM_LOGO_URL.replace(':id', String(homeTeam.id)),
+      // });
 
-      if (round.type === 'knockout') {
-        urlToFetch = `${baseUrl}/events/round/${round.knockoutId}/slug/${round.slug}`;
-      }
-
-      if (round.type === 'special-knockout') {
-        urlToFetch = `${baseUrl}/events/round/${round.knockoutId}/slug/${round.slug}/prefix/${round.prefix}`;
-      }
-
-      if (round.type === 'season') {
-        urlToFetch = `${baseUrl}/events/round/${round.order}`;
-      }
-
-      console.log({ URL_TO_FETCH: urlToFetch });
-
-      const response = await axios.get(urlToFetch);
-
-      return response.data;
-    });
-
-    return Promise.all(allTeams);
-  },
-  mapTeamsFromAvailableRounds: async (data, provider) => {
-    const round = data[0].events;
-
-    const promises = round.map(async (game: any) => {
-      const homeTeam = game.homeTeam;
-      const homeTeamBadge = await SofascoreTeams.fetchAndStoreLogo({
-        filename: `team-${provider}-${homeTeam.id}`,
-        logoUrl: SOFA_TEAM_LOGO_URL.replace(':id', String(homeTeam.id)),
-      });
-
-      const awayTeam = game.awayTeam;
-      const awayTeamBadge = await SofascoreTeams.fetchAndStoreLogo({
-        filename: `team-${provider}-${awayTeam.id}`,
-        logoUrl: SOFA_TEAM_LOGO_URL.replace(':id', String(awayTeam.id)),
-      });
+      const awayTeam = match.awayTeam;
+      // const awayTeamBadge = await SofascoreTeams.fetchAndStoreLogo({
+      //   filename: `team-${provider}-${awayTeam.id}`,
+      //   logoUrl: SOFA_TEAM_LOGO_URL.replace(':id', String(awayTeam.id)),
+      // });
 
       return [
         {
           name: homeTeam.name,
           externalId: String(homeTeam.id),
           shortName: homeTeam.nameCode,
-          badge: homeTeamBadge,
+          badge: 'temp',
           provider: 'sofa',
         } satisfies DB_InsertTeam,
         {
           name: awayTeam.name,
           externalId: String(awayTeam.id),
           shortName: awayTeam.nameCode,
-          badge: awayTeamBadge,
+          badge: 'temp',
           provider: 'sofa',
         } satisfies DB_InsertTeam,
       ];
     });
 
-    return Promise.all(promises);
+    return (await Promise.all(promises)).flat();
   },
 };

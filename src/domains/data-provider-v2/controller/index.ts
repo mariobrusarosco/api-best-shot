@@ -1,6 +1,8 @@
 import { type Response } from 'express';
 import { TournamentController } from '../controller/tournaments';
 import { TournamentRequest } from '../interface';
+import { MatchDataController } from './matches';
+import { TeamsDataController } from './teams';
 import { TournamentRoundsController } from './tournament-rounds';
 
 const setup = async (req: TournamentRequest, res: Response) => {
@@ -10,13 +12,15 @@ const setup = async (req: TournamentRequest, res: Response) => {
 
   // SETUP TOURNAMENTS ROUNDS
   const newRounds = await TournamentRoundsController.setup(newTournament);
-
   if (!newRounds) throw new Error('Tournament rounds not created');
 
-  // SETUP MATCHES
-  const createdMatches = newRounds.map(async round => {});
+  // SETUP TEAMS
+  const teams = await TeamsDataController.setup(newTournament);
 
-  return res.status(200).send({ newTournament });
+  // SETUP MATCHES
+  const matches = await MatchDataController.setup(newTournament);
+
+  return res.status(200).send({ teams, matches });
 };
 
 const update = async (req: TournamentRequest, res: Response) => {

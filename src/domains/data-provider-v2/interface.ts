@@ -1,12 +1,14 @@
 import { FetchAndStoreAssetPayload } from '@/utils';
 import { type Request } from 'express';
+import { DB_InsertMatch } from '../match/schema';
+import { DB_InsertTeam } from '../team/schema';
 import {
   DB_InsertTournament,
   DB_InsertTournamentRound,
   DB_SelectTournament,
   DB_SelectTournamentRound,
 } from '../tournament/schema';
-import { API_SofaScoreRounds } from './providers/sofascore/typing';
+import { API_SofaScoreRound, API_SofaScoreRounds } from './providers/sofascore/typing';
 
 export type IApiProviderV2 = {
   tournament: {
@@ -28,6 +30,25 @@ export type IApiProviderV2 = {
     updateOnDatabase: (
       rounds: DB_InsertTournamentRound[]
     ) => Promise<DB_SelectTournamentRound[] | undefined>;
+  };
+  matches: {
+    mapRoundMatches: (
+      round: any,
+      roundId: string,
+      tournamentId: string
+    ) => DB_InsertMatch[];
+  };
+  teams: {
+    // fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
+    fetchTeamsFromStandings: (tournamentId: string) => Promise<any>;
+    mapTeamsFromStandings: (standings: any, provider: string) => Promise<DB_InsertTeam[]>;
+    mapTeamsFromKnockoutRounds: (
+      knockoutRound: API_SofaScoreRound[],
+      provider: string
+    ) => Promise<any>;
+    fetchTeamsFromKnockoutRounds: (tournamentId: string) => Promise<API_SofaScoreRound[]>;
+    createOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[]>;
+    // updateOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[] | undefined>;
   };
 };
 

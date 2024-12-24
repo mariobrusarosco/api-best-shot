@@ -4,8 +4,6 @@ import { IApiProviderV2 } from '../../interface';
 import { API_SofaScoreRound } from './typing';
 
 const safeSofaDate = (date: any) => {
-  console.log(date, typeof date, new Date(date), typeof new Date(date));
-
   return date === null || date === undefined ? null : new Date(date);
 };
 

@@ -52,7 +52,7 @@ const buildTournamentRound = (
 ) => {
   if (round?.prefix) {
     const knockoutId = `${round.prefix}`;
-    const providerUrl = `${tournamentBaseUrl}/events/round/${knockoutId}/slug/${round.slug}`;
+    const providerUrl = `${tournamentBaseUrl}/events/round/${round.round}/slug/${round.slug}/prefix/${knockoutId}`;
     const specialOrder = `0${round.round}`;
 
     return {

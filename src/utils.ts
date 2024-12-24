@@ -133,3 +133,5 @@ export async function fetchAndStoreAssetFromApiNew(payload: FetchAndStoreAssetPa
     console.error('[ERROR WHEN FETCHING AND STORING A NEW TOURNAMENT LOGO]: ', error);
   }
 }
+
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

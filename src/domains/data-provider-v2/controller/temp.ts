@@ -92,12 +92,182 @@ export type StandingsPayload = {
 
 export type TeamsRequestTeamsRequest = Request<{ tournamentId: string }, null, null>;
 
+const update = async (tournamentId: string) => {
+  try {
+    const tournament = await TournamentQueries.tournament(tournamentId);
+    if (!tournament) throw new Error('Tournament not found');
+    const tournamentMode = tournament.mode;
 
-  matches: {
-    // fetchRoundMatches: (baseUrl: string, round: string) => Promise<any>;
-    mapRoundMatches: (
-      round: any,
-      roundId: string,
-      tournamentId: string
-    ) => DB_InsertMatch[];
-  };
+    if (tournamentMode === 'regular-season-only') {
+      return updateRegularSeasonTeams(tournamentId, tournament.provider);
+    }
+
+    if (tournamentMode === 'knockout-only') {
+      return updateKnockoutSeasonTeams(
+        tournamentId,
+        tournament.baseUrl,
+        tournament.provider
+      );
+    }
+
+    return updateRegularAndKnockoutSeasonTeams(
+      tournamentId,
+      tournament.baseUrl,
+      tournament.provider
+    );
+  } catch (error: any) {
+    console.error('[ERROR] - updateTeams', error);
+  }
+};
+
+const updateRegularSeasonTeams = async (baseUrl: string, provider: string) => {
+  try {
+    const standings = await SofascoreTeams.fetchTeamsFromStandings(baseUrl);
+    const mappedTeams = await SofascoreTeams.mapTeamsFromStandings(standings, provider);
+    const query = await SofascoreTeams.updateOnDatabase(mappedTeams);
+
+    return query;
+  } catch (error: any) {
+    console.error('[ERROR] - updateRegularSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM STANDINGS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
+  }
+};
+
+const setupKnockoutSeasonTeams = async (
+  tournamentId: string,
+  baseUrl: string,
+  provider: string
+) => {
+  try {
+    const allAvailableRounds = await TournamentQueries.allTournamentRounds(tournamentId);
+    if (!allAvailableRounds) throw new Error('Tournament does not have rounds');
+
+    const roundsGames = await SofascoreTeams.fetchTeamsFromAvailableRounds(
+      allAvailableRounds,
+      baseUrl
+    );
+    const mappedTeams = (
+      await SofascoreTeams.mapTeamsFromAvailableRounds(roundsGames, provider)
+    ).flat();
+
+    const query = await SofascoreTeams.createOnDatabase(mappedTeams);
+
+    return query;
+  } catch (error: any) {
+    console.error('[ERROR] - setupKnockoutSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM KNOCKOUT ROUNDS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
+  }
+};
+
+const updateKnockoutSeasonTeams = async (
+  tournamentId: string,
+  baseUrl: string,
+  provider: string
+) => {
+  try {
+    const allAvailableRounds = await TournamentQueries.allTournamentRounds(tournamentId);
+    if (!allAvailableRounds) throw new Error('Tournament does not have rounds');
+
+    const roundsGames = await SofascoreTeams.fetchTeamsFromAvailableRounds(
+      allAvailableRounds,
+      baseUrl
+    );
+    const mappedTeams = (
+      await SofascoreTeams.mapTeamsFromAvailableRounds(roundsGames, provider)
+    ).flat();
+
+    const query = await SofascoreTeams.updateOnDatabase(mappedTeams);
+
+    return query;
+  } catch (error: any) {
+    console.error('[ERROR] - updateKnockoutSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM KNOCKOUT ROUNDS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
+  }
+};
+
+const setupRegularAndKnockoutSeasonTeams = async (
+  tournamentId: string,
+  baseUrl: string,
+  provider: string
+) => {
+  try {
+    const allAvailableRounds = await TournamentQueries.allTournamentRounds(tournamentId);
+    if (!allAvailableRounds) throw new Error('Tournament does not have rounds');
+
+    const roundsGames = await SofascoreTeams.fetchTeamsFromAvailableRounds(
+      allAvailableRounds,
+      baseUrl
+    );
+    const mappedTeams = (
+      await SofascoreTeams.mapTeamsFromAvailableRounds(roundsGames, provider)
+    ).flat();
+
+    const query = await SofascoreTeams.createOnDatabase(mappedTeams);
+
+    return query;
+  } catch (error: any) {
+    console.error('[ERROR] - setupRegularAndKnockoutSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM KNOCKOUT ROUNDS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
+  }
+};
+
+const updateRegularAndKnockoutSeasonTeams = async (
+  tournamentId: string,
+  baseUrl: string,
+  provider: string
+) => {
+  try {
+    const allAvailableRounds = await TournamentQueries.allTournamentRounds(tournamentId);
+    if (!allAvailableRounds) throw new Error('Tournament does not have rounds');
+
+    const roundsGames = await SofascoreTeams.fetchTeamsFromAvailableRounds(
+      allAvailableRounds,
+      baseUrl
+    );
+    const mappedTeams = (
+      await SofascoreTeams.mapTeamsFromAvailableRounds(roundsGames, provider)
+    ).flat();
+
+    const query = await SofascoreTeams.updateOnDatabase(mappedTeams);
+
+    return query;
+  } catch (error: any) {
+    console.error('[ERROR] - updateRegularAndKnockoutSeasonTeams');
+    console.error('[URL] - ', error.config.url);
+    console.error('[STATUS] - ', error.response.status, ' - ', error.response.statusText);
+
+    if (error.response.status === 404) {
+      console.error(
+        `[TEAMS FROM KNOCKOUT ROUNDS] - baseUrl: ${baseUrl} , provider: ${provider}`
+      );
+    }
+  }
+};

@@ -1,0 +1,1 @@
+ALTER TABLE "tournament_round" ALTER COLUMN "provider_url" SET NOT NULL;

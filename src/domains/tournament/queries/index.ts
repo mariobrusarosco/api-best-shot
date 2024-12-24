@@ -44,7 +44,7 @@ const tournament = async (tournamenId: string) => {
   }
 };
 
-const allAvailableRounds = async (tournamenId: string) => {
+const allTournamentRounds = async (tournamenId: string) => {
   try {
     return db
       .select()
@@ -58,5 +58,5 @@ const allAvailableRounds = async (tournamenId: string) => {
 export const TournamentQueries = {
   allTournaments,
   tournament,
-  allAvailableRounds,
+  allTournamentRounds,
 };

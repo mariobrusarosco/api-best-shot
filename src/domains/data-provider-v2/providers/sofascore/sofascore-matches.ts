@@ -1,7 +1,5 @@
-//@ts-nocheck
 import { DB_InsertMatch } from '@/domains/match/schema';
 import { safeString } from '@/utils';
-import axios from 'axios';
 import { IApiProviderV2 } from '../../interface';
 import { API_SofaScoreRound } from './typing';
 
@@ -12,14 +10,14 @@ const safeSofaDate = (date: any) => {
 };
 
 export const SofascoreMatches: IApiProviderV2['matches'] = {
-  fetchRound: async (url, round) => {
-    const parsedRoundsUrl = url + `${String(round)}`;
+  // fetchRoundMatches: async (baseUrl, round) => {
+  //   const parsedRoundsUrl = baseUrl + `${String(round)}`;
 
-    const apiResponse = await axios.get(parsedRoundsUrl);
+  //   const apiResponse = await axios.get(parsedRoundsUrl);
 
-    return apiResponse.data;
-  },
-  mapRound: (round: API_SofaScoreRound, roundId, tournamentId) => {
+  //   return apiResponse.data;
+  // },
+  mapRoundMatches: (round: API_SofaScoreRound, roundId, tournamentId) => {
     return round.events.map(match => {
       return {
         externalId: String(match.id),

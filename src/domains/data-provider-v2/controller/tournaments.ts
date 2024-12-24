@@ -12,28 +12,6 @@ const setupTournament = async (req: TournamentRequest, res: Response) => {
     });
     const tournament = await SofascoreTournament.createOnDatabase({ ...req.body, logo });
     if (!tournament) throw new Error('Tournament not created');
-    // // TEAMS CREATION
-    // const teams = await TeamsDataController.setupTeams(tournament.id!);
-
-    // // CREATE TOURNAMENT STANDINGS
-    // if (tournament.mode === 'regular-season-only') {
-    //   const standings = await StandingsDataController.setupStandings(
-    //     tournament.baseUrl,
-    //     tournament.id!
-    //   );
-
-    //   console.log('CREATED STANDINGS', standings);
-    // }
-
-    // CREATE TOURNAMENT MATCHES
-    // if (tournament.mode === 'regular-season-only') {
-    //   const standings = await MatchesDataController.setupMatches(
-    //     tournament.baseUrl,
-    //     tournament.id!
-    //   );
-
-    //   console.log('CREATED STANDINGS', standings);
-    // }
 
     return tournament;
   } catch (error: any) {
@@ -54,17 +32,6 @@ const updateTournament = async (req: TournamentRequest, res: Response) => {
       ...req.body,
       logo,
     });
-
-    // UPDATE TOURNAMENT ROUNDS
-    // const rounds = await SofascoreTournament.fetchRounds(tournament.baseUrl);
-    // const roundsToUpdate = SofascoreTournament.mapRoundsToInsert(rounds, tournament.id!);
-    // const roundsUpdated = await SofascoreTournament.updateRoundsOnDatabase(
-    //   roundsToUpdate
-    // );
-
-    // UPDATE TOURNAMENT STANDINGS
-
-    // UPDATE TOURNAMENT MATCHES
 
     return updatedTournament;
   } catch (error: any) {

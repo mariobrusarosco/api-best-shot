@@ -1,4 +1,3 @@
-import { ACTIVE_API_PROVIDER } from '@/domains/data-provider-v2';
 import { ErrorMapper } from '@/domains/match/error-handling/mapper';
 import { T_Match } from '@/domains/match/schema';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
@@ -55,7 +54,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
       .where(
         and(
           eq(T_Match.tournamentId, tournamentId),
-          eq(T_Match.provider, ACTIVE_API_PROVIDER),
+          eq(T_Match.provider, 'sofa'),
           eq(T_Match.roundId, round)
         )
       );

@@ -2,7 +2,7 @@ import { ErrorMapper } from '@/domains/match/error-handling/mapper';
 import { T_Match } from '@/domains/match/schema';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import { T_Team } from '@/domains/team/schema';
-import { T_TournamentRound } from '@/domains/tournament/schema';
+import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import db from '@/services/database';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -20,19 +20,9 @@ async function getMatchesByTournament(req: Request, res: Response) {
       round: string;
     };
 
-    const roundSubquery = db
-      .select({
-        id: T_TournamentRound.id,
-      })
-      .from(T_TournamentRound)
-      .where(
-        and(
-          eq(T_TournamentRound.tournamentId, tournamentId),
-          eq(T_TournamentRound.slug, round)
-        )
-      );
     const homeTeam = aliasedTable(T_Team, 'homeTeam');
     const awayTeam = aliasedTable(T_Team, 'awayTeam');
+    const roundId = await TournamentRoundsQueries.getRoundIdBySlug(tournamentId, round);
 
     const matches = await db
       .select({
@@ -67,7 +57,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
         and(
           eq(T_Match.tournamentId, tournamentId),
           eq(T_Match.provider, 'sofa'),
-          eq(T_Match.roundId, roundSubquery)
+          eq(T_Match.roundId, roundId)
         )
       );
 

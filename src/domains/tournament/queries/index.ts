@@ -30,6 +30,7 @@ const tournament = async (tournamenId: string) => {
       })
       .from(T_Tournament)
       .where(and(eq(T_Tournament.provider, 'sofa'), eq(T_Tournament.id, tournamenId)));
+
     const rounds = await db
       .select({
         label: T_TournamentRound.label,

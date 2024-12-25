@@ -5,6 +5,7 @@ import { T_Guess } from '@/domains/guess/schema';
 import { GuessInput } from '@/domains/guess/typing';
 import { T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
@@ -32,6 +33,10 @@ async function getMemberGuesses(req: Request, res: Response) {
     //   console.log('matchesWithNullGuess', matchesWithNullGuess.length);
     //   return res.status(200).send([]);
     // }
+    const roundId = await TournamentRoundsQueries.getRoundIdBySlug(
+      tournamentId,
+      query.round
+    );
 
     const guesses = await db
       .select()
@@ -40,7 +45,7 @@ async function getMemberGuesses(req: Request, res: Response) {
       .where(
         and(
           eq(T_Match.tournamentId, tournamentId),
-          eq(T_Match.roundId, query?.round),
+          eq(T_Match.roundId, roundId),
           eq(T_Guess.memberId, memberId)
         )
       );

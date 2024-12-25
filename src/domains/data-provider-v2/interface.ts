@@ -39,7 +39,7 @@ export type IApiProviderV2 = {
     ) => DB_InsertMatch[];
   };
   teams: {
-    // fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
+    fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
     fetchTeamsFromStandings: (tournamentId: string) => Promise<any>;
     mapTeamsFromStandings: (standings: any, provider: string) => Promise<DB_InsertTeam[]>;
     mapTeamsFromKnockoutRounds: (

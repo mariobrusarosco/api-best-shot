@@ -1,6 +1,6 @@
 import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
-import { fetchAndStoreAssetFromApiNew } from '@/utils';
+import { fetchAndStoreAssetFromApi } from '@/utils';
 import { and, eq } from 'drizzle-orm';
 import { IApiProviderV2 } from '../../interface';
 
@@ -25,7 +25,7 @@ export const SofascoreTournament: IApiProviderV2['tournament'] = {
     return tournament;
   },
   fetchAndStoreLogo: async data => {
-    const assetPath = await fetchAndStoreAssetFromApiNew(data);
+    const assetPath = await fetchAndStoreAssetFromApi(data);
 
     return `https://${process.env['AWS_CLOUDFRONT_URL']}/${assetPath}`;
   },

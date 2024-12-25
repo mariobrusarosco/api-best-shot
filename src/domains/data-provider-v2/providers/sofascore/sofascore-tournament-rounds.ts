@@ -89,6 +89,7 @@ const buildTournamentRound = (
     order,
     label: `${round.round}`,
     providerUrl,
+    slug: `${round.round}`,
     type: 'season',
   } satisfies DB_InsertTournamentRound;
 };

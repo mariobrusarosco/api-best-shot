@@ -2,6 +2,7 @@ import { ErrorMapper } from '@/domains/match/error-handling/mapper';
 import { T_Match } from '@/domains/match/schema';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import { T_Team } from '@/domains/team/schema';
+import { T_TournamentRound } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -19,6 +20,17 @@ async function getMatchesByTournament(req: Request, res: Response) {
       round: string;
     };
 
+    const roundSubquery = db
+      .select({
+        id: T_TournamentRound.id,
+      })
+      .from(T_TournamentRound)
+      .where(
+        and(
+          eq(T_TournamentRound.tournamentId, tournamentId),
+          eq(T_TournamentRound.slug, round)
+        )
+      );
     const homeTeam = aliasedTable(T_Team, 'homeTeam');
     const awayTeam = aliasedTable(T_Team, 'awayTeam');
 
@@ -55,7 +67,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
         and(
           eq(T_Match.tournamentId, tournamentId),
           eq(T_Match.provider, 'sofa'),
-          eq(T_Match.roundId, round)
+          eq(T_Match.roundId, roundSubquery)
         )
       );
 
@@ -65,7 +77,6 @@ async function getMatchesByTournament(req: Request, res: Response) {
 
     res.status(200).send(matches);
   } catch (error: any) {
-    // log here: ErrorMapper.INTERNAL_SERVER_ERROR.debug
     console.error('[TOURNAMENT] - [GET MACTHES BY TOURNAMENT]', error);
 
     return res

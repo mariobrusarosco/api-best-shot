@@ -20,7 +20,7 @@ const setup = async (req: TournamentRequest, res: Response) => {
   // SETUP MATCHES
   const matches = await MatchDataController.setup(newTournament);
 
-  return res.status(200).send({ teams, matches });
+  return res.status(200).send('OK');
 };
 
 const update = async (req: TournamentRequest, res: Response) => {

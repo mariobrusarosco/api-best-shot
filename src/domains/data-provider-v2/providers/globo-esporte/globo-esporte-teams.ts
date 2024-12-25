@@ -1,7 +1,7 @@
 //@ts-nocheck
 import { DB_InsertTeam, T_Team } from '@/domains/team/schema';
 import db from '@/services/database';
-import { fetchAndStoreAssetFromApiNew } from '@/utils';
+import { fetchAndStoreAssetFromApi } from '@/utils';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import { IApiProviderV2 } from '../../interface';
@@ -32,7 +32,7 @@ export const GloboEsporteTeams: IApiProviderV2['teams'] = {
     return Promise.all(promises);
   },
   fetchAndStoreLogo: async data => {
-    const assetPath = await fetchAndStoreAssetFromApiNew(data);
+    const assetPath = await fetchAndStoreAssetFromApi(data);
 
     return assetPath ? `https://${process.env['AWS_CLOUDFRONT_URL']}/${assetPath}` : '';
   },

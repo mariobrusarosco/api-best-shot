@@ -1,4 +1,4 @@
-import { pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Tournament = pgTable(
   'tournament',
@@ -35,7 +35,7 @@ export const T_TournamentStandings = pgTable(
     id: uuid('id').defaultRandom(),
     teamExternalId: text('team_external_id').notNull(),
     tournamentId: text('tournament_id').notNull(),
-    order: text('order').notNull(),
+    order: numeric('order').notNull(),
     shortName: text('shortame').notNull(),
     longName: text('longame').notNull(),
     points: text('points').notNull(),

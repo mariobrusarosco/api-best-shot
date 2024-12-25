@@ -11,8 +11,10 @@ import { API_SofaScoreStandings } from './typing';
 
 export const SofascoreStandings: IApiProviderV2['standings'] = {
   fetchStandings: async (baseUrl: string) => {
-    const response = await axios.get(`${baseUrl}/standings/total`);
+    const url = `${baseUrl}/standings/total`;
+    console.error('[UPDATE] - Updating tournament standings for: ', url);
 
+    const response = await axios.get(url);
     return response.data as API_SofaScoreStandings;
   },
   mapStandings: async (standings: API_SofaScoreStandings, tournamentId) => {
@@ -47,6 +49,23 @@ export const SofascoreStandings: IApiProviderV2['standings'] = {
           .set(standing)
           .where(eq(T_TournamentStandings.teamExternalId, standing.teamExternalId))
           .returning();
+      }
+    });
+  },
+  upsertOnDatabase: async standings => {
+    return await db.transaction(async tx => {
+      for (const standing of standings) {
+        const query = await tx
+          .update(T_TournamentStandings)
+          .set(standing)
+          .where(eq(T_TournamentStandings.teamExternalId, standing.teamExternalId))
+          .returning();
+
+        console.error('[UPDATE] - Upserted tournament standings for: ', query, standing);
+
+        if (!query.length) {
+          await tx.insert(T_TournamentStandings).values(standing).returning();
+        }
       }
     });
   },

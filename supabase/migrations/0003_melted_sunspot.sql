@@ -1,1 +1,0 @@
-ALTER TABLE "tournament_round" ADD COLUMN "slug" text NOT NULL;

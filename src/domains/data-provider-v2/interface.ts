@@ -52,7 +52,7 @@ export type IApiProviderV2 = {
   };
 };
 
-export type TournamentRequest = Request<null, null, PayloadTournament>;
+export type TournamentRequest = Request<null, PayloadTournament>;
 
 export type PayloadTournament = {
   externalId: string;

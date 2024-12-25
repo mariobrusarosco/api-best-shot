@@ -3,6 +3,7 @@ import type { Express } from 'express';
 import express from 'express';
 import { API_Dataprovider } from '../controller';
 import { Scheduler } from '../controller/scheduler';
+import { StandingsDataApi } from '../controller/standings';
 
 const DataProviderRouting = (app: Express) => {
   const dataProviderRouter = express.Router();
@@ -34,10 +35,10 @@ const DataProviderRouting = (app: Express) => {
   //   '/tournaments/:tournamentId/standings',
   //   StandingsDataController.setupStandings
   // );
-  // dataProviderRouter.patch(
-  //   '/tournaments/:tournamentId/standings',
-  //   StandingsDataController.updateStandings
-  // );
+  dataProviderRouter.patch(
+    '/tournaments/:tournamentId/standings',
+    StandingsDataApi.update
+  );
 
   // SCHEDULER
   dataProviderRouter.post('/scheduler', Scheduler.run);

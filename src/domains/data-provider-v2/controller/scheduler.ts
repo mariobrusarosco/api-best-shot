@@ -20,7 +20,7 @@ const run = async (req: Request, res: Response) => {
     const dailySchedule = mapMatchesToDailySchedule(currentDayMatches);
 
     dailySchedule.forEach(async schedule => {
-      await scheduleTournamentStandingsUpdateCronJob(schedule);
+      // await scheduleTournamentStandingsUpdateCronJob(schedule);
       await scheduleTournamentRoundUpdateCronJob(schedule);
     });
 
@@ -69,20 +69,39 @@ const toCronFormat = (date: ReturnType<typeof dayjs>) => {
   } ${'?'} ${d.year()})`;
 };
 
-const scheduleTournamentStandingsUpdateCronJob = async (schedule: ISchedule) => {
+const scheduleTournamentStandingsUpdateCronJob = async (
+  tournament: DB_SelectTournament
+) => {
+  const startDate = dayjs().add(1, 'minute');
+  const endDate = startDate.add(1, 'day');
+  const SCHEDULE_ID = `${tournament.label}_${startDate.format('YYYY_MM_DD_HH_mm')}`
+    .toLowerCase()
+    .replace(/\s/gi, '');
+
+  const schedule = {
+    id: SCHEDULE_ID,
+    cron: 'rate(2 minutes)',
+    startDate: new Date(),
+    tournamentIdToUpdate: tournament.id,
+    tournamentLabelToUpdate: tournament.label,
+    roundToUpdate: '',
+  } as ISchedule;
+
   const standingsUrl = DATA_PROVIDER_STANDINGS_URL.replace(
     '[tournamentId]',
-    schedule.tournamentIdToUpdate
+    tournament.id!
   );
 
   const params = {
     Name: `standings_${schedule.id}`,
-    ScheduleExpression: schedule.cron,
-    StartDate: schedule.startDate,
+    ScheduleExpression: 'rate(2 minutes)',
+    ScheduleExpressionTimezone: 'America/Sao_Paulo',
+    StartDate: startDate.toDate(),
+    EndDate: endDate.toDate(),
     Target: {
       Arn: 'arn:aws:lambda:us-east-1:905418297381:function:update-tournament-standings-demo',
       RoleArn:
-        'arn:aws:iam::905418297381:role/service-role/Amazon_EventBridge_Scheduler_LAMBDA_b425d46da9',
+        'arn:aws:iam::905418297381:role/service-role/Amazon_EventBridge_Scheduler_LAMBDA_d1e4620a00',
       Input: JSON.stringify({ standingsUrl }),
     },
     State: 'ENABLED' as const, // Schedule state: 'ENABLED' or 'DISABLED',
@@ -133,7 +152,7 @@ const tournamentUpdateRecurrence = async (tournament: DB_SelectTournament) => {
     return null;
   }
 
-  const startDate = dayjs().add(2, 'minute');
+  const startDate = dayjs().add(1, 'minute');
   const endDate = startDate.add(1, 'day');
   const apiUrl = `${process.env.API_DOMAIN}/data-provider/tournaments/${tournament.id}/rounds`;
 
@@ -150,9 +169,7 @@ const tournamentUpdateRecurrence = async (tournament: DB_SelectTournament) => {
       Input: JSON.stringify({ apiUrl }),
     },
     FlexibleTimeWindow: {
-      // Mode: // five minuts
       Mode: 'OFF' as const,
-      // MaximumWindowInMinutes: 5,
     },
     ActionAfterCompletion: undefined,
     GroupName: 'tournament-rounds-checker',
@@ -173,4 +190,8 @@ type ISchedule = {
   roundToUpdate: string;
 };
 
-export const Scheduler = { run, tournamentUpdateRecurrence };
+export const Scheduler = {
+  run,
+  tournamentUpdateRecurrence,
+  scheduleTournamentStandingsUpdateCronJob,
+};

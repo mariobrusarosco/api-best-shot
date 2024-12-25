@@ -1,1 +1,0 @@
-ALTER TABLE "tournament" ADD COLUMN "base_url" text NOT NULL;

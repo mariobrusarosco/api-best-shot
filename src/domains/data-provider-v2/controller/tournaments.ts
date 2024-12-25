@@ -2,6 +2,7 @@ import { TournamentRequest } from '@/domains/data-provider-v2/interface';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { type Response } from 'express';
 import { SofascoreTournament } from '../providers/sofascore/sofascore-tournament';
+import { Scheduler } from './scheduler';
 
 const setupTournament = async (req: TournamentRequest, res: Response) => {
   try {
@@ -32,6 +33,10 @@ const updateTournament = async (req: TournamentRequest, res: Response) => {
       ...req.body,
       logo,
     });
+
+    const schedule = await Scheduler.scheduleTournamentStandingsUpdateCronJob(
+      updatedTournament
+    );
 
     return updatedTournament;
   } catch (error: any) {

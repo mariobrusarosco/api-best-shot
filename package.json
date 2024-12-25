@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "5.4.1",
+  "version": "5.4.2",
   "description": "API - Best Shot",
   "scripts": {
     "build": "rimraf ./dist && tsc && tsc-alias",

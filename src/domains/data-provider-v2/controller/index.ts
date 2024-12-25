@@ -2,6 +2,7 @@ import { type Response } from 'express';
 import { TournamentController } from '../controller/tournaments';
 import { TournamentRequest } from '../interface';
 import { MatchDataController } from './matches';
+import { StandingsDataController } from './standings';
 import { TeamsDataController } from './teams';
 import { TournamentRoundsController } from './tournament-rounds';
 
@@ -20,6 +21,8 @@ const setup = async (req: TournamentRequest, res: Response) => {
   // SETUP MATCHES
   const matches = await MatchDataController.setup(newTournament);
 
+  // SETUP STANDINGS
+
   return res.status(200).send('OK');
 };
 
@@ -33,7 +36,13 @@ const update = async (req: TournamentRequest, res: Response) => {
 
   // UPDATE MATCHES
 
-  return res.status(200).send(updatedRounds);
+  // UPDATE STANDINGS
+  const standings = await StandingsDataController.updateStandings(
+    updatedTournament.baseUrl,
+    updatedTournament.id!
+  );
+
+  return res.status(200).send('test');
 };
 
 export const API_Dataprovider = {

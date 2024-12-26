@@ -1,7 +1,7 @@
 import { TournamentRequest } from '@/domains/data-provider/api/typying/tournament';
+import { TournamentController } from '@/domains/data-provider/controllers/tournament';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { Response } from 'express';
-import { TournamentController } from '../../data-provider-v2/controller/tournaments';
 
 const setup = async (req: TournamentRequest, res: Response) => {
   try {

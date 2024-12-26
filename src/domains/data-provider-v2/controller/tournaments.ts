@@ -26,8 +26,6 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
 
 const updateTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
-    console.log('[LOG] - Updating tournament:', input.label);
-
     const logo = await API_Sofascore.tournament.fetchAndStoreLogo({
       logoPngBase64: input.logoPngBase64,
       logoUrl: input.logoUrl,

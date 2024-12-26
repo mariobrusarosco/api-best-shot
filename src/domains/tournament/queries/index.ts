@@ -61,3 +61,5 @@ export const TournamentQueries = {
   tournament,
   allTournamentRounds,
 };
+
+export type TournamentQuery = Awaited<ReturnType<typeof tournament>>;

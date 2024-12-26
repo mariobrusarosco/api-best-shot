@@ -1,4 +1,5 @@
 import { CreateTournamentInput } from '@/domains/data-provider/api/typying/tournament';
+import { TournamentQuery } from '@/domains/tournament/queries';
 import { FetchAndStoreAssetPayload } from '@/utils';
 import {
   API_SofaScoreRound,
@@ -13,7 +14,7 @@ import {
   DB_SelectTournamentRound,
 } from '../../tournament/schema';
 
-export type IApiProviderV2 = {
+export type IApiProvider = {
   tournament: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
     createOnDatabase: (
@@ -22,18 +23,16 @@ export type IApiProviderV2 = {
     updateOnDatabase: (data: DB_InsertTournament) => Promise<DB_SelectTournament>;
   };
   rounds: {
-    fetchRoundFromProvider: (providerUrl: string) => Promise<API_SofaScoreRound>;
+    // fetchRoundFromProvider: (providerUrl: string) => Promise<API_SofaScoreRound>;
     fetchRoundsFromProvider: (baseUrl: string) => Promise<API_SofaScoreRounds>;
     mapAvailableRounds: (
       data: API_SofaScoreRounds,
-      tournament: DB_SelectTournament
+      tournament: NonNullable<TournamentQuery>
     ) => Promise<any[]>;
     createOnDatabase: (
       rounds: DB_InsertTournamentRound[]
     ) => Promise<DB_SelectTournamentRound[]>;
-    updateOnDatabase: (
-      rounds: DB_InsertTournamentRound[]
-    ) => Promise<DB_SelectTournamentRound[] | undefined>;
+    upsertOnDatabase: (rounds: DB_InsertTournamentRound[]) => Promise<any>;
   };
   matches: {
     mapRoundMatches: (

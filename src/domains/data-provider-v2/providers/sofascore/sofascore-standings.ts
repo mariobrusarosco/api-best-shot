@@ -63,6 +63,7 @@ export const SofascoreStandings: IApiProviderV2['standings'] = {
 
         console.error('[UPDATE] - Upserted tournament standings for: ', query, standing);
 
+        // TODO Consider a 'insert' + onConlifct Update
         if (!query.length) {
           await tx.insert(T_TournamentStandings).values(standing).returning();
         }

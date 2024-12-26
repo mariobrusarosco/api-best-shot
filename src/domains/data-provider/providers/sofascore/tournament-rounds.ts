@@ -1,72 +1,76 @@
-// @ts-nocheck
+import { API_SofaScoreRounds } from '@/domains/data-provider-v2/providers/sofascore/typing';
 import { DB_InsertTournamentRound, T_TournamentRound } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import axios from 'axios';
-import { and, eq } from 'drizzle-orm';
-import { IApiProviderV2 } from '../../../data-provider/typying/main-interface';
-import { API_SofaScoreRounds } from './typing';
+import { IApiProvider } from '../../typying/main-interface';
 
-export const SofascoreTournamentRounds: IApiProviderV2['rounds'] = {
+export const SofascoreTournamentRound: IApiProvider['rounds'] = {
   fetchRoundsFromProvider: async baseUrl => {
     const roundsUrl = `${baseUrl}/rounds`;
+    console.log(
+      '[LOG] - [SofascoreTournamentRounds] - FETCHING TOURNAMENT ROUNDS AT: ',
+      roundsUrl
+    );
+
     const response = await axios.get(roundsUrl);
 
     const data = response.data;
 
     return data;
   },
-  fetchRoundFromProvider: async providerUrl => {
-    const response = await axios.get(providerUrl);
+  // fetchRoundFromProvider: async providerUrl => {
+  //   const response = await axios.get(providerUrl);
 
-    const data = response.data;
+  //   const data = response.data;
 
-    return data;
-  },
-  mapAvailableRounds: async (data, tournament) => {
-    return data.rounds.map(round =>
-      buildTournamentRound(round, tournament.id!, tournament.baseUrl)
-    );
-  },
+  //   return data;
+  // },
+  mapAvailableRounds: async (data, tournament) =>
+    data.rounds.map((round, index) => {
+      return buildTournamentRound(round, index, tournament.id!, tournament.baseUrl);
+    }),
   createOnDatabase: async roundsToInsert => {
     const rounds = await db.insert(T_TournamentRound).values(roundsToInsert).returning();
 
     return rounds;
   },
-  updateOnDatabase: async roundsToUpdate => {
+  upsertOnDatabase: async roundsToUpdate => {
+    console.log('[LOG] - [SofascoreTournamentRounds] - UPSERTING ROUNDS ON DATABASE');
+
     return await db.transaction(async tx => {
-      const updatedRounds = await Promise.all(
-        roundsToUpdate.map(async round => {
-          return await tx
-            .update(T_TournamentRound)
-            .set(round)
-            .where(
-              and(
-                eq(T_TournamentRound.order, round.order),
-                eq(T_TournamentRound.tournamentId, round.tournamentId)
-              )
-            )
-            .returning();
-        })
-      );
-      return updatedRounds.flat();
+      for (const round of roundsToUpdate) {
+        await tx
+          .insert(T_TournamentRound)
+          .values(round)
+          .onConflictDoUpdate({
+            target: [T_TournamentRound.order, T_TournamentRound.tournamentId],
+            set: {
+              ...round,
+            },
+          });
+
+        console.log('[LOG] - [SofascoreTournamentRounds] - UPSERTING ROUND: ', round);
+      }
     });
   },
 };
 
 const buildTournamentRound = (
   round: API_SofaScoreRounds['rounds'][number],
+  roundOrder: number,
   tournamentId: string,
   tournamentBaseUrl: string
 ) => {
+  const order = String(roundOrder);
+
   if (round?.prefix) {
     const knockoutId = `${round.prefix}`;
     const providerUrl = `${tournamentBaseUrl}/events/round/${round.round}/slug/${round.slug}/prefix/${knockoutId}`;
-    const specialOrder = `0${round.round}`;
 
     return {
       tournamentId,
       slug: round.slug!,
-      order: specialOrder,
+      order,
       knockoutId,
       label: round.name!,
       type: 'special-knockout',
@@ -77,11 +81,11 @@ const buildTournamentRound = (
   if (round?.slug) {
     const knockoutId = `${round.round}`;
     const providerUrl = `${tournamentBaseUrl}/events/round/${knockoutId}/slug/${round.slug}`;
-    const specialOrder = `0${round.round}`;
+
     return {
       tournamentId,
       slug: round.slug!,
-      order: specialOrder,
+      order,
       knockoutId,
       label: round.name!,
       type: 'knockout',
@@ -89,7 +93,6 @@ const buildTournamentRound = (
     } satisfies DB_InsertTournamentRound;
   }
 
-  const order = `${round.round}`;
   const providerUrl = `${tournamentBaseUrl}/events/round/${order}`;
 
   return {

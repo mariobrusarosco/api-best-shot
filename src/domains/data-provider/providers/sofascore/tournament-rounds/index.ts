@@ -20,7 +20,7 @@ export const SofascoreTournamentRound: IApiProvider['rounds'] = {
 
     const response = await axios.get(providerUrl);
     const data = response.data;
-    console.log('[LOG] - FETCHED ROUND:', data);
+    console.log('[LOG] - FETCHED ROUND:');
 
     return data;
   },

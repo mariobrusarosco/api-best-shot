@@ -1,6 +1,9 @@
 import { TournamentQueries } from '@/domains/tournament/queries';
 import { SofascoreTeams } from '../../providers/sofascore/teams';
-import { fetchAndMapTeamsForRegularSeason } from './fetcher';
+import {
+  fetchAndMapTeamsForRegularAndKnockout,
+  fetchAndMapTeamsForRegularSeason,
+} from './fetcher';
 
 const create = async (tournamentId: string) => {
   try {
@@ -10,11 +13,11 @@ const create = async (tournamentId: string) => {
     console.log('[LOG] - [START] - TEAM CREATION FOR ', tournament.label);
 
     const tournamentMode = tournament.mode;
-    // if (tournamentMode === 'regular-season-and-knockout') {
-    //   const teamsToInsert = await fetchAndMapTeamsFromKnockoutRounds(tournament);
+    if (tournamentMode === 'regular-season-and-knockout') {
+      const teamsToInsert = await fetchAndMapTeamsForRegularAndKnockout(tournament);
 
-    // return await SofascoreTeams.createOnDatabase(teamsToInsert);
-    // }
+      return await SofascoreTeams.createOnDatabase(teamsToInsert);
+    }
 
     if (tournamentMode === 'regular-season-only') {
       const teamsToInsert = await fetchAndMapTeamsForRegularSeason(tournament);
@@ -22,9 +25,9 @@ const create = async (tournamentId: string) => {
       return await SofascoreTeams.createOnDatabase(teamsToInsert);
     }
 
-    console.log('[LOG] - [SUCCESS] - TEAM CREATION FOR ', tournament.label);
+    console.log('[LOG] - [END] - TEAM CREATION FOR ', tournament.label);
 
-    return [];
+    return 'OK';
   } catch (error: any) {}
 };
 
@@ -36,11 +39,11 @@ const update = async (tournamentId: string) => {
     console.log('[LOG] - [TeamsController] - UPDATING TEAMS FOR: ', tournament.label);
 
     const tournamentMode = tournament.mode;
-    // if (tournamentMode === 'regular-season-and-knockout') {
-    //   const teamsToInsert = await fetchAndMapTeamsFromKnockoutRounds(tournament);
+    if (tournamentMode === 'regular-season-and-knockout') {
+      const teamsToInsert = await fetchAndMapTeamsForRegularAndKnockout(tournament);
 
-    // return await SofascoreTeams.upsertOnDatabase(teamsToInsert);
-    // }
+      // return await SofascoreTeams.upsertOnDatabase(teamsToInsert);
+    }
 
     if (tournamentMode === 'regular-season-only') {
       const teamsToInsert = await fetchAndMapTeamsForRegularSeason(tournament);

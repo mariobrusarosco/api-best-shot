@@ -13,6 +13,7 @@ import {
   DB_SelectTournamentRound,
 } from '@/domains/tournament/schema';
 import { FetchAndStoreAssetPayload } from '@/utils';
+import { API_SofaScoreStandings } from './providers/sofascore/standings/typing';
 
 export type IApiProvider = {
   tournament: {
@@ -46,12 +47,17 @@ export type IApiProvider = {
   teams: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
     mapTeamsFromStandings: (standings: any, provider: string) => Promise<DB_InsertTeam[]>;
-    mapTeamsFromRound: (round: API_SofaScoreRound, provider: string) => Promise<any>;
+    mapTeamsFromRound: (
+      round: API_SofaScoreRound,
+      provider: string
+    ) => Promise<DB_InsertTeam[]>;
     createOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[]>;
     upsertOnDatabase: (teams: DB_InsertTeam[]) => Promise<any>;
   };
   standings: {
-    fetchStandingsFromProvider: (baseUrl: string) => Promise<any>;
+    fetchStandingsFromProvider: (
+      baseUrl: string
+    ) => Promise<API_SofaScoreStandings | null>;
     mapStandings: (data: any, provider: string) => Promise<any>;
     createOnDatabase: (standings: any) => Promise<any>;
   };

@@ -4,19 +4,27 @@ import {
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
 import db from '@/services/database';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { API_SofaScoreStandings } from './typing';
 
 export const SofascoreStandings: IApiProvider['standings'] = {
   fetchStandingsFromProvider: async (baseUrl: string) => {
-    const url = `${baseUrl}/standings/total`;
+    try {
+      const url = `${baseUrl}/standings/total`;
 
-    console.log(`[LOG] - [START] - FETCHING STANDINGS - AT: ${url}`);
+      console.log(`[LOG] - [START] - FETCHING STANDINGS - AT: ${url}`);
 
-    const response = await axios.get(url);
-    const data = response.data as API_SofaScoreStandings;
-    console.log(`[LOG] - [SUCCESS] - FETCHING STANDINGS - AT: ${url}`);
-    return data;
+      const response = await axios.get(url);
+      const data = response.data as API_SofaScoreStandings;
+      console.log(`[LOG] - [SUCCESS] - FETCHING STANDINGS - AT: ${url}`);
+      return data;
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        console.error('[ERROR] - [FETCHING STANDINGS] - ', error.message);
+      }
+
+      return null;
+    }
   },
   mapStandings: async (standings: API_SofaScoreStandings, tournamentId) => {
     const promises = standings?.standings[0]['rows']?.map(async team => {

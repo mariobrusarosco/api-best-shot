@@ -1,4 +1,4 @@
-import { CreateTournamentInput } from '@/domains/data-provider/api/typying/tournament';
+import { CreateTournamentInput } from '@/domains/data-provider/api/tournament/typing';
 import { API_Sofascore } from '../../data-provider/providers/sofascore';
 
 const createTournament = async ({ input }: { input: CreateTournamentInput }) => {

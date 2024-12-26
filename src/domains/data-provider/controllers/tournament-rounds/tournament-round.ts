@@ -7,7 +7,7 @@ const create = async (tournamentId: string) => {
   if (tournament === undefined) throw new Error('Tournament not found');
 
   console.log(
-    '[LOG] - [API_TournamentRounds] - CREATING TOURNAMENT ROUNDS FOR: ',
+    '[LOG] - [TournamentRoundController] - CREATING TOURNAMENT ROUNDS FOR: ',
     tournament.label
   );
 
@@ -29,7 +29,7 @@ const update = async (tournamentId: string) => {
   if (tournament === undefined) throw new Error('Tournament not found');
 
   console.log(
-    '[LOG] - [API_TournamentRounds] - UPDATING TOURNAMENT ROUNDS FOR: ',
+    '[LOG] - [TournamentRoundController] - UPDATING TOURNAMENT ROUNDS FOR: ',
     tournament.label
   );
 

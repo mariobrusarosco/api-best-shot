@@ -14,7 +14,7 @@ export type API_SofaScoreRounds = {
 
 // Endpoint example: https://api.sofascore.com/api/v1/unique-tournament/16/season/325/rounds/1
 
-type API_SofaScoreRound = {
+export type API_SofaScoreRound = {
   events: API_SofaScoreMatch[];
   hasPreviousPage: boolean;
 };

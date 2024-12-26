@@ -1,8 +1,9 @@
 import { AuthMiddleware } from '@/domains/auth/middleware';
 import { API_Tournament } from '@/domains/data-provider/api/tournament';
-import { API_TournamentRounds } from '@/domains/data-provider/api/tournament-rounds';
+import { API_TournamentRounds } from '@/domains/data-provider/api/tournament-round';
 import type { Express } from 'express';
 import express from 'express';
+import { API_Teams } from '../api/teams';
 
 const DataProviderRouting = (app: Express) => {
   const dataProviderRouter = express.Router();
@@ -22,14 +23,8 @@ const DataProviderRouting = (app: Express) => {
   );
 
   // TEAMS
-  // dataProviderRouter.post(
-  //   '/tournaments/:tournamentId/teams',
-  //   API_Teams.createTeams
-  // );
-  // dataProviderRouter.patch(
-  //   '/tournaments/:tournamentId/teams',
-  //   TeamsDataController.updateTeams
-  // );
+  dataProviderRouter.post('/tournaments/:tournamentId/teams', API_Teams.createTeams);
+  dataProviderRouter.patch('/tournaments/:tournamentId/teams', API_Teams.updateTeams);
   // // MATCHES
   // dataProviderRouter.post(
   //   '/tournaments/:tournamentId/matches',

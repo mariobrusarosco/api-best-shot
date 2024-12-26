@@ -1,18 +1,18 @@
-import { CreateTournamentInput } from '@/domains/data-provider/api/typying/tournament';
-import { TournamentQuery } from '@/domains/tournament/queries';
-import { FetchAndStoreAssetPayload } from '@/utils';
+import { CreateTournamentInput } from '@/domains/data-provider/api/tournament/typing';
 import {
   API_SofaScoreRound,
   API_SofaScoreRounds,
-} from '../../data-provider-v2/providers/sofascore/typing';
-import { DB_InsertMatch } from '../../match/schema';
-import { DB_InsertTeam } from '../../team/schema';
+} from '@/domains/data-provider/providers/sofascore/tournament-rounds/typing';
+import { DB_InsertMatch } from '@/domains/match/schema';
+import { DB_InsertTeam } from '@/domains/team/schema';
+import { TournamentQuery } from '@/domains/tournament/queries';
 import {
   DB_InsertTournament,
   DB_InsertTournamentRound,
   DB_SelectTournament,
   DB_SelectTournamentRound,
-} from '../../tournament/schema';
+} from '@/domains/tournament/schema';
+import { FetchAndStoreAssetPayload } from '@/utils';
 
 export type IApiProvider = {
   tournament: {

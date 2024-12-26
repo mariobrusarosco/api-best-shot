@@ -1,7 +1,7 @@
-import { TournamentRoundController } from '@/domains/data-provider/controllers/tournament-round';
+import { TournamentRoundController } from '@/domains/data-provider/controllers/tournament-rounds/tournament-round';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { Response } from 'express';
-import { TournamentRoundRequest } from './typying/tournament-round';
+import { TournamentRoundRequest } from './typing';
 
 const createRounds = async (req: TournamentRoundRequest, res: Response) => {
   try {

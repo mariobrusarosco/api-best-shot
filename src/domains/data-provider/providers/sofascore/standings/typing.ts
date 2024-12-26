@@ -1,4 +1,4 @@
-type API_SofaScoreStandings = {
+export type API_SofaScoreStandings = {
   standings: {
     tournament: {
       name: string;
@@ -55,7 +55,7 @@ type API_SofaScoreStandings = {
   }[];
 };
 
-type API_SofascoreStandingTeam = {
+export type API_SofascoreStandingTeam = {
   team: {
     name: string;
     slug: string;

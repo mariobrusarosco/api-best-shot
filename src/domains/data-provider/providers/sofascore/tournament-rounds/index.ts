@@ -1,8 +1,8 @@
-import { API_SofaScoreRounds } from '@/domains/data-provider-v2/providers/sofascore/typing';
+import { API_SofaScoreRounds } from '@/domains/data-provider/providers/sofascore/tournament-rounds/typing';
+import { IApiProvider } from '@/domains/data-provider/typing';
 import { DB_InsertTournamentRound, T_TournamentRound } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import axios from 'axios';
-import { IApiProvider } from '../../typying/main-interface';
 
 export const SofascoreTournamentRound: IApiProvider['rounds'] = {
   fetchRoundsFromProvider: async baseUrl => {

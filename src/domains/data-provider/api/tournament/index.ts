@@ -1,4 +1,4 @@
-import { TournamentRequest } from '@/domains/data-provider/api/typying/tournament';
+import { TournamentRequest } from '@/domains/data-provider/api/tournament/typing';
 import { TournamentController } from '@/domains/data-provider/controllers/tournament';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { Response } from 'express';

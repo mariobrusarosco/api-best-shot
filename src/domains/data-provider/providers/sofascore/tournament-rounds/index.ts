@@ -14,8 +14,9 @@ export const SofascoreTournamentRound: IApiProvider['rounds'] = {
 
     const response = await axios.get(roundsUrl);
 
-    const data = response.data;
+    console.log('[LOG] - [SofascoreTournamentRounds] - FETCHING DONE');
 
+    const data = response.data;
     return data;
   },
   // fetchRoundFromProvider: async providerUrl => {

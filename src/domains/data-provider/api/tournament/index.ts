@@ -1,5 +1,5 @@
 import { TournamentRequest } from '@/domains/data-provider/api/tournament/typing';
-import { TournamentController } from '@/domains/data-provider/controllers/tournament';
+import { TournamentController } from '@/domains/data-provider/controllers/tournament/tournament';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { Response } from 'express';
 

@@ -21,6 +21,7 @@ const create = async (tournamentId: string) => {
 
   const roundsInserted = await SofascoreTournamentRound.createOnDatabase(roundsToInsert);
 
+  console.log('[LOG] - [TournamentRoundController] - CREATED', tournament.label);
   return roundsInserted;
 };
 

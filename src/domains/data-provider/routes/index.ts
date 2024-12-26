@@ -1,9 +1,9 @@
 import { AuthMiddleware } from '@/domains/auth/middleware';
+import { API_Teams } from '@/domains/data-provider/api/teams';
 import { API_Tournament } from '@/domains/data-provider/api/tournament';
 import { API_TournamentRounds } from '@/domains/data-provider/api/tournament-round';
 import type { Express } from 'express';
 import express from 'express';
-import { API_Teams } from '../api/teams';
 
 const DataProviderRouting = (app: Express) => {
   const dataProviderRouter = express.Router();

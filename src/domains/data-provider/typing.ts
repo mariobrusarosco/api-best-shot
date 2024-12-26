@@ -1,4 +1,5 @@
 import { CreateTournamentInput } from '@/domains/data-provider/api/tournament/typing';
+import { API_SofaScoreStandings } from '@/domains/data-provider/providers/sofascore/standings/typing';
 import {
   API_SofaScoreRound,
   API_SofaScoreRounds,
@@ -43,14 +44,16 @@ export type IApiProvider = {
   };
   teams: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
-    fetchTeamsFromStandings: (tournamentId: string) => Promise<any>;
+    fetchTeamsFromStandings: (baseUrl: string) => Promise<API_SofaScoreStandings | []>;
+    fetchTeamsFromKnockoutRounds: (
+      tournamentId: string
+    ) => Promise<API_SofaScoreRound[] | []>;
     mapTeamsFromStandings: (standings: any, provider: string) => Promise<DB_InsertTeam[]>;
     mapTeamsFromKnockoutRounds: (
-      knockoutRound: API_SofaScoreRound[],
+      knockoutRounds: API_SofaScoreRound[] | [],
       provider: string
     ) => Promise<any>;
-    fetchTeamsFromKnockoutRounds: (tournamentId: string) => Promise<API_SofaScoreRound[]>;
     createOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[]>;
-    // updateOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[] | undefined>;
+    upsertOnDatabase: (teams: DB_InsertTeam[]) => Promise<any>;
   };
 };

@@ -9,12 +9,77 @@ import axios from 'axios';
 const SOFA_TEAM_LOGO_URL = 'https://img.sofascore.com/api/v1/team/:id/image/';
 
 export const SofascoreTeams: IApiProvider['teams'] = {
-  fetchTeamsFromStandings: async (baseUrl: string) => {
-    const response = await axios.get(`${baseUrl}/standings/total`);
+  fetchTeamsFromStandings: async baseUrl => {
+    try {
+      const response = await axios.get(`${baseUrl}/standings/total`);
 
-    return response.data as API_SofaScoreStandings;
+      console.log(
+        `[LOG] - [SofascoreTeams] - FETCHED TEAMS FROM STANDINGS OF : ${baseUrl}`
+      );
+      return response.data as API_SofaScoreStandings;
+    } catch (error: any) {
+      if (error.response.data.error.code === 404) {
+        console.log(
+          `[LOG] - NO ROUNDS FOUND FOR TOURNAMENT: ${error.response.config.url} WHEN FETCHING TEAMS FROM STANDINGS`
+        );
+      } else {
+        console.error(
+          '[ERROR] - SOMETHING WENT WRONG WHEN FETCHING TEAMS ON STANDINGS:',
+          error.response.config.url
+        );
+      }
+
+      return [];
+    }
+  },
+  fetchTeamsFromKnockoutRounds: async tournamentId => {
+    try {
+      let rounds = [] as API_SofaScoreRound[];
+
+      const allTournamentsRounds = await TournamentQueries.allTournamentRounds(
+        tournamentId
+      );
+
+      if (!allTournamentsRounds?.length) {
+        console.log(
+          `[LOG] - NO ROUNDS FOUND FOR TOURNAMENT: ${tournamentId} BEFORE FETCHING TEAMS FROM KNOCKOUT ROUNDS`
+        );
+
+        return rounds;
+      }
+
+      for (const round of allTournamentsRounds || []) {
+        await sleep(3000);
+
+        console.log(
+          `[LOG] - [SofascoreTeams] - FETCHING TEAMS FROM: ${round.providerUrl}`
+        );
+
+        const roundResponse = await axios.get(round.providerUrl);
+        const roundData = roundResponse.data;
+        console.log(`[LOG] - [SofascoreTeams] - FETCHED WITH SUCCESS`);
+        rounds.push(roundData);
+      }
+
+      return rounds;
+    } catch (error: any) {
+      if (error.response.data.error.code === 404) {
+        console.log(
+          `[LOG] - NO TEAMS FOUND FOR: ${error.response.config.url}, WHEN FETCHING TEAMS FROM KNOCKOUT ROUNDS`
+        );
+      } else {
+        console.error(
+          '[ERROR] - SOMETHING WENT WRONG WHEN FETCHING TEAMS ON FROM KNOCKOUT ROUNDS:',
+          error.response.config.url
+        );
+      }
+
+      return [];
+    }
   },
   mapTeamsFromStandings: async (data: API_SofaScoreStandings, provider) => {
+    if (!data?.standings) return [];
+
     const standings = data?.standings;
     const groupOfTeams = standings.map(groupOfTeams => groupOfTeams.rows);
     const allTournamentTeams = groupOfTeams.flat();
@@ -33,32 +98,19 @@ export const SofascoreTeams: IApiProvider['teams'] = {
       } satisfies DB_InsertTeam;
     });
 
-    return Promise.all(promises);
+    const teams = await Promise.all(promises);
+    console.log(
+      `[LOG] - [SofascoreTeams] - MAPPED ${teams.length} TEAMS FROM STANDING ROUNDS`
+    );
+
+    return teams;
   },
   fetchAndStoreLogo: async data => {
     const assetPath = await fetchAndStoreAssetFromApi(data);
 
     return assetPath ? `https://${process.env['AWS_CLOUDFRONT_URL']}/${assetPath}` : '';
   },
-  fetchTeamsFromKnockoutRounds: async tournamentId => {
-    const allTournamentsRounds = await TournamentQueries.allTournamentRounds(
-      tournamentId
-    );
 
-    let rounds = [];
-
-    for (const round of allTournamentsRounds || []) {
-      await sleep(3000);
-      console.log('FETCHING - round.providerUrl:', round.providerUrl);
-
-      const roundResponse = await axios.get(round.providerUrl);
-      const roundData = roundResponse.data;
-
-      rounds.push(roundData);
-    }
-
-    return rounds as API_SofaScoreRound[];
-  },
   mapTeamsFromKnockoutRounds: async (knockoutRounds, provider) => {
     const matches = knockoutRounds.map(round => round.events).flat();
 
@@ -93,19 +145,43 @@ export const SofascoreTeams: IApiProvider['teams'] = {
       ];
     });
 
-    return (await Promise.all(promises)).flat();
+    const teams = (await Promise.all(promises)).flat();
+    console.log(
+      `[LOG] - [SofascoreTeams] - MAPPED ${teams.length} TEAMS FROM KNOCKOUT ROUNDS`
+    );
+
+    return teams;
   },
-  createOnDatabase: async teams =>
-    await db.insert(T_Team).values(teams).onConflictDoNothing().returning(),
-  // updateOnDatabase: async teams => {
-  //   return await db.transaction(async tx => {
-  //     for (const team of teams) {
-  //       return await tx
-  //         .update(T_Team)
-  //         .set(team)
-  //         .where(eq(T_Team.externalId, team.externalId))
-  //         .returning();
-  //     }
-  //   });
-  // },
+  createOnDatabase: async teams => {
+    const createdTeams = await db
+      .insert(T_Team)
+      .values(teams)
+      .onConflictDoNothing()
+      .returning();
+
+    console.log(
+      `[LOG] - [SofascoreTeams] - CREATED ${createdTeams.length} TEAMS ON DATABASE`
+    );
+
+    return createdTeams;
+  },
+  upsertOnDatabase: async teams => {
+    console.log('[LOG] - [SofascoreTeams] - UPSERTING TEAMS ON DATABASE');
+
+    return await db.transaction(async tx => {
+      for (const team of teams) {
+        await tx
+          .insert(T_Team)
+          .values(team)
+          .onConflictDoUpdate({
+            target: [T_Team.externalId, T_Team.provider],
+            set: {
+              ...team,
+            },
+          });
+
+        console.log('[LOG] - [SofascoreTeams] - UPSERTING TEAM: ', team);
+      }
+    });
+  },
 };

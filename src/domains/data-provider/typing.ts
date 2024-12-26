@@ -44,7 +44,9 @@ export type IApiProvider = {
   };
   teams: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
-    fetchTeamsFromStandings: (baseUrl: string) => Promise<API_SofaScoreStandings | []>;
+    fetchTeamsFromStandings: (
+      baseUrl: string
+    ) => Promise<API_SofaScoreStandings | { standings: null }>;
     fetchTeamsFromKnockoutRounds: (
       tournamentId: string
     ) => Promise<API_SofaScoreRound[] | []>;

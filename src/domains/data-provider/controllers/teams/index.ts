@@ -10,10 +10,7 @@ const create = async (tournamentId: string) => {
     const tournament = await TournamentQueries.tournament(tournamentId);
     if (tournament === undefined) throw new Error('Tournament not found');
 
-    console.log(
-      '[LOG] - [TeamsController] - CREATING TOURNAMENT ROUNDS FOR: ',
-      tournament.label
-    );
+    console.log('[LOG] - [TeamsController] - CREATING TEAMS FOR: ', tournament.label);
 
     const tournamentMode = tournament.mode;
     if (tournamentMode === 'regular-season-and-knockout') {
@@ -37,10 +34,7 @@ const update = async (tournamentId: string) => {
     const tournament = await TournamentQueries.tournament(tournamentId);
     if (tournament === undefined) throw new Error('Tournament not found');
 
-    console.log(
-      '[LOG] - [TeamsController] - CREATING TOURNAMENT ROUNDS FOR: ',
-      tournament.label
-    );
+    console.log('[LOG] - [TeamsController] - UPDATING TEAMS FOR: ', tournament.label);
 
     const tournamentMode = tournament.mode;
     if (tournamentMode === 'regular-season-and-knockout') {

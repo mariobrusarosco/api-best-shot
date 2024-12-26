@@ -1,4 +1,4 @@
-import { SofascoreTeams } from '@/domains/data-provider-v2/providers/sofascore/sofacore-teams';
+import { SofascoreTeams } from '@/domains/data-provider/providers/sofascore/teams';
 import { TournamentQuery } from '@/domains/tournament/queries';
 
 export const fetchTeamsForRegularSeason = async (
@@ -13,7 +13,7 @@ export const fetchTeamsForRegularSeason = async (
   );
 
   console.log(
-    `[LOG] - [TeamsController] - TOURNAMENT:${tournament.label} - TEAMS FROM STANDINGS: ${teamsFromStandings?.length}`
+    `[LOG] - [TeamsController] - TOURNAMENT:${tournament.label} - TEAMS FROM STANDINGS: ${teamsFromStandings}`
   );
 
   return mappedTeamsFromStandings;

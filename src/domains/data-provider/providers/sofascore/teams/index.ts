@@ -20,7 +20,7 @@ export const SofascoreTeams: IApiProvider['teams'] = {
     } catch (error: any) {
       if (error.response.data.error.code === 404) {
         console.log(
-          `[LOG] - NO ROUNDS FOUND FOR TOURNAMENT: ${error.response.config.url} WHEN FETCHING TEAMS FROM STANDINGS`
+          `[LOG] - NO TEAM FOUND FOR TOURNAMENT: ${error.response.config.url} WHEN FETCHING TEAMS FROM STANDINGS`
         );
       } else {
         console.error(
@@ -29,7 +29,7 @@ export const SofascoreTeams: IApiProvider['teams'] = {
         );
       }
 
-      return [];
+      return { standings: null };
     }
   },
   fetchTeamsFromKnockoutRounds: async tournamentId => {

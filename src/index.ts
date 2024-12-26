@@ -4,7 +4,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
 import AuthRouting from './domains/auth/routes';
-import DataProviderRouting from './domains/data-provider-v2/routes';
+import DataProviderRouting from './domains/data-provider/routes';
 import GuessRouting from './domains/guess/routes';
 import LeagueRouting from './domains/league/routes';
 import MatchRouting from './domains/match/routes';

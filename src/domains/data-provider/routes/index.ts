@@ -2,16 +2,13 @@ import { AuthMiddleware } from '@/domains/auth/middleware';
 import type { Express } from 'express';
 import express from 'express';
 import { API_Tournament } from '../../data-provider/api/tournament';
-import { API_MatchesDataprovider } from '../controller/matches';
-import { Scheduler } from '../controller/scheduler';
-import { API_StandingsDataprovider } from '../controller/standings';
 
 const DataProviderRouting = (app: Express) => {
   const dataProviderRouter = express.Router();
 
   // TOURNAMENTS
   dataProviderRouter.post('/tournaments', API_Tournament.setup);
-  // dataProviderRouter.patch('/tournaments/:tournamentId', API_Dataprovider.update);
+  dataProviderRouter.patch('/tournaments/:tournamentId/test', API_Tournament.update);
 
   // TEAMS
   // dataProviderRouter.post(
@@ -27,23 +24,23 @@ const DataProviderRouting = (app: Express) => {
   //   '/tournaments/:tournamentId/matches',
   //   MatchesDataController.setupMatches
   // );
-  dataProviderRouter.patch(
-    '/tournaments/:tournamentId/matches/:roundId',
-    API_MatchesDataprovider.updateScoresOfRound
-  );
+  // dataProviderRouter.patch(
+  //   '/tournaments/:tournamentId/matches/:roundId',
+  //   API_MatchesDataprovider.updateScoresOfRound
+  // );
 
   // STANDINGS
   // dataProviderRouter.post(
   //   '/tournaments/:tournamentId/standings',
   //   StandingsDataController.setupStandings
   // );
-  dataProviderRouter.patch(
-    '/tournaments/:tournamentId/standings',
-    API_StandingsDataprovider.update
-  );
+  // dataProviderRouter.patch(
+  //   '/tournaments/:tournamentId/standings',
+  //   API_StandingsDataprovider.update
+  // );
 
   // SCHEDULER
-  dataProviderRouter.post('/scheduler', Scheduler.run);
+  // dataProviderRouter.post('/scheduler', Scheduler.run);
   app.use(`${process.env.API_VERSION}/data-provider`, AuthMiddleware, dataProviderRouter);
 };
 

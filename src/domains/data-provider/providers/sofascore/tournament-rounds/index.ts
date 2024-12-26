@@ -5,28 +5,26 @@ import db from '@/services/database';
 import axios from 'axios';
 
 export const SofascoreTournamentRound: IApiProvider['rounds'] = {
-  fetchRoundsFromProvider: async baseUrl => {
+  fetchShallowListOfRoundsFromProvider: async baseUrl => {
     const roundsUrl = `${baseUrl}/rounds`;
-    console.log(
-      '[LOG] - [SofascoreTournamentRounds] - FETCHING TOURNAMENT ROUNDS AT: ',
-      roundsUrl
-    );
+    console.log(`[LOG] - [START] - FETCHING SHALLOW LIST OF ROUNDS - AT: ${roundsUrl}`);
 
     const response = await axios.get(roundsUrl);
-
-    console.log('[LOG] - [SofascoreTournamentRounds] - FETCHING DONE');
-
     const data = response.data;
+
+    console.log('[LOG] - [SUCCESS] - SHALLOW LIST OF ROUNDS DONE: ', data);
     return data;
   },
-  // fetchRoundFromProvider: async providerUrl => {
-  //   const response = await axios.get(providerUrl);
+  fetchRoundFromProvider: async providerUrl => {
+    console.log(`[LOG] - FETCHING ROUND DATA AT: ${providerUrl}`);
 
-  //   const data = response.data;
+    const response = await axios.get(providerUrl);
+    const data = response.data;
+    console.log('[LOG] - FETCHED ROUND:', data);
 
-  //   return data;
-  // },
-  mapAvailableRounds: async (data, tournament) =>
+    return data;
+  },
+  mapShallowListOfRounds: async (data, tournament) =>
     data.rounds.map((round, index) => {
       return buildTournamentRound(round, index, tournament.id!, tournament.baseUrl);
     }),

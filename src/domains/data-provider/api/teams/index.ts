@@ -6,6 +6,7 @@ import { Response } from 'express';
 const createTeams = async (req: TournamentRoundRequest, res: Response) => {
   try {
     const tournamentId = req.params.tournamentId;
+
     const teams = await TeamsController.create(tournamentId);
 
     return res.status(200).send(teams);

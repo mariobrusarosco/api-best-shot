@@ -56,10 +56,27 @@ const allTournamentRounds = async (tournamenId: string) => {
   }
 };
 
+const knockoutRounds = async (tournamenId: string) => {
+  try {
+    return db
+      .select()
+      .from(T_TournamentRound)
+      .where(
+        and(
+          eq(T_TournamentRound.tournamentId, tournamenId),
+          eq(T_TournamentRound.type, 'knockout')
+        )
+      );
+  } catch (error: any) {
+    console.error('[TournamentQueries] - [allKnockoutRounds]', error);
+  }
+};
+
 export const TournamentQueries = {
   allTournaments,
   tournament,
   allTournamentRounds,
+  knockoutRounds,
 };
 
 export type TournamentQuery = Awaited<ReturnType<typeof tournament>>;

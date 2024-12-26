@@ -24,7 +24,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
     const awayTeam = aliasedTable(T_Team, 'awayTeam');
     const round = await TournamentRoundsQueries.getRound({
       tournamentId,
-      roundId,
+      roundSlug: roundId,
     });
 
     const matches = await db

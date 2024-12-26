@@ -35,7 +35,7 @@ async function getMemberGuesses(req: Request, res: Response) {
     // }
     const round = await TournamentRoundsQueries.getRound({
       tournamentId,
-      roundId: query.round,
+      roundSlug: query.round,
     });
 
     const guesses = await db

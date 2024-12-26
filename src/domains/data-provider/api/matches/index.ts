@@ -1,7 +1,7 @@
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { Response } from 'express';
 
-const createTeams = async (req: any, res: Response) => {
+const createMatches = async (req: any, res: Response) => {
   try {
     return res.status(200).send([]);
   } catch (error: any) {
@@ -11,17 +11,17 @@ const createTeams = async (req: any, res: Response) => {
   }
 };
 
-const updateTeams = async (req: any, res: Response) => {
+const updateMatchOfRound = async (req: any, res: Response) => {
   try {
     return res.status(200).send([]);
   } catch (error: any) {
-    console.error('[ERROR] - [API_Matches] - UPDATE MATCHES', error);
+    console.error('[ERROR] - [API_Matches] - UPDATE MATCHES OF A ROUND', error);
 
     handleInternalServerErrorResponse(res, error);
   }
 };
 
 export const API_Matches = {
-  createTeams,
-  updateTeams,
+  createMatches,
+  updateMatchOfRound,
 };

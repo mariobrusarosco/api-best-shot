@@ -25,14 +25,16 @@ const DataProviderRouting = (app: Express) => {
   // TEAMS
   dataProviderRouter.post('/tournaments/:tournamentId/teams', API_Teams.createTeams);
   dataProviderRouter.patch('/tournaments/:tournamentId/teams', API_Teams.updateTeams);
-  // // MATCHES
+
+  // MATCHES
+
   // dataProviderRouter.post(
   //   '/tournaments/:tournamentId/matches',
-  //   MatchesDataController.setupMatches
+  //   API_Matches.createMatches
   // );
   // dataProviderRouter.patch(
   //   '/tournaments/:tournamentId/matches/:roundId',
-  //   API_MatchesDataprovider.updateScoresOfRound
+  //   API_Matches.updateScoresOfRound
   // );
 
   // STANDINGS

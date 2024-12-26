@@ -1,5 +1,4 @@
 import { CreateTournamentInput } from '@/domains/data-provider/api/tournament/typing';
-import { API_SofaScoreStandings } from '@/domains/data-provider/providers/sofascore/standings/typing';
 import {
   API_SofaScoreRound,
   API_SofaScoreRounds,
@@ -24,9 +23,11 @@ export type IApiProvider = {
     updateOnDatabase: (data: DB_InsertTournament) => Promise<DB_SelectTournament>;
   };
   rounds: {
-    // fetchRoundFromProvider: (providerUrl: string) => Promise<API_SofaScoreRound>;
-    fetchRoundsFromProvider: (baseUrl: string) => Promise<API_SofaScoreRounds>;
-    mapAvailableRounds: (
+    fetchRoundFromProvider: (providerUrl: string) => Promise<API_SofaScoreRound>;
+    fetchShallowListOfRoundsFromProvider: (
+      baseUrl: string
+    ) => Promise<API_SofaScoreRounds>;
+    mapShallowListOfRounds: (
       data: API_SofaScoreRounds,
       tournament: NonNullable<TournamentQuery>
     ) => Promise<any[]>;
@@ -44,18 +45,14 @@ export type IApiProvider = {
   };
   teams: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
-    fetchTeamsFromStandings: (
-      baseUrl: string
-    ) => Promise<API_SofaScoreStandings | { standings: null }>;
-    fetchTeamsFromKnockoutRounds: (
-      tournamentId: string
-    ) => Promise<API_SofaScoreRound[] | []>;
     mapTeamsFromStandings: (standings: any, provider: string) => Promise<DB_InsertTeam[]>;
-    mapTeamsFromKnockoutRounds: (
-      knockoutRounds: API_SofaScoreRound[] | [],
-      provider: string
-    ) => Promise<any>;
+    mapTeamsFromRound: (round: API_SofaScoreRound, provider: string) => Promise<any>;
     createOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[]>;
     upsertOnDatabase: (teams: DB_InsertTeam[]) => Promise<any>;
+  };
+  standings: {
+    fetchStandingsFromProvider: (baseUrl: string) => Promise<any>;
+    mapStandings: (data: any, provider: string) => Promise<any>;
+    createOnDatabase: (standings: any) => Promise<any>;
   };
 };

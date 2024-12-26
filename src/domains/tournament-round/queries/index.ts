@@ -1,15 +1,13 @@
 import { T_TournamentRound } from '@/domains/tournament/schema';
 import db from '@/services/database';
-import { and, eq, or } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 const getRound = async ({
   tournamentId,
-  roundId,
   roundSlug,
 }: {
   tournamentId: string;
-  roundId?: string;
-  roundSlug?: string;
+  roundSlug: string;
 }) => {
   const [query] = await db
     .select()
@@ -17,7 +15,21 @@ const getRound = async ({
     .where(
       and(
         eq(T_TournamentRound.tournamentId, tournamentId),
-        or(eq(T_TournamentRound.id, roundId!), eq(T_TournamentRound.slug, roundSlug!))
+        eq(T_TournamentRound.slug, roundSlug)
+      )
+    );
+
+  return query;
+};
+
+const getRegularSeasonRounds = async ({ tournamentId }: { tournamentId: string }) => {
+  const [query] = await db
+    .select()
+    .from(T_TournamentRound)
+    .where(
+      and(
+        eq(T_TournamentRound.tournamentId, tournamentId),
+        eq(T_TournamentRound.slug, 'season')
       )
     );
 
@@ -26,4 +38,5 @@ const getRound = async ({
 
 export const TournamentRoundsQueries = {
   getRound,
+  getRegularSeasonRounds,
 };

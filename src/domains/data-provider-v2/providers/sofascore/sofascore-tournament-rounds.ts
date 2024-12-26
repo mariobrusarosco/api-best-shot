@@ -2,13 +2,20 @@ import { DB_InsertTournamentRound, T_TournamentRound } from '@/domains/tournamen
 import db from '@/services/database';
 import axios from 'axios';
 import { and, eq } from 'drizzle-orm';
-import { IApiProviderV2 } from '../../interface';
+import { IApiProviderV2 } from '../../../data-provider/typying/main-interface';
 import { API_SofaScoreRounds } from './typing';
 
 export const SofascoreTournamentRounds: IApiProviderV2['rounds'] = {
   fetchRoundsFromProvider: async baseUrl => {
     const roundsUrl = `${baseUrl}/rounds`;
     const response = await axios.get(roundsUrl);
+
+    const data = response.data;
+
+    return data;
+  },
+  fetchRoundFromProvider: async providerUrl => {
+    const response = await axios.get(providerUrl);
 
     const data = response.data;
 
@@ -93,38 +100,3 @@ const buildTournamentRound = (
     type: 'season',
   } satisfies DB_InsertTournamentRound;
 };
-
-// const buildSpecialKnockoutRound = (
-//   round: API_SofaScoreRounds['rounds'][number],
-//   tournamentId: string,
-//   tournamentBaseUrl: string
-// ) => {
-//   const roundType = 'special-knockout';
-//   const providerUrl = buildProviderUrl(roundType, tournamentBaseUrl);
-
-//   return {
-//     tournamentId,
-//     slug: round.slug!,
-//     order: `0${round.round}`,
-//     knockoutId: String(round.round),
-//     label: round.name!,
-//     type: roundType,
-//     providerUrl,
-//   } satisfies DB_InsertTournamentRound;
-// };
-
-// const buildProviderUrl = (roundType: string, baseUrl: string) => {
-//   if (roundType === 'knockout') {
-//     return `${baseUrl}/events/round/${round.knockoutId}/slug/${round.slug}`;
-//   }
-
-//   if (roundType === 'special-knockout') {
-//     return `${baseUrl}/events/round/${round.knockoutId}/slug/${round.slug}/prefix/${round.prefix}`;
-//   }
-
-//   if (roundType === 'season') {
-//     return `${baseUrl}/events/round/${round.order}`;
-//   }
-
-//   return false;
-// };

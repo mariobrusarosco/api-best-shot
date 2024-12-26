@@ -13,7 +13,7 @@ const TournamentRouting = (app: Express) => {
   tournamentRouter.get('/', API_Tournament.getAllTournaments);
   tournamentRouter.get('/:tournamentId', API_Tournament.getTournament);
   tournamentRouter.get(
-    '/:tournamentId/matches/:round',
+    '/:tournamentId/matches/:roundId',
     MatchController.getMatchesByTournament
   );
   tournamentRouter.get(

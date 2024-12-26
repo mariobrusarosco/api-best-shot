@@ -2,7 +2,6 @@ import { Utils } from '@/domains/auth/utils';
 import { MatchQueries } from '@/domains/match/queries';
 import { DB_Performance } from '@/domains/performance/database';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import { TournamentQueries } from '@/domains/tournament/queries';
 import { T_TournamentStandings } from '@/domains/tournament/schema';
 import db from '@/services/database';
@@ -55,10 +54,10 @@ const getTournament = async (req: Request, res: Response) => {
     const nearestMatch = await MatchQueries.nearestMatchOnDatabase({
       tournamentId,
     });
-    const roundId = nearestMatch?.roundId || 1;
-    const starterRound = await TournamentRoundsQueries.getBySlugRoundId(String(roundId));
+    const roundId = nearestMatch?.roundId || '1';
+    // const starterRound = await TournamentRoundsQueries.getRound({ roundId: String(roundId));
 
-    return res.status(200).send({ ...tournament, starterRound });
+    return res.status(200).send({ ...tournament, starterRound: '1' });
   } catch (error: any) {
     console.error('Error fetching matches:', error);
     return handleInternalServerErrorResponse(res, error);

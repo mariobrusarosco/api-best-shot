@@ -2,7 +2,7 @@ import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { fetchAndStoreAssetFromApi } from '@/utils';
 import { and, eq } from 'drizzle-orm';
-import { IApiProviderV2 } from '../../interface';
+import { IApiProviderV2 } from '../../../data-provider/typying/main-interface';
 
 export const SofascoreTournament: IApiProviderV2['tournament'] = {
   createOnDatabase: async data => {

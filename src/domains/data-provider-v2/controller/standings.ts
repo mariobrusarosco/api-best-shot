@@ -66,7 +66,7 @@ export const StandingsDataController = {
   updateStandings,
 };
 
-export const StandingsDataApi = {
+export const API_StandingsDataprovider = {
   update: async (req: Request<{ tournamentId: string }, null, null>, res: Response) => {
     try {
       const tournamentId = req.params.tournamentId;

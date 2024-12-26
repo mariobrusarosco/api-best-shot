@@ -2,7 +2,7 @@
 import { DB_InsertMatch } from '@/domains/match/schema';
 import { safeDate, safeString } from '@/utils';
 import axios from 'axios';
-import { IApiProviderV2 } from '../../interface';
+import { IApiProviderV2 } from '../../../data-provider/typying/main-interface';
 import { API_GloboEsporteRound } from './typing';
 
 export const GloboEsporteMatches: IApiProviderV2['matches'] = {

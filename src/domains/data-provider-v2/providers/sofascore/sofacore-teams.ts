@@ -3,7 +3,7 @@ import { TournamentQueries } from '@/domains/tournament/queries';
 import db from '@/services/database';
 import { fetchAndStoreAssetFromApi, sleep } from '@/utils';
 import axios from 'axios';
-import { IApiProviderV2 } from '../../interface';
+import { IApiProviderV2 } from '../../../data-provider/typying/main-interface';
 import { API_SofaScoreRound, API_SofaScoreStandings } from './typing';
 const SOFA_TEAM_LOGO_URL = 'https://img.sofascore.com/api/v1/team/:id/image/';
 

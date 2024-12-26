@@ -1,17 +1,16 @@
-//@ts-nocheck
-import { DB_InsertTournament, T_Tournament } from '@/domains/tournament/schema';
+import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { fetchAndStoreAssetFromApi } from '@/utils';
 import { and, eq } from 'drizzle-orm';
-import { IApiProviderV2 } from '../../../data-provider/typying/main-interface';
+import { IApiProviderV2 } from '../../typying/main-interface';
 
-export const GloboEsporteTournament: IApiProviderV2['tournament'] = {
-  createOnDatabase: async (data): Promise<DB_InsertTournament> => {
+export const SofascoreTournament: IApiProviderV2['tournament'] = {
+  createOnDatabase: async data => {
     const [tournament] = await db.insert(T_Tournament).values(data).returning();
 
     return tournament;
   },
-  updateOnDatabase: async (data): Promise<DB_InsertTournament> => {
+  updateOnDatabase: async data => {
     const [tournament] = await db
       .update(T_Tournament)
       .set(data)
@@ -20,7 +19,8 @@ export const GloboEsporteTournament: IApiProviderV2['tournament'] = {
           eq(T_Tournament.externalId, data.externalId),
           eq(T_Tournament.provider, data.provider)
         )
-      );
+      )
+      .returning();
 
     return tournament;
   },

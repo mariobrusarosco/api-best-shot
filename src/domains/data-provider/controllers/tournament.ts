@@ -1,8 +1,8 @@
+import { CreateTournamentInput } from '@/domains/data-provider/api/typying/tournament';
+import { BestshotScheduler } from '@/domains/data-provider/bestshot-scheduler';
+import { API_Sofascore } from '@/domains/data-provider/providers/sofascore';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { type Response } from 'express';
-import { CreateTournamentInput } from '../../data-provider/api/tournament';
-import { API_Sofascore } from '../../data-provider/providers/sofascore';
-import { Scheduler } from './scheduler';
 
 const createTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
@@ -35,7 +35,7 @@ const updateTournament = async (req: any, res: Response) => {
       logo,
     });
 
-    await Scheduler.scheduleTournamentStandingsUpdateCronJob(updatedTournament);
+    await BestshotScheduler.scheduleTournamentStandingsUpdateCronJob(updatedTournament);
 
     return updatedTournament;
   } catch (error: any) {

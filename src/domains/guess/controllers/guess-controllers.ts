@@ -33,10 +33,10 @@ async function getMemberGuesses(req: Request, res: Response) {
     //   console.log('matchesWithNullGuess', matchesWithNullGuess.length);
     //   return res.status(200).send([]);
     // }
-    const roundId = await TournamentRoundsQueries.getRoundIdBySlug(
+    const round = await TournamentRoundsQueries.getRound({
       tournamentId,
-      query.round
-    );
+      roundId: query.round,
+    });
 
     const guesses = await db
       .select()
@@ -45,7 +45,7 @@ async function getMemberGuesses(req: Request, res: Response) {
       .where(
         and(
           eq(T_Match.tournamentId, tournamentId),
-          eq(T_Match.roundId, roundId),
+          eq(T_Match.roundId, round.id!),
           eq(T_Guess.memberId, memberId)
         )
       );

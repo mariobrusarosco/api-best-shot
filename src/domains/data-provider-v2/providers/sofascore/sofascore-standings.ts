@@ -6,7 +6,7 @@ import {
 import db from '@/services/database';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import { IApiProviderV2 } from '../../interface';
+import { IApiProviderV2 } from '../../../data-provider/typying/main-interface';
 import { API_SofaScoreStandings } from './typing';
 
 export const SofascoreStandings: IApiProviderV2['standings'] = {

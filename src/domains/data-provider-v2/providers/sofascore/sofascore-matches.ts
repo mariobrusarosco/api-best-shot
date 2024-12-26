@@ -1,6 +1,6 @@
 import { DB_InsertMatch } from '@/domains/match/schema';
 import { safeString } from '@/utils';
-import { IApiProviderV2 } from '../../interface';
+import { IApiProviderV2 } from '../../../data-provider/typying/main-interface';
 import { API_SofaScoreRound } from './typing';
 
 const safeSofaDate = (date: any) => {

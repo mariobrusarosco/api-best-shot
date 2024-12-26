@@ -15,14 +15,17 @@ const defineTimebox = (matchDate: string) => dayjs(matchDate).fromNow();
 
 async function getMatchesByTournament(req: Request, res: Response) {
   try {
-    const { round, tournamentId } = req?.params as {
+    const { roundId, tournamentId } = req?.params as {
       tournamentId: string;
-      round: string;
+      roundId: string;
     };
 
     const homeTeam = aliasedTable(T_Team, 'homeTeam');
     const awayTeam = aliasedTable(T_Team, 'awayTeam');
-    const roundId = await TournamentRoundsQueries.getRoundIdBySlug(tournamentId, round);
+    const round = await TournamentRoundsQueries.getRound({
+      tournamentId,
+      roundId,
+    });
 
     const matches = await db
       .select({
@@ -57,7 +60,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
         and(
           eq(T_Match.tournamentId, tournamentId),
           eq(T_Match.provider, 'sofa'),
-          eq(T_Match.roundId, roundId)
+          eq(T_Match.roundId, round.id!)
         )
       );
 

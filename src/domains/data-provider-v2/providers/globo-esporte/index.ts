@@ -1,5 +1,5 @@
 //@ts-nocheck
-import { IApiProviderV2 } from '../../interface';
+import { IApiProviderV2 } from '../../../data-provider/typying/main-interface';
 import { GloboEsporteTournament } from './globo-esporte-tournament';
 
 export const ApiProviderGloboEsporte = {

@@ -4,7 +4,7 @@ import db from '@/services/database';
 import { fetchAndStoreAssetFromApi } from '@/utils';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import { IApiProviderV2 } from '../../interface';
+import { IApiProviderV2 } from '../../../data-provider/typying/main-interface';
 import { API_GloboEsporteStandings } from './typing';
 
 export const GloboEsporteTeams: IApiProviderV2['teams'] = {

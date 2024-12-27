@@ -43,6 +43,8 @@ export type IApiProvider = {
       roundSlug: string;
       tournamentId: string;
     }) => DB_InsertMatch[];
+    upsertOnDatabase: (matches: DB_InsertMatch[]) => Promise<any>;
+    createOnDatabase: (matches: DB_InsertMatch[]) => Promise<any>;
   };
   teams: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;

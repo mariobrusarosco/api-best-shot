@@ -15,6 +15,20 @@
       "when": 1735302806129,
       "tag": "0001_dapper_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1735303696025,
+      "tag": "0002_famous_amphibian",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1735303742207,
+      "tag": "0003_aromatic_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

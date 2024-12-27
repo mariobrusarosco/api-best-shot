@@ -42,7 +42,7 @@ const update = async (tournamentId: string) => {
     if (tournamentMode === 'regular-season-and-knockout') {
       const teamsToInsert = await fetchAndMapTeamsForRegularAndKnockout(tournament);
 
-      // return await SofascoreTeams.upsertOnDatabase(teamsToInsert);
+      return await SofascoreTeams.upsertOnDatabase(teamsToInsert);
     }
 
     if (tournamentMode === 'regular-season-only') {

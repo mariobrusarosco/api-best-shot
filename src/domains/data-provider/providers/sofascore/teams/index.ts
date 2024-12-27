@@ -77,13 +77,15 @@ export const SofascoreTeams: IApiProvider['teams'] = {
     return teams;
   },
   createOnDatabase: async teams => {
+    console.log(`[LOG] - [START] - CREATING TEAMS ON DATABASE`);
+
     const createdTeams = await db
       .insert(T_Team)
       .values(teams)
       .onConflictDoNothing()
       .returning();
 
-    console.log(`[LOG] - [SUCCESS] - CREATED ${createdTeams.length} TEAMS ON DATABASE`);
+    console.log(`[LOG] - [START] - CREATED TEAMS ${createdTeams.length} ON DATABASE`);
 
     return createdTeams;
   },

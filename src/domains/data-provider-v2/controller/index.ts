@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type Response } from 'express';
 import { TournamentRequest } from '../../data-provider/typying/main-interface';
 import { TournamentController } from '../controller/tournaments';

@@ -1,6 +1,7 @@
 import { API_SofaScoreRound } from '@/domains/data-provider/providers/sofascore/tournament-rounds/typing';
 import { IApiProvider } from '@/domains/data-provider/typing';
-import { DB_InsertMatch } from '@/domains/match/schema';
+import { DB_InsertMatch, T_Match } from '@/domains/match/schema';
+import db from '@/services/database';
 import { safeString } from '@/utils';
 
 const safeSofaDate = (date: any) => {
@@ -8,13 +9,29 @@ const safeSofaDate = (date: any) => {
 };
 
 export const SofascoreMatches: IApiProvider['matches'] = {
-  // fetchRoundMatches: async (baseUrl, round) => {
-  //   const parsedRoundsUrl = baseUrl + `${String(round)}`;
+  createOnDatabase: async matches => {
+    const query = await db.insert(T_Match).values(matches).returning();
 
-  //   const apiResponse = await axios.get(parsedRoundsUrl);
+    return query;
+  },
+  upsertOnDatabase: async matches => {
+    console.log('[LOG] - [START] - UPSERTING MATCHES ON DATABASE');
 
-  //   return apiResponse.data;
-  // },
+    await db.transaction(async tx => {
+      for (const match of matches) {
+        await tx
+          .insert(T_Match)
+          .values(match)
+          .onConflictDoUpdate({
+            target: [T_Match.externalId, T_Match.provider],
+            set: {
+              ...match,
+            },
+          });
+      }
+    });
+    console.log('[LOG] - [SUCCESS] - UPSERTING MATCHES ON DATABASE');
+  },
   mapRoundMatches: ({ round, roundSlug, tournamentId }) => {
     return round.events.map(match => {
       return {

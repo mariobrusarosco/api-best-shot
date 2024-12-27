@@ -15,7 +15,7 @@ export const SofascoreMatches: IApiProvider['matches'] = {
 
   //   return apiResponse.data;
   // },
-  mapRoundMatches: (round: API_SofaScoreRound, roundSlug, tournamentId) => {
+  mapRoundMatches: ({ round, roundSlug, tournamentId }) => {
     return round.events.map(match => {
       return {
         externalId: String(match.id),

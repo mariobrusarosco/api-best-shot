@@ -11,7 +11,29 @@ const createMatches = async (req: TeamsRequest, res: Response) => {
 
     return res.status(200).send(matches);
   } catch (error: any) {
-    console.error('[ERROR] - [API_Matches] - CREATE MATCHES', error);
+    console.error(
+      '[ERROR] - [API_Matches] - CREATING ALL MATCHES OF A TOURNAMENT',
+      error
+    );
+
+    handleInternalServerErrorResponse(res, error);
+  }
+};
+
+const updateMatches = async (req: TeamsRequest, res: Response) => {
+  try {
+    const tournamentId = req.params.tournamentId;
+    console.log(
+      `[LOG] - [API_Matches] - UPDATING ALL MATCHES OF A TOURNAMENT: ${tournamentId}`
+    );
+    const matches = await MatchesController.update(tournamentId);
+
+    return res.status(200).send(matches);
+  } catch (error: any) {
+    console.error(
+      '[ERROR] - [API_Matches] - UPDATING ALL MATCHES OF A TOURNAMENT',
+      error
+    );
 
     handleInternalServerErrorResponse(res, error);
   }
@@ -32,4 +54,5 @@ const updateMatchOfRound = async (req: any, res: Response) => {
 export const API_Matches = {
   createMatches,
   updateMatchOfRound,
+  updateMatches,
 };

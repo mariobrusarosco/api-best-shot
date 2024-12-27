@@ -32,10 +32,10 @@ const DataProviderRouting = (app: Express) => {
     '/tournaments/:tournamentId/matches',
     API_Matches.createMatches
   );
-  // dataProviderRouter.patch(
-  //   '/tournaments/:tournamentId/matches/:roundId',
-  //   API_Matches.updateScoresOfRound
-  // );
+  dataProviderRouter.patch(
+    '/tournaments/:tournamentId/matches',
+    API_Matches.updateMatches
+  );
 
   // STANDINGS
   // dataProviderRouter.post(

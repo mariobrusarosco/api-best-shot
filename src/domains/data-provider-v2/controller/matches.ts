@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';

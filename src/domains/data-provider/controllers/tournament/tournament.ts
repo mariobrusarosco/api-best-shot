@@ -3,7 +3,7 @@ import { API_Sofascore } from '@/domains/data-provider/providers/sofascore';
 
 const createTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
-    console.log('[LOG] - Creating tournament:', input.label);
+    console.log('[LOG] - [START]- TOURNAMENT CREATION:', input.label);
 
     const logo = await API_Sofascore.tournament.fetchAndStoreLogo({
       logoPngBase64: input.logoPngBase64,
@@ -16,7 +16,7 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
     });
     if (!newTournament) throw new Error('Tournament not created');
 
-    console.log('[LOG] - Tournament updated:', newTournament.label);
+    console.log('[LOG] - [END]- TOURNAMENT CREATION:', newTournament.label);
 
     return newTournament;
   } catch (error: any) {
@@ -26,6 +26,8 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
 
 const updateTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
+    console.log('[LOG] - [START]- TOURNAMENT UPDATE:', input.externalId);
+
     const logo = await API_Sofascore.tournament.fetchAndStoreLogo({
       logoPngBase64: input.logoPngBase64,
       logoUrl: input.logoUrl,
@@ -37,11 +39,12 @@ const updateTournament = async ({ input }: { input: CreateTournamentInput }) => 
     });
 
     // await Scheduler.scheduleTournamentStandingsUpdateCronJob(updatedTournament);
-    console.log('[LOG] - Tournament updated:', input.label);
+
+    console.log('[LOG] - [END]- TOURNAMENT UPDATE:', updatedTournament.externalId);
 
     return updatedTournament;
   } catch (error: any) {
-    console.error('[ERROR] - updateTournament', error.message);
+    console.error('[ERROR] - TOURNAMENT UPDATE', error.message);
   }
 };
 

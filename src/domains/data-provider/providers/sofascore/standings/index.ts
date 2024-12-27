@@ -11,19 +11,22 @@ export const SofascoreStandings: IApiProvider['standings'] = {
   fetchStandingsFromProvider: async (baseUrl: string) => {
     try {
       const url = `${baseUrl}/standings/total`;
-
       console.log(`[LOG] - [START] - FETCHING STANDINGS - AT: ${url}`);
 
       const response = await axios.get(url);
       const data = response.data as API_SofaScoreStandings;
-      console.log(`[LOG] - [SUCCESS] - FETCHING STANDINGS - AT: ${url}`);
+
       return data;
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        console.error('[ERROR] - [FETCHING STANDINGS] - ', error.message);
+      const axiosError = error instanceof AxiosError && error.response?.data.error;
+
+      if (axiosError && axiosError.code === 404) {
+        return Promise.resolve(null);
       }
 
-      return null;
+      return Promise.reject(error);
+    } finally {
+      console.log(`[LOG] - [END] - FETCHING STANDINGS`);
     }
   },
   mapStandings: async (standings: API_SofaScoreStandings, tournamentId) => {
@@ -50,33 +53,25 @@ export const SofascoreStandings: IApiProvider['standings'] = {
   },
   createOnDatabase: async standings =>
     await db.insert(T_TournamentStandings).values(standings).returning(),
-  // updateOnDatabase: async standings => {
-  //   return await db.transaction(async tx => {
-  //     for (const standing of standings) {
-  //       return await tx
-  //         .update(T_TournamentStandings)
-  //         .set(standing)
-  //         .where(eq(T_TournamentStandings.teamExternalId, standing.teamExternalId))
-  //         .returning();
-  //     }
-  //   });
-  // },
-  // upsertOnDatabase: async standings => {
-  //   return await db.transaction(async tx => {
-  //     for (const standing of standings) {
-  //       const query = await tx
-  //         .update(T_TournamentStandings)
-  //         .set(standing)
-  //         .where(eq(T_TournamentStandings.teamExternalId, standing.teamExternalId))
-  //         .returning();
+  upsertOnDatabase: async standings => {
+    console.log('[LOG] - [START] - UPSERTING STANDINGS');
 
-  //       console.error('[UPDATE] - Upserted tournament standings for: ', query, standing);
+    const query = await db.transaction(async tx => {
+      for (const standing of standings) {
+        return await tx
+          .insert(T_TournamentStandings)
+          .values(standing)
+          .onConflictDoUpdate({
+            target: [T_TournamentStandings.order, T_TournamentStandings.tournamentId],
+            set: {
+              ...standing,
+            },
+          })
+          .returning();
+      }
+    });
 
-  //       // TODO Consider a 'insert' + onConlifct Update
-  //       if (!query.length) {
-  //         await tx.insert(T_TournamentStandings).values(standing).returning();
-  //       }
-  //     }
-  //   });
-  // },
+    console.log('[LOG] - [END] - UPSERTING STANDINGS');
+    return query;
+  },
 };

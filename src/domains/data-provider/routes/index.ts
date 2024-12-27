@@ -5,6 +5,7 @@ import { API_TournamentRounds } from '@/domains/data-provider/api/tournament-rou
 import type { Express } from 'express';
 import express from 'express';
 import { API_Matches } from '../api/matches';
+import { API_Standings } from '../api/standings/standings';
 
 const DataProviderRouting = (app: Express) => {
   const dataProviderRouter = express.Router();
@@ -42,10 +43,10 @@ const DataProviderRouting = (app: Express) => {
   //   '/tournaments/:tournamentId/standings',
   //   StandingsDataController.setupStandings
   // );
-  // dataProviderRouter.patch(
-  //   '/tournaments/:tournamentId/standings',
-  //   API_StandingsDataprovider.update
-  // );
+  dataProviderRouter.patch(
+    '/tournaments/:tournamentId/standings',
+    API_Standings.updateStandings
+  );
 
   // SCHEDULER
   // dataProviderRouter.post('/scheduler', Scheduler.run);

@@ -9,6 +9,7 @@ import { TournamentQuery } from '@/domains/tournament/queries';
 import {
   DB_InsertTournament,
   DB_InsertTournamentRound,
+  DB_InsertTournamentStandings,
   DB_SelectTournament,
   DB_SelectTournamentRound,
 } from '@/domains/tournament/schema';
@@ -61,6 +62,9 @@ export type IApiProvider = {
       baseUrl: string
     ) => Promise<API_SofaScoreStandings | null>;
     mapStandings: (data: any, provider: string) => Promise<any>;
-    createOnDatabase: (standings: any) => Promise<any>;
+    createOnDatabase: (standings: any) => Promise<DB_InsertTournamentStandings[]>;
+    upsertOnDatabase: (
+      standings: any
+    ) => Promise<DB_InsertTournamentStandings[] | undefined>;
   };
 };

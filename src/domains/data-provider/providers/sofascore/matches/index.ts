@@ -1,7 +1,7 @@
+import { API_SofaScoreRound } from '@/domains/data-provider/providers/sofascore/tournament-rounds/typing';
 import { IApiProvider } from '@/domains/data-provider/typing';
 import { DB_InsertMatch } from '@/domains/match/schema';
 import { safeString } from '@/utils';
-import { API_SofaScoreRound } from './typing';
 
 const safeSofaDate = (date: any) => {
   return date === null || date === undefined ? null : new Date(date);
@@ -15,7 +15,7 @@ export const SofascoreMatches: IApiProvider['matches'] = {
 
   //   return apiResponse.data;
   // },
-  mapRoundMatches: (round: API_SofaScoreRound, roundSlug, tournamentId) => {
+  mapRoundMatches: ({ round, roundSlug, tournamentId }) => {
     return round.events.map(match => {
       return {
         externalId: String(match.id),

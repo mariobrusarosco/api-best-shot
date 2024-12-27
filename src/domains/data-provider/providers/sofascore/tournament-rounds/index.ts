@@ -16,11 +16,11 @@ export const SofascoreTournamentRound: IApiProvider['rounds'] = {
     return data;
   },
   fetchRoundFromProvider: async providerUrl => {
-    console.log(`[LOG] - FETCHING ROUND DATA AT: ${providerUrl}`);
+    console.log(`[LOG] - [START] AT: ${providerUrl}`);
 
     const response = await axios.get(providerUrl);
     const data = response.data;
-    console.log('[LOG] - FETCHED ROUND:');
+    console.log(`[LOG] - [END] AT: ${providerUrl}`);
 
     return data;
   },
@@ -92,14 +92,16 @@ const buildTournamentRound = (
     } satisfies DB_InsertTournamentRound;
   }
 
-  const providerUrl = `${tournamentBaseUrl}/events/round/${order}`;
+  const slug = `${round.round}`;
+  const label = slug;
+  const providerUrl = `${tournamentBaseUrl}/events/round/${round.round}`;
 
   return {
     tournamentId,
     order,
-    label: `${round.round}`,
+    label,
     providerUrl,
-    slug: `${round.round}`,
+    slug,
     type: 'season',
   } satisfies DB_InsertTournamentRound;
 };

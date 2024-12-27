@@ -38,11 +38,11 @@ export type IApiProvider = {
     upsertOnDatabase: (rounds: DB_InsertTournamentRound[]) => Promise<any>;
   };
   matches: {
-    mapRoundMatches: (
-      round: any,
-      roundId: string,
-      tournamentId: string
-    ) => DB_InsertMatch[];
+    mapRoundMatches: (data: {
+      round: API_SofaScoreRound;
+      roundSlug: string;
+      tournamentId: string;
+    }) => DB_InsertMatch[];
   };
   teams: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;

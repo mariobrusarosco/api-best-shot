@@ -4,6 +4,7 @@ import { API_Tournament } from '@/domains/data-provider/api/tournament';
 import { API_TournamentRounds } from '@/domains/data-provider/api/tournament-round';
 import type { Express } from 'express';
 import express from 'express';
+import { API_Matches } from '../api/matches';
 
 const DataProviderRouting = (app: Express) => {
   const dataProviderRouter = express.Router();
@@ -27,11 +28,10 @@ const DataProviderRouting = (app: Express) => {
   dataProviderRouter.patch('/tournaments/:tournamentId/teams', API_Teams.updateTeams);
 
   // MATCHES
-
-  // dataProviderRouter.post(
-  //   '/tournaments/:tournamentId/matches',
-  //   API_Matches.createMatches
-  // );
+  dataProviderRouter.post(
+    '/tournaments/:tournamentId/matches',
+    API_Matches.createMatches
+  );
   // dataProviderRouter.patch(
   //   '/tournaments/:tournamentId/matches/:roundId',
   //   API_Matches.updateScoresOfRound

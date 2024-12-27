@@ -50,8 +50,18 @@ const getKnockoutRounds = async ({ tournamentId }: { tournamentId: string }) => 
   return query;
 };
 
+const getAllRounds = async (tournamentId: string) => {
+  const query = await db
+    .select()
+    .from(T_TournamentRound)
+    .where(eq(T_TournamentRound.tournamentId, tournamentId));
+
+  return query;
+};
+
 export const TournamentRoundsQueries = {
   getRound,
   getRegularSeasonRounds,
   getKnockoutRounds,
+  getAllRounds,
 };

@@ -90,14 +90,15 @@ const buildTournamentRound = (
   }
 
   const order = `${round.round}`;
-  const providerUrl = `${tournamentBaseUrl}/events/round/${order}`;
+  const slug = order;
+  const providerUrl = `${tournamentBaseUrl}/events/round/${slug}`;
 
   return {
     tournamentId,
     order,
-    label: `${round.round}`,
+    label: slug,
     providerUrl,
-    slug: `${round.round}`,
+    slug,
     type: 'season',
   } satisfies DB_InsertTournamentRound;
 };

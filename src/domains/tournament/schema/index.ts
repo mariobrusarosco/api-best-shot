@@ -56,7 +56,7 @@ export const T_TournamentStandings = pgTable(
   table => {
     return {
       pk: primaryKey({
-        columns: [table.teamExternalId, table.provider, table.tournamentId],
+        columns: [table.order, table.tournamentId],
       }),
     };
   }

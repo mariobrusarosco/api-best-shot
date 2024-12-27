@@ -52,17 +52,8 @@ const update = async (tournamentId: string) => {
     return null;
   }
 
-  // if (data.standings[0].tournament.id !== Number(tournament.externalId)) {
-  //   console.log(
-  //     `[LOG] - [END] - UPDATING STANDINDS FOR TOURNAMENT ${tournamentLabel} - TOURNAMENT ID MISMATCH!`
-  //   );
-  //   return null;
-  // }
-
-  // console.log(data.standings[0].tournament.id, tournament.externalId);
-
   const mappedStandings = await SofascoreStandings.mapStandings(data, tournamentId);
-  const query = await SofascoreStandings.createOnDatabase(mappedStandings);
+  const query = await SofascoreStandings.upsertOnDatabase(mappedStandings);
 
   console.log(`[LOG] - [END] - UPDATING STANDINDS FOR TOURNAMENT ${tournamentLabel}`);
 

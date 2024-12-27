@@ -35,7 +35,10 @@ const getTournamentStandings = async (req: Request, res: Response) => {
       .where(eq(T_TournamentStandings.tournamentId, tournamentId))
       .orderBy(sql`cast(${T_TournamentStandings.order} as integer)`);
 
-    const lastUpdated = standings[0]?.updatedAt;
+    const lastUpdated = standings[0]?.updatedAt ?? null;
+
+    console.log('standings', standings);
+    console.log('tournamentId', tournamentId);
 
     return res.status(200).send({
       standings,
@@ -54,10 +57,9 @@ const getTournament = async (req: Request, res: Response) => {
     const nearestMatch = await MatchQueries.nearestMatchOnDatabase({
       tournamentId,
     });
-    const roundId = nearestMatch?.roundId || '1';
-    // const starterRound = await TournamentRoundsQueries.getRound({ roundId: String(roundId));
+    const starterRound = nearestMatch?.roundId || '1';
 
-    return res.status(200).send({ ...tournament, starterRound: '1' });
+    return res.status(200).send({ ...tournament, starterRound });
   } catch (error: any) {
     console.error('Error fetching matches:', error);
     return handleInternalServerErrorResponse(res, error);

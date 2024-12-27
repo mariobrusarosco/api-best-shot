@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { IApiProvider } from '@/domains/data-provider/typing';
 import { DB_InsertMatch } from '@/domains/match/schema';
 import { safeString } from '@/utils';

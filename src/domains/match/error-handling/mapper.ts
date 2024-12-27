@@ -8,4 +8,9 @@ export const ErrorMapper = {
     debug: 'not found',
     user: 'We could not find matches for this tournament.',
   },
+  INVALID_ROUND: {
+    status: 400,
+    debug: 'invalid_found',
+    user: 'We could not find matches for the current round.',
+  },
 };

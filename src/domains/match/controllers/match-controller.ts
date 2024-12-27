@@ -9,6 +9,9 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { aliasedTable, and, eq, sql } from 'drizzle-orm';
 import { Request, Response } from 'express';
 
+const homeTeam = aliasedTable(T_Team, 'homeTeam');
+const awayTeam = aliasedTable(T_Team, 'awayTeam');
+
 dayjs.extend(relativeTime);
 
 const defineTimebox = (matchDate: string) => dayjs(matchDate).fromNow();
@@ -20,12 +23,16 @@ async function getMatchesByTournament(req: Request, res: Response) {
       roundId: string;
     };
 
-    const homeTeam = aliasedTable(T_Team, 'homeTeam');
-    const awayTeam = aliasedTable(T_Team, 'awayTeam');
     const round = await TournamentRoundsQueries.getRound({
       tournamentId,
       roundSlug: roundId,
     });
+
+    if (!round || !round.slug) {
+      return res
+        .status(ErrorMapper.INVALID_ROUND.status)
+        .send(ErrorMapper.INVALID_ROUND.status);
+    }
 
     const matches = await db
       .select({
@@ -60,7 +67,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
         and(
           eq(T_Match.tournamentId, tournamentId),
           eq(T_Match.provider, 'sofa'),
-          eq(T_Match.roundId, round.id!)
+          eq(T_Match.roundId, round?.slug ?? '')
         )
       );
 

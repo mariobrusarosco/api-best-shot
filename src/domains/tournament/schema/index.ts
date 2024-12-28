@@ -10,6 +10,7 @@ export const T_Tournament = pgTable(
     provider: text('provider').notNull(),
     season: text('season').notNull(),
     mode: text('mode').notNull(),
+    standings: text('standings').notNull().default(''),
     label: text('label').notNull(),
     logo: text('logo').notNull().default(''),
     createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -36,6 +37,7 @@ export const T_TournamentStandings = pgTable(
     teamExternalId: text('team_external_id').notNull(),
     tournamentId: text('tournament_id').notNull(),
     order: numeric('order').notNull(),
+    groupName: text('group_name').default(''),
     shortName: text('shortame').notNull(),
     longName: text('longame').notNull(),
     points: text('points').notNull(),
@@ -56,7 +58,7 @@ export const T_TournamentStandings = pgTable(
   table => {
     return {
       pk: primaryKey({
-        columns: [table.order, table.tournamentId],
+        columns: [table.shortName, table.tournamentId],
       }),
     };
   }

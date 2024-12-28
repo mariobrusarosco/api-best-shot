@@ -1,0 +1,1 @@
+ALTER TABLE "tournament" ADD COLUMN "standings" text DEFAULT '' NOT NULL;

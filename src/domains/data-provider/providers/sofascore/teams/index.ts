@@ -3,7 +3,7 @@ import { IApiProvider } from '@/domains/data-provider/typing';
 import { DB_InsertTeam, T_Team } from '@/domains/team/schema';
 import db from '@/services/database';
 import { fetchAndStoreAssetFromApi } from '@/utils';
-const SOFA_TEAM_LOGO_URL = 'https://img.sofascore.com/api/v1/team/:id/image/';
+const SOFA_TEAM_LOGO_URL = 'https://img.sofascore.com/api/v1/team/:id/image';
 
 export const SofascoreTeams: IApiProvider['teams'] = {
   mapTeamsFromStandings: async (data: API_SofaScoreStandings, provider) => {

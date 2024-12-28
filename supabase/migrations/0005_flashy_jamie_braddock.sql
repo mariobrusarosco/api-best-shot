@@ -1,0 +1,1 @@
+ALTER TABLE "tournament_standings" ADD COLUMN "group_name" text DEFAULT '';

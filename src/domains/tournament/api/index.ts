@@ -28,21 +28,22 @@ const getTournamentPerformanceForMember = async (req: Request, res: Response) =>
 const getTournamentStandings = async (req: Request, res: Response) => {
   try {
     const tournamentId = req?.params.tournamentId;
+    const tournament = await TournamentQueries.tournament(tournamentId);
 
-    const standings = await db
+    if (!tournament) {
+      return res.status(404).send({ message: 'Tournament not found' });
+    }
+
+    const query = await db
       .select()
       .from(T_TournamentStandings)
-      .where(eq(T_TournamentStandings.tournamentId, tournamentId))
+      .where(eq(T_TournamentStandings.tournamentId, tournament.id!))
       .orderBy(sql`cast(${T_TournamentStandings.order} as integer)`);
 
-    const lastUpdated = standings[0]?.updatedAt ?? null;
-
-    console.log('standings', standings);
-    console.log('tournamentId', tournamentId);
-
     return res.status(200).send({
-      standings,
-      lastUpdated,
+      standings: query,
+      format: tournament.standings,
+      lastUpdated: query[0]?.updatedAt,
     });
   } catch (error: any) {
     console.error('[TOURNAMENT API] -[getTournamentStandings] -', error);

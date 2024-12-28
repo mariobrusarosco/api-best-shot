@@ -5,7 +5,7 @@ import {
 } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import axios, { AxiosError } from 'axios';
-import { API_SofaScoreStandings } from './typing';
+import { API_SofaScoreStandings, API_SofascoreStandingTeam } from './typing';
 
 export const SofascoreStandings: IApiProvider['standings'] = {
   fetchStandingsFromProvider: async (baseUrl: string) => {
@@ -29,27 +29,35 @@ export const SofascoreStandings: IApiProvider['standings'] = {
       console.log(`[LOG] - [END] - FETCHING STANDINGS`);
     }
   },
-  mapStandings: async (standings: API_SofaScoreStandings, tournamentId) => {
-    const promises = standings?.standings[0]['rows']?.map(async team => {
-      return {
-        teamExternalId: String(team.team.id),
-        tournamentId: String(tournamentId),
-        shortName: String(team.team.nameCode),
-        longName: String(team.team.name),
-        order: String(team.position),
-        games: String(team.matches),
-        points: String(team.points),
-        wins: String(team.wins),
-        draws: String(team.draws),
-        losses: String(team.losses),
-        gf: String(team.scoresFor),
-        ga: String(team.scoresAgainst),
-        gd: String(team.scoreDiffFormatted),
-        provider: 'sofa',
-      } satisfies DB_InsertTournamentStandings;
-    });
+  mapStandings: async (
+    data: API_SofaScoreStandings,
+    tournamentId,
+    tournamentStandingsMode
+  ) => {
+    if (!data?.standings) return [];
+    let standings = [] as DB_InsertTournamentStandings[];
 
-    return Promise.all(promises);
+    console.log(`[LOG] - [MAPPING] - STANDINGS - TYPE: ${tournamentStandingsMode}`);
+
+    if (tournamentStandingsMode === 'unique-group') {
+      standings = data.standings[0].rows.map(team =>
+        mapTeamStandings(team, tournamentId)
+      );
+    }
+
+    if (tournamentStandingsMode === 'multi-group') {
+      const groups = data.standings.map(groupOfTeams => ({
+        name: groupOfTeams.name,
+        teams: groupOfTeams.rows,
+      }));
+      standings = groups
+        .map(group =>
+          group.teams.map(team => mapTeamStandings(team, tournamentId, group.name))
+        )
+        .flat();
+    }
+
+    return standings;
   },
   createOnDatabase: async standings =>
     await db.insert(T_TournamentStandings).values(standings).returning(),
@@ -58,20 +66,43 @@ export const SofascoreStandings: IApiProvider['standings'] = {
 
     const query = await db.transaction(async tx => {
       for (const standing of standings) {
-        return await tx
+        await tx
           .insert(T_TournamentStandings)
           .values(standing)
           .onConflictDoUpdate({
-            target: [T_TournamentStandings.order, T_TournamentStandings.tournamentId],
+            target: [T_TournamentStandings.shortName, T_TournamentStandings.tournamentId],
             set: {
               ...standing,
             },
-          })
-          .returning();
+          });
       }
     });
 
     console.log('[LOG] - [END] - UPSERTING STANDINGS');
     return query;
   },
+};
+
+const mapTeamStandings = (
+  team: API_SofascoreStandingTeam,
+  tournamentId: string,
+  groupName?: string
+) => {
+  return {
+    teamExternalId: String(team.team.id),
+    tournamentId: String(tournamentId),
+    groupName: String(groupName),
+    shortName: String(team.team.nameCode),
+    longName: String(team.team.name),
+    order: String(team.position),
+    games: String(team.matches),
+    points: String(team.points),
+    wins: String(team.wins),
+    draws: String(team.draws),
+    losses: String(team.losses),
+    gf: String(team.scoresFor),
+    ga: String(team.scoresAgainst),
+    gd: String(team.scoreDiffFormatted),
+    provider: 'sofa',
+  } satisfies DB_InsertTournamentStandings;
 };

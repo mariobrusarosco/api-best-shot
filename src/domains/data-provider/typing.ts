@@ -61,10 +61,12 @@ export type IApiProvider = {
     fetchStandingsFromProvider: (
       baseUrl: string
     ) => Promise<API_SofaScoreStandings | null>;
-    mapStandings: (data: any, provider: string) => Promise<any>;
+    mapStandings: (
+      data: any,
+      tournamentId: string,
+      tournamentStandingsMode: string
+    ) => Promise<any>;
     createOnDatabase: (standings: any) => Promise<DB_InsertTournamentStandings[]>;
-    upsertOnDatabase: (
-      standings: any
-    ) => Promise<DB_InsertTournamentStandings[] | undefined>;
+    upsertOnDatabase: (standings: any) => Promise<any>;
   };
 };

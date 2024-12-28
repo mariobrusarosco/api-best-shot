@@ -1,5 +1,7 @@
 import { CreateTournamentInput } from '@/domains/data-provider/api/tournament/typing';
 import { API_Sofascore } from '@/domains/data-provider/providers/sofascore';
+import { TournamentQueries } from '@/domains/tournament/queries';
+import { BestshotScheduler } from '../../scheduler';
 
 const createTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
@@ -10,15 +12,33 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
       logoUrl: input.logoUrl,
       filename: `tournament-${input.provider}-${input.externalId}`,
     });
-    const newTournament = await API_Sofascore.tournament.createOnDatabase({
+    const queryResult = await API_Sofascore.tournament.createOnDatabase({
       ...input,
       logo,
     });
-    if (!newTournament) throw new Error('Tournament not created');
 
-    console.log('[LOG] - [END]- TOURNAMENT CREATION:', newTournament.label);
+    const tournament = await TournamentQueries.tournament(queryResult.id!);
+    if (!tournament) throw new Error('Tournament not created');
 
-    return newTournament;
+    const tournamentMode = tournament.mode;
+    if (tournamentMode === 'regular-season-only') {
+      await BestshotScheduler.dailyStandingsChecker(tournament);
+    }
+
+    if (tournamentMode === 'regular-season-and-knockout') {
+      await BestshotScheduler.dailyNewRoundsChecker(tournament);
+      await BestshotScheduler.dailyStandingsChecker(tournament);
+
+      // Matches of new Knockout rounds
+
+      // Teams of new Knockout rounds
+
+      // Matches Scored of new Knockout rounds
+    }
+
+    console.log('[LOG] - [END]- TOURNAMENT CREATION:', tournament.label);
+
+    return tournament;
   } catch (error: any) {
     console.error('[ERROR] - createTournament', error);
   }

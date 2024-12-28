@@ -70,7 +70,36 @@ const update = async (tournamentId: string) => {
   return query;
 };
 
+const updateRound = async (tournamentId: string, roundSlug: string) => {
+  const tournament = await TournamentQueries.tournament(tournamentId);
+  if (!tournament) throw new Error('Tournament not found');
+
+  const round = await TournamentRoundsQueries.getRound({
+    tournamentId,
+    roundSlug,
+  });
+  if (!round) throw new Error('Round not found');
+
+  console.log('[LOG] - [START] - FETCHING ROUND:', round.providerUrl);
+
+  const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(
+    round.providerUrl
+  );
+  const matches = SofascoreMatches.mapRoundMatches({
+    roundSlug: round.slug!,
+    round: roundData,
+    tournamentId: tournamentId,
+  });
+
+  console.log('[LOG] - [END] - FETCHING ROUND:', round.providerUrl);
+
+  const query = await SofascoreMatches.upsertOnDatabase(matches);
+
+  return query;
+};
+
 export const MatchesController = {
   create,
   update,
+  updateRound,
 };

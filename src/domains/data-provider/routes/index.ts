@@ -37,6 +37,10 @@ const DataProviderRouting = (app: Express) => {
     '/tournaments/:tournamentId/matches',
     API_Matches.updateMatches
   );
+  dataProviderRouter.patch(
+    '/tournaments/:tournamentId/matches/:roundSlug',
+    API_Matches.updateMatchesForRound
+  );
 
   // STANDINGS
   // dataProviderRouter.post(

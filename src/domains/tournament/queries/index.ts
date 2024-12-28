@@ -1,5 +1,5 @@
 import db from '@/services/database';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { T_Tournament, T_TournamentRound } from '../schema';
 
 const allTournaments = async () => {
@@ -27,6 +27,7 @@ const tournament = async (tournamenId: string) => {
         baseUrl: T_Tournament.baseUrl,
         provider: T_Tournament.provider,
         mode: T_Tournament.mode,
+        standings: T_Tournament.standings,
       })
       .from(T_Tournament)
       .where(and(eq(T_Tournament.provider, 'sofa'), eq(T_Tournament.id, tournamenId)));
@@ -37,7 +38,8 @@ const tournament = async (tournamenId: string) => {
         slug: T_TournamentRound.slug,
       })
       .from(T_TournamentRound)
-      .where(eq(T_TournamentRound.tournamentId, tournamenId));
+      .where(eq(T_TournamentRound.tournamentId, tournamenId))
+      .orderBy(sql`cast(${T_TournamentRound.order} as integer)`);
 
     return { ...tournament, rounds };
   } catch (error: any) {

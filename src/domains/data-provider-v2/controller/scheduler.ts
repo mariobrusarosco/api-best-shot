@@ -16,7 +16,7 @@ const client = new SchedulerClient({ region: 'us-east-1' });
 const run = async (req: Request, res: Response) => {
   try {
     const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase();
-    console.log({ currentDayMatches });
+
     const dailySchedule = mapMatchesToDailySchedule(currentDayMatches);
 
     dailySchedule.forEach(async schedule => {
@@ -41,7 +41,7 @@ const mapMatchesToDailySchedule = (
     const utcDate = dayjs(date).utc();
     const SCHEDULE_ID = `${tournamentLabel}_${utcDate.format('YYYY_MM_DD_HH_mm')}`
       .toLowerCase()
-      .replace(/\s/gi, '');
+      .replace(/\s/gi, '_');
 
     if (!SCHEDULES.has(SCHEDULE_ID)) {
       SCHEDULES.set(SCHEDULE_ID, {

@@ -5,6 +5,7 @@ import { API_TournamentRounds } from '@/domains/data-provider/api/tournament-rou
 import type { Express } from 'express';
 import express from 'express';
 import { API_Matches } from '../api/matches';
+import { API_Scheduler } from '../api/scheduler';
 import { API_Standings } from '../api/standings/standings';
 
 const DataProviderRouting = (app: Express) => {
@@ -53,7 +54,7 @@ const DataProviderRouting = (app: Express) => {
   );
 
   // SCHEDULER
-  // dataProviderRouter.post('/scheduler', Scheduler.run);
+  dataProviderRouter.post('/scheduler', API_Scheduler.dailyRoutine);
   app.use(`${process.env.API_VERSION}/data-provider`, AuthMiddleware, dataProviderRouter);
 };
 

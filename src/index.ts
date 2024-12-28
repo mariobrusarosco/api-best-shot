@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
 import AuthRouting from './domains/auth/routes';
+import DashboardRouting from './domains/dashboard/routes';
 import DataProviderRouting from './domains/data-provider/routes';
 import GuessRouting from './domains/guess/routes';
 import LeagueRouting from './domains/league/routes';
@@ -41,6 +42,7 @@ ScoreRouting(app);
 MatchRouting(app);
 DataProviderRouting(app);
 MemberRouting(app);
+DashboardRouting(app);
 
 async function startServer() {
   app.listen(PORT, () =>

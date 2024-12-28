@@ -1,7 +1,7 @@
 import { CreateTournamentInput } from '@/domains/data-provider/api/tournament/typing';
 import { API_Sofascore } from '@/domains/data-provider/providers/sofascore';
 import { TournamentQueries } from '@/domains/tournament/queries';
-import { BestshotScheduler } from '../../scheduler';
+import { SchedulerController } from '../scheduler';
 
 const createTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
@@ -22,12 +22,12 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
 
     const tournamentMode = tournament.mode;
     if (tournamentMode === 'regular-season-only') {
-      await BestshotScheduler.dailyStandingsChecker(tournament);
+      await SchedulerController.dailyStandingsChecker(tournament);
     }
 
     if (tournamentMode === 'regular-season-and-knockout') {
-      await BestshotScheduler.dailyNewRoundsChecker(tournament);
-      await BestshotScheduler.dailyStandingsChecker(tournament);
+      await SchedulerController.dailyNewRoundsChecker(tournament);
+      await SchedulerController.dailyStandingsChecker(tournament);
 
       // Matches of new Knockout rounds
 

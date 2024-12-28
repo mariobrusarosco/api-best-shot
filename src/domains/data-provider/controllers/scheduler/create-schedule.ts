@@ -2,7 +2,7 @@ import { CreateScheduleCommand, SchedulerClient } from '@aws-sdk/client-schedule
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
-import { TournamentQuery } from '../../tournament/queries';
+import { TournamentQuery } from '../../../tournament/queries';
 
 dayjs.extend(utc);
 dayjs.extend(isToday);
@@ -34,6 +34,49 @@ export const createSchedule = async ({
     ScheduleExpressionTimezone: 'UTC',
     StartDate: startDate.toDate(),
     EndDate: endDate.toDate(),
+    State: 'ENABLED' as const,
+    FlexibleTimeWindow: { Mode: 'OFF' as const },
+    ActionAfterCompletion: undefined,
+    GroupName: groupName,
+    Target: {
+      Arn: targetArn,
+      RoleArn: 'arn:aws:iam::905418297381:role/service-role/scheduler-user-demo',
+      Input: JSON.stringify(targetInput),
+    },
+  };
+
+  const command = new CreateScheduleCommand(params);
+  const response = await client.send(command);
+  console.log(`[LOG] - [END] - Schedule created: ${response.ScheduleArn}`);
+
+  return response.ScheduleArn;
+};
+
+export const createCustomSchedule = async ({
+  targetInput,
+  targetArn = 'arn:aws:lambda:us-east-1:905418297381:function:scheduler-caller-demo',
+  cronExpression,
+  groupName,
+  id,
+}: {
+  cronExpression: string;
+  targetInput: Object;
+  targetArn?: string;
+  groupName: string;
+  id: string;
+}) => {
+  console.log(
+    `[LOG] - [START] - Schedule for ${targetInput} calling ${targetArn} at ${cronExpression}`
+  );
+
+  const startDate = dayjs().utc().add(1, 'minute');
+  const SCHEDULE_ID = id.toLowerCase().replace(/[\s\/\-]+/gi, '_');
+
+  const params = {
+    Name: SCHEDULE_ID,
+    ScheduleExpression: cronExpression,
+    ScheduleExpressionTimezone: 'UTC',
+    StartDate: startDate.toDate(),
     State: 'ENABLED' as const,
     FlexibleTimeWindow: { Mode: 'OFF' as const },
     ActionAfterCompletion: undefined,

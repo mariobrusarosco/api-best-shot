@@ -31,7 +31,22 @@ const updateRounds = async (req: TournamentRoundRequest, res: Response) => {
   }
 };
 
+const knockoutRoundsUpdate = async (req: TournamentRoundRequest, res: Response) => {
+  try {
+    const { tournamentId } = req.params;
+
+    const rounds = await TournamentRoundController.knockoutRoundsUpdate(tournamentId);
+
+    return res.status(200).send(rounds);
+  } catch (error: any) {
+    console.error('[ERROR] - [API_TournamentRounds] - KNOCKOUT ROUNDS UPDATE', error);
+
+    handleInternalServerErrorResponse(res, error);
+  }
+};
+
 export const API_TournamentRounds = {
   createRounds,
   updateRounds,
+  knockoutRoundsUpdate,
 };

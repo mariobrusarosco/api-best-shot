@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { SchedulerController } from '../../controllers/scheduler';
 const dailyRoutine = async (req: Request, res: Response) => {
   try {
-    const daily = await SchedulerController.dailyScoresAndStandingsRoutine();
+    const daily = await SchedulerController.createDailyScoresAndStandingsRoutine();
 
     return res.status(200).send(daily);
   } catch (error: any) {

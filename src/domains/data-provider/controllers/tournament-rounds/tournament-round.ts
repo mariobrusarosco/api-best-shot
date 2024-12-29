@@ -1,6 +1,7 @@
 import { SofascoreTournamentRound } from '@/domains/data-provider/providers/sofascore/tournament-rounds';
 import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import { TournamentQueries } from '@/domains/tournament/queries';
+import { MatchesController } from '../matches';
 
 const create = async (tournamentId: string) => {
   // const schedule = await Scheduler.tournamentUpdateRecurrence(tournament);
@@ -52,8 +53,41 @@ const getRoundProviderData = async (tournamentId: string, roundSlug: string) => 
   return await SofascoreTournamentRound.fetchRoundFromProvider(roundQuery.providerUrl);
 };
 
+const knockoutRoundsUpdate = async (tournamentId: string) => {
+  const tournament = await TournamentQueries.tournament(tournamentId);
+  if (tournament === undefined) throw new Error('Tournament not found');
+
+  console.log('[LOG] - [START] - UPDATING KNOCKOUT ROUNDS FOR: ', tournament.label);
+
+  const listOfRoundsFromDataProvider =
+    await SofascoreTournamentRound.mapShallowListOfRounds(
+      await SofascoreTournamentRound.fetchShallowListOfRoundsFromProvider(
+        tournament.baseUrl
+      ),
+      tournament
+    );
+  const listOfRoundsFromDatabase = await TournamentRoundsQueries.getAllRounds(
+    tournamentId
+  );
+
+  const newDetectedRounds = listOfRoundsFromDataProvider.filter(round => {
+    return !listOfRoundsFromDatabase.find(
+      currentRound => currentRound.slug === round.slug
+    );
+  });
+
+  await SofascoreTournamentRound.upsertOnDatabase(newDetectedRounds);
+
+  for (const newRound of newDetectedRounds) {
+    await MatchesController.updateRound(tournamentId, newRound.slug!);
+  }
+
+  return { newDetectedRounds };
+};
+
 export const TournamentRoundController = {
   create,
   update,
   getRoundProviderData,
+  knockoutRoundsUpdate,
 };

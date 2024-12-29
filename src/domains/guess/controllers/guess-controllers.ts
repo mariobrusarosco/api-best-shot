@@ -1,7 +1,7 @@
 import { Utils } from '@/domains/auth/utils';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { ErrorMapper } from '@/domains/guess/error-handling/mapper';
-import { T_Guess } from '@/domains/guess/schema';
+import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
 import { GuessInput } from '@/domains/guess/typing';
 import { T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
@@ -14,7 +14,6 @@ const GuessController = {
   createGuess,
   getMemberGuesses,
   runGuessAnalysis,
-  setupTournamentGuesses,
 };
 
 async function getMemberGuesses(req: Request, res: Response) {
@@ -39,6 +38,41 @@ async function getMemberGuesses(req: Request, res: Response) {
           eq(T_Guess.memberId, memberId)
         )
       );
+
+    // TODO - Refactor this
+    if (guesses.length === 0) {
+      const matches = await db
+        .select()
+        .from(T_Match)
+        .where(
+          and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundId, round.slug!))
+        );
+
+      const guessesToInsert = matches.map(row => {
+        return {
+          matchId: row.id,
+          memberId,
+          awayScore: null,
+          homeScore: null,
+        } satisfies DB_InsertGuess;
+      });
+
+      await db.insert(T_Guess).values(guessesToInsert);
+      const guesses = await db
+        .select()
+        .from(T_Guess)
+        .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
+        .where(
+          and(
+            eq(T_Match.tournamentId, tournamentId),
+            eq(T_Match.roundId, round.slug!),
+            eq(T_Guess.memberId, memberId)
+          )
+        );
+
+      const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
+      return res.status(200).send(parsedGuesses);
+    }
 
     const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
 
@@ -84,7 +118,5 @@ async function createGuess(req: Request, res: Response) {
     return handleInternalServerErrorResponse(res, error);
   }
 }
-
-async function setupTournamentGuesses(req: Request, res: Response) {}
 
 export default GuessController;

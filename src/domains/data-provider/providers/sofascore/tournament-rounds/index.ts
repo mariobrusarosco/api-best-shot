@@ -38,11 +38,16 @@ export const SofascoreTournamentRound: IApiProvider['rounds'] = {
 
     return await db.transaction(async tx => {
       for (const round of roundsToUpdate) {
+        console.log(
+          '[LOG] - [SofascoreTournamentRounds],' + ' - UPSERTING ROUND: ',
+          round
+        );
+
         await tx
           .insert(T_TournamentRound)
           .values(round)
           .onConflictDoUpdate({
-            target: [T_TournamentRound.order, T_TournamentRound.tournamentId],
+            target: [T_TournamentRound.slug, T_TournamentRound.tournamentId],
             set: {
               ...round,
             },

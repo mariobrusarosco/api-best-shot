@@ -21,13 +21,13 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
     if (!tournament) throw new Error('Tournament not created');
 
     const tournamentMode = tournament.mode;
-    if (tournamentMode === 'regular-season-only') {
-      await SchedulerController.dailyStandingsChecker(tournament);
-    }
+    // if (tournamentMode === 'regular-season-only') {
+    //   await SchedulerController(tournament);
+    // }
 
     if (tournamentMode === 'regular-season-and-knockout') {
-      await SchedulerController.dailyNewRoundsChecker(tournament);
-      await SchedulerController.dailyStandingsChecker(tournament);
+      await SchedulerController.createKnockoutNewRoundsRoutine(tournament);
+      // await SchedulerController.dailyStandingsChecker(tournament);
 
       // Matches of new Knockout rounds
 

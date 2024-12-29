@@ -89,7 +89,7 @@ export const T_TournamentRound = pgTable(
   table => {
     return {
       pk: primaryKey({
-        columns: [table.tournamentId, table.order],
+        columns: [table.tournamentId, table.slug],
       }),
     };
   }

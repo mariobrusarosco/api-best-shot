@@ -24,6 +24,10 @@ const DataProviderRouting = (app: Express) => {
     '/tournaments/:tournamentId/rounds',
     API_TournamentRounds.updateRounds
   );
+  dataProviderRouter.post(
+    '/tournaments/:tournamentId/rounds/knockout-update',
+    API_TournamentRounds.knockoutRoundsUpdate
+  );
 
   // TEAMS
   dataProviderRouter.post('/tournaments/:tournamentId/teams', API_Teams.createTeams);
@@ -44,10 +48,10 @@ const DataProviderRouting = (app: Express) => {
   );
 
   // STANDINGS
-  // dataProviderRouter.post(
-  //   '/tournaments/:tournamentId/standings',
-  //   StandingsDataController.setupStandings
-  // );
+  dataProviderRouter.post(
+    '/tournaments/:tournamentId/standings',
+    API_Standings.createStandings
+  );
   dataProviderRouter.patch(
     '/tournaments/:tournamentId/standings',
     API_Standings.updateStandings

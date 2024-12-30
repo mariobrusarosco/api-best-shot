@@ -37,7 +37,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
     const matches = await db
       .select({
         id: T_Match.id,
-        round: T_Match.roundId,
+        round: T_Match.roundSlug,
         stadium: T_Match.stadium,
         date: T_Match.date,
         home: {
@@ -67,7 +67,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
         and(
           eq(T_Match.tournamentId, tournamentId),
           eq(T_Match.provider, 'sofa'),
-          eq(T_Match.roundId, round?.slug ?? '')
+          eq(T_Match.roundSlug, round?.slug ?? '')
         )
       );
 

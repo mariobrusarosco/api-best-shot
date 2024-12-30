@@ -38,7 +38,7 @@ export const SofascoreMatches: IApiProvider['matches'] = {
         externalId: String(match.id),
         provider: 'sofa',
         tournamentId,
-        roundId: roundSlug,
+        roundSlug,
         homeTeamId: String(match.homeTeam.id),
         homeScore: safeString(match.homeScore.current),
         awayTeamId: String(match.awayTeam.id),

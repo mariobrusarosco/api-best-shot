@@ -24,7 +24,7 @@ const currentDayMatchesOnDatabase = async (filter?: { tournamentId?: string }) =
       baseUrl: T_Tournament.baseUrl,
       match: T_Match.id,
       date: T_Match.date,
-      roundId: T_Match.roundId,
+      roundSlug: T_Match.roundSlug,
     })
     .from(T_Match)
     .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
@@ -40,7 +40,7 @@ const nearestMatchOnDatabase = async (filter: { tournamentId: string }) => {
       tournamentId: T_Match.tournamentId,
       match: T_Match.id,
       date: T_Match.date,
-      roundId: T_Match.roundId,
+      roundId: T_Match.roundSlug,
     })
     .from(T_Match)
     .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))

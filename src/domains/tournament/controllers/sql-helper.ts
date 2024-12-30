@@ -6,7 +6,7 @@ export const SQLHelper = {
     return {
       ...match,
       externalId: String(match.externalId),
-      roundId: String(match.roundId),
+      roundId: String(match?.roundSlug),
       homeTeamId: String(match.home.id),
       awayTeamId: String(match.away.id),
       awayScore: isNullable(match.away.score) ? null : String(match.away.score),

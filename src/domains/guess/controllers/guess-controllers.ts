@@ -34,7 +34,7 @@ async function getMemberGuesses(req: Request, res: Response) {
       .where(
         and(
           eq(T_Match.tournamentId, tournamentId),
-          eq(T_Match.roundId, round.slug!),
+          eq(T_Match.roundSlug, round.slug!),
           eq(T_Guess.memberId, memberId)
         )
       );
@@ -45,7 +45,7 @@ async function getMemberGuesses(req: Request, res: Response) {
         .select()
         .from(T_Match)
         .where(
-          and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundId, round.slug!))
+          and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round.slug!))
         );
 
       const guessesToInsert = matches.map(row => {
@@ -65,7 +65,7 @@ async function getMemberGuesses(req: Request, res: Response) {
         .where(
           and(
             eq(T_Match.tournamentId, tournamentId),
-            eq(T_Match.roundId, round.slug!),
+            eq(T_Match.roundSlug, round.slug!),
             eq(T_Guess.memberId, memberId)
           )
         );

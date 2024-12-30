@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "6.5.0",
+  "version": "6.6.0",
   "description": "API - Best Shot",
   "scripts": {
     "build": "rimraf ./dist && tsc && tsc-alias",
@@ -9,7 +9,8 @@
     "compile": "tsc ./src --noEmit",
     "scrapper": "tsx watch ./src/scrapper.ts",
     "api-lookup": "tsx watch ./src/api-lookup.ts",
-    "run-scheduler": "ts-node ./dist/scheduler.js"
+    "run-scheduler": "ts-node ./dist/scheduler.js",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org mario-79 --project node-express ./dist && sentry-cli sourcemaps upload --org mario-79 --project node-express ./dist"
   },
   "author": "Mario Brusarosco",
   "license": "ISC",
@@ -25,6 +26,9 @@
     "@aws-sdk/client-eventbridge": "^3.716.0",
     "@aws-sdk/client-s3": "^3.703.0",
     "@aws-sdk/client-scheduler": "^3.716.0",
+    "@sentry/cli": "^2.39.1",
+    "@sentry/node": "^8.47.0",
+    "@sentry/profiling-node": "^8.47.0",
     "@types/lodash": "^4.17.13",
     "@types/node-cron": "^3.0.11",
     "axios": "^1.7.2",

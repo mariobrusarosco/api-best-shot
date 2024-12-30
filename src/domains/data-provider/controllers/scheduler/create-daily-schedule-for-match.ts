@@ -39,16 +39,18 @@ const generateScheduleId = (
     .replace(/[\s\/\-]+/g, '_');
 };
 
-const buildSchedule = (match: any) => {
+const buildSchedule = (
+  match: Awaited<ReturnType<typeof MatchQueries.currentDayMatchesOnDatabase>>[number]
+) => {
   const estimatedEndOfMatch = getEstimatedEndOfMatch(match.date);
-  const scheduleId = generateScheduleId(match.tournamentLabel, estimatedEndOfMatch);
+  const scheduleId = generateScheduleId(match.tournamentId, estimatedEndOfMatch);
 
   return {
     targetInput: {
       standingsUrl: STANDINGS_URL.replace(':tournamentId', match.tournamentId),
       roundUrl: ROUND_URL.replace(':tournamentId', match.tournamentId).replace(
         ':roundSlug',
-        match.roundId
+        match.roundSlug
       ),
     },
     cronExpression: Utils.toCronFormat(estimatedEndOfMatch),

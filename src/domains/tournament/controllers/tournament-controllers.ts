@@ -123,7 +123,7 @@ async function queryMatchesWithNullGuess(
       T_Guess,
       and(eq(T_Match.id, T_Guess.matchId), eq(T_Guess.memberId, memberId))
     )
-    .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundId, round)));
+    .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round)));
 
   return rows.filter(row => row.guess === null);
 }

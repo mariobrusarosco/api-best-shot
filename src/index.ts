@@ -1,3 +1,6 @@
+// Disclaimer: Following Sentry DOCs, the above code should be placed in the main file before importing "Express" :https://docs.sentry.io/platforms/javascript/guides/express/
+import './services/profiling/sentry-instrument';
+
 import express from 'express';
 import logger from './middlewares/logger';
 const cookieParser = require('cookie-parser');
@@ -43,6 +46,8 @@ MatchRouting(app);
 DataProviderRouting(app);
 MemberRouting(app);
 DashboardRouting(app);
+
+// Sentry?.setupExpressErrorHandler(app);
 
 async function startServer() {
   app.listen(PORT, () =>

@@ -7,7 +7,7 @@ export const T_Match = pgTable(
     externalId: text('external_id').notNull(),
     provider: text('provider').notNull(),
     tournamentId: uuid('tournament_id').notNull(),
-    roundId: text('round_id').notNull(),
+    roundSlug: text('round_slug').notNull(),
     homeTeamId: text('home_team_id').notNull(),
     awayTeamId: text('away_team_id').notNull(),
     homeScore: numeric('home_score'),

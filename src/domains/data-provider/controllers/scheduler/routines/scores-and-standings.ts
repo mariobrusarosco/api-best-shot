@@ -1,3 +1,4 @@
+import Profiling from '@/services/profiling';
 import {
   CreateScheduleCommand,
   CreateScheduleCommandInput,
@@ -23,7 +24,9 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
     'arn:aws:lambda:us-east-1:905418297381:function:caller-scores-and-standings';
 
   console.log(
-    `[LOG] - [START] - Scores And Standings Routine for ${schedule.targetInput} calling ${targetArn} at ${schedule.cronExpression}`
+    `[LOG] - [START] - Scores And Standings Routine for ${JSON.stringify(
+      schedule.targetInput
+    )} calling ${targetArn} at ${schedule.cronExpression}`
   );
 
   const params = {
@@ -33,18 +36,22 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
     StartDate,
     State: 'ENABLED' as const,
     FlexibleTimeWindow: { Mode: 'OFF' as const },
-    ActionAfterCompletion: 'DELETE' as const,
+    ActionAfterCompletion: 'NONE' as const,
     GroupName,
     Target: {
       Arn: targetArn,
-      RoleArn: 'arn:aws:iam::905418297381:role/service-role/scheduler-user-demo',
+      RoleArn: 'arn:aws:iam::905418297381:role/service-role/user-scheduler',
       Input: JSON.stringify(schedule.targetInput),
     },
   } satisfies CreateScheduleCommandInput;
 
-  const command = new CreateScheduleCommand(params);
-  const response = await client.send(command);
-  console.log(`[LOG] - [END] - Scores And Standings Routine: ${response.ScheduleArn}`);
+  try {
+    const command = new CreateScheduleCommand(params);
+    const response = await client.send(command);
+    console.log(`[LOG] - [END] - Scores And Standings Routine: ${response.ScheduleArn}`);
 
-  return response.ScheduleArn;
+    return response.ScheduleArn;
+  } catch (error) {
+    Profiling.error('[ERROR] - [END] - Scores And Standings Routine: ', error);
+  }
 };

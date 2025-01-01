@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "6.7.3",
+  "version": "6.7.4",
   "description": "API - Best Shot",
   "scripts": {
     "build": "rimraf ./dist && tsc && tsc-alias && yarn sentry:sourcemaps",

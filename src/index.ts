@@ -48,7 +48,7 @@ DataProviderRouting(app);
 MemberRouting(app);
 DashboardRouting(app);
 
-Sentry?.setupExpressErrorHandler(app);
+Sentry.setupExpressErrorHandler(app);
 
 async function startServer() {
   app.listen(PORT, () =>

@@ -5,20 +5,13 @@ import { Utils } from './utils';
 
 export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const byPassAuth =
-      process.env['NODE_ENV'] === 'demo' || process.env['NODE_ENV'] === 'local-dev';
     const authCookie = Utils.getUserCookie(req);
+    const member = Utils.decodeMemberToken(authCookie) as AuthCookieContent;
 
-    console.log('AUTH -> ', req.cookies);
-
-    if (byPassAuth) {
-      const member = Utils.decodeMemberToken(authCookie) as AuthCookieContent;
-
-      req.authenticatedUser = {
-        id: member.id || '',
-        nickName: member.nickName,
-      };
-    }
+    req.authenticatedUser = {
+      id: member.id || '',
+      nickName: member.nickName,
+    };
 
     next();
   } catch (error) {

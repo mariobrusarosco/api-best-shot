@@ -1,4 +1,5 @@
 // Disclaimer: Following Sentry DOCs, the above code should be placed in the main file before importing "Express" :https://docs.sentry.io/platforms/javascript/guides/express/
+import * as Sentry from '@sentry/node';
 import './services/profiling/sentry-instrument';
 
 import express from 'express';
@@ -47,7 +48,7 @@ DataProviderRouting(app);
 MemberRouting(app);
 DashboardRouting(app);
 
-// Sentry?.setupExpressErrorHandler(app);
+Sentry?.setupExpressErrorHandler(app);
 
 async function startServer() {
   app.listen(PORT, () =>

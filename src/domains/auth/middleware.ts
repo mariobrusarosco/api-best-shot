@@ -9,6 +9,8 @@ export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) 
       process.env['NODE_ENV'] === 'demo' || process.env['NODE_ENV'] === 'local-dev';
     const authCookie = Utils.getUserCookie(req);
 
+    console.log('AUTH -> ', req.cookies);
+
     if (byPassAuth) {
       const member = Utils.decodeMemberToken(authCookie) as AuthCookieContent;
 

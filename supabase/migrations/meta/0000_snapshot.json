@@ -1,5 +1,5 @@
 {
-  "id": "e3cf69e5-f1a8-46d5-a0ba-b2eb0407a6f3",
+  "id": "f31c682d-ea06-4b91-9b35-60faa7946921",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -11,7 +11,7 @@
         "id": {
           "name": "id",
           "type": "uuid",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true,
           "default": "gen_random_uuid()"
         },
@@ -33,9 +33,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "round_id": {
-          "name": "round_id",
-          "type": "uuid",
+        "round_slug": {
+          "name": "round_slug",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -110,16 +110,16 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "match_external_id_unique": {
-          "name": "match_external_id_unique",
-          "nullsNotDistinct": false,
+      "compositePrimaryKeys": {
+        "match_external_id_provider_pk": {
+          "name": "match_external_id_provider_pk",
           "columns": [
-            "external_id"
+            "external_id",
+            "provider"
           ]
         }
-      }
+      },
+      "uniqueConstraints": {}
     },
     "public.guess": {
       "name": "guess",
@@ -404,7 +404,7 @@
         },
         "public_id": {
           "name": "public_id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -742,6 +742,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "standings": {
+          "name": "standings",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
         "label": {
           "name": "label",
           "type": "text",
@@ -863,11 +870,11 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "tournament_round_tournament_id_order_pk": {
-          "name": "tournament_round_tournament_id_order_pk",
+        "tournament_round_tournament_id_slug_pk": {
+          "name": "tournament_round_tournament_id_slug_pk",
           "columns": [
             "tournament_id",
-            "order"
+            "slug"
           ]
         }
       },
@@ -901,6 +908,13 @@
           "type": "numeric",
           "primaryKey": false,
           "notNull": true
+        },
+        "group_name": {
+          "name": "group_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "''"
         },
         "shortame": {
           "name": "shortame",
@@ -986,11 +1000,10 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "tournament_standings_team_external_id_provider_tournament_id_pk": {
-          "name": "tournament_standings_team_external_id_provider_tournament_id_pk",
+        "tournament_standings_shortame_tournament_id_pk": {
+          "name": "tournament_standings_shortame_tournament_id_pk",
           "columns": [
-            "team_external_id",
-            "provider",
+            "shortame",
             "tournament_id"
           ]
         }

@@ -1,2 +1,0 @@
-ALTER TABLE "tournament_standings" DROP CONSTRAINT "tournament_standings_team_external_id_provider_tournament_id_pk";--> statement-breakpoint
-ALTER TABLE "tournament_standings" ADD CONSTRAINT "tournament_standings_order_tournament_id_pk" PRIMARY KEY("order","tournament_id");

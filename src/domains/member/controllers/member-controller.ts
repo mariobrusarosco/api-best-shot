@@ -9,6 +9,7 @@ import { DB_SelectTournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
+import { CreateMemberInput } from '../api/typing';
 
 const getMember = async (req: Request, res: Response) => {
   const memberId = Utils.getAuthenticatedUserId(req, res);
@@ -23,6 +24,17 @@ const getMember = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[ERROR] [getMember]', error);
     return handleInternalServerErrorResponse(res, error);
+  }
+};
+
+const createMember = async (input: CreateMemberInput) => {
+  try {
+    const [member] = await db.insert(T_Member).values(input).returning();
+
+    return member;
+  } catch (error: any) {
+    console.error('[ERROR] [Controller] createMember', error);
+    return null;
   }
 };
 
@@ -42,4 +54,5 @@ const getBestAndWorstPerformance = (
 
 export const MemberController = {
   getMember,
+  createMember,
 };

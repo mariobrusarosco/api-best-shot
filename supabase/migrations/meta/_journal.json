@@ -5,71 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1735130916428,
-      "tag": "0000_deep_wilson_fisk",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1735302806129,
-      "tag": "0001_dapper_giant_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1735303696025,
-      "tag": "0002_famous_amphibian",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1735303742207,
-      "tag": "0003_aromatic_goblin_queen",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1735335376197,
-      "tag": "0004_nebulous_dazzler",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1735399743938,
-      "tag": "0005_flashy_jamie_braddock",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1735400067816,
-      "tag": "0006_romantic_natasha_romanoff",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1735403705762,
-      "tag": "0007_milky_mandarin",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1735498847821,
-      "tag": "0008_odd_scourge",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1735601267398,
-      "tag": "0009_dizzy_jazinda",
+      "when": 1735737834031,
+      "tag": "0000_workable_black_cat",
       "breakpoints": true
     }
   ]

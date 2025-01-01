@@ -2,13 +2,13 @@ import { Utils } from '@/domains/auth/utils';
 import { T_Member } from '@/domains/member/schema';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import { eq } from 'drizzle-orm';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import db from '../../../services/database';
+import { AuthenticateMemberRequest } from '../typing';
 
-async function authenticateUser(req: Request, res: Response) {
+async function authenticateUser(req: AuthenticateMemberRequest, res: Response) {
   try {
-    const body = req?.body as { publicId: string };
-    const publicId = body.publicId;
+    const publicId = req.query.publicId;
 
     const [member] = await db
       .select()
@@ -21,7 +21,7 @@ async function authenticateUser(req: Request, res: Response) {
 
     return res.status(200).send(token);
   } catch (error: any) {
-    console.error(`[AUTH - POST] ${error}`);
+    console.error(`[AUTH - authenticateUser] ${error}`);
 
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)

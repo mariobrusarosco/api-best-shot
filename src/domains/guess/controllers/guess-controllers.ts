@@ -7,6 +7,7 @@ import { T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import db from '@/services/database';
+import Profiling from '@/services/profiling';
 import { and, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 
@@ -78,6 +79,7 @@ async function getMemberGuesses(req: Request, res: Response) {
 
     return res.status(200).send(parsedGuesses);
   } catch (error: any) {
+    Profiling.error('GETTING MEMBER GUESSES', error);
     return handleInternalServerErrorResponse(res, error);
   }
 }

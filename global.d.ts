@@ -17,7 +17,7 @@ declare global {
       AWS_BUCKET_NAME: string;
       AWS_CLOUDFRONT_ID: string;
       AWS_CLOUDFRONT_URL: string;
-      SENTRY_ID: string;
+      SENTRY_DSN: string;
     }
   }
 }

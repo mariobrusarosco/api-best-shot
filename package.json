@@ -1,17 +1,18 @@
 {
   "name": "api-best-shot",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "description": "API - Best Shot",
   "scripts": {
-    "build": "rimraf ./dist && tsc && tsc-alias && yarn sentry:sourcemaps",
     "dev": "ts-node-dev -r tsconfig-paths/register ./src/index.ts",
     "dev-demo": "ENV_PATH=.env.demo ts-node-dev -r tsconfig-paths/register ./src/index.ts",
+    "build-demo": "rimraf ./dist && tsc && tsc-alias",
     "dev-prod": "ENV_PATH=.env.production ts-node-dev -r tsconfig-paths/register ./src/index.ts",
+    "build-prod": "rimraf ./dist && tsc && tsc-alias && yarn sentry:sourcemaps",
     "serve-prod": "node -r dotenv/config ./dist/index.js",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org mario-79 --project api-best-shot-production ./dist && sentry-cli sourcemaps upload --org mario-79 --project api-best-shot-production ./dist",
     "compile": "tsc ./src --noEmit",
     "scrapper": "tsx watch ./src/scrapper.ts",
-    "api-lookup": "tsx watch ./src/api-lookup.ts",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org mario-79 --project api-best-shot-production ./dist && sentry-cli sourcemaps upload --org mario-79 --project api-best-shot-production ./dist"
+    "api-lookup": "tsx watch ./src/api-lookup.ts"
   },
   "author": "Mario Brusarosco",
   "license": "ISC",

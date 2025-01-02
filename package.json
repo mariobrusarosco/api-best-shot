@@ -1,10 +1,11 @@
 {
   "name": "api-best-shot",
-  "version": "6.7.4",
+  "version": "6.7.5",
   "description": "API - Best Shot",
   "scripts": {
     "build": "rimraf ./dist && tsc && tsc-alias && yarn sentry:sourcemaps",
     "dev": "ts-node-dev -r tsconfig-paths/register ./src/index.ts",
+    "dev-demo": "ENV_PATH=.env.demo ts-node-dev -r tsconfig-paths/register ./src/index.ts",
     "dev-prod": "ENV_PATH=.env.production ts-node-dev -r tsconfig-paths/register ./src/index.ts",
     "serve-prod": "node -r dotenv/config ./dist/index.js",
     "compile": "tsc ./src --noEmit",

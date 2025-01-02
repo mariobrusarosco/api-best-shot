@@ -1,3 +1,5 @@
+import { config } from 'dotenv';
+config({ path: process.env.ENV_PATH || '.env' });
 // Disclaimer: Following Sentry DOCs, the above code should be placed in the main file before importing "Express" :https://docs.sentry.io/platforms/javascript/guides/express/
 import * as Sentry from '@sentry/node';
 import './services/profiling/sentry-instrument';
@@ -52,7 +54,7 @@ Sentry.setupExpressErrorHandler(app);
 
 async function startServer() {
   app.listen(PORT, () =>
-    console.log(`Listening on port ${PORT} + ${process.env.API_VERSION}`)
+    console.log(`Listening on port ${PORT} --- API_VERSION: ${process.env.API_VERSION}`)
   );
 }
 

@@ -9,11 +9,12 @@ dayjs.extend(utc);
 
 export const createDailyScoresAndStandingsRoutine = async () => {
   const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase();
-  if (!currentDayMatches)
-    return {
-      standingsToUpdate: [],
-      roundsToUpdate: [],
-    };
+  if (!currentDayMatches) {
+    return new Map([
+      ['standingsToUpdate', []],
+      ['roundsToUpdate', []],
+    ]);
+  }
 
   const schedules = new Map<string, IDailySchedule>();
 

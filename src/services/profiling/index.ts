@@ -1,22 +1,29 @@
 import * as Sentry from '@sentry/node';
 
-const isProd = process.env.NODE_ENV === 'production' || 'local-dev';
+const ENV = process.env.NODE_ENV;
+const enableProfiling = ENV === 'production' || ENV === 'demo';
 
 const Profiling = {
   error: (msg: string, error: unknown) => {
-    console.error('[ERROR]', msg, error);
-    if (isProd) {
-      Sentry.captureMessage(msg, {
+    if (enableProfiling) {
+      return Sentry.captureException(`[${ENV}] - ${msg}`, {
         extra: { error },
       });
     }
+
+    return console.log(`[${ENV}] - ${msg}`);
   },
-  // middleware: (req: Request, res: Response, next: NextFunction) => {
-  //   console.log('[LOGGER] - ROUTE', req.method, req.url);
-  //   console.log('[LOGGER] - COOKIES', JSON.stringify(req.cookies));
-  //   next();
-  // },
-  log: (msg: string, data?: any) => console.log({ isProd }, '[LOG]', msg, data),
+  log: (msg: string, data?: any) => {
+    if (enableProfiling) {
+      console.log('profiling log', msg, data);
+      return Sentry.captureMessage(`[${ENV}] - ${msg}`, {
+        level: 'log',
+        extra: { data },
+      });
+    }
+
+    return console.log(`[${ENV}] - ${msg}`, data);
+  },
 };
 
 export default Profiling;

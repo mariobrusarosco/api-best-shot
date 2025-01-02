@@ -59,6 +59,7 @@ const DataProviderRouting = (app: Express) => {
 
   // SCHEDULER
   dataProviderRouter.post('/scheduler', API_Scheduler.dailyRoutine);
+
   app.use(`${process.env.API_VERSION}/data-provider`, AuthMiddleware, dataProviderRouter);
 };
 

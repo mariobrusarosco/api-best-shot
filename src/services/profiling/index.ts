@@ -15,7 +15,6 @@ const Profiling = {
   },
   log: (msg: string, data?: any) => {
     if (enableProfiling) {
-      console.log('profiling log', msg, data);
       return Sentry.captureMessage(`[${ENV}] - ${msg}`, {
         level: 'log',
         extra: { data },

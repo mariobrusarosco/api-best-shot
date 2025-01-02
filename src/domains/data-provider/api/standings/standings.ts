@@ -1,31 +1,46 @@
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import Profiling from '@/services/profiling';
 import { Response } from 'express';
 import { StandingsController } from '../../controllers/standings';
 import { StandingsRequest } from './typing';
 
 const createStandings = async (req: StandingsRequest, res: Response) => {
-  try {
-    const tournamentId = req.params.tournamentId;
+  const tournamentId = req.params.tournamentId;
 
+  try {
     const standings = await StandingsController.create(tournamentId);
+
+    Profiling.log(
+      `[LOG] - [DATA PROVIDER] - [CREATE STANDINGS FOR TOURNAMENT] - [${tournamentId}]`,
+      standings
+    );
 
     return res.status(200).send(standings);
   } catch (error: any) {
-    console.error('[ERROR] - [API_Standings] - CREATE STANDINGS. REASON IS:', error);
+    Profiling.error(
+      `[ERROR] - [DATA PROVIDER] - [CREATE STANDINGS FOR  TOURNAMENT] - [${tournamentId}]`,
+      error
+    );
 
     handleInternalServerErrorResponse(res, error);
   }
 };
 
 const updateStandings = async (req: any, res: Response) => {
+  const tournamentId = req.params.tournamentId;
   try {
-    const tournamentId = req.params.tournamentId;
-
     const standings = await StandingsController.update(tournamentId);
+    Profiling.log(
+      `[LOG] - [DATA PROVIDER] - [UPDATE STANDINGS FOR TOURNAMENT] - [${tournamentId}]`,
+      standings
+    );
 
     return res.status(200).send(standings);
   } catch (error: any) {
-    console.error('[ERROR] - [API_Standings] - UPDATE STANDINGS. REASON IS:', error);
+    Profiling.error(
+      `[ERROR] - [DATA PROVIDER] - [UPDATE STANDINGS FOR  TOURNAMENT] - [${tournamentId}]`,
+      error
+    );
 
     handleInternalServerErrorResponse(res, error);
   }

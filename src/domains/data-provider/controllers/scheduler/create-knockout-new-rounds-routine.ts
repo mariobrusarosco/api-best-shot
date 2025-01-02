@@ -24,7 +24,7 @@ const buildSchedule = (tournament: any) => {
 
   return {
     targetInput: {
-      kni: ROUNDS_URL.replace(':tournamentId', tournament.id),
+      roundsUrl: ROUNDS_URL.replace(':tournamentId', tournament.id),
     },
     id: scheduleId,
   };

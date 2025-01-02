@@ -1,4 +1,5 @@
 import { TournamentQueries } from '@/domains/tournament/queries';
+import Profiling from '@/services/profiling';
 import { SofascoreTeams } from '../../providers/sofascore/teams';
 import {
   fetchAndMapTeamsForRegularAndKnockout,
@@ -10,7 +11,7 @@ const create = async (tournamentId: string) => {
     const tournament = await TournamentQueries.tournament(tournamentId);
     if (tournament === undefined) throw new Error('Tournament not found');
 
-    console.log('[LOG] - [START] - TEAM CREATION FOR ', tournament.label);
+    Profiling.log('[LOG] - [DATA PROVIDER] - TEAM CREATION FOR ', tournament.label);
 
     const tournamentMode = tournament.mode;
     if (tournamentMode === 'regular-season-and-knockout') {
@@ -25,10 +26,12 @@ const create = async (tournamentId: string) => {
       return await SofascoreTeams.createOnDatabase(teamsToInsert);
     }
 
-    console.log('[LOG] - [END] - TEAM CREATION FOR ', tournament.label);
+    Profiling.log('[LOG] - [DATA PROVIDER] - TEAM CREATION FOR ', tournament.label);
 
     return 'OK';
-  } catch (error: any) {}
+  } catch (error: any) {
+    Profiling.error('[ERROR] - [DATA PROVIDER] - TEAM CREATION FOR ', error);
+  }
 };
 
 const update = async (tournamentId: string) => {
@@ -36,7 +39,7 @@ const update = async (tournamentId: string) => {
     const tournament = await TournamentQueries.tournament(tournamentId);
     if (tournament === undefined) throw new Error('Tournament not found');
 
-    console.log('[LOG] - [TeamsController] - UPDATING TEAMS FOR: ', tournament.label);
+    Profiling.log('[LOG] - [DATA PROVIDER] - UPDATING TEAMS FOR: ', tournament.label);
 
     const tournamentMode = tournament.mode;
     if (tournamentMode === 'regular-season-and-knockout') {
@@ -53,7 +56,7 @@ const update = async (tournamentId: string) => {
 
     return [];
   } catch (error: any) {
-    console.error('[ERROR] - [TeamsController] - UPDATE TEAMS', error);
+    Profiling.error('[ERROR] - [DATA PROVIDER] - UPDATE TEAMS', error);
   }
 };
 

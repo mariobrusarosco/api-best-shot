@@ -1,3 +1,4 @@
+import Profiling from '@/services/profiling';
 import {
   CreateScheduleCommand,
   CreateScheduleCommandInput,
@@ -22,10 +23,6 @@ export const scheduleNewRoundsAndMatchesRoutine = async (schedule: {
     'arn:aws:lambda:us-east-1:905418297381:function:caller-new-rounds-and-matches';
   const ScheduleExpression = 'rate(2 day)';
 
-  console.log(
-    `[LOG] - [START] - New Rounds and Matches for ${schedule.targetInput} calling ${targetArn} at ${ScheduleExpression}`
-  );
-
   const params = {
     Name: schedule.id,
     ScheduleExpression,
@@ -36,14 +33,17 @@ export const scheduleNewRoundsAndMatchesRoutine = async (schedule: {
     GroupName,
     Target: {
       Arn: targetArn,
-      RoleArn: 'arn:aws:iam::905418297381:role/service-role/scheduler-user-demo',
+      RoleArn: 'arn:aws:iam::905418297381:role/service-role/user-scheduler',
       Input: JSON.stringify(schedule.targetInput),
     },
   } satisfies CreateScheduleCommandInput;
 
   const command = new CreateScheduleCommand(params);
   const response = await client.send(command);
-  console.log(`[LOG] - [END] - Scores And Standings Routine: ${response.ScheduleArn}`);
+
+  Profiling.log(
+    `[LOG] - [DATA PROVIDER] - New Rounds and Matches for ${schedule.targetInput} calling ${targetArn} at ${ScheduleExpression}. ScheduleArn: ${response.ScheduleArn}`
+  );
 
   return response.ScheduleArn;
 };

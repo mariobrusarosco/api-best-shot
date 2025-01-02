@@ -3,19 +3,18 @@ import { SofascoreTournamentRound } from '@/domains/data-provider/providers/sofa
 import { DB_InsertMatch } from '@/domains/match/schema';
 import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import { TournamentQueries } from '@/domains/tournament/queries';
+import Profiling from '@/services/profiling';
 import { sleep } from '@/utils';
 
 const create = async (tournamentId: string) => {
   const tournament = await TournamentQueries.tournament(tournamentId);
   if (!tournament) throw new Error('Tournament not found');
 
-  // Get All Tournament Rounds
   const roundList = await TournamentRoundsQueries.getAllRounds(tournamentId);
-  // Call the fetch round process to all rounds
   let matches: DB_InsertMatch[] = [];
 
   for (const round of roundList) {
-    console.log('[LOG] - [START] - FETCHING ROUND:', round.providerUrl);
+    Profiling.log('[LOG] - [DATA PROVIDER] - FETCHING ROUND:', round.providerUrl);
     await sleep(3000);
 
     const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(
@@ -28,7 +27,10 @@ const create = async (tournamentId: string) => {
       tournamentId: tournamentId,
     });
 
-    console.log('[LOG] - [END] - FETCHING ROUND:', round.providerUrl);
+    Profiling.log(
+      '[LOG] - [DATA PROVIDER] - [CREATE ALL MACTHES] - FETCHED ROUND:',
+      round.providerUrl
+    );
 
     matches = [...matches, ...newMatches];
   }
@@ -42,12 +44,14 @@ const update = async (tournamentId: string) => {
   const tournament = await TournamentQueries.tournament(tournamentId);
   if (!tournament) throw new Error('Tournament not found');
 
-  // Get All Tournament Rounds
   const roundList = await TournamentRoundsQueries.getAllRounds(tournamentId);
   let matches: DB_InsertMatch[] = [];
 
   for (const round of roundList) {
-    console.log('[LOG] - [START] - FETCHING ROUND:', round.providerUrl);
+    console.log(
+      '[LOG] - [DATA PROVIDER] - [UPDATE] - FETCHING ROUND:',
+      round.providerUrl
+    );
     await sleep(3000);
 
     // Call the fetch round process to all rounds
@@ -60,7 +64,10 @@ const update = async (tournamentId: string) => {
       tournamentId: tournamentId,
     });
 
-    console.log('[LOG] - [END] - FETCHING ROUND:', round.providerUrl);
+    Profiling.log(
+      '[LOG] - [DATA PROVIDER] - [UPDATE ALL MATCHES] - FETCHED ROUND:',
+      round.providerUrl
+    );
 
     matches = [...matches, ...newMatches];
   }
@@ -80,7 +87,10 @@ const updateRound = async (tournamentId: string, roundSlug: string) => {
   });
   if (!round) throw new Error('Round not found');
 
-  console.log('[LOG] - [START] - FETCHING ROUND:', round.providerUrl);
+  console.log(
+    '[LOG] - [DATA PROVIDER] - [UPDATE UNIQUE ROUND MATCHES] - FETCHING ROUND:',
+    round.providerUrl
+  );
 
   const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(
     round.providerUrl
@@ -91,7 +101,10 @@ const updateRound = async (tournamentId: string, roundSlug: string) => {
     tournamentId: tournamentId,
   });
 
-  console.log('[LOG] - [END] - FETCHING ROUND:', round.providerUrl);
+  Profiling.log(
+    '[LOG] - [DATA PROVIDER] - [UPDATE UNIQUE ROUND MATCHES] - FETCHED ROUND:',
+    round.providerUrl
+  );
 
   const query = await SofascoreMatches.upsertOnDatabase(matches);
 

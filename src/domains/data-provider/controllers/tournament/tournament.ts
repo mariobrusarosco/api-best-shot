@@ -1,11 +1,15 @@
 import { CreateTournamentInput } from '@/domains/data-provider/api/tournament/typing';
 import { API_Sofascore } from '@/domains/data-provider/providers/sofascore';
 import { TournamentQueries } from '@/domains/tournament/queries';
+import Profiling from '@/services/profiling';
 import { SchedulerController } from '../scheduler';
 
 const createTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
-    console.log('[LOG] - [START]- TOURNAMENT CREATION:', input.label);
+    Profiling.log(
+      '[LOG] - [DATA PROVIDER] - [START] -  TOURNAMENT CREATION:',
+      input.label
+    );
 
     const logo = await API_Sofascore.tournament.fetchAndStoreLogo({
       logoPngBase64: input.logoPngBase64,
@@ -21,32 +25,30 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
     if (!tournament) throw new Error('Tournament not created');
 
     const tournamentMode = tournament.mode;
-    // if (tournamentMode === 'regular-season-only') {
-    //   await SchedulerController(tournament);
-    // }
-
-    if (tournamentMode === 'regular-season-and-knockout') {
+    if (
+      tournamentMode === 'knockout-only' ||
+      tournamentMode === 'regular-season-and-knockout'
+    ) {
       await SchedulerController.createKnockoutNewRoundsRoutine(tournament);
-      // await SchedulerController.dailyStandingsChecker(tournament);
-
-      // Matches of new Knockout rounds
-
-      // Teams of new Knockout rounds
-
-      // Matches Scored of new Knockout rounds
     }
 
-    console.log('[LOG] - [END]- TOURNAMENT CREATION:', tournament.label);
+    Profiling.log(
+      '[LOG] - [DATA PROVIDER] - [END] -  TOURNAMENT CREATION:',
+      tournament.label
+    );
 
     return tournament;
   } catch (error: any) {
-    console.error('[ERROR] - createTournament', error);
+    Profiling.error('[ERROR] - [DATA PROVIDER]', error);
   }
 };
 
 const updateTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
-    console.log('[LOG] - [START]- TOURNAMENT UPDATE:', input.externalId);
+    Profiling.log(
+      '[LOG] - [DATA PROVIDER] - [START] - TOURNAMENT UPDATE:',
+      input.externalId
+    );
 
     const logo = await API_Sofascore.tournament.fetchAndStoreLogo({
       logoPngBase64: input.logoPngBase64,
@@ -58,13 +60,14 @@ const updateTournament = async ({ input }: { input: CreateTournamentInput }) => 
       logo,
     });
 
-    // await Scheduler.scheduleTournamentStandingsUpdateCronJob(updatedTournament);
-
-    console.log('[LOG] - [END]- TOURNAMENT UPDATE:', updatedTournament.externalId);
+    Profiling.log(
+      '[LOG] - [DATA PROVIDER] - [END] - TOURNAMENT UPDATE:',
+      updatedTournament.externalId
+    );
 
     return updatedTournament;
   } catch (error: any) {
-    console.error('[ERROR] - TOURNAMENT UPDATE', error.message);
+    Profiling.error('[ERROR] - [DATA PROVIDER] - TOURNAMENT UPDATE', error.message);
   }
 };
 

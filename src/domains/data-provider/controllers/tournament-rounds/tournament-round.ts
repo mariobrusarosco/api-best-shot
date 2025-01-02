@@ -1,14 +1,17 @@
 import { SofascoreTournamentRound } from '@/domains/data-provider/providers/sofascore/tournament-rounds';
 import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import { TournamentQueries } from '@/domains/tournament/queries';
+import Profiling from '@/services/profiling';
 import { MatchesController } from '../matches';
 
 const create = async (tournamentId: string) => {
-  // const schedule = await Scheduler.tournamentUpdateRecurrence(tournament);
   const tournament = await TournamentQueries.tournament(tournamentId);
   if (tournament === undefined) throw new Error('Tournament not found');
 
-  console.log('[LOG] - CREATING TOURNAMENT ROUNDS FOR: ', tournament.label);
+  Profiling.log(
+    '[LOG] - [DATA PROVIDER] - CREATING TOURNAMENT ROUNDS FOR: ',
+    tournament.label
+  );
 
   const shallowListOfRounds =
     await SofascoreTournamentRound.fetchShallowListOfRoundsFromProvider(
@@ -20,7 +23,10 @@ const create = async (tournamentId: string) => {
   );
   const roundsInserted = await SofascoreTournamentRound.createOnDatabase(roundsToInsert);
 
-  console.log('[LOG] - CREATED TOURNAMENT ROUNDS FOR: ', tournament.label);
+  Profiling.log(
+    '[LOG] - [DATA PROVIDER] - CREATED TOURNAMENT ROUNDS FOR: ',
+    tournament.label
+  );
   return roundsInserted;
 };
 
@@ -28,8 +34,8 @@ const update = async (tournamentId: string) => {
   const tournament = await TournamentQueries.tournament(tournamentId);
   if (tournament === undefined) throw new Error('Tournament not found');
 
-  console.log(
-    '[LOG] - [TournamentRoundController] - UPDATING TOURNAMENT ROUNDS FOR: ',
+  Profiling.log(
+    '[LOG] - [DATA PROVIDER] - UPDATING TOURNAMENT ROUNDS FOR: ',
     tournament.label
   );
 
@@ -49,7 +55,6 @@ const getRoundProviderData = async (tournamentId: string, roundSlug: string) => 
   const roundQuery = await TournamentRoundsQueries.getRound({ tournamentId, roundSlug });
   if (roundQuery === undefined)
     throw new Error('Tournament does not have a record for this round');
-
   return await SofascoreTournamentRound.fetchRoundFromProvider(roundQuery.providerUrl);
 };
 
@@ -57,7 +62,10 @@ const knockoutRoundsUpdate = async (tournamentId: string) => {
   const tournament = await TournamentQueries.tournament(tournamentId);
   if (tournament === undefined) throw new Error('Tournament not found');
 
-  console.log('[LOG] - [START] - UPDATING KNOCKOUT ROUNDS FOR: ', tournament.label);
+  Profiling.log(
+    '[LOG] - [DATA PROVIDER] - [START] - UPDATING KNOCKOUT ROUNDS FOR: ',
+    tournament.label
+  );
 
   const listOfRoundsFromDataProvider =
     await SofascoreTournamentRound.mapShallowListOfRounds(

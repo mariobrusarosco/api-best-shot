@@ -13,7 +13,8 @@ const setup = async (req: TournamentRequest, res: Response) => {
     const newTournament = await TournamentController.createTournament({
       input: req.body,
     });
-    if (!newTournament) throw new Error('[ERROR] - [SETUP] - Tournament not created');
+    if (!newTournament)
+      throw new Error('[ERROR] - [DATA PROVIDER] - [SETUP] - Tournament not created');
 
     // SETUP TOURNAMENTS ROUNDS
     const newRounds = await TournamentRoundController.create(newTournament.id!);

@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "6.9.0",
+  "version": "6.10.0",
   "description": "API - Best Shot",
   "scripts": {
     "dev": "ts-node-dev -r tsconfig-paths/register ./src/index.ts",
@@ -9,6 +9,7 @@
     "dev-prod": "ENV_PATH=.env.production ts-node-dev -r tsconfig-paths/register ./src/index.ts",
     "build-prod": "rimraf ./dist && tsc && tsc-alias && yarn sentry:sourcemaps",
     "serve-prod": "node -r dotenv/config ./dist/index.js",
+    "build": "rimraf ./dist && tsc && tsc-alias",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org mario-79 --project api-best-shot-production ./dist && sentry-cli sourcemaps upload --org mario-79 --project api-best-shot-production ./dist",
     "compile": "tsc ./src --noEmit",
     "scrapper": "tsx watch ./src/scrapper.ts",
@@ -25,14 +26,12 @@
   },
   "homepage": "https://github.com/mariobrusarosco/api-best-shot/#readme",
   "dependencies": {
-    "@aws-sdk/client-eventbridge": "^3.716.0",
     "@aws-sdk/client-s3": "^3.703.0",
     "@aws-sdk/client-scheduler": "^3.716.0",
     "@sentry/cli": "^2.39.1",
     "@sentry/node": "^8.47.0",
     "@sentry/profiling-node": "^8.47.0",
     "@types/lodash": "^4.17.13",
-    "@types/node-cron": "^3.0.11",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",

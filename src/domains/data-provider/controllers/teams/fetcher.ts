@@ -1,6 +1,7 @@
 import { SofascoreTeams } from '@/domains/data-provider/providers/sofascore/teams';
 import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import { TournamentQuery } from '@/domains/tournament/queries';
+import Profiling from '@/services/profiling';
 import { sleep } from '@/utils';
 import { SofascoreStandings } from '../../providers/sofascore/standings';
 import { SofascoreTournamentRound } from '../../providers/sofascore/tournament-rounds';
@@ -63,7 +64,10 @@ export const fetchAndMapTeamsFromKnockoutRounds = async (
     await sleep(3000);
   }
 
-  console.log('[LOG] - [END] - fetchAndMapTeamsFromKnockoutRounds', tournament.label);
+  Profiling.log(
+    '[LOG] - [DATA PROVIDER] - fetchAndMapTeamsFromKnockoutRounds',
+    tournament.label
+  );
 
   return ALL_TEAMS;
 };
@@ -74,8 +78,8 @@ export const fetchAndMapTeamsForRegularAndKnockout = async (
   const regularSeasonTeams = await fetchAndMapTeamsForRegularSeason(tournament);
   const knockoutSeasonTeams = await fetchAndMapTeamsFromKnockoutRounds(tournament);
 
-  console.log(
-    `[LOG] - [TeamsController] - TOURNAMENT:${tournament.label} - TEAMS FROM STANDINGS: ${
+  Profiling.log(
+    `[LOG] - [DATA PROVIDER] - TOURNAMENT:${tournament.label} - TEAMS FROM STANDINGS: ${
       [...regularSeasonTeams].length
     } - TEAMS FROM KNOCKOUT ROUNDS: ${[...knockoutSeasonTeams].length}`
   );

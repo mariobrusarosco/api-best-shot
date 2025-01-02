@@ -45,8 +45,6 @@
     "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.35",
-    "mongoose": "^6.5.4",
-    "node-cron": "^3.0.3",
     "postgres": "^3.4.4",
     "puppeteer": "^22.12.1",
     "tsconfig-paths": "^4.2.0",

@@ -2,7 +2,7 @@ import { TournamentQuery } from '@/domains/tournament/queries';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { scheduleNewRoundsAndMatchesRoutine } from './routines/new-rounds-and-matches';
-import { ROUNDS_URL } from './typing';
+import { KNOCKOUT_ROUNDS_UPDATE_URL } from './typing';
 
 dayjs.extend(utc);
 
@@ -24,7 +24,10 @@ const buildSchedule = (tournament: any) => {
 
   return {
     targetInput: {
-      roundsUrl: ROUNDS_URL.replace(':tournamentId', tournament.id),
+      updateKnockoutRoundsUrl: KNOCKOUT_ROUNDS_UPDATE_URL.replace(
+        ':tournamentId',
+        tournament.id
+      ),
     },
     id: scheduleId,
   };

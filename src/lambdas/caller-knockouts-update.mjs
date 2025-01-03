@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/aws-serverless';
 import '/opt/nodejs/instrument.mjs';
 
 import axios from 'axios';
-import { metadata } from '/opt/nodejs/metadata.mjs';
+import { metadata } from './metadata.mjs';
 
 export const handler = Sentry.wrapHandler(async event => {
   const envTarget = event.envTarget || 'demo';
@@ -10,7 +10,7 @@ export const handler = Sentry.wrapHandler(async event => {
   const COOKIE = process.env[COOKIE_TOKEN_NAME];
 
   try {
-    const newKnockoutRounds = await axios.post(event.updateKnockoutRoundsUrl, null, {
+    const newKnockoutRounds = await axios.post(event.knockoutsUpdateUrl, null, {
       headers: {
         Cookie: COOKIE,
       },

@@ -1,22 +1,24 @@
 import { TournamentQuery } from '@/domains/tournament/queries';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { scheduleNewRoundsAndMatchesRoutine } from './routines/new-rounds-and-matches';
+import { scheduleKnockoutsUpdateRoutine } from './routines/knockouts-update';
 import { KNOCKOUT_ROUNDS_UPDATE_URL } from './typing';
 
 dayjs.extend(utc);
 
-export const createKnockoutNewRoundsRoutine = async (tournament: TournamentQuery) => {
+export const createKnockoutsUpdatesRoutine = async (tournament: TournamentQuery) => {
   if (!tournament) return 'No given tournament to schedule';
 
   const schedule = buildSchedule(tournament);
-  await scheduleNewRoundsAndMatchesRoutine(schedule);
+  await scheduleKnockoutsUpdateRoutine(schedule);
 
   return schedule;
 };
 
 const generateScheduleId = (tournamentLabel: string | null) => {
-  return `${tournamentLabel}_new_rounds_and_macthes`.replace(/[\s\/\-]+/g, '_');
+  const env = process.env.NODE_ENV === 'demo_' ? 'demo' : '';
+
+  return `${env}${tournamentLabel}_knockouts_update`.replace(/[\s\/\-]+/g, '_');
 };
 
 const buildSchedule = (tournament: any) => {
@@ -24,7 +26,7 @@ const buildSchedule = (tournament: any) => {
 
   return {
     targetInput: {
-      updateKnockoutRoundsUrl: KNOCKOUT_ROUNDS_UPDATE_URL.replace(
+      knockoutsUpdateUrl: KNOCKOUT_ROUNDS_UPDATE_URL.replace(
         ':tournamentId',
         tournament.id
       ),

@@ -1,7 +1,7 @@
 import { createDailyScoresAndStandingsRoutine } from './create-daily-schedule-for-match';
-import { createKnockoutNewRoundsRoutine } from './create-knockout-new-rounds-routine';
+import { createKnockoutsUpdatesRoutine } from './create-knockouts-update-routine';
 
 export const SchedulerController = {
   createDailyScoresAndStandingsRoutine,
-  createKnockoutNewRoundsRoutine,
+  createKnockoutsUpdatesRoutine,
 };

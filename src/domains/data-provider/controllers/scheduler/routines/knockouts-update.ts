@@ -13,16 +13,16 @@ dayjs.extend(isToday);
 
 const client = new SchedulerClient({ region: 'us-east-1' });
 
-export const scheduleNewRoundsAndMatchesRoutine = async (schedule: {
+export const scheduleKnockoutsUpdateRoutine = async (schedule: {
   targetInput: Object;
   id: string;
 }) => {
   try {
     const StartDate = dayjs().utc().add(1, 'minute').toDate();
-    const GroupName = 'new-rounds-and-matches';
+    const GroupName = 'knockouts-update';
     const targetArn =
-      'arn:aws:lambda:us-east-1:905418297381:function:caller-new-rounds-and-matches';
-    const ScheduleExpression = 'rate(2 day)';
+      'arn:aws:lambda:us-east-1:905418297381:function:caller-knockouts-update';
+    const ScheduleExpression = 'rate(1 day)';
 
     const params = {
       Name: schedule.id,
@@ -42,13 +42,13 @@ export const scheduleNewRoundsAndMatchesRoutine = async (schedule: {
     const command = new CreateScheduleCommand(params);
     const response = await client.send(command);
 
-    Profiling.log('[DATA PROVIDER] - [NEW ROUNDS AND MATCHES]', {
+    Profiling.log('[DATA PROVIDER] - [KNOCKOUTS UPDATE]', {
       targetArn,
       scheduled: response.ScheduleArn,
     });
 
     return response.ScheduleArn;
   } catch (error) {
-    Profiling.error('[DATA PROVIDER] - [NEW ROUNDS AND MATCHES ROUTINE]: ', error);
+    Profiling.error('[DATA PROVIDER] - [KNOCKOUTS UPDATE]: ', error);
   }
 };

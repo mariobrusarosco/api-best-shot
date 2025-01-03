@@ -43,16 +43,13 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
     const command = new CreateScheduleCommand(params);
     const response = await client.send(command);
 
-    Profiling.log(`[LOG] - [DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE]`, {
+    Profiling.log(`[DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE]`, {
       targetArn,
       scheduled: response.ScheduleArn,
     });
 
     return response.ScheduleArn;
   } catch (error) {
-    Profiling.error(
-      '[ERROR] - [DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE]: ',
-      error
-    );
+    Profiling.error('[DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE]: ', error);
   }
 };

@@ -9,7 +9,7 @@ const create = async (tournamentId: string) => {
   const mode = tournament.mode;
   const label = tournament.label;
 
-  Profiling.log(
+  console.log(
     `[LOG] - [DATA PROVIDER] - [START] - CREATING STANDINDS FOR TOURNAMENT ${label}`
   );
 
@@ -22,7 +22,7 @@ const create = async (tournamentId: string) => {
 
   if (!data) {
     Profiling.log(
-      `[LOG] - [DATA PROVIDER] - [END] - CREATING STANDINDS FOR TOURNAMENT - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`
+      `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`
     );
 
     return null;
@@ -36,7 +36,10 @@ const create = async (tournamentId: string) => {
   const query = await SofascoreStandings.createOnDatabase(mappedStandings);
 
   Profiling.log(
-    `[LOG] - [DATA PROVIDER] - [END] - CREATING STANDINDS FOR TOURNAMENT ${label}`
+    `[DATA PROVIDER] - [STANDINGS] - CREATING STANDINDS FOR TOURNAMENT ${label}`,
+    {
+      standings: mappedStandings,
+    }
   );
 
   return query;
@@ -50,12 +53,14 @@ const update = async (tournamentId: string) => {
   const label = tournament.label;
   const standingsMode = tournament.standings;
 
-  Profiling.log(
-    `[LOG] - [DATA PROVIDER] - [START] - UPDATING STANDINDS FOR TOURNAMENT ${label}`
+  console.log(
+    `[LOG] - [DATA PROVIDER] - [STANDINGS] - UPDATING STANDINDS FOR TOURNAMENT ${label}`
   );
 
   if (mode === 'knockout-only') {
-    Profiling.log('Knockout-only tournaments do not have standings');
+    Profiling.log(
+      '[DATA PROVIDER] - [STANDINGS] - KNOCKOUT-ONLY TOURNAMENT DO NOT HAVE STANDINGS'
+    );
     return null;
   }
 
@@ -63,7 +68,7 @@ const update = async (tournamentId: string) => {
 
   if (!data) {
     Profiling.log(
-      `[LOG] - [DATA PROVIDER] - [END] - UPDATING UPDATING FOR TOURNAMENT - ${label} DOESN'T HAVE STANDINGS IN PLACE YET!`
+      `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`
     );
 
     return null;
@@ -77,9 +82,9 @@ const update = async (tournamentId: string) => {
   const query = await SofascoreStandings.upsertOnDatabase(mappedStandings);
 
   Profiling.log(
-    `[LOG] - [DATA PROVIDER] - [END] - UPDATING STANDINDS FOR TOURNAMENT ${label}`,
+    `[DATA PROVIDER] - [STANDINGS] - UPDATING STANDINDS FOR TOURNAMENT ${label}`,
     {
-      mappedStandings,
+      standings: mappedStandings,
     }
   );
 

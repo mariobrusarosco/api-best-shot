@@ -1,3 +1,4 @@
+import { Request } from 'express';
 export type GuessInput = {
   id: string;
   matchId: string;
@@ -20,3 +21,12 @@ export const GUESS_STATUSES = {
 } as const;
 
 export type GUESS_STATUS = (typeof GUESS_STATUSES)[keyof typeof GUESS_STATUSES];
+
+export type MemberGuessesRequest = Request<
+  {
+    tournamentId: string;
+  },
+  null,
+  null,
+  { round: string }
+>;

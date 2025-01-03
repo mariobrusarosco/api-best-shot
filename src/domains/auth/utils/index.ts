@@ -21,7 +21,7 @@ const signUserCookieBased = ({ memberId, res }: { memberId: string; res: Respons
     if (!res || !memberId || !process.env['JWT_SECRET']) return null;
 
     const token = jwt.sign({ id: memberId }, process.env['JWT_SECRET'], {
-      expiresIn: '365d',
+      expiresIn: '30d',
     });
 
     res.clearCookie(process.env['MEMBER_PUBLIC_ID_COOKIE'] || '');
@@ -39,6 +39,8 @@ const signUserCookieBased = ({ memberId, res }: { memberId: string; res: Respons
 
 const getAuthenticatedUserId = (req: Request, res: Response) => {
   try {
+    if (!req.authenticatedUser) throw new Error('User not authenticated');
+
     return req.authenticatedUser?.id;
   } catch (e) {
     res

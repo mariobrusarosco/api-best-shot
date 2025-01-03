@@ -1,5 +1,5 @@
 import { AuthMiddleware } from '@/domains/auth/middleware';
-import GuessController from '@/domains/guess/controllers/guess-controllers';
+import { API_Guess } from '@/domains/guess/api';
 import MatchController from '@/domains/match/controllers/match-controller';
 import { PerformanceController } from '@/domains/performance/controller';
 import type { Express } from 'express';
@@ -11,7 +11,7 @@ const TournamentRouting = (app: Express) => {
   const tournamentRouter = express.Router();
 
   tournamentRouter.get('/', API_Tournament.getAllTournaments);
-  tournamentRouter.get('/:tournamentId', API_Tournament.getTournament);
+  tournamentRouter.get('/:tournamentId', AuthMiddleware, API_Tournament.getTournament);
   tournamentRouter.get(
     '/:tournamentId/matches/:roundId',
     MatchController.getMatchesByTournament
@@ -19,7 +19,7 @@ const TournamentRouting = (app: Express) => {
   tournamentRouter.get(
     '/:tournamentId/guess',
     AuthMiddleware,
-    GuessController.getMemberGuesses
+    API_Guess.getMemberGuesses
   );
   tournamentRouter.get(
     '/:tournamentId/score',

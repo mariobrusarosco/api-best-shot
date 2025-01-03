@@ -7,7 +7,7 @@ const GuessRouting = (app: Express) => {
   const guessRouter = express.Router();
 
   guessRouter.post('/', GuessController.createGuess);
-  guessRouter.get('/', GuessController.getMemberGuesses);
+  // guessRouter.get('/', API_Guess.getMemberGuesses);
 
   app.use(`${process.env.API_VERSION}/guess`, AuthMiddleware, guessRouter);
 };

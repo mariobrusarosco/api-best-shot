@@ -51,6 +51,7 @@ const nearestMatchOnDatabase = async (filter: { tournamentId: string }) => {
         gte(T_Match.date, now)
       )
     )
+    .offset(1)
     .limit(1);
 
   return match;

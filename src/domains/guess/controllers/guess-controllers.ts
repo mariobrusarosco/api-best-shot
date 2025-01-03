@@ -1,11 +1,10 @@
 import { Utils } from '@/domains/auth/utils';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { ErrorMapper } from '@/domains/guess/error-handling/mapper';
-import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
+import { T_Guess } from '@/domains/guess/schema';
 import { GuessInput } from '@/domains/guess/typing';
 import { T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import db from '@/services/database';
 import Profiling from '@/services/profiling';
 import { and, eq } from 'drizzle-orm';
@@ -17,17 +16,16 @@ const GuessController = {
   runGuessAnalysis,
 };
 
-async function getMemberGuesses(req: Request, res: Response) {
+async function getMemberGuesses({
+  memberId,
+  round,
+  tournamentId,
+}: {
+  memberId: string;
+  tournamentId: string;
+  round: string;
+}) {
   try {
-    const memberId = Utils.getAuthenticatedUserId(req, res);
-    const tournamentId = req.params.tournamentId as string;
-    const query = req.query as { round: string };
-
-    const round = await TournamentRoundsQueries.getRound({
-      tournamentId,
-      roundSlug: query.round,
-    });
-
     const guesses = await db
       .select()
       .from(T_Guess)
@@ -35,52 +33,20 @@ async function getMemberGuesses(req: Request, res: Response) {
       .where(
         and(
           eq(T_Match.tournamentId, tournamentId),
-          eq(T_Match.roundSlug, round.slug!),
+          eq(T_Match.roundSlug, round),
           eq(T_Guess.memberId, memberId)
         )
       );
 
-    // TODO - Refactor this
-    if (guesses.length === 0) {
-      const matches = await db
-        .select()
-        .from(T_Match)
-        .where(
-          and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round.slug!))
-        );
-
-      const guessesToInsert = matches.map(row => {
-        return {
-          matchId: row.id,
-          memberId,
-          awayScore: null,
-          homeScore: null,
-        } satisfies DB_InsertGuess;
-      });
-
-      await db.insert(T_Guess).values(guessesToInsert);
-      const guesses = await db
-        .select()
-        .from(T_Guess)
-        .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
-        .where(
-          and(
-            eq(T_Match.tournamentId, tournamentId),
-            eq(T_Match.roundSlug, round.slug!),
-            eq(T_Guess.memberId, memberId)
-          )
-        );
-
-      const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
-      return res.status(200).send(parsedGuesses);
+    if (!guesses) {
+      return [];
     }
 
     const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
 
-    return res.status(200).send(parsedGuesses);
+    return parsedGuesses;
   } catch (error: any) {
     Profiling.error('GETTING MEMBER GUESSES', error);
-    return handleInternalServerErrorResponse(res, error);
   }
 }
 

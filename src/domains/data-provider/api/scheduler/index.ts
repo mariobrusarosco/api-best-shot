@@ -6,13 +6,13 @@ import { SchedulerController } from '../../controllers/scheduler';
 const dailyRoutine = async (req: Request, res: Response) => {
   try {
     const daily = await SchedulerController.createDailyScoresAndStandingsRoutine();
-    Profiling.log('[LOG] - [DATA PROVIDER] - [DAILY SCHEDULER]', {
+    Profiling.log('[DATA PROVIDER] - [DAILY SCHEDULER]', {
       report: [...daily.keys()],
     });
 
     return res.status(200).send(daily);
   } catch (error: any) {
-    Profiling.error('[ERROR] - [DATA PROVIDER] - [DAILY SCHEDULER]', error);
+    Profiling.error('[DATA PROVIDER] - [DAILY SCHEDULER]', error);
     handleInternalServerErrorResponse(res, error);
   }
 };

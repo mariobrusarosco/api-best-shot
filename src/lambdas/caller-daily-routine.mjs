@@ -1,12 +1,14 @@
 import * as Sentry from '@sentry/aws-serverless';
+import '/opt/nodejs/instrument.mjs';
+
 import axios from 'axios';
 import { metadata } from './metadata.mjs';
-import '/opt/nodejs/instrument.mjs';
 
 export const handler = Sentry.wrapHandler(async (event, context) => {
   const envTarget = event.envTarget || 'demo';
-  const ENDPOINT = metadata[envTarget].endpoint;
-  const COOKIE = metadata[envTarget].cookie;
+  const ENDPOINT = metadata[envTarget].ENDPOINT;
+  const COOKIE_TOKEN_NAME = metadata[envTarget].TOKEN_NAME;
+  const COOKIE = process.env[COOKIE_TOKEN_NAME];
 
   try {
     const schedulerResponse = await axios.post(ENDPOINT, null, {

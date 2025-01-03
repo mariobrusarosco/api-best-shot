@@ -17,31 +17,31 @@ const setup = async (req: TournamentRequest, res: Response) => {
     if (!newTournament)
       throw new Error('[ERROR] - [DATA PROVIDER] - [SETUP] - Tournament not created');
 
-    Profiling.log('[DATA PROVIDER] - [SETUP] - [STEP 1]', {
+    Profiling.log('[DATA PROVIDER] - [SETUP - STEP 1]', {
       tournament: newTournament,
     });
 
     // SETUP TOURNAMENTS ROUNDS
     const newRounds = await TournamentRoundController.create(newTournament.id!);
-    Profiling.log('[DATA PROVIDER] - [SETUP] - [STEP 2]', {
+    Profiling.log('[DATA PROVIDER] - [SETUP - STEP 2]', {
       rounds: newRounds,
     });
 
     // SETUP TEAMS
     const teams = await TeamsController.create(newTournament.id!);
-    Profiling.log('[DATA PROVIDER] - [SETUP] - [STEP 3]', {
+    Profiling.log('[DATA PROVIDER] - [SETUP - STEP 3]', {
       teams,
     });
 
     // SETUP MATCHES
     const matches = await MatchesController.create(newTournament.id!);
-    Profiling.log('[DATA PROVIDER] - [SETUP] - [STEP 4]', {
+    Profiling.log('[DATA PROVIDER] - [SETUP - STEP 4]', {
       matches,
     });
 
     // SETUP STANDINGS
     const standings = await StandingsController.create(newTournament.id!);
-    Profiling.log('[DATA PROVIDER] - [SETUP] - [STEP 5]', {
+    Profiling.log('[DATA PROVIDER] - [SETUP - STEP 5]', {
       standings,
     });
 

@@ -6,11 +6,6 @@ import { SchedulerController } from '../scheduler';
 
 const createTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
-    Profiling.log(
-      '[LOG] - [DATA PROVIDER] - [START] -  TOURNAMENT CREATION:',
-      input.label
-    );
-
     const logo = await API_Sofascore.tournament.fetchAndStoreLogo({
       logoPngBase64: input.logoPngBase64,
       logoUrl: input.logoUrl,
@@ -32,24 +27,19 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
       await SchedulerController.createKnockoutNewRoundsRoutine(tournament);
     }
 
-    Profiling.log(
-      '[LOG] - [DATA PROVIDER] - [END] -  TOURNAMENT CREATION:',
-      tournament.label
-    );
+    Profiling.log('[DATA PROVIDER] - [TOURNAMENT] - CREATE', {
+      tournamentId: tournament.id,
+      tournamentLabel: tournament.label,
+    });
 
     return tournament;
   } catch (error: any) {
-    Profiling.error('[ERROR] - [DATA PROVIDER]', error);
+    Profiling.error('[DATA PROVIDER]', error);
   }
 };
 
 const updateTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
-    Profiling.log(
-      '[LOG] - [DATA PROVIDER] - [START] - TOURNAMENT UPDATE:',
-      input.externalId
-    );
-
     const logo = await API_Sofascore.tournament.fetchAndStoreLogo({
       logoPngBase64: input.logoPngBase64,
       logoUrl: input.logoUrl,
@@ -60,14 +50,14 @@ const updateTournament = async ({ input }: { input: CreateTournamentInput }) => 
       logo,
     });
 
-    Profiling.log(
-      '[LOG] - [DATA PROVIDER] - [END] - TOURNAMENT UPDATE:',
-      updatedTournament.externalId
-    );
+    Profiling.log('[DATA PROVIDER] - [TOURNAMENT] - UPDATE', {
+      tournamentId: updatedTournament.id,
+      tournamentLabel: updatedTournament.label,
+    });
 
     return updatedTournament;
   } catch (error: any) {
-    Profiling.error('[ERROR] - [DATA PROVIDER] - TOURNAMENT UPDATE', error.message);
+    Profiling.error('[DATA PROVIDER] - [TOURNAMENT] - UPDATE', { error });
   }
 };
 

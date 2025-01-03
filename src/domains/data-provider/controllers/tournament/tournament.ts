@@ -24,7 +24,7 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
       tournamentMode === 'knockout-only' ||
       tournamentMode === 'regular-season-and-knockout'
     ) {
-      await SchedulerController.createKnockoutNewRoundsRoutine(tournament);
+      await SchedulerController.createKnockoutsUpdatesRoutine(tournament);
     }
 
     Profiling.log('[DATA PROVIDER] - [TOURNAMENT] - CREATE', {

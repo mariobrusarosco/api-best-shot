@@ -27,15 +27,12 @@ const create = async (tournamentId: string) => {
       tournamentId: tournamentId,
     });
 
-    Profiling.log(
-      '[LOG] - [DATA PROVIDER] - [CREATE ALL MACTHES] - FETCHED ROUND:',
-      round.providerUrl
-    );
-
     matches = [...matches, ...newMatches];
   }
 
   const query = await SofascoreMatches.createOnDatabase(matches);
+
+  Profiling.log('[DATA PROVIDER] - [MATCHES] - [CREATE ALL MACTHES]', { matches });
 
   return query;
 };
@@ -64,15 +61,12 @@ const update = async (tournamentId: string) => {
       tournamentId: tournamentId,
     });
 
-    Profiling.log(
-      '[LOG] - [DATA PROVIDER] - [UPDATE ALL MATCHES] - FETCHED ROUND:',
-      round.providerUrl
-    );
-
     matches = [...matches, ...newMatches];
   }
 
   const query = await SofascoreMatches.upsertOnDatabase(matches);
+
+  Profiling.log('[DATA PROVIDER] - [MATCHES] - [UPDATE ALL MACTHES]', { matches });
 
   return query;
 };
@@ -87,11 +81,6 @@ const updateRound = async (tournamentId: string, roundSlug: string) => {
   });
   if (!round) throw new Error('Round not found');
 
-  console.log(
-    '[LOG] - [DATA PROVIDER] - [UPDATE UNIQUE ROUND MATCHES] - FETCHING ROUND:',
-    round.providerUrl
-  );
-
   const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(
     round.providerUrl
   );
@@ -101,13 +90,11 @@ const updateRound = async (tournamentId: string, roundSlug: string) => {
     tournamentId: tournamentId,
   });
 
-  Profiling.log(
-    '[LOG] - [DATA PROVIDER] - [UPDATE UNIQUE ROUND MATCHES] - FETCHED ROUND:',
-    round.providerUrl
-  );
-
   const query = await SofascoreMatches.upsertOnDatabase(matches);
-
+  Profiling.log('[DATA PROVIDER] - [MATCHES] - [UPDATE MACTHES OF A ROUND]', {
+    matches,
+    round,
+  });
   return query;
 };
 

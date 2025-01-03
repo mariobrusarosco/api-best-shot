@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "6.11.2",
+  "version": "6.11.3",
   "description": "API - Best Shot",
   "scripts": {
     "dev": "ts-node-dev -r tsconfig-paths/register ./src/index.ts",

@@ -45,6 +45,7 @@ const buildSchedule = (
 ) => {
   const estimatedEndOfMatch = getEstimatedEndOfMatch(match.date);
   const scheduleId = generateScheduleId(match.tournamentLabel, estimatedEndOfMatch);
+  const targetEnv = process.env.NODE_ENV;
 
   return {
     targetInput: {
@@ -53,7 +54,7 @@ const buildSchedule = (
         ':roundSlug',
         match.roundSlug
       ),
-      env: process.env.NODE_ENV,
+      targetEnv,
     },
     cronExpression: Utils.toCronFormat(estimatedEndOfMatch),
     startDate: estimatedEndOfMatch.toDate(),

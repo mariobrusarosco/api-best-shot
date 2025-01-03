@@ -44,11 +44,18 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
     const response = await client.send(command);
 
     Profiling.log(
-      `[LOG] - [DATA PROVIDER] - Scores And Standings Routine ${schedule.targetInput} calling ${targetArn} at ${schedule.cronExpression}. ScheduleArn: ${response.ScheduleArn}`
+      `[LOG] - [DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE] ${JSON.stringify(
+        schedule.targetInput
+      )} calling ${targetArn} at ${schedule.cronExpression}. ScheduleArn: ${
+        response.ScheduleArn
+      }`
     );
 
     return response.ScheduleArn;
   } catch (error) {
-    Profiling.error('[ERROR] - [DATA PROVIDER] - Scores And Standings Routine: ', error);
+    Profiling.error(
+      '[ERROR] - [DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE]: ',
+      error
+    );
   }
 };

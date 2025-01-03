@@ -6,7 +6,9 @@ import { SchedulerController } from '../../controllers/scheduler';
 const dailyRoutine = async (req: Request, res: Response) => {
   try {
     const daily = await SchedulerController.createDailyScoresAndStandingsRoutine();
-    Profiling.log('[LOG] - [DATA PROVIDER] - [DAILY SCHEDULER]', [...daily.keys()]);
+    Profiling.log('[LOG] - [DATA PROVIDER] - [DAILY SCHEDULER]', {
+      report: [...daily.keys()],
+    });
 
     return res.status(200).send(daily);
   } catch (error: any) {

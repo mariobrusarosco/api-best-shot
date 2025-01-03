@@ -42,9 +42,10 @@ export const scheduleNewRoundsAndMatchesRoutine = async (schedule: {
     const command = new CreateScheduleCommand(params);
     const response = await client.send(command);
 
-    Profiling.log(
-      `[LOG] - [DATA PROVIDER] - [NEW ROUNDS AND MATCHES]  for ${schedule.targetInput} calling ${targetArn} at ${ScheduleExpression}. ScheduleArn: ${response.ScheduleArn}`
-    );
+    Profiling.log('[LOG] - [DATA PROVIDER] - [NEW ROUNDS AND MATCHES]', {
+      targetArn,
+      scheduled: response.ScheduleArn,
+    });
 
     return response.ScheduleArn;
   } catch (error) {

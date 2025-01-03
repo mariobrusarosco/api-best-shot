@@ -43,13 +43,10 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
     const command = new CreateScheduleCommand(params);
     const response = await client.send(command);
 
-    Profiling.log(
-      `[LOG] - [DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE] ${JSON.stringify(
-        schedule.targetInput
-      )} calling ${targetArn} at ${schedule.cronExpression}. ScheduleArn: ${
-        response.ScheduleArn
-      }`
-    );
+    Profiling.log(`[LOG] - [DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE]`, {
+      targetArn,
+      scheduled: response.ScheduleArn,
+    });
 
     return response.ScheduleArn;
   } catch (error) {

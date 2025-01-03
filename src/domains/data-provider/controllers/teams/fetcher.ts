@@ -3,23 +3,21 @@ import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import { TournamentQuery } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { sleep } from '@/utils';
+import { error } from 'console';
 import { SofascoreStandings } from '../../providers/sofascore/standings';
 import { SofascoreTournamentRound } from '../../providers/sofascore/tournament-rounds';
 
 export const fetchAndMapTeamsForRegularSeason = async (
   tournament: NonNullable<TournamentQuery>
 ) => {
-  console.log(
-    `[LOG] - [START] - FETCHING AND MAPPING TEAMS FOR REGULAR SEASON OF TOURNAMENT:${tournament.label} FROM STANDINGS`
-  );
-
   const standings = await SofascoreStandings.fetchStandingsFromProvider(
     tournament.baseUrl
   );
 
   if (!standings) {
-    console.error(
-      `[LOG] - [FETCHING TEAMS FOR A REGULAR SEASON] - ${tournament.label} DOES NOT HAVE A STANDING IN PLACE YET`
+    Profiling.error(
+      `[DATA PROVIDER] - [TEAMS] - [FETCHING TEAMS FOR A REGULAR SEASON] - ${tournament.label} DOES NOT HAVE A STANDING IN PLACE YET`,
+      error
     );
     return [];
   }
@@ -29,8 +27,12 @@ export const fetchAndMapTeamsForRegularSeason = async (
     tournament.provider
   );
 
-  console.log(
-    `[LOG] - [SUCCESS] - FETCHING AND MAPPING TEAMS FOR REGULAR SEASON OF TOURNAMENT:${tournament.label} FROM STANDINGS: ${mappedTeamsFromStandings?.length} TEAMS`
+  Profiling.log(
+    `[DATA PROVIDER] - [TEAMS] - [FETCHING AND MAPPING] - [FOR REGULAR SEASON OF TOURNAMENT:${tournament.label}]`,
+    {
+      tournamentLabel: tournament.label,
+      teams: mappedTeamsFromStandings,
+    }
   );
 
   return mappedTeamsFromStandings;
@@ -39,8 +41,6 @@ export const fetchAndMapTeamsForRegularSeason = async (
 export const fetchAndMapTeamsFromKnockoutRounds = async (
   tournament: NonNullable<TournamentQuery>
 ) => {
-  console.log('[LOG] - [START] - fetchAndMapTeamsFromKnockoutRounds', tournament.label);
-
   const knockoutRoundsList = await TournamentRoundsQueries.getKnockoutRounds({
     tournamentId: tournament.id!,
   });
@@ -64,10 +64,10 @@ export const fetchAndMapTeamsFromKnockoutRounds = async (
     await sleep(3000);
   }
 
-  Profiling.log(
-    '[LOG] - [DATA PROVIDER] - fetchAndMapTeamsFromKnockoutRounds',
-    tournament.label
-  );
+  Profiling.log('[DATA PROVIDER] - [TEAMS] - [FETCH] - [FROM KNOCKOUT ROUNDS]', {
+    tournamentLabel: tournament.label,
+    teams: ALL_TEAMS,
+  });
 
   return ALL_TEAMS;
 };
@@ -77,12 +77,6 @@ export const fetchAndMapTeamsForRegularAndKnockout = async (
 ) => {
   const regularSeasonTeams = await fetchAndMapTeamsForRegularSeason(tournament);
   const knockoutSeasonTeams = await fetchAndMapTeamsFromKnockoutRounds(tournament);
-
-  Profiling.log(
-    `[LOG] - [DATA PROVIDER] - TOURNAMENT:${tournament.label} - TEAMS FROM STANDINGS: ${
-      [...regularSeasonTeams].length
-    } - TEAMS FROM KNOCKOUT ROUNDS: ${[...knockoutSeasonTeams].length}`
-  );
 
   return [...regularSeasonTeams, ...knockoutSeasonTeams];
 };

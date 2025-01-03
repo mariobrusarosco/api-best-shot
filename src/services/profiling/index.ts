@@ -5,23 +5,25 @@ const enableProfiling = ENV === 'production' || ENV === 'demo';
 
 const Profiling = {
   error: (msg: string, error: unknown) => {
+    const finalMessage = `[${ENV}] - [ERROR] - ${msg}`;
+
     if (enableProfiling) {
-      return Sentry.captureException(`[${ENV}] - ${msg}`, {
-        extra: { error },
-      });
+      return Sentry.captureException(finalMessage, { extra: { error } });
     }
 
-    return console.log(`[${ENV}] - ${msg}`);
+    console.error(finalMessage, error);
   },
   log: (msg: string, data?: any) => {
+    const finalMessage = `[${ENV}] - [LOG] - ${msg}`;
+
     if (enableProfiling) {
-      return Sentry.captureMessage(`[${ENV}] - ${msg}`, {
+      return Sentry.captureMessage(finalMessage, {
         level: 'log',
         extra: { data },
       });
     }
 
-    return console.log(`[${ENV}] - ${msg}`, data);
+    console.log(finalMessage, data);
   },
 };
 

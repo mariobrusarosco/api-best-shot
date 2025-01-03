@@ -1,9 +1,11 @@
+import { DB_InsertTeam } from '@/domains/team/schema';
 import { TournamentQueries } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { SofascoreTeams } from '../../providers/sofascore/teams';
 import {
   fetchAndMapTeamsForRegularAndKnockout,
   fetchAndMapTeamsForRegularSeason,
+  fetchAndMapTeamsFromKnockoutRounds,
 } from './fetcher';
 
 const create = async (tournamentId: string) => {
@@ -11,26 +13,35 @@ const create = async (tournamentId: string) => {
     const tournament = await TournamentQueries.tournament(tournamentId);
     if (tournament === undefined) throw new Error('Tournament not found');
 
-    Profiling.log('[LOG] - [DATA PROVIDER] - TEAM CREATION FOR ', tournament.label);
-
     const tournamentMode = tournament.mode;
-    if (tournamentMode === 'regular-season-and-knockout') {
-      const teamsToInsert = await fetchAndMapTeamsForRegularAndKnockout(tournament);
+    let TEAMS = [] as DB_InsertTeam[];
 
-      return await SofascoreTeams.createOnDatabase(teamsToInsert);
+    if (tournamentMode === 'regular-season-and-knockout') {
+      TEAMS = await fetchAndMapTeamsForRegularAndKnockout(tournament);
+
+      return await SofascoreTeams.createOnDatabase(TEAMS);
+    }
+
+    if (tournamentMode === 'knockout-only') {
+      TEAMS = await fetchAndMapTeamsFromKnockoutRounds(tournament);
+
+      return await SofascoreTeams.createOnDatabase(TEAMS);
     }
 
     if (tournamentMode === 'regular-season-only') {
-      const teamsToInsert = await fetchAndMapTeamsForRegularSeason(tournament);
+      TEAMS = await fetchAndMapTeamsForRegularSeason(tournament);
 
-      return await SofascoreTeams.createOnDatabase(teamsToInsert);
+      return await SofascoreTeams.createOnDatabase(TEAMS);
     }
 
-    Profiling.log('[LOG] - [DATA PROVIDER] - TEAM CREATION FOR ', tournament.label);
+    Profiling.log('[DATA PROVIDER] - [TEAMS] - CREATE SUCCESS', {
+      tournamentLabel: tournament.label,
+      team: TEAMS,
+    });
 
-    return 'OK';
+    return TEAMS;
   } catch (error: any) {
-    Profiling.error('[ERROR] - [DATA PROVIDER] - TEAM CREATION FOR ', error);
+    Profiling.error('[DATA PROVIDER] - [TEAMS] - TEAM CREATE FAILED', error);
   }
 };
 
@@ -39,24 +50,35 @@ const update = async (tournamentId: string) => {
     const tournament = await TournamentQueries.tournament(tournamentId);
     if (tournament === undefined) throw new Error('Tournament not found');
 
-    Profiling.log('[LOG] - [DATA PROVIDER] - UPDATING TEAMS FOR: ', tournament.label);
-
     const tournamentMode = tournament.mode;
-    if (tournamentMode === 'regular-season-and-knockout') {
-      const teamsToInsert = await fetchAndMapTeamsForRegularAndKnockout(tournament);
+    let TEAMS = [] as DB_InsertTeam[];
 
-      return await SofascoreTeams.upsertOnDatabase(teamsToInsert);
+    if (tournamentMode === 'regular-season-and-knockout') {
+      TEAMS = await fetchAndMapTeamsForRegularAndKnockout(tournament);
+
+      return await SofascoreTeams.upsertOnDatabase(TEAMS);
+    }
+
+    if (tournamentMode === 'knockout-only') {
+      TEAMS = await fetchAndMapTeamsFromKnockoutRounds(tournament);
+
+      return await SofascoreTeams.createOnDatabase(TEAMS);
     }
 
     if (tournamentMode === 'regular-season-only') {
-      const teamsToInsert = await fetchAndMapTeamsForRegularSeason(tournament);
+      TEAMS = await fetchAndMapTeamsForRegularSeason(tournament);
 
-      await SofascoreTeams.upsertOnDatabase(teamsToInsert);
+      await SofascoreTeams.upsertOnDatabase(TEAMS);
     }
 
-    return [];
+    Profiling.log('[DATA PROVIDER] - [TEAMS] - UPDATE SUCCESS', {
+      tournamentLabel: tournament.label,
+      team: TEAMS,
+    });
+
+    return TEAMS;
   } catch (error: any) {
-    Profiling.error('[ERROR] - [DATA PROVIDER] - UPDATE TEAMS', error);
+    Profiling.error('[DATA PROVIDER] - [TEAMS] - TEAM UPDATE FAILED', error);
   }
 };
 

@@ -31,7 +31,7 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
       StartDate,
       State: 'ENABLED' as const,
       FlexibleTimeWindow: { Mode: 'OFF' as const },
-      ActionAfterCompletion: 'NONE' as const,
+      ActionAfterCompletion: 'DELETE' as const,
       GroupName,
       Target: {
         Arn: targetArn,

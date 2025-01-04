@@ -16,7 +16,7 @@ export const createKnockoutsUpdatesRoutine = async (tournament: TournamentQuery)
 };
 
 const generateScheduleId = (tournamentLabel: string | null) => {
-  const env = process.env.NODE_ENV === 'demo_' ? 'demo' : '';
+  const env = process.env.NODE_ENV === 'demo' ? '_demo' : '';
 
   return `${env}${tournamentLabel}_knockouts_update`.replace(/[\s\/\-]+/g, '_');
 };

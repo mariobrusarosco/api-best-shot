@@ -35,7 +35,7 @@ const generateScheduleId = (
   tournamentLabel: string | null,
   estimatedEndOfMatch: dayjs.Dayjs
 ) => {
-  const env = process.env.NODE_ENV === 'demo_' ? 'demo' : '';
+  const env = process.env.NODE_ENV === 'demo' ? 'demo_' : '';
 
   return `${env}${tournamentLabel}_${estimatedEndOfMatch.format('YYYY_MM_DD_HH_mm')}`
     .toLowerCase()

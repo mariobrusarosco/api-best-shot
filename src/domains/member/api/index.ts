@@ -43,6 +43,7 @@ const createMember = async (req: CreateMemberRequest, res: Response) => {
 const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
   try {
     const memberId = Utils.getAuthenticatedUserId(req, res);
+    console.log('getGeneralTournamentPerformance API', memberId);
 
     const memberTournaments = await DB_Performance.queryPerformanceOfAllMemberTournaments(
       memberId

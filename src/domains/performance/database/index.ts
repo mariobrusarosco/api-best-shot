@@ -42,6 +42,8 @@ const queryPerformanceOfAllMemberTournaments = async (memberId: string) => {
       .where(eq(T_Guess.memberId, memberId));
     // .groupBy(T_Tournament.id, T_Tournament.label, T_Tournament.logo);
 
+    if (query.length === 0) return { tournaments: [] };
+
     const parsed = query.map(row => {
       return {
         tournamentId: row.tournament.id,

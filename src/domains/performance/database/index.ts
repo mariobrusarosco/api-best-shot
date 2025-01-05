@@ -2,7 +2,6 @@ import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { T_Guess } from '@/domains/guess/schema';
 import { GuessUtils } from '@/domains/guess/utils';
 import { T_Match } from '@/domains/match/schema';
-import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
 import _ from 'lodash';
@@ -34,45 +33,46 @@ const queryPerformanceOfAllMemberTournaments = async (memberId: string) => {
     //   .where(eq(T_Guess.memberId, memberId))
     //   .groupBy(T_Tournament.id, T_Tournament.label, T_Tournament.logo);
 
-    const query = await db
-      .select()
-      .from(T_Guess)
-      .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
-      .innerJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
-      .where(eq(T_Guess.memberId, memberId));
-    // .groupBy(T_Tournament.id, T_Tournament.label, T_Tournament.logo);
+    // const query = await db
+    //   .select()
+    //   .from(T_Guess)
+    //   .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
+    //   .innerJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
+    //   .where(eq(T_Guess.memberId, memberId));
 
-    if (query.length === 0) return { tournaments: [] };
+    // if (query.length === 0) return { tournaments: [] };
 
-    const parsed = query.map(row => {
-      return {
-        tournamentId: row.tournament.id,
-        tournamentLogo: row.tournament.logo,
-        tournamentLabel: row.tournament.label,
-        // @ts-ignore
-        result: runGuessAnalysis(row.guess, row.match)?.total,
-        // @ts-ignore
-        // .reduce((acc, prev) => {
-        //   console.log({ acc, prev });
-        //   return (acc += prev);
-        // }, 0),
-        // ...(guesses as Array<{ guess: any; match: any }>).map(row => {
-        //   return runGuessAnalysis(row.guess, row.match);
-        // }),
-      };
-    });
+    // const parsed = query.map(row => {
+    //   return {
+    //     tournamentId: row.tournament.id,
+    //     tournamentLogo: row.tournament.logo,
+    //     tournamentLabel: row.tournament.label,
+    //     // @ts-ignore
+    //     result: runGuessAnalysis(row.guess, row.match)?.total,
+    //     // @ts-ignore
+    //     // .reduce((acc, prev) => {
+    //     //   console.log({ acc, prev });
+    //     //   return (acc += prev);
+    //     // }, 0),
+    //     // ...(guesses as Array<{ guess: any; match: any }>).map(row => {
+    //     //   return runGuessAnalysis(row.guess, row.match);
+    //     // }),
+    //   };
+    // });
 
-    const byTournament = _.groupBy(parsed, 'tournamentId');
-    const tournaments = Object.entries(byTournament).map(([id, guesses]) => {
-      return {
-        tournamentId: guesses[0].tournamentId,
-        badge: guesses[0].tournamentLogo,
-        label: guesses[0].tournamentLabel,
-        // @ts-ignore
-        points: guesses.reduce((acc, prev) => acc + prev.result, 0),
-      };
-    });
-    return { tournaments };
+    // const byTournament = _.groupBy(parsed, 'tournamentId');
+    // const tournaments = Object.entries(byTournament).map(([id, guesses]) => {
+    //   return {
+    //     tournamentId: guesses[0].tournamentId,
+    //     badge: guesses[0].tournamentLogo,
+    //     label: guesses[0].tournamentLabel,
+    //     // @ts-ignore
+    //     points: guesses.reduce((acc, prev) => acc + prev.result, 0),
+    //   };
+    // });
+    // return { tournaments };
+
+    return { tournaments: [] };
   } catch (error: any) {
     console.error('[DB_Performance] - [queryPerformanceOfAllMemberTournaments] ', error);
   }

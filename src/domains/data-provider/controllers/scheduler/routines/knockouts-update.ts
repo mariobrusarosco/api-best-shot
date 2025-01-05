@@ -34,7 +34,7 @@ export const scheduleKnockoutsUpdateRoutine = async (schedule: {
       GroupName,
       Target: {
         Arn: targetArn,
-        RoleArn: 'arn:aws:iam::905418297381:role/service-role/user-scheduler',
+        RoleArn: 'arn:aws:iam::905418297381:role/root-scheduler',
         Input: JSON.stringify(schedule.targetInput),
       },
     } satisfies CreateScheduleCommandInput;

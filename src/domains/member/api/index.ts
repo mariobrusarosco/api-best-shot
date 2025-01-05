@@ -17,7 +17,8 @@ const getMember = async (req: Request, res: Response) => {
       .from(T_Member)
       .where(eq(T_Member.id, memberId));
 
-    return res.status(200).send(member);
+    res.status(200).send(member);
+    return;
   } catch (error: any) {
     console.error('[ERROR] [getMember]', error);
     return handleInternalServerErrorResponse(res, error);
@@ -33,10 +34,12 @@ const createMember = async (req: CreateMemberRequest, res: Response) => {
 
     Utils.signUserCookieBased({ memberId: newMember.id, res });
 
-    return res.status(200).send(newMember);
+    res.status(200).send(newMember);
+    return;
   } catch (error: any) {
     console.error('[ERROR] [createMember]', error);
-    return handleInternalServerErrorResponse(res, error);
+    handleInternalServerErrorResponse(res, error);
+    return;
   }
 };
 
@@ -48,12 +51,13 @@ const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
     const memberTournaments = await DB_Performance.queryPerformanceOfAllMemberTournaments(
       memberId
     );
-    // const query = await DB_Performance.queryTournamentPerformance(memberId, tournamentId);
 
-    return res.status(200).send(memberTournaments);
+    res.status(200).send(memberTournaments);
+    return;
   } catch (error: any) {
     console.error('Error fetching matches:', error);
-    return handleInternalServerErrorResponse(res, error);
+    handleInternalServerErrorResponse(res, error);
+    return;
   }
 };
 

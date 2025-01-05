@@ -31,11 +31,11 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
       StartDate,
       State: 'ENABLED' as const,
       FlexibleTimeWindow: { Mode: 'OFF' as const },
-      ActionAfterCompletion: 'DELETE' as const,
+      ActionAfterCompletion: 'NONE' as const,
       GroupName,
       Target: {
         Arn: targetArn,
-        RoleArn: 'arn:aws:iam::905418297381:role/service-role/user-scheduler',
+        RoleArn: 'arn:aws:iam::905418297381:role/root-scheduler',
         Input: JSON.stringify(schedule.targetInput),
       },
     } satisfies CreateScheduleCommandInput;

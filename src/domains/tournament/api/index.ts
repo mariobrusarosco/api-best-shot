@@ -1,5 +1,4 @@
 import { Utils } from '@/domains/auth/utils';
-import { GuessQueries } from '@/domains/guess/queries';
 import { MatchQueries } from '@/domains/match/queries';
 import { DB_Performance } from '@/domains/performance/database';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
@@ -57,13 +56,15 @@ const getTournament = async (req: Request, res: Response) => {
     const memberId = Utils.getAuthenticatedUserId(req, res);
     const tournamentId = req?.params.tournamentId;
     const tournament = await TournamentQueries.tournament(tournamentId);
-    const onbordingCompleted = await GuessQueries.checkOnboardingStatus({
+    const onbordingCompleted = await TournamentQueries.checkOnboardingStatus({
       memberId,
       tournamentId,
     });
     const nearestMatch = await MatchQueries.nearestMatchOnDatabase({
       tournamentId,
     });
+
+    console.log({ onbordingCompleted });
 
     const starterRound = nearestMatch?.roundId || '1';
 

@@ -74,11 +74,40 @@ const knockoutRounds = async (tournamenId: string) => {
   }
 };
 
+import { T_TournamentPerformance } from '@/domains/performance/schema';
+import Profiling from '@/services/profiling';
+
+const checkOnboardingStatus = async ({
+  memberId,
+  tournamentId,
+}: {
+  memberId: string;
+  tournamentId: string;
+}) => {
+  try {
+    const [tournamentPerformance] = await db
+      .select()
+      .from(T_TournamentPerformance)
+      .where(
+        and(
+          eq(T_TournamentPerformance.tournamentId, tournamentId),
+          eq(T_TournamentPerformance.memberId, memberId)
+        )
+      );
+
+    return !!tournamentPerformance;
+  } catch (error: any) {
+    Profiling.error('checkOnboardingStatus', error);
+    return false;
+  }
+};
+
 export const TournamentQueries = {
   allTournaments,
   tournament,
   allTournamentRounds,
   knockoutRounds,
+  checkOnboardingStatus,
 };
 
 export type TournamentQuery = Awaited<ReturnType<typeof tournament>>;

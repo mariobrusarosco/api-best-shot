@@ -50,6 +50,16 @@ const updateTournament = async ({ input }: { input: CreateTournamentInput }) => 
       logo,
     });
 
+    const tournament = await TournamentQueries.tournament(updatedTournament.id!);
+    const tournamentMode = tournament?.mode;
+
+    if (
+      tournamentMode === 'knockout-only' ||
+      tournamentMode === 'regular-season-and-knockout'
+    ) {
+      await SchedulerController.createKnockoutsUpdatesRoutine(tournament);
+    }
+
     Profiling.log('[DATA PROVIDER] - [TOURNAMENT] - UPDATE', {
       tournamentId: updatedTournament.id,
       tournamentLabel: updatedTournament.label,

@@ -7,10 +7,7 @@ interface CustomRequest extends Request {
 }
 
 const decodeMemberToken = (token: string) => {
-  return jwt.verify(
-    token || '',
-    '2ab7228845df238a2c01a3364bc079f2e4030421e8ef9baaa5580f52abde2d0f'
-  );
+  return jwt.verify(token || '', process.env['JWT_SECRET'] || '');
 };
 
 const getUserCookie = (req: CustomRequest) =>
@@ -21,7 +18,7 @@ const signUserCookieBased = ({ memberId, res }: { memberId: string; res: Respons
     if (!res || !memberId || !process.env['JWT_SECRET']) return null;
 
     const token = jwt.sign({ id: memberId }, process.env['JWT_SECRET'], {
-      expiresIn: '30d',
+      expiresIn: '180d',
     });
 
     res.clearCookie(process.env['MEMBER_PUBLIC_ID_COOKIE'] || '');

@@ -8,8 +8,7 @@ import { AuthenticateMemberRequest } from '../typing';
 
 async function authenticateUser(req: AuthenticateMemberRequest, res: Response) {
   try {
-    const publicId = req.query.publicId;
-
+    const publicId = req.body.publicId;
     const [member] = await db
       .select()
       .from(T_Member)

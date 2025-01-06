@@ -64,9 +64,7 @@ const getTournament = async (req: Request, res: Response) => {
       tournamentId,
     });
 
-    console.log({ onbordingCompleted, nearestMatch });
-
-    const starterRound = nearestMatch?.roundId;
+    const starterRound = nearestMatch?.roundId ?? tournament?.rounds.at(-1)?.slug;
 
     res.status(200).send({ ...tournament, starterRound, onbordingCompleted, memberId });
     return;

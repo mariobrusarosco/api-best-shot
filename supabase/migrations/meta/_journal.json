@@ -8,6 +8,13 @@
       "when": 1735737834031,
       "tag": "0000_workable_black_cat",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1736199764512,
+      "tag": "0001_cultured_boom_boom",
+      "breakpoints": true
     }
   ]
 }

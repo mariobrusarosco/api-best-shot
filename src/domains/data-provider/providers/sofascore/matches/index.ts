@@ -40,9 +40,11 @@ export const SofascoreMatches: IApiProvider['matches'] = {
         tournamentId,
         roundSlug,
         homeTeamId: String(match.homeTeam.id),
-        homeScore: safeString(match.homeScore.current),
+        homeScore: safeString(match.homeScore.display),
+        homePenaltiesScore: safeString(match.homeScore.penalties),
         awayTeamId: String(match.awayTeam.id),
-        awayScore: safeString(match.awayScore.current),
+        awayScore: safeString(match.awayScore.display),
+        awayePenaltiesScore: safeString(match.awayScore.penalties),
         date: safeSofaDate(match.startTimestamp! * 1000),
         status: getMatchStatus(match),
       } as DB_InsertMatch;

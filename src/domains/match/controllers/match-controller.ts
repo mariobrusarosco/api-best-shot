@@ -43,6 +43,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
         home: {
           id: T_Match.homeTeamId,
           score: T_Match.homeScore,
+          penaltiesScore: T_Match.homePenaltiesScore,
           shortName: homeTeam.shortName,
           badge: homeTeam.badge,
           name: homeTeam.name,
@@ -50,6 +51,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
         away: {
           id: T_Match.awayTeamId,
           score: T_Match.awayScore,
+          penaltiesScore: T_Match.awayPenaltiesScore,
           shortName: awayTeam.shortName,
           badge: awayTeam.badge,
           name: awayTeam.name,

@@ -1,4 +1,12 @@
-import { numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  numeric,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 export const T_Tournament = pgTable(
   'tournament',
@@ -21,7 +29,11 @@ export const T_Tournament = pgTable(
   },
   table => {
     return {
-      pk: primaryKey({ columns: [table.provider, table.externalId] }),
+      pk: primaryKey({ columns: [table.id] }),
+      uniqueProviderExternalId: uniqueIndex('unique_provider_external_id').on(
+        table.provider,
+        table.externalId
+      ), // Unique constraint on composite key
     };
   }
 );

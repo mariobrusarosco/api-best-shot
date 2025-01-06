@@ -1,4 +1,13 @@
-import { numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { T_Tournament } from '@/domains/tournament/schema';
+import {
+  foreignKey,
+  numeric,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 export const T_Match = pgTable(
   'match',
@@ -9,9 +18,11 @@ export const T_Match = pgTable(
     tournamentId: uuid('tournament_id').notNull(),
     roundSlug: text('round_slug').notNull(),
     homeTeamId: text('home_team_id').notNull(),
-    awayTeamId: text('away_team_id').notNull(),
     homeScore: numeric('home_score'),
+    homePenaltiesScore: numeric('home_penalties_score'),
+    awayTeamId: text('away_team_id').notNull(),
     awayScore: numeric('away_score'),
+    awayPenaltiesScore: numeric('away_penalties_score'),
     date: timestamp('date'),
     time: text('time'),
     stadium: text('stadium'),
@@ -26,6 +37,14 @@ export const T_Match = pgTable(
   table => {
     return {
       pk: primaryKey({ columns: [table.externalId, table.provider] }),
+      fkTournament: foreignKey({
+        columns: [table.provider, table.tournamentId],
+        foreignColumns: [T_Tournament.provider, T_Tournament.externalId], // Reference the composite key
+      }),
+      indexes: {
+        statusIndex: ['status'],
+        tournamentRounds: ['tournamentId', 'roundSlug'],
+      },
     };
   }
 );

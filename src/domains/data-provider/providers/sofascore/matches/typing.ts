@@ -46,6 +46,7 @@ type API_SofaScoreMatch = {
     period1: number;
     period2: number;
     normaltime: number;
+    penalties: number;
   };
   awayScore: {
     current: number;
@@ -53,5 +54,6 @@ type API_SofaScoreMatch = {
     period1: number;
     period2: number;
     normaltime: number;
+    penalties: number;
   };
 };

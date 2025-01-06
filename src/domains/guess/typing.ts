@@ -1,4 +1,7 @@
 import { Request } from 'express';
+
+export type CreateGuessRequest = Request<{}, {}, GuessInput & { publicId: string }, {}>;
+
 export type GuessInput = {
   id: string;
   matchId: string;

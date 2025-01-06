@@ -64,13 +64,12 @@ const getTournament = async (req: Request, res: Response) => {
       tournamentId,
     });
 
-    console.log({ onbordingCompleted });
+    console.log({ onbordingCompleted, nearestMatch });
 
-    const starterRound = nearestMatch?.roundId || '1';
+    const starterRound = nearestMatch?.roundId;
 
-    return res
-      .status(200)
-      .send({ ...tournament, starterRound, onbordingCompleted, memberId });
+    res.status(200).send({ ...tournament, starterRound, onbordingCompleted, memberId });
+    return;
   } catch (error: any) {
     console.error('Error fetching matches:', error);
     return handleInternalServerErrorResponse(res, error);

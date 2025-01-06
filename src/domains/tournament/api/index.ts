@@ -41,7 +41,7 @@ const getTournamentStandings = async (req: Request, res: Response) => {
       .orderBy(sql`cast(${T_TournamentStandings.order} as integer)`);
 
     return res.status(200).send({
-      standings: query,
+      teams: query,
       format: tournament.standings,
       lastUpdated: query[0]?.updatedAt,
     });

@@ -56,7 +56,6 @@ const generateExpiredGuess = (
       value,
       points,
     },
-    fullMatch: { status, points },
     status: status,
     total: 0,
     ...options,
@@ -88,7 +87,6 @@ const generatePausedGuess = (
       value,
       points,
     },
-    fullMatch: { status, points },
     total: 0,
     status: status,
     ...options,
@@ -120,7 +118,6 @@ const generateNotStartedGuess = (
       value,
       points,
     },
-    fullMatch: { status, points },
     total: 0,
     status: status,
     ...options,
@@ -151,7 +148,6 @@ const generateWaitingForGameGuess = (
       value: toNumberOrNull(guess.awayScore),
       points,
     },
-    fullMatch: { status, points },
     total: 0,
     status,
     ...options,
@@ -165,7 +161,6 @@ const generateFinalizedGuess = (
     hasLostTimewindowToGuess: boolean;
   }
 ) => {
-  const POINTS_FOR_MATCH = 2;
   const POINTS_FOR_TEAM = 1;
   const POINTS_FOR_MISS = 0;
   const CORRECT_GUESS = GUESS_STATUSES.CORRECT;
@@ -174,7 +169,6 @@ const generateFinalizedGuess = (
     toNumberOrNull(guess.homeScore) === toNumberOrNull(match.homeScore);
   const hasGuessedAway =
     toNumberOrNull(guess.awayScore) === toNumberOrNull(match.awayScore);
-  const matchOutcome = hasGuessedMatchOutcome(guess, match);
 
   const home = {
     status: hasGuessedHome ? CORRECT_GUESS : INCORRECT_GUESS,
@@ -188,12 +182,7 @@ const generateFinalizedGuess = (
     points: hasGuessedAway ? POINTS_FOR_TEAM : POINTS_FOR_MISS,
   };
 
-  const fullMatch = {
-    status: matchOutcome ? CORRECT_GUESS : INCORRECT_GUESS,
-    points: matchOutcome ? POINTS_FOR_MATCH : POINTS_FOR_MISS,
-  };
-
-  const total = home.points + away.points + fullMatch.points;
+  const total = home.points + away.points;
 
   return {
     id: guess.id,
@@ -201,7 +190,6 @@ const generateFinalizedGuess = (
     matchDate: match.date,
     home,
     away,
-    fullMatch,
     total,
     status: GUESS_STATUSES.FINALIZED,
     ...options,
@@ -239,10 +227,6 @@ interface IGuessAnalysis {
   away: {
     status: GUESS_STATUS;
     value: number | null;
-    points: number | null;
-  };
-  fullMatch: {
-    status: GUESS_STATUS;
     points: number | null;
   };
   total: number | null;

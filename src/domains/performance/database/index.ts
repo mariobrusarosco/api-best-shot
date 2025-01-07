@@ -86,6 +86,20 @@ const queryPerformanceForTournament = async (memberId: string, tournamentId: str
     .where(and(eq(T_Guess.memberId, memberId), eq(T_Match.tournamentId, tournamentId)));
 
   const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
+  const guessesByOutcome = parsedGuesses.reduce(
+    (acc, guess) => {
+      const updateCount = (status: string) => {
+        if (status === 'correct') acc.correct++;
+        else if (status === 'incorrect') acc.incorrect++;
+      };
+
+      updateCount(guess.home.status);
+      updateCount(guess.away.status);
+
+      return acc;
+    },
+    { correct: 0, incorrect: 0 }
+  );
 
   const guessesByStatus = _.groupBy(parsedGuesses, ({ status }) => status);
   const guessesByStatusQty = (
@@ -95,6 +109,7 @@ const queryPerformanceForTournament = async (memberId: string, tournamentId: str
   return {
     details: guessesByStatusQty,
     points: GuessUtils.getTotalPoints(parsedGuesses),
+    guessesByOutcome,
   };
 };
 

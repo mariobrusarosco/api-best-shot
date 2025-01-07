@@ -56,6 +56,7 @@ const generateExpiredGuess = (
       value,
       points,
     },
+    fullMatch: { status, points, label: '' },
     status: status,
     total: 0,
     ...options,
@@ -87,6 +88,7 @@ const generatePausedGuess = (
       value,
       points,
     },
+    fullMatch: { status, points, label: '' },
     total: 0,
     status: status,
     ...options,
@@ -118,6 +120,7 @@ const generateNotStartedGuess = (
       value,
       points,
     },
+    fullMatch: { status, points, label: '' },
     total: 0,
     status: status,
     ...options,
@@ -148,6 +151,7 @@ const generateWaitingForGameGuess = (
       value: toNumberOrNull(guess.awayScore),
       points,
     },
+    fullMatch: { status, points, label: '' },
     total: 0,
     status,
     ...options,
@@ -169,6 +173,7 @@ const generateFinalizedGuess = (
     toNumberOrNull(guess.homeScore) === toNumberOrNull(match.homeScore);
   const hasGuessedAway =
     toNumberOrNull(guess.awayScore) === toNumberOrNull(match.awayScore);
+  const matchOutcome = getMatchOutcome(guess, match);
 
   const home = {
     status: hasGuessedHome ? CORRECT_GUESS : INCORRECT_GUESS,
@@ -182,7 +187,7 @@ const generateFinalizedGuess = (
     points: hasGuessedAway ? POINTS_FOR_TEAM : POINTS_FOR_MISS,
   };
 
-  const total = home.points + away.points;
+  const total = home.points + away.points + matchOutcome.points;
 
   return {
     id: guess.id,
@@ -191,12 +196,14 @@ const generateFinalizedGuess = (
     home,
     away,
     total,
+    fullMatch: matchOutcome,
     status: GUESS_STATUSES.FINALIZED,
     ...options,
   } satisfies IGuessAnalysis;
 };
 
-const hasGuessedMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
+const getMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
+  const POINTS_FOR_MATCH_OUTCOME = 3;
   let guessPrediction = null;
   let matchOutcome = null;
   const homeGuess = toNumberOrZero(guess.homeScore);
@@ -204,15 +211,22 @@ const hasGuessedMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) =>
   const awayGuess = toNumberOrZero(guess.awayScore);
   const awayMatch = toNumberOrZero(match.awayScore);
 
-  if (homeGuess > awayGuess) guessPrediction = 'HOME_WIN';
-  else if (homeGuess < homeGuess) guessPrediction = 'AWAY_WIN';
-  else guessPrediction = 'DRAW';
+  if (homeGuess > awayGuess) guessPrediction = { label: `HOME_WIN` };
+  else if (homeGuess < homeGuess) guessPrediction = { label: 'AWAY_WIN' };
+  else guessPrediction = { label: 'DRAW' };
 
-  if (homeMatch > awayMatch) matchOutcome = 'HOME_WIN';
-  else if (homeMatch < awayMatch) matchOutcome = 'AWAY_WIN';
-  else matchOutcome = 'DRAW';
+  if (homeMatch > awayMatch) matchOutcome = { label: `HOME_WIN` };
+  else if (homeMatch < awayMatch) matchOutcome = { label: 'AWAY_WIN' };
+  else matchOutcome = { label: 'DRAW' };
 
-  return guessPrediction === matchOutcome;
+  return {
+    label: matchOutcome.label,
+    points: guessPrediction.label === matchOutcome.label ? POINTS_FOR_MATCH_OUTCOME : 0,
+    status:
+      guessPrediction.label === matchOutcome.label
+        ? GUESS_STATUSES.CORRECT
+        : GUESS_STATUSES.INCORRECT,
+  };
 };
 
 interface IGuessAnalysis {
@@ -227,6 +241,11 @@ interface IGuessAnalysis {
   away: {
     status: GUESS_STATUS;
     value: number | null;
+    points: number | null;
+  };
+  fullMatch: {
+    status: GUESS_STATUS;
+    label: string;
     points: number | null;
   };
   total: number | null;

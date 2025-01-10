@@ -1,0 +1,1 @@
+ALTER TABLE "guess" ADD COLUMN "active" boolean DEFAULT true NOT NULL;

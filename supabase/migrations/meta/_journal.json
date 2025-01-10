@@ -15,6 +15,20 @@
       "when": 1736199764512,
       "tag": "0001_cultured_boom_boom",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1736550614636,
+      "tag": "0002_adorable_stephen_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1736551084543,
+      "tag": "0003_old_gideon",
+      "breakpoints": true
     }
   ]
 }

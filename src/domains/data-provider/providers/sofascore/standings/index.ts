@@ -47,7 +47,7 @@ export const SofascoreStandings: IApiProvider['standings'] = {
 
     if (tournamentStandingsMode === 'multi-group') {
       const groups = data.standings.map(groupOfTeams => ({
-        name: groupOfTeams.tournament.groupName,
+        name: groupOfTeams.tournament.name,
         teams: groupOfTeams.rows,
       }));
       standings = groups

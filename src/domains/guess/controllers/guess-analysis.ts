@@ -15,6 +15,8 @@ export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) =
     .utc()
     .isSameOrAfter(dayjs.utc(match.date).toDate());
 
+  console.log({ match });
+
   const guessPaused = match.status === 'not-defined';
   const guessExpired = hasNullGuesses && hasLostTimewindowToGuess;
   const notStartedGuess = match.status === 'open' && hasNullGuesses;

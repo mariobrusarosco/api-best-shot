@@ -44,7 +44,7 @@ export const SofascoreMatches: IApiProvider['matches'] = {
         homePenaltiesScore: safeString(match.homeScore.penalties),
         awayTeamId: String(match.awayTeam.id),
         awayScore: safeString(match.awayScore.display),
-        awayePenaltiesScore: safeString(match.awayScore.penalties),
+        awayPenaltiesScore: safeString(match.awayScore.penalties),
         date: safeSofaDate(match.startTimestamp! * 1000),
         status: getMatchStatus(match),
       } as DB_InsertMatch;
@@ -53,8 +53,8 @@ export const SofascoreMatches: IApiProvider['matches'] = {
 };
 
 const getMatchStatus = (match: API_SofaScoreRound['events'][number]) => {
-  const matchWasPostponed = match.status.code === 60;
-  const matcheEnded = match.status.code === 100;
+  const matchWasPostponed = match.status.type === 'postponed';
+  const matcheEnded = match.status.type === 'finished';
 
   if (matchWasPostponed) return 'not-defined';
   if (matcheEnded) return 'ended';

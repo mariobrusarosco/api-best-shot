@@ -93,8 +93,7 @@ const queryPerformanceForTournament = async (memberId: string, tournamentId: str
         else if (status === 'incorrect') acc.incorrect++;
       };
 
-      updateCount(guess.home.status);
-      updateCount(guess.away.status);
+      updateCount(guess.fullMatch.status);
 
       return acc;
     },

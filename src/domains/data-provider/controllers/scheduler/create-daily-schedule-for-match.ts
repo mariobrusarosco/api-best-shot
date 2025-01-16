@@ -65,5 +65,5 @@ const buildSchedule = (
 };
 
 const getEstimatedEndOfMatch = (date: Date | null) => {
-  return dayjs(date).utc().add(2, 'hours');
+  return dayjs(date).utc().add(2, 'hours').add(30, 'minutes');
 };

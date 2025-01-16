@@ -39,7 +39,6 @@ export type API_SofaScoreStandings = {
       };
       priority: number;
       isGroup: boolean;
-      groupName: string;
       isLive: boolean;
       id: number;
     };

@@ -15,7 +15,6 @@ export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) =
     .utc()
     .isSameOrAfter(dayjs.utc(match.date).toDate());
 
-  console.log({ match });
 
   const guessPaused = match.status === 'not-defined';
   const guessExpired = hasNullGuesses && hasLostTimewindowToGuess;
@@ -167,7 +166,7 @@ const generateFinalizedGuess = (
     hasLostTimewindowToGuess: boolean;
   }
 ) => {
-  const POINTS_FOR_TEAM = 1;
+  const POINTS_FOR_TEAM = 0;
   const POINTS_FOR_MISS = 0;
   const CORRECT_GUESS = GUESS_STATUSES.CORRECT;
   const INCORRECT_GUESS = GUESS_STATUSES.INCORRECT;
@@ -214,12 +213,18 @@ const getMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const awayMatch = toNumberOrZero(match.awayScore);
 
   if (homeGuess > awayGuess) guessPrediction = { label: `HOME_WIN` };
-  else if (homeGuess < homeGuess) guessPrediction = { label: 'AWAY_WIN' };
+  else if (homeGuess < awayGuess) guessPrediction = { label: 'AWAY_WIN' };
   else guessPrediction = { label: 'DRAW' };
 
   if (homeMatch > awayMatch) matchOutcome = { label: `HOME_WIN` };
   else if (homeMatch < awayMatch) matchOutcome = { label: 'AWAY_WIN' };
   else matchOutcome = { label: 'DRAW' };
+
+
+  console.log({ homeGuess, homeMatch, awayGuess, awayMatch, matchOutcome, guessPrediction },  guessPrediction.label === matchOutcome.label
+    ? GUESS_STATUSES.CORRECT
+    : GUESS_STATUSES.INCORRECT,);
+
 
   return {
     label: matchOutcome.label,

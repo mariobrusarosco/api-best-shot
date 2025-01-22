@@ -9,11 +9,8 @@ import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { type Request, Response } from 'express';
-import {
-  DB_InsertTournamentPerformance,
-  T_LeaguePerformance,
-  T_TournamentPerformance,
-} from '../schema';
+import { DB_Performance } from '../database';
+import { T_LeaguePerformance, T_TournamentPerformance } from '../schema';
 
 const getLeaguePerformance = async (req: Request, res: Response) => {
   try {
@@ -152,6 +149,12 @@ const getTournamentPerformance = async (req: Request, res: Response) => {
     const memberId = Utils.getAuthenticatedUserId(req, res);
     const { tournamentId } = req?.params as { tournamentId: string };
 
+    await DB_Performance.updateTournamentPerformanceOnDatabase(
+      memberId,
+      tournamentId,
+      await queryMemberTournamentGuesses(memberId, tournamentId)
+    );
+
     const guesses = await getMatchGuessesForTournament(tournamentId, memberId);
     const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
     const [performance] = await db
@@ -185,7 +188,7 @@ const updateTournamentPerformance = async (req: Request, res: Response) => {
     // QUery
     const parsedGuesses = await queryMemberTournamentGuesses(memberId, tournamentId);
     // Update
-    const updated = await updateTournamentPerformanceOnDatabase(
+    const updated = await DB_Performance.updateTournamentPerformanceOnDatabase(
       memberId,
       tournamentId,
       parsedGuesses
@@ -218,7 +221,10 @@ const queryLeagueTournamentGuesses = async (tournamentId: string) => {
   return guesses.map(row => runGuessAnalysis(row.guess, row.match));
 };
 
-const queryMemberTournamentGuesses = async (memberId: string, tournamentId: string) => {
+export const queryMemberTournamentGuesses = async (
+  memberId: string,
+  tournamentId: string
+) => {
   const guesses = await db
     .select()
     .from(T_Guess)
@@ -259,7 +265,7 @@ export const updateLeagueTournamentsForMember = async (
       performance.tournamentId
     );
     // Update
-    const [updated] = await updateTournamentPerformanceOnDatabase(
+    const [updated] = await DB_Performance.updateTournamentPerformanceOnDatabase(
       performance.memberId,
       performance.tournamentId,
       parsedGuesses
@@ -284,7 +290,7 @@ export const updateTournamentsForMember = async (
     console.log('parsedGuesses --------- ', memberId, tournament.id);
 
     // Update
-    const [updated] = await updateTournamentPerformanceOnDatabase(
+    const [updated] = await DB_Performance.updateTournamentPerformanceOnDatabase(
       memberId,
       tournament.id,
       parsedGuesses
@@ -311,7 +317,7 @@ export const updateAllTournamentsForMember = async (memberId: string) => {
       performance.tournamentId
     );
     // Update
-    const [updated] = await updateTournamentPerformanceOnDatabase(
+    const [updated] = await DB_Performance.updateTournamentPerformanceOnDatabase(
       performance.memberId,
       performance.tournamentId,
       parsedGuesses
@@ -324,31 +330,6 @@ export const updateAllTournamentsForMember = async (memberId: string) => {
 
   // console.log('RESULT --------- ', updateResult);
   return updateResult;
-};
-
-const updateTournamentPerformanceOnDatabase = async (
-  memberId: string,
-  tournamentId: string,
-  parsedGuesses: Awaited<ReturnType<typeof queryMemberTournamentGuesses>>
-) => {
-  const insertValues: DB_InsertTournamentPerformance = {
-    tournamentId,
-    memberId,
-    points: String(getTotalPoints(parsedGuesses)),
-  };
-
-  console.log('updateTournamentPerformanceOnDatabase -----------', parsedGuesses);
-
-  return await db
-    .update(T_TournamentPerformance)
-    .set(insertValues)
-    .where(
-      and(
-        eq(T_TournamentPerformance.tournamentId, tournamentId),
-        eq(T_TournamentPerformance.memberId, memberId)
-      )
-    )
-    .returning();
 };
 
 export const updateAllLeaguesForMember = async (memberId: string) => {

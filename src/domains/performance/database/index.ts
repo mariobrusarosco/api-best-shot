@@ -5,6 +5,8 @@ import { T_Match } from '@/domains/match/schema';
 import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
 import _ from 'lodash';
+import { queryMemberTournamentGuesses } from '../controller';
+import { DB_InsertTournamentPerformance, T_TournamentPerformance } from '../schema';
 
 const queryPerformanceOfAllMemberTournaments = async (memberId: string) => {
   try {
@@ -112,7 +114,33 @@ const queryPerformanceForTournament = async (memberId: string, tournamentId: str
   };
 };
 
+const updateTournamentPerformanceOnDatabase = async (
+  memberId: string,
+  tournamentId: string,
+  parsedGuesses: Awaited<ReturnType<typeof queryMemberTournamentGuesses>>
+) => {
+  const insertValues: DB_InsertTournamentPerformance = {
+    tournamentId,
+    memberId,
+    points: String(GuessUtils.getTotalPoints(parsedGuesses)),
+  };
+
+  console.log('updateTournamentPerformanceOnDatabase -----------', parsedGuesses);
+
+  return await db
+    .update(T_TournamentPerformance)
+    .set(insertValues)
+    .where(
+      and(
+        eq(T_TournamentPerformance.tournamentId, tournamentId),
+        eq(T_TournamentPerformance.memberId, memberId)
+      )
+    )
+    .returning();
+};
+
 export const DB_Performance = {
   queryPerformanceForTournament,
   queryPerformanceOfAllMemberTournaments,
+  updateTournamentPerformanceOnDatabase,
 };

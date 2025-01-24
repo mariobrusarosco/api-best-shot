@@ -1,13 +1,13 @@
-import type { Express } from 'express';
 import express from 'express';
 import { API_Dashboard } from '../api';
+import ApplicationRouter from '@/router';
 
-const DashboardRouting = (app: Express) => {
-  const dashboardRouter = express.Router();
+const RouterV1 = express.Router();
+RouterV1.get('/', API_Dashboard.getDashboard);
 
-  dashboardRouter.get('/', API_Dashboard.getDashboard);
+const RouterV2 = express.Router();
+RouterV2.get('/', API_Dashboard.getDashboard);
 
-  app.use(`${process.env.API_VERSION}/dashboard`, dashboardRouter);
-};
 
-export default DashboardRouting;
+ApplicationRouter.register("api/v1/dashboard", RouterV1)
+ApplicationRouter.register("api/v2/dashboard", RouterV2);

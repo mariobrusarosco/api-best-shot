@@ -1,13 +1,13 @@
 import express from 'express'
-import type { Express } from 'express'
+import ApplicationRouter from '@/router'
 import ScoreController from '../controllers/score-controllers'
 
-const ScoreRouting = (app: Express) => {
-  const scoreRouter = express.Router()
+const RouterV1 = express.Router()
+RouterV1.get('/league/:leagueId', ScoreController.getLeagueScore)
 
-  scoreRouter.get('/league/:leagueId', ScoreController.getLeagueScore)
+ApplicationRouter.register("api/v1/scores", RouterV1)
 
-  app.use(`${process.env.API_VERSION}/scores`, scoreRouter)
-}
+const RouterV2 = express.Router()
+RouterV2.get('/league/:leagueId', ScoreController.getLeagueScore)
 
-export default ScoreRouting
+ApplicationRouter.register("api/v2/scores", RouterV2)

@@ -1,11 +1,13 @@
-import { AuthMiddleware } from '@/domains/auth/middleware';
-import type { Express } from 'express';
 import express from 'express';
+import ApplicationRouter from '@/router';
+import { AuthMiddleware } from '@/domains/auth/middleware';
 
-const MatchRouting = (app: Express) => {
-  const mactchRouter = express.Router();
+const RouterV1 = express.Router();
+RouterV1.use(AuthMiddleware);
 
-  app.use(`${process.env.API_VERSION}/match`, AuthMiddleware, mactchRouter);
-};
+ApplicationRouter.register("api/v1/match", RouterV1);
 
-export default MatchRouting;
+const RouterV2 = express.Router();
+RouterV2.use(AuthMiddleware);
+
+ApplicationRouter.register("api/v2/match", RouterV2);

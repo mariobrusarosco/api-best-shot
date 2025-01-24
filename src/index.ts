@@ -6,19 +6,11 @@ import './services/profiling/sentry-instrument';
 
 import express from 'express';
 import logger from './middlewares/logger';
+import ApplicationRouter from './router';
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-import AuthRouting from './domains/auth/routes';
-import DashboardRouting from './domains/dashboard/routes';
-import DataProviderRouting from './domains/data-provider/routes';
-import GuessRouting from './domains/guess/routes';
-import LeagueRouting from './domains/league/routes';
-import MatchRouting from './domains/match/routes';
-import MemberRouting from './domains/member/routes';
-import ScoreRouting from './domains/score/routes';
 import accessControl from './domains/shared/middlewares/access-control';
-import TournamentRouting from './domains/tournament/routes';
 
 const PORT = process.env.PORT || 9090;
 
@@ -40,19 +32,10 @@ app.options('*', cors(corsConfig));
 app.use(logger);
 app.use(accessControl);
 
-TournamentRouting(app);
-AuthRouting(app);
-LeagueRouting(app);
-GuessRouting(app);
-ScoreRouting(app);
-MatchRouting(app);
-DataProviderRouting(app);
-MemberRouting(app);
-DashboardRouting(app);
-
-Sentry.setupExpressErrorHandler(app);
-
 async function startServer() {
+  // Initialize router with auto-loading of routes
+  await ApplicationRouter.init(app);
+  
   app.listen(PORT, () =>
     console.log(`Listening on port ${PORT} --- API_VERSION: ${process.env.API_VERSION}`)
   );

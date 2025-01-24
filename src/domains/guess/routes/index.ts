@@ -1,15 +1,16 @@
-import { AuthMiddleware } from '@/domains/auth/middleware';
-import type { Express } from 'express';
 import express from 'express';
+import ApplicationRouter from '@/router';
+import { AuthMiddleware } from '@/domains/auth/middleware';
 import GuessController from '../controllers/guess-controllers';
 
-const GuessRouting = (app: Express) => {
-  const guessRouter = express.Router();
+const RouterV1 = express.Router();
+RouterV1.use(AuthMiddleware);
+RouterV1.post('/', GuessController.createGuess);
 
-  guessRouter.post('/', GuessController.createGuess);
-  // guessRouter.get('/', API_Guess.getMemberGuesses);
+ApplicationRouter.register("api/v1/guess", RouterV1);
 
-  app.use(`${process.env.API_VERSION}/guess`, AuthMiddleware, guessRouter);
-};
+const RouterV2 = express.Router();
+RouterV2.use(AuthMiddleware);
+RouterV2.post('/', GuessController.createGuess);
 
-export default GuessRouting;
+ApplicationRouter.register("api/v2/guess", RouterV2);

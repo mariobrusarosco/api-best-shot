@@ -1,26 +1,29 @@
+import express from 'express';
+import ApplicationRouter from '@/router';
 import { AuthMiddleware } from '@/domains/auth/middleware';
 import { PerformanceController } from '@/domains/performance/controller';
-import type { Express } from 'express';
-import express from 'express';
 import LeagueController from '../controllers/league-controller';
 
-const LeagueRouting = (app: Express) => {
-  const leagueRouter = express.Router();
+const RouterV1 = express.Router();
+RouterV1.use(AuthMiddleware);
+RouterV1.post('/', LeagueController.createLeague);
+RouterV1.get('/', LeagueController.getLeagues);
+RouterV1.post('/invitation', LeagueController.inviteToLeague);
+RouterV1.get('/:leagueId', LeagueController.getLeague);
+RouterV1.patch('/:leagueId/tournaments', LeagueController.updateLeagueTournaments);
+RouterV1.get('/:leagueId/performance', PerformanceController.getLeaguePerformance);
+RouterV1.patch('/:leagueId/performance', PerformanceController.updateLeaguePerformance);
 
-  leagueRouter.post('/', LeagueController.createLeague);
-  leagueRouter.get('/', LeagueController.getLeagues);
-  leagueRouter.post('/invitation', LeagueController.inviteToLeague);
+ApplicationRouter.register("api/v1/leagues", RouterV1);
 
-  leagueRouter.get('/:leagueId', LeagueController.getLeague);
-  leagueRouter.patch('/:leagueId/tournaments', LeagueController.updateLeagueTournaments);
+const RouterV2 = express.Router();
+RouterV2.use(AuthMiddleware);
+RouterV2.post('/', LeagueController.createLeague);
+RouterV2.get('/', LeagueController.getLeagues);
+RouterV2.post('/invitation', LeagueController.inviteToLeague);
+RouterV2.get('/:leagueId', LeagueController.getLeague);
+RouterV2.patch('/:leagueId/tournaments', LeagueController.updateLeagueTournaments);
+RouterV2.get('/:leagueId/performance', PerformanceController.getLeaguePerformance);
+RouterV2.patch('/:leagueId/performance', PerformanceController.updateLeaguePerformance);
 
-  leagueRouter.get('/:leagueId/performance', PerformanceController.getLeaguePerformance);
-  leagueRouter.patch(
-    '/:leagueId/performance',
-    PerformanceController.updateLeaguePerformance
-  );
-
-  app.use(`${process.env.API_VERSION}/leagues`, AuthMiddleware, leagueRouter);
-};
-
-export default LeagueRouting;
+ApplicationRouter.register("api/v2/leagues", RouterV2);

@@ -61,3 +61,6 @@ export const MatchQueries = {
   currentDayMatchesOnDatabase,
   nearestMatchOnDatabase,
 };
+
+export const QUERIES_MATCH = {
+};

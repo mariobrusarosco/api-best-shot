@@ -65,3 +65,6 @@ export const TournamentRoundsQueries = {
   getKnockoutRounds,
   getAllRounds,
 };
+
+export const QUERIES_TOURNAMENT_ROUND = {
+};

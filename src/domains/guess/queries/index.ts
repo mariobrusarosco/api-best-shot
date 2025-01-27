@@ -22,3 +22,6 @@ const selectMemberGuessesForTournament = async (memberId: string, tournamentId: 
 export const QUERIES_Guess = {
     selectMemberGuessesForTournament,
 };
+
+export const QUERIES_GUESS = {
+};

@@ -1,6 +1,7 @@
 import { Utils } from '@/domains/auth/utils';
 import { MatchQueries } from '@/domains/match/queries';
 import { DB_Performance } from '@/domains/performance/database';
+import { SERVICES_Performance } from '@/domains/performance/services';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { TournamentQueries } from '@/domains/tournament/queries';
 import { T_TournamentStandings } from '@/domains/tournament/schema';
@@ -8,7 +9,7 @@ import db from '@/services/database';
 import { eq, sql } from 'drizzle-orm';
 import { Request, Response } from 'express';
 
-const getTournamentPerformanceForMember = async (req: Request, res: Response) => {
+const getTournamentPerformanceForMemberOld = async (req: Request, res: Response) => {
   try {
     const tournamentId = req?.params.tournamentId;
     const memberId = Utils.getAuthenticatedUserId(req, res);
@@ -84,10 +85,20 @@ const getAllTournaments = async (_: Request, res: Response) => {
     return handleInternalServerErrorResponse(res, error);
   }
 };
+const getTournamentPerformanceForMember = async (req: Request, res: Response) => {
+  const tournamentId = req?.params.tournamentId;
+  const memberId = Utils.getAuthenticatedUserId(req, res);
 
-export const API_Tournament = {
-  getTournamentPerformanceForMember,
+  const performance = await SERVICES_Performance.getMemberTournamentPerformanceV2(memberId, tournamentId);
+  
+  return res.status(200).send(performance);
+};
+
+export const API_TOURNAMENT = {
+  getTournamentPerformanceForMemberOld,
   getTournamentStandings,
   getTournament,
   getAllTournaments,
+  getTournamentPerformanceForMember,
 };
+

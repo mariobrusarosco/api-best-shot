@@ -111,3 +111,6 @@ export const TournamentQueries = {
 };
 
 export type TournamentQuery = Awaited<ReturnType<typeof tournament>>;
+
+export const QUERIES_Tournament = {
+};

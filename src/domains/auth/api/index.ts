@@ -13,6 +13,6 @@ const unauthenticateUser = async (req: Request, res: Response) => {
   }
 };
 
-export const API_Auth = {
+export const API_AUTH = {
   unauthenticateUser,
 };

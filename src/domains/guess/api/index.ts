@@ -21,6 +21,6 @@ const getMemberGuesses = async (req: MemberGuessesRequest, res: Response) => {
   }
 };
 
-export const API_Guess = {
+export const API_GUESS = {
   getMemberGuesses,
 };

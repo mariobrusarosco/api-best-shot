@@ -61,7 +61,7 @@ const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
   }
 };
 
-export const API_Member = {
+export const API_MEMBER = {
   getGeneralTournamentPerformance,
   getMember,
   createMember,

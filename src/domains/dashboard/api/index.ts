@@ -13,6 +13,6 @@ const getDashboard = async (req: Request, res: Response) => {
   }
 };
 
-export const API_Dashboard = {
+export const API_DASHBOARD = {
   getDashboard,
 };

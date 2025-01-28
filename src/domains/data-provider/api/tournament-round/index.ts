@@ -61,7 +61,7 @@ const knockoutRoundsUpdate = async (req: TournamentRoundRequest, res: Response) 
   }
 };
 
-export const API_TournamentRounds = {
+export const API_TOURNAMENT_ROUNDS = {
   createRounds,
   updateRounds,
   knockoutRoundsUpdate,

@@ -1,17 +1,17 @@
 import { CreateTournamentInput } from '@/domains/data-provider/api/tournament/typing';
-import { API_Sofascore } from '@/domains/data-provider/providers/sofascore';
+import { API_SOFASCORE } from '@/domains/data-provider/providers/sofascore';
 import { TournamentQueries } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { SchedulerController } from '../scheduler';
 
 const createTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
-    const logo = await API_Sofascore.tournament.fetchAndStoreLogo({
+    const logo = await API_SOFASCORE.tournament.fetchAndStoreLogo({
       logoPngBase64: input.logoPngBase64,
       logoUrl: input.logoUrl,
       filename: `tournament-${input.provider}-${input.externalId}`,
     });
-    const queryResult = await API_Sofascore.tournament.createOnDatabase({
+    const queryResult = await API_SOFASCORE.tournament.createOnDatabase({
       ...input,
       logo,
     });
@@ -40,12 +40,12 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
 
 const updateTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
-    const logo = await API_Sofascore.tournament.fetchAndStoreLogo({
+    const logo = await API_SOFASCORE.tournament.fetchAndStoreLogo({
       logoPngBase64: input.logoPngBase64,
       logoUrl: input.logoUrl,
       filename: `tournament-${input.provider}-${input.externalId}`,
     });
-    const updatedTournament = await API_Sofascore.tournament.updateOnDatabase({
+    const updatedTournament = await API_SOFASCORE.tournament.updateOnDatabase({
       ...input,
       logo,
     });

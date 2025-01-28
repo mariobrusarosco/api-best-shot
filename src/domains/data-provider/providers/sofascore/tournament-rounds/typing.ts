@@ -1,6 +1,8 @@
 // Endpoint example: https://api.sofascore.com/api/v1/unique-tournament/16/season/325/rounds
 
-export type API_SofaScoreRounds = {
+import { API_SOFASCORE_MATCH } from "../matches/typing";
+
+export interface API_SOFASCORE_ROUNDS {
   currentRound: {
     round: number;
   };
@@ -10,11 +12,11 @@ export type API_SofaScoreRounds = {
     slug?: string;
     prefix?: string;
   }[];
-};
+}
 
 // Endpoint example: https://api.sofascore.com/api/v1/unique-tournament/16/season/325/rounds/1
 
-export type API_SofaScoreRound = {
-  events: API_SofaScoreMatch[];
+export interface API_SOFASCORE_ROUND {
+  events: API_SOFASCORE_MATCH[];
   hasPreviousPage: boolean;
-};
+}

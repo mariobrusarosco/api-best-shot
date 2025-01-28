@@ -1,4 +1,4 @@
-export type API_SofaScoreStandings = {
+export interface API_SOFASCORE_STANDINGS {
   standings: {
     tournament: {
       name: string;
@@ -49,13 +49,13 @@ export type API_SofaScoreStandings = {
       text: string;
       id: number;
     };
-    rows: API_SofascoreStandingTeam[];
+    rows: API_SOFASCORE_STANDING_TEAM[];
     id: number;
     updatedAtTimestamp: number;
   }[];
-};
+}
 
-export type API_SofascoreStandingTeam = {
+export interface API_SOFASCORE_STANDING_TEAM {
   team: {
     name: string;
     slug: string;
@@ -99,4 +99,4 @@ export type API_SofascoreStandingTeam = {
   draws: number;
   points: number;
   scoreDiffFormatted: string;
-};
+}

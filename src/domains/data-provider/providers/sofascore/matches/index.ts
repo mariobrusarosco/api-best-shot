@@ -1,4 +1,4 @@
-import { API_SofaScoreRound } from '@/domains/data-provider/providers/sofascore/tournament-rounds/typing';
+import { API_SOFASCORE_ROUND } from '@/domains/data-provider/providers/sofascore/tournament-rounds/typing';
 import { IApiProvider } from '@/domains/data-provider/typing';
 import { DB_InsertMatch, T_Match } from '@/domains/match/schema';
 import db from '@/services/database';
@@ -52,7 +52,7 @@ export const SofascoreMatches: IApiProvider['matches'] = {
   },
 };
 
-const getMatchStatus = (match: API_SofaScoreRound['events'][number]) => {
+const getMatchStatus = (match: API_SOFASCORE_ROUND['events'][number]) => {
   const matchWasPostponed = match.status.type === 'postponed';
   const matcheEnded = match.status.type === 'finished';
 

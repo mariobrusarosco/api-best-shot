@@ -1,4 +1,4 @@
-type API_SofaScoreMatch = {
+export interface API_SOFASCORE_MATCH {
   id: number;
   slug: string;
   roundInfo: {
@@ -56,4 +56,4 @@ type API_SofaScoreMatch = {
     normaltime: number;
     penalties: number;
   };
-};
+}

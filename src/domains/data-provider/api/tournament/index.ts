@@ -65,7 +65,7 @@ const update = async (req: TournamentRequest, res: Response) => {
   }
 };
 
-export const API_Tournament = {
+export const API_TOURNAMENT = {
   setup,
   update,
 };

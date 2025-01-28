@@ -46,7 +46,7 @@ const updateStandings = async (req: any, res: Response) => {
   }
 };
 
-export const API_Standings = {
+export const API_STANDINGS = {
   createStandings,
   updateStandings,
 };

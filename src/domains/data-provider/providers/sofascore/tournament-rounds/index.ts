@@ -1,4 +1,4 @@
-import { API_SofaScoreRounds } from '@/domains/data-provider/providers/sofascore/tournament-rounds/typing';
+import { API_SOFASCORE_ROUNDS } from './typing';
 import { IApiProvider } from '@/domains/data-provider/typing';
 import { DB_InsertTournamentRound, T_TournamentRound } from '@/domains/tournament/schema';
 import db from '@/services/database';
@@ -60,7 +60,7 @@ export const SofascoreTournamentRound: IApiProvider['rounds'] = {
 };
 
 const buildTournamentRound = (
-  round: API_SofaScoreRounds['rounds'][number],
+  round: API_SOFASCORE_ROUNDS['rounds'][number],
   roundOrder: number,
   tournamentId: string,
   tournamentBaseUrl: string

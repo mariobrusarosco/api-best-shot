@@ -46,7 +46,7 @@ const updateTeams = async (req: any, res: Response) => {
   }
 };
 
-export const API_Teams = {
+export const API_TEAMS = {
   createTeams,
   updateTeams,
 };

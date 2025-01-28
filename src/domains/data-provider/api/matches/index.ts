@@ -71,7 +71,7 @@ const updateMatchesForRound = async (req: MatchesForRoundRequest, res: Response)
   }
 };
 
-export const API_Matches = {
+export const API_MATCHES = {
   createMatches,
   updateMatchesForRound,
   updateMatches,

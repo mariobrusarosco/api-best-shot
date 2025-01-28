@@ -17,6 +17,6 @@ const dailyRoutine = async (req: Request, res: Response) => {
   }
 };
 
-export const API_Scheduler = {
+export const API_SCHEDULER = {
   dailyRoutine,
 };

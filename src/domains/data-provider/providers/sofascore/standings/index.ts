@@ -5,7 +5,8 @@ import {
 } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import axios, { AxiosError } from 'axios';
-import { API_SofaScoreStandings, API_SofascoreStandingTeam } from './typing';
+import { API_SOFASCORE_STANDINGS, API_SOFASCORE_STANDING_TEAM } from './typing';
+import { DB_InsertTeam } from '@/domains/team/schema';
 
 export const SofascoreStandings: IApiProvider['standings'] = {
   fetchStandingsFromProvider: async (baseUrl: string) => {
@@ -14,7 +15,7 @@ export const SofascoreStandings: IApiProvider['standings'] = {
       console.log(`[LOG] - [START] - FETCHING STANDINGS - AT: ${url}`);
 
       const response = await axios.get(url);
-      const data = response.data as API_SofaScoreStandings;
+      const data = response.data as API_SOFASCORE_STANDINGS;
 
       return data;
     } catch (error: unknown) {
@@ -30,7 +31,7 @@ export const SofascoreStandings: IApiProvider['standings'] = {
     }
   },
   mapStandings: async (
-    data: API_SofaScoreStandings,
+    data: API_SOFASCORE_STANDINGS,
     tournamentId,
     tournamentStandingsMode
   ) => {
@@ -85,7 +86,7 @@ export const SofascoreStandings: IApiProvider['standings'] = {
 };
 
 const mapTeamStandings = (
-  team: API_SofascoreStandingTeam,
+  team: API_SOFASCORE_STANDING_TEAM,
   tournamentId: string,
   groupName?: string
 ) => {
@@ -107,3 +108,4 @@ const mapTeamStandings = (
     provider: 'sofa',
   } satisfies DB_InsertTournamentStandings;
 };
+

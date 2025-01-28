@@ -3,7 +3,7 @@ import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
 
 import { T_Match } from '@/domains/match/schema';
-import { DB_Performance } from '@/domains/performance/database';
+import { DB_PERFORMANCE } from '@/domains/performance/database';
 import { T_TournamentPerformance } from '@/domains/performance/schema';
 import { T_Tournament } from '@/domains/tournament/schema';
 import { and, eq } from 'drizzle-orm';
@@ -16,7 +16,7 @@ const getTournamentPerformanceForMember = async (req: Request, res: Response) =>
     const tournamentId = req?.params.tournamentId;
     const memberId = Utils.getAuthenticatedUserId(req, res);
 
-    const query = await DB_Performance.queryPerformanceForTournament(
+    const query = await DB_PERFORMANCE.queryPerformanceForTournament(
       memberId,
       tournamentId
     );

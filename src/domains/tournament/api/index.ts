@@ -1,6 +1,6 @@
 import { Utils } from '@/domains/auth/utils';
 import { MatchQueries } from '@/domains/match/queries';
-import { DB_Performance } from '@/domains/performance/database';
+import { DB_PERFORMANCE } from '@/domains/performance/database';
 import { SERVICES_Performance } from '@/domains/performance/services';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { TournamentQueries } from '@/domains/tournament/queries';
@@ -14,7 +14,7 @@ const getTournamentPerformanceForMemberOld = async (req: Request, res: Response)
     const tournamentId = req?.params.tournamentId;
     const memberId = Utils.getAuthenticatedUserId(req, res);
 
-    const query = await DB_Performance.queryPerformanceForTournament(
+    const query = await DB_PERFORMANCE.queryPerformanceForTournament(
       memberId,
       tournamentId
     );

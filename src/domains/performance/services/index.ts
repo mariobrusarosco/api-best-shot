@@ -1,8 +1,9 @@
 import { DB_SelectGuess } from "@/domains/guess/schema";
 import { DB_SelectMatch } from "@/domains/match/schema";
 import { QUERIES_Guess } from "@/domains/guess/queries";
-import { QUERIES_Performance } from "../queries";
+import { QUERIES_PERFORMANCE } from "../queries";
 import { runGuessAnalysis } from "@/domains/guess/controllers/guess-analysis";
+import _ from 'lodash';
 
 interface GuessWithMatch {
     guess: DB_SelectGuess;
@@ -20,7 +21,7 @@ const updateMemberGuessesForTournament = async (memberId: string, tournamentId: 
     
     const points = calculatePoints(memberGuesses);
    
-    await QUERIES_Performance.upsertMemberTournamentPerformance(memberId, tournamentId, points);
+    await QUERIES_PERFORMANCE.upsertMemberTournamentPerformance(memberId, tournamentId, points);
     return memberGuesses;
 }
 
@@ -42,3 +43,26 @@ export const SERVICES_Performance = {
     updateMemberGuessesForTournament,
     getMemberTournamentPerformanceV2  // New V2 endpoint
 };
+
+const getMemberBestAndWorstTournamentPerformance = async (memberId: string) => {
+    const tournamentPerformance = await QUERIES_PERFORMANCE.queryPerformanceOfAllMemberTournaments(memberId);
+    if (!tournamentPerformance.length) {
+        return { worstPerformance: null, bestPerformance: null };
+    }
+
+    const mapped = tournamentPerformance.map(row => ({
+        points: Number(row.tournament_performance.points),
+        label: row.tournament.label,
+        id: row.tournament.id,
+        logo: row.tournament.logo,
+    }));
+    
+    const worstPerformance = _.minBy(mapped, p => Number(p.points));    
+    const bestPerformance = _.maxBy(mapped, p => Number(p.points));
+    
+    return { tournaments: { worstPerformance, bestPerformance } };
+};
+
+export const SERVICES_PERFORMANCE = {
+    getMemberBestAndWorstTournamentPerformance
+};  

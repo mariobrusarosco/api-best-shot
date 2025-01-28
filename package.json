@@ -3,7 +3,7 @@
   "version": "7.0.0",
   "description": "API - Best Shot",
   "scripts": {
-    "dev": "ts-node-dev -r tsconfig-paths/register ./src/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register ./src/index.ts",
     "dev-demo": "ENV_PATH=.env.demo ts-node-dev -r tsconfig-paths/register ./src/index.ts",
     "build-demo": "rimraf ./dist && tsc && tsc-alias",
     "dev-prod": "ENV_PATH=.env.production ts-node-dev -r tsconfig-paths/register ./src/index.ts",

@@ -1,5 +1,4 @@
 import { Utils } from '@/domains/auth/utils';
-import { DB_Performance } from '@/domains/performance/database';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import db from '@/services/database';
 import { eq } from 'drizzle-orm';
@@ -7,6 +6,8 @@ import { Request, Response } from 'express';
 import { MemberController } from '../controllers/member-controller';
 import { T_Member } from '../schema';
 import { CreateMemberRequest } from './typing';
+import { SERVICES_PERFORMANCE } from '@/domains/performance/services';
+import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
 
 const getMember = async (req: Request, res: Response) => {
   const memberId = Utils.getAuthenticatedUserId(req, res);
@@ -48,7 +49,7 @@ const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
     const memberId = Utils.getAuthenticatedUserId(req, res);
     console.log('getGeneralTournamentPerformance API', memberId);
 
-    const memberTournaments = await DB_Performance.queryPerformanceOfAllMemberTournaments(
+    const memberTournaments = await QUERIES_PERFORMANCE.queryPerformanceOfAllMemberTournaments(
       memberId
     );
 
@@ -61,8 +62,23 @@ const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
   }
 };
 
+
+const getMemberPerformanceForAllTournaments = async (req: Request, res: Response) => {
+  try {
+    const memberId = Utils.getAuthenticatedUserId(req, res);
+    const bestAndWorstPerformance = await SERVICES_PERFORMANCE.getMemberBestAndWorstTournamentPerformance(memberId);
+
+    res.status(200).send(bestAndWorstPerformance);
+    return;
+  } catch (error: any) {
+    console.error('Error fetching matches:', error);
+    handleInternalServerErrorResponse(res, error);
+    return;
+  }
+};
 export const API_MEMBER = {
   getGeneralTournamentPerformance,
   getMember,
   createMember,
+  getMemberPerformanceForAllTournaments,
 };

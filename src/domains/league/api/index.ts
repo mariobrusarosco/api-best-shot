@@ -8,8 +8,9 @@ type GetLeagueStandingsParams = {
 const getLeagueStandings = async (req: Request<GetLeagueStandingsParams>, res: Response) => {
     const { leagueId } = req.params
     const standings = await SERVICES_LEAGUE.getLeagueStandings(leagueId);
+    const lastUpdated = await SERVICES_LEAGUE.getLeaguePerformanceLastUpdated(leagueId);
     
-    return res.status(200).send(standings);
+    return res.status(200).send({ standings, lastUpdated });
 }
 
 

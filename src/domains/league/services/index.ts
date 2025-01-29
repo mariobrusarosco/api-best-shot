@@ -32,7 +32,13 @@ const getLeagueStandings = async (leagueId: string) => {
   return standings;
 }
 
+const getLeaguePerformanceLastUpdated = async (leagueId: string) => {
+  const query = await QUERIES_PERFORMANCE.getLeaguePerformanceLastUpdated(leagueId);
+  return query?.updatedAt;
+}
+
 export const SERVICES_LEAGUE = {
-    getLeagueStandings
+    getLeagueStandings,
+    getLeaguePerformanceLastUpdated
 }
 

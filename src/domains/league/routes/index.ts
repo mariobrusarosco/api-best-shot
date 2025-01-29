@@ -4,6 +4,7 @@ import { AuthMiddleware } from '@/domains/auth/middleware';
 import { PerformanceController } from '@/domains/performance/controller';
 import LeagueController from '../controllers/league-controller';
 import { API_LEAGUE } from '../api';
+import { SERVICES_PERFORMANCE_V2 } from '@/domains/performance/services';
 
 const RouterV1 = express.Router();
 RouterV1.use(AuthMiddleware);
@@ -25,6 +26,6 @@ RouterV2.post('/invitation', LeagueController.inviteToLeague);
 RouterV2.get('/:leagueId', LeagueController.getLeague);
 RouterV2.patch('/:leagueId/tournaments', LeagueController.updateLeagueTournaments);
 RouterV2.get('/:leagueId/performance',  API_LEAGUE.getLeagueStandings);
-RouterV2.patch('/:leagueId/performance', PerformanceController.updateLeaguePerformance);
+RouterV2.patch('/:leagueId/performance', SERVICES_PERFORMANCE_V2.league.updatePerformance);
 
 ApplicationRouter.register("api/v2/leagues", RouterV2);

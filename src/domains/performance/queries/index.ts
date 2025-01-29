@@ -103,10 +103,25 @@ const queryPerformanceOfAllMemberTournaments = async (memberId: string) => {
     }
   };
 
+
+const getLeaguePerformanceLastUpdated = async (leagueId: string) => {
+  try {
+    const query = await db.query.T_LeaguePerformance.findFirst({
+      where: (leaguePerformance, {eq}) => eq(leaguePerformance.leagueId, leagueId)
+    })
+
+    return query;
+  } catch (error: any) {
+    console.error('[DB_PERFORMANCE] - [getLeaguePerformanceLastUpdated] ', error);
+    return null;
+  }
+}
+
 export const QUERIES_PERFORMANCE = {
     selectMemberTournamentPerformance,
     upsertMemberTournamentPerformance,
     selectMemberPerformanceForAllTournaments,
     queryPerformanceOfAllMemberTournaments,
-    getLeaguePerformance
+    getLeaguePerformance,
+    getLeaguePerformanceLastUpdated
 };

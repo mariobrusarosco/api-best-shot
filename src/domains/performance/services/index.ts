@@ -10,6 +10,7 @@ import { T_TournamentPerformance } from "@/services/database/schema";
 import { SERVICES_GUESS_V2 } from '@/domains/guess/services';
 import { runGuessAnalysis_V2 } from "@/domains/guess/services/guess-analysis-v2";
 import { and, eq } from "drizzle-orm";
+import { QUERIES_LEAGUE } from "@/domains/league/queries";
 
 interface GuessWithMatch {
     guess: DB_SelectGuess;
@@ -75,6 +76,15 @@ const getMemberBestAndWorstPerformance = async (memberId: string) => {
     return { tournaments: { worstPerformance, bestPerformance } };
 };
 
+const updatePerformance = async (leagueId: string) => {
+    const league = await QUERIES_LEAGUE.selectLeague(leagueId);
+    
+    if (!league) {
+        return { error: 'League not found' };
+    }
+    
+}
+
 export const SERVICES_Performance = {
     updateMemberGuessesForTournament,
     getMemberPerformance
@@ -86,4 +96,8 @@ export const SERVICES_PERFORMANCE_V2 = {
         getMemberPerformance,
         getMemberBestAndWorstPerformance
     },
+    league: {
+        getMemberPerformance,
+        updatePerformance
+    }
 };  

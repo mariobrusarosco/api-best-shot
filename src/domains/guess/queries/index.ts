@@ -13,15 +13,18 @@ const selectMemberGuessesForTournament = async (memberId: string, tournamentId: 
                 eq(T_Match.tournamentId, tournamentId),
                 eq(T_Guess.memberId, memberId)
             )
-        );
+        ).orderBy(T_Match.date);
 
     return guesses;
 }
+
+
 
 
 export const QUERIES_Guess = {
     selectMemberGuessesForTournament,
 };
 
-export const QUERIES_GUESS = {
+export const QUERIES_GUESS_V2 = {
+    selectMemberGuessesForTournament
 };

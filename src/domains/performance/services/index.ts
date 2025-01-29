@@ -1,9 +1,15 @@
 import { DB_SelectGuess } from "@/domains/guess/schema";
 import { DB_SelectMatch } from "@/domains/match/schema";
-import { QUERIES_Guess } from "@/domains/guess/queries";
+import { QUERIES_Guess, QUERIES_GUESS_V2 } from "@/domains/guess/queries";
 import { QUERIES_PERFORMANCE } from "../queries";
 import { runGuessAnalysis } from "@/domains/guess/controllers/guess-analysis";
 import _ from 'lodash';
+import { handleInternalServerErrorResponse } from "@/domains/shared/error-handling/httpResponsesHelper";
+import db from "@/services/database";
+import { T_TournamentPerformance } from "@/services/database/schema";
+import { SERVICES_GUESS_V2 } from '@/domains/guess/services';
+import { runGuessAnalysis_V2 } from "@/domains/guess/services/guess-analysis-v2";
+import { and, eq } from "drizzle-orm";
 
 interface GuessWithMatch {
     guess: DB_SelectGuess;
@@ -25,26 +31,32 @@ const updateMemberGuessesForTournament = async (memberId: string, tournamentId: 
     return memberGuesses;
 }
 
-const getMemberTournamentPerformanceV2 = async (memberId: string, tournamentId: string) => {
-    const guesses = await SERVICES_Performance.updateMemberGuessesForTournament(
-        memberId,
-        tournamentId
-    );
+const getMemberPerformance = async (memberId: string, tournamentId: string) => {
+        try {
+          const guesses = await QUERIES_GUESS_V2.selectMemberGuessesForTournament(tournamentId, memberId);
+          const parsedGuesses = SERVICES_GUESS_V2.runGuessAnalysis_V2(guesses) 
+          const [performance] = await db
+            .select()
+            .from(T_TournamentPerformance)
+            .where(
+              and(
+                eq(T_TournamentPerformance.memberId, memberId),
+                eq(T_TournamentPerformance.tournamentId, tournamentId)
+              )
+            );
 
-    return {
-        tournamentId,
-        memberId,
-        guesses,
-        // Add any other fields needed in the response
-    };
+          return {
+            details: parsedGuesses,
+            points: performance.points,
+            lastUpdated: performance.updatedAt,
+          }
+        } catch (error: any) {
+          console.error('[GET] - [GUESS]', error);
+        }
 };
 
-export const SERVICES_Performance = {
-    updateMemberGuessesForTournament,
-    getMemberTournamentPerformanceV2  // New V2 endpoint
-};
 
-const getMemberBestAndWorstTournamentPerformance = async (memberId: string) => {
+const getMemberBestAndWorstPerformance = async (memberId: string) => {
     const tournamentPerformance = await QUERIES_PERFORMANCE.queryPerformanceOfAllMemberTournaments(memberId);
     if (!tournamentPerformance.length) {
         return { worstPerformance: null, bestPerformance: null };
@@ -63,6 +75,15 @@ const getMemberBestAndWorstTournamentPerformance = async (memberId: string) => {
     return { tournaments: { worstPerformance, bestPerformance } };
 };
 
-export const SERVICES_PERFORMANCE = {
-    getMemberBestAndWorstTournamentPerformance
+export const SERVICES_Performance = {
+    updateMemberGuessesForTournament,
+    getMemberPerformance
+};
+
+
+export const SERVICES_PERFORMANCE_V2 = {
+    tournaments: {
+        getMemberPerformance,
+        getMemberBestAndWorstPerformance
+    },
 };  

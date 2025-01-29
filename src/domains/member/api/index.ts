@@ -6,7 +6,7 @@ import { Request, Response } from 'express';
 import { MemberController } from '../controllers/member-controller';
 import { T_Member } from '../schema';
 import { CreateMemberRequest } from './typing';
-import { SERVICES_PERFORMANCE } from '@/domains/performance/services';
+import { SERVICES_PERFORMANCE_V2 } from '@/domains/performance/services';
 import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
 
 const getMember = async (req: Request, res: Response) => {
@@ -66,7 +66,7 @@ const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
 const getMemberPerformanceForAllTournaments = async (req: Request, res: Response) => {
   try {
     const memberId = Utils.getAuthenticatedUserId(req, res);
-    const bestAndWorstPerformance = await SERVICES_PERFORMANCE.getMemberBestAndWorstTournamentPerformance(memberId);
+    const bestAndWorstPerformance = await SERVICES_PERFORMANCE_V2.tournaments.getMemberBestAndWorstPerformance(memberId);
 
     res.status(200).send(bestAndWorstPerformance);
     return;

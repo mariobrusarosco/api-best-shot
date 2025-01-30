@@ -107,6 +107,7 @@ const nearestMatch = async (filter: { tournamentId: string }) => {
   return match;
 };
 
+
 export const MatchQueries = {
   currentDayMatchesOnDatabase,
   nearestMatchOnDatabase,

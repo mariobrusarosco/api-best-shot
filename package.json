@@ -13,7 +13,9 @@
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org mario-79 --project api-best-shot-production ./dist && sentry-cli sourcemaps upload --org mario-79 --project api-best-shot-production ./dist",
     "compile": "tsc ./src --noEmit",
     "scrapper": "tsx watch ./src/scrapper.ts",
-    "api-lookup": "tsx watch ./src/api-lookup.ts"
+    "api-lookup": "tsx watch ./src/api-lookup.ts",
+    "migrate": "npx drizzle-kit migrate",
+    "generate-migrations": "npx drizzle-kit generate"
   },
   "author": "Mario Brusarosco",
   "license": "ISC",

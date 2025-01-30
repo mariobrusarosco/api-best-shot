@@ -79,10 +79,15 @@ const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
 const getGeneralTournamentPerformanceV2 = async (req: Request, res: Response) => {
   try {
     const memberId = Utils.getAuthenticatedUserId(req, res);
-    const tournamentPeformance = await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
+
+    // Trigger the update for the member's performance
+    await SERVICES_PERFORMANCE_V2.tournament.updateGeneralPerformance(memberId);
+
+    // Fetch the updated performance data
+    const tournamentPerformance = await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
 
     res.status(200).send({
-      tournaments: tournamentPeformance
+      tournaments: tournamentPerformance
     });
     return;
   } catch (error: any) {

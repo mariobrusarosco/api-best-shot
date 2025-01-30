@@ -3,7 +3,7 @@ import { DB_SelectMatch } from "@/domains/match/schema";
 import { QUERIES_GUESS } from "@/domains/guess/queries";
 import { QUERIES_PERFORMANCE } from "../queries";
 import { runGuessAnalysis } from "@/domains/guess/controllers/guess-analysis";
-import _  from 'lodash';
+import _, { matches }  from 'lodash';
 import db from "@/services/database";
 import { T_LeaguePerformance, T_LeagueRole, T_LeagueTournament, T_Member } from "@/services/database/schema";
 import { SERVICES_GUESS_V2 } from '@/domains/guess/services';
@@ -11,6 +11,7 @@ import Profiling from "@/services/profiling";
 import { and, eq } from "drizzle-orm";
 import { queryMemberTournamentGuesses } from "../controller";
 import { DB_Performance } from "../database";
+import { QUERIES_MATCH } from "@/domains/match/queries";
 
 interface GuessWithMatch {
     guess: DB_SelectGuess;
@@ -66,7 +67,6 @@ const getMemberBestAndWorstPerformance = async (memberId: string) => {
     
     return { worstPerformance, bestPerformance };
 };
-
 
 const updateMemberPerformance = async (memberId: string, tournamentId: string) => {
   const guesses = await QUERIES_GUESS.selectMemberGuessesForTournament(memberId, tournamentId);
@@ -184,7 +184,34 @@ export const SERVICES_PERFORMANCE_V2 = {
     tournament: {
         getMemberPerformance,
         getMemberBestAndWorstPerformance,
-        updateMemberPerformance
+        updateMemberPerformance,
+        updateGeneralPerformance: async (memberId: string) => {
+          try {
+            // 1. Get all guesses grouped by tournament
+            const memberGuesses = await QUERIES_GUESS.getAllMemberGuesses(memberId);
+            
+            // Group guesses by tournament
+            const guessesByTournament = _.groupBy(memberGuesses, 'match.tournamentId');
+            
+            // 2. Update each tournament performance
+            const promises = Object.entries(guessesByTournament).map(async ([tournamentId, guesses]) => {
+              const points = parseFloat(calculatePoints(guesses));
+              
+              return QUERIES_PERFORMANCE.tournament.updatePerformance(
+                points, 
+                memberId, 
+                tournamentId
+              );
+            });
+        
+            const results = await Promise.all(promises);
+            return results.map(parsePerformance);
+            
+          } catch (error: any) {
+            Profiling.error(error, '[SERVICES_PERFORMANCE] - UPDATE_ALL_TOURNAMENT_PERFORMANCES');
+            throw error;
+          }
+        }
     },
     league: {
         getMemberPerformance,

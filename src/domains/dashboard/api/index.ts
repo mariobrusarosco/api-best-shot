@@ -1,8 +1,9 @@
 import { DashboardController } from '@/domains/dashboard/controller';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { type Request, Response } from 'express';
+import { SERVICES_DASHBOARD } from '../services';
 
-const getDashboard = async (req: Request, res: Response) => {
+const getDashboardDeprecated = async (req: Request, res: Response) => {
   try {
     const dashboard = await DashboardController.getDashboard();
 
@@ -13,6 +14,14 @@ const getDashboard = async (req: Request, res: Response) => {
   }
 };
 
+
+const getDashboard = async (_: Request, res: Response) => {
+  const dashboard = await SERVICES_DASHBOARD.getDashboard();
+
+  res.status(200).send(dashboard);
+};
+
 export const API_DASHBOARD = {
   getDashboard,
+  getDashboardDeprecated,
 };

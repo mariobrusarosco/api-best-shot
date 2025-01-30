@@ -57,10 +57,62 @@ const nearestMatchOnDatabase = async (filter: { tournamentId: string }) => {
   return match;
 };
 
+const currentDayMatches = async (filter?: { tournamentId?: string }) => {
+  const startOfDay = dayjs().utc().startOf('day').toDate().toISOString();
+  const endOfDay = dayjs().utc().endOf('day').toDate().toISOString();
+
+  let whereClause = sql`date >= ${startOfDay} AND date <= ${endOfDay}`;
+
+  if (filter?.tournamentId) {
+    whereClause = sql`${whereClause} AND ${T_Match.tournamentId} = ${filter.tournamentId}`;
+  }
+
+  return db
+    .selectDistinct({
+      tournamentId: T_Match.tournamentId,
+      tournamentLabel: T_Tournament.label,
+      baseUrl: T_Tournament.baseUrl,
+      match: T_Match.id,
+      date: T_Match.date,
+      roundSlug: T_Match.roundSlug,
+    })
+    .from(T_Match)
+    .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
+    .where(whereClause)
+    .orderBy(asc(T_Match.date));
+};
+
+const nearestMatch = async (filter: { tournamentId: string }) => {
+  const now = dayjs().utc().toDate();
+
+  const [match] = await db
+    .select({
+      tournamentId: T_Match.tournamentId,
+      match: T_Match.id,
+      date: T_Match.date,
+      roundId: T_Match.roundSlug,
+    })
+    .from(T_Match)
+    .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
+    .where(
+      and(
+        eq(T_Match.tournamentId, filter.tournamentId),
+        eq(T_Match.status, 'open'),
+        gte(T_Match.date, now)
+      )
+    )
+    .orderBy(asc(T_Match.date))
+    .limit(1);
+
+  return match;
+};
+
 export const MatchQueries = {
   currentDayMatchesOnDatabase,
   nearestMatchOnDatabase,
 };
 
 export const QUERIES_MATCH = {
+  currentDayMatches,
+  nearestMatch,
 };

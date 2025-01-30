@@ -235,11 +235,7 @@ export const queryMemberTournamentGuesses = async (
   return guesses.map(row => runGuessAnalysis(row.guess, row.match));
 };
 
-const getTotalPoints = (guesses?: ReturnType<typeof runGuessAnalysis>[]) => {
-  if (!performance) return null;
 
-  return guesses?.reduce((acc, value) => acc + value.total, 0);
-};
 
 export const updateLeagueTournamentsForMember = async (
   memberId: string,

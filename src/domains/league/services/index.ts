@@ -17,6 +17,7 @@ const getLeagueStandings = async (leagueId: string) => {
 
     if (id && !acc[id]) {
       acc[id] = {
+        
         id,
         logo: logo,
         members: [],

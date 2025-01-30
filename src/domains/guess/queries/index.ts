@@ -4,6 +4,7 @@ import { T_Match } from "@/domains/match/schema";
 import { eq, and } from "drizzle-orm";
 
 const selectMemberGuessesForTournament = async (memberId: string, tournamentId: string) => {
+    // console.log({ memberId, tournamentId });
     const guesses = await db
         .select()
         .from(T_Guess)
@@ -15,16 +16,12 @@ const selectMemberGuessesForTournament = async (memberId: string, tournamentId: 
             )
         ).orderBy(T_Match.date);
 
+    console.log({ guesses });
+
     return guesses;
 }
 
 
-
-
-export const QUERIES_Guess = {
-    selectMemberGuessesForTournament,
-};
-
-export const QUERIES_GUESS_V2 = {
+export const QUERIES_GUESS = {
     selectMemberGuessesForTournament
 };

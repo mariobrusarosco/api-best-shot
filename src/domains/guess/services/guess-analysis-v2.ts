@@ -6,13 +6,13 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import utc from 'dayjs/plugin/utc';
 import { GUESS_STATUS, GUESS_STATUSES } from '../typing';
 import { runGuessAnalysis } from '../controllers/guess-analysis';
-import { QUERIES_GUESS_V2 } from '../queries';
+import { QUERIES_GUESS } from '../queries';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
 
 
-export const runGuessAnalysis_V2 = (guesses: Awaited<ReturnType<typeof QUERIES_GUESS_V2.selectMemberGuessesForTournament>>) => {
+export const runGuessAnalysis_V2 = (guesses: Awaited<ReturnType<typeof QUERIES_GUESS.selectMemberGuessesForTournament>>) => {
   return guesses.map(row => {
     const hasNullGuesses = row.guess.homeScore === null || row.guess.awayScore === null;
     const hasLostTimewindowToGuess = dayjs()

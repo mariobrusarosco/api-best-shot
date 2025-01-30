@@ -66,7 +66,7 @@ const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
 const getMemberPerformanceForAllTournaments = async (req: Request, res: Response) => {
   try {
     const memberId = Utils.getAuthenticatedUserId(req, res);
-    const bestAndWorstPerformance = await SERVICES_PERFORMANCE_V2.tournaments.getMemberBestAndWorstPerformance(memberId);
+    const bestAndWorstPerformance = await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
 
     res.status(200).send(bestAndWorstPerformance);
     return;

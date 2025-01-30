@@ -7,6 +7,8 @@ import { T_LeagueTournament } from "@/domains/league/schema";
 import { T_LeagueRole } from "@/domains/league/schema";
 import { Request, Response } from "express";
 import { T_Member } from "@/domains/member/schema";
+import { SERVICES_GUESS_V2 } from "@/domains/guess/services";
+import { QUERIES_GUESS } from "@/domains/guess/queries";
 
 const selectMemberTournamentPerformance = async (memberId: string, tournamentId: string) => {
     const query = await db.query.T_TournamentPerformance.findFirst({
@@ -117,11 +119,45 @@ const getLeaguePerformanceLastUpdated = async (leagueId: string) => {
   }
 }
 
+const getMemberPerformance = async (memberId: string, tournamentId: string) => {
+  const [performance] = await db
+  .select()
+  .from(T_TournamentPerformance)
+.where(
+  and(
+    eq(T_TournamentPerformance.memberId, memberId),
+    eq(T_TournamentPerformance.tournamentId, tournamentId)
+  )
+  );
+
+  return performance;
+}
+
+
+const updateMemberPerformance = async (points: number | null | undefined, memberId: string, tournamentId: string) => {
+  const [query] = await db.update(T_TournamentPerformance).set({
+    points: points?.toString(),
+    updatedAt: new Date()
+  }).where(
+    and(
+      eq(T_TournamentPerformance.memberId, memberId),
+      eq(T_TournamentPerformance.tournamentId, tournamentId)
+    )
+  ).returning();
+
+  return query;
+}
+
+
 export const QUERIES_PERFORMANCE = {
     selectMemberTournamentPerformance,
     upsertMemberTournamentPerformance,
     selectMemberPerformanceForAllTournaments,
     queryPerformanceOfAllMemberTournaments,
     getLeaguePerformance,
-    getLeaguePerformanceLastUpdated
+    getLeaguePerformanceLastUpdated,
+    tournament: {
+      getMemberPerformance,
+      updateMemberPerformance
+    }
 };

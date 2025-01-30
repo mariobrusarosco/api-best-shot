@@ -25,7 +25,7 @@ RouterV2.get('/', LeagueController.getLeagues);
 RouterV2.post('/invitation', LeagueController.inviteToLeague);
 RouterV2.get('/:leagueId', LeagueController.getLeague);
 RouterV2.patch('/:leagueId/tournaments', LeagueController.updateLeagueTournaments);
-RouterV2.get('/:leagueId/performance',  API_LEAGUE.getLeagueStandings);
-RouterV2.patch('/:leagueId/performance', SERVICES_PERFORMANCE_V2.league.updatePerformance);
+RouterV2.get('/:leagueId/performance',  API_LEAGUE.updateLeaguePerformance);
+RouterV2.patch('/:leagueId/performance', API_LEAGUE.updateLeaguePerformance);
 
 ApplicationRouter.register("api/v2/leagues", RouterV2);

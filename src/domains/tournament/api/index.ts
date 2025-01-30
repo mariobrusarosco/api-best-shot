@@ -1,7 +1,7 @@
 import { Utils } from '@/domains/auth/utils';
 import { MatchQueries } from '@/domains/match/queries';
-import { DB_PERFORMANCE } from '@/domains/performance/database';
-import { SERVICES_Performance } from '@/domains/performance/services';
+import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
+import { SERVICES_Performance, SERVICES_PERFORMANCE_V2 } from '@/domains/performance/services';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { TournamentQueries } from '@/domains/tournament/queries';
 import { T_TournamentStandings } from '@/domains/tournament/schema';
@@ -14,7 +14,7 @@ const getTournamentPerformanceForMemberOld = async (req: Request, res: Response)
     const tournamentId = req?.params.tournamentId;
     const memberId = Utils.getAuthenticatedUserId(req, res);
 
-    const query = await DB_PERFORMANCE.queryPerformanceForTournament(
+    const query = await QUERIES_PERFORMANCE.tournament.getMemberPerformance(
       memberId,
       tournamentId
     );
@@ -89,7 +89,7 @@ const getTournamentPerformanceForMember = async (req: Request, res: Response) =>
   const tournamentId = req?.params.tournamentId;
   const memberId = Utils.getAuthenticatedUserId(req, res);
 
-  const performance = await SERVICES_Performance.getMemberTournamentPerformanceV2(memberId, tournamentId);
+  const performance = await SERVICES_PERFORMANCE_V2.tournament.updateMemberPerformance(memberId, tournamentId);
   
   return res.status(200).send(performance);
 };

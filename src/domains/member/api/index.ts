@@ -8,6 +8,8 @@ import { T_Member } from '../schema';
 import { CreateMemberRequest } from './typing';
 import { SERVICES_PERFORMANCE_V2 } from '@/domains/performance/services';
 import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
+import { QUERIES_MEMBER } from '../queries';
+import Profiling from '@/services/profiling';
 
 const getMember = async (req: Request, res: Response) => {
   const memberId = Utils.getAuthenticatedUserId(req, res);
@@ -25,6 +27,18 @@ const getMember = async (req: Request, res: Response) => {
     return handleInternalServerErrorResponse(res, error);
   }
 };
+
+const getMemberV2 = async (req: Request, res: Response) => {
+  try {
+    const memberId = Utils.getAuthenticatedUserId(req, res)
+    const member = await QUERIES_MEMBER.getMember(memberId);
+
+    res.status(200).send(member);
+  } catch (error: any) {
+    Profiling.error('[API_MEMBER]', error);
+    handleInternalServerErrorResponse(res, error);
+  }
+}
 
 const createMember = async (req: CreateMemberRequest, res: Response) => {
   try {
@@ -49,7 +63,7 @@ const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
     const memberId = Utils.getAuthenticatedUserId(req, res);
     console.log('getGeneralTournamentPerformance API', memberId);
 
-    const memberTournaments = await QUERIES_PERFORMANCE.queryPerformanceOfAllMemberTournaments(
+    const memberTournaments = await QUERIES_PERFORMANCE.tournament.getMemberGeneralPerformance(
       memberId
     );
 
@@ -62,6 +76,20 @@ const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
   }
 };
 
+const getGeneralTournamentPerformanceV2 = async (req: Request, res: Response) => {
+  try {
+    const memberId = Utils.getAuthenticatedUserId(req, res);
+    const tournamentPeformance = await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
+
+    res.status(200).send({
+      tournaments: tournamentPeformance
+    });
+    return;
+  } catch (error: any) {
+    Profiling.error('[API_MEMBER]', error);
+    handleInternalServerErrorResponse(res, error);
+  }
+}
 
 const getMemberPerformanceForAllTournaments = async (req: Request, res: Response) => {
   try {
@@ -76,9 +104,12 @@ const getMemberPerformanceForAllTournaments = async (req: Request, res: Response
     return;
   }
 };
+
 export const API_MEMBER = {
   getGeneralTournamentPerformance,
   getMember,
   createMember,
   getMemberPerformanceForAllTournaments,
+  getMemberV2,
+  getGeneralTournamentPerformanceV2
 };

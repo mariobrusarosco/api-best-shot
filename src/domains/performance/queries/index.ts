@@ -1,65 +1,44 @@
 import { T_TournamentPerformance } from "@/domains/performance/schema";
 import db from "@/services/database";
-import { API_TOURNAMENT } from '@/domains/tournament/api';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { T_Tournament } from "@/domains/tournament/schema";
 import { T_LeagueTournament } from "@/domains/league/schema";
 import { T_LeagueRole } from "@/domains/league/schema";
-import { Request, Response } from "express";
 import { T_Member } from "@/domains/member/schema";
-import { SERVICES_GUESS_V2 } from "@/domains/guess/services";
-import { QUERIES_GUESS } from "@/domains/guess/queries";
 
-const selectMemberTournamentPerformance = async (memberId: string, tournamentId: string) => {
-    const query = await db.query.T_TournamentPerformance.findFirst({
-        where: (tournamentPerformance, {eq}) => 
-            eq(tournamentPerformance.memberId, memberId) && 
-            eq(tournamentPerformance.tournamentId, tournamentId)
+const member = {
+  selectTournamentPerformance: async (memberId: string, tournamentId: string) => {
+    return db.query.T_TournamentPerformance.findFirst({
+      where: (tournamentPerformance, {eq}) => eq(tournamentPerformance.memberId, memberId) && eq(tournamentPerformance.tournamentId, tournamentId)
     })
+  },
+  updatePerformance: async (points: number | null | undefined, memberId: string, tournamentId: string) => {
+    const [query] = await db.update(T_TournamentPerformance).set({
+      points: points?.toString(),
+      updatedAt: new Date()
+    }).where(
+      and(
+        eq(T_TournamentPerformance.memberId, memberId),
+        eq(T_TournamentPerformance.tournamentId, tournamentId)
+      )
+    ).returning();
 
     return query;
-}
-
-const upsertMemberTournamentPerformance = async (memberId: string, tournamentId: string, points: string) => {
-    return db
-        .insert(T_TournamentPerformance)
-        .values({
-            memberId,
-            tournamentId,
-            points,
-            updatedAt: new Date()
-        })
-        .onConflictDoUpdate({
-            target: [T_TournamentPerformance.memberId, T_TournamentPerformance.tournamentId],
-            set: { points, updatedAt: new Date() }
-        });
-};
-
-const selectMemberPerformanceForAllTournaments = async (memberId: string) => {
-    const query = await db.query.T_TournamentPerformance.findMany({
-        where: (tournamentPerformance, {eq}) => eq(tournamentPerformance.memberId, memberId)
+  },
+  getGeneralPerformance: async (memberId: string) => {
+    return db.query.T_TournamentPerformance.findMany({
+      where: (tournamentPerformance, {eq}) => eq(tournamentPerformance.memberId, memberId)
     })
-
-    return query;
+  },
+  getPerformanceLastUpdated: async (memberId: string) => {
+    return db.query.T_TournamentPerformance.findFirst({
+      where: (tournamentPerformance, {eq}) => eq(tournamentPerformance.memberId, memberId)
+    })
+  }
 }
 
-const queryPerformanceOfAllMemberTournaments = async (memberId: string) => {
-    try {
-      const query = await db
-        .select()
-        .from(T_TournamentPerformance)
-        .innerJoin(T_Tournament, eq(T_TournamentPerformance.tournamentId, T_Tournament.id))
-        .where(eq(T_TournamentPerformance.memberId, memberId)); 
-    
-        return query;
-    } catch (error: any) {
-      console.error('[DB_PERFORMANCE] - [queryPerformanceOfAllMemberTournaments] ', error);
-      return [];
-    }
-  };
-
-
-  const getLeaguePerformance = async (leagueId: string) => {
+const league = {
+  getPerformance: async (leagueId: string) => {
     try {
       const leagueMembersSubquery = db
         .select({
@@ -103,61 +82,61 @@ const queryPerformanceOfAllMemberTournaments = async (memberId: string) => {
     } catch (error: any) {
       throw error;
     }
-  };
+  },
+  getPerformanceLastUpdated: async (leagueId: string) => {
+    try {
+      const query = await db.query.T_LeaguePerformance.findFirst({
+        where: (leaguePerformance, {eq}) => eq(leaguePerformance.leagueId, leagueId)
+      })
 
-
-const getLeaguePerformanceLastUpdated = async (leagueId: string) => {
-  try {
-    const query = await db.query.T_LeaguePerformance.findFirst({
-      where: (leaguePerformance, {eq}) => eq(leaguePerformance.leagueId, leagueId)
-    })
-
-    return query;
-  } catch (error: any) {
-    console.error('[DB_PERFORMANCE] - [getLeaguePerformanceLastUpdated] ', error);
-    return null;
+      return query;
+    } catch (error: any) {
+      console.error('[DB_PERFORMANCE] - [getLeaguePerformanceLastUpdated] ', error);
+      return null;
+    }
   }
 }
 
-const getMemberPerformance = async (memberId: string, tournamentId: string) => {
-  const [performance] = await db
-  .select()
-  .from(T_TournamentPerformance)
-.where(
-  and(
-    eq(T_TournamentPerformance.memberId, memberId),
-    eq(T_TournamentPerformance.tournamentId, tournamentId)
-  )
-  );
+const tournament = {
+  getPerformance: async (memberId: string, tournamentId: string | null) => {
+    if (!tournamentId) {
+      return null;
+    }
 
-  return performance;
+    const query = await db.query.T_TournamentPerformance.findFirst({
+      where: (tournamentPerformance, {eq}) => eq(tournamentPerformance.memberId, memberId) && eq(tournamentPerformance.tournamentId, tournamentId)
+    })
+
+    return query ?? null;
+  },
+  getMemberGeneralPerformance: async (memberId: string) => {
+    return db
+      .select()
+      .from(T_TournamentPerformance)
+      .leftJoin(
+        T_Tournament,
+        eq(T_Tournament.id, T_TournamentPerformance.tournamentId)
+      )
+      .where(eq(T_TournamentPerformance.memberId, memberId));
+  },
+  updatePerformance: async (points: number | null | undefined, memberId: string, tournamentId: string) => {
+    const [query] = await db.update(T_TournamentPerformance).set({
+      points: points?.toString(),
+      updatedAt: new Date()
+    }).where(
+      and(
+        eq(T_TournamentPerformance.memberId, memberId),
+        eq(T_TournamentPerformance.tournamentId, tournamentId)
+      )
+    ).returning();
+
+    return query;
+  }
 }
-
-
-const updateMemberPerformance = async (points: number | null | undefined, memberId: string, tournamentId: string) => {
-  const [query] = await db.update(T_TournamentPerformance).set({
-    points: points?.toString(),
-    updatedAt: new Date()
-  }).where(
-    and(
-      eq(T_TournamentPerformance.memberId, memberId),
-      eq(T_TournamentPerformance.tournamentId, tournamentId)
-    )
-  ).returning();
-
-  return query;
-}
-
 
 export const QUERIES_PERFORMANCE = {
-    selectMemberTournamentPerformance,
-    upsertMemberTournamentPerformance,
-    selectMemberPerformanceForAllTournaments,
-    queryPerformanceOfAllMemberTournaments,
-    getLeaguePerformance,
-    getLeaguePerformanceLastUpdated,
-    tournament: {
-      getMemberPerformance,
-      updateMemberPerformance
-    }
+  // member,
+  league,
+  tournament
 };
+

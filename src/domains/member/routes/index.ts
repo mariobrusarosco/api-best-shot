@@ -12,8 +12,8 @@ ApplicationRouter.register("api/v1/member", RouterV1);
 
 const RouterV2 = express.Router();
 RouterV2.use(AuthMiddleware);  // Add middleware for all member routes
-RouterV2.get('/performance', API_MEMBER.getMemberPerformanceForAllTournaments);
-RouterV2.get('/', API_MEMBER.getMember);
+RouterV2.get('/performance', API_MEMBER.getGeneralTournamentPerformanceV2);
+RouterV2.get('/', API_MEMBER.getMemberV2);
 
 ApplicationRouter.register("api/v2/member", RouterV2);
 

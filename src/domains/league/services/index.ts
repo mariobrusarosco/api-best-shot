@@ -2,7 +2,7 @@ import { QUERIES_PERFORMANCE } from "@/domains/performance/queries";
 
 
 const getLeagueStandings = async (leagueId: string) => {
-   const query = await QUERIES_PERFORMANCE.getLeaguePerformance(leagueId);
+   const query = await QUERIES_PERFORMANCE.league.getPerformance(leagueId);
 
    const standings = query.reduce<
     Record<
@@ -34,7 +34,7 @@ const getLeagueStandings = async (leagueId: string) => {
 }
 
 const getLeaguePerformanceLastUpdated = async (leagueId: string) => {
-  const query = await QUERIES_PERFORMANCE.getLeaguePerformanceLastUpdated(leagueId);
+  const query = await QUERIES_PERFORMANCE.league.getPerformanceLastUpdated(leagueId);
   return query?.updatedAt;
 }
 

@@ -15,7 +15,13 @@
     "scrapper": "tsx watch ./src/scrapper.ts",
     "api-lookup": "tsx watch ./src/api-lookup.ts",
     "migrate": "npx drizzle-kit migrate",
-    "generate-migrations": "npx drizzle-kit generate"
+    "generate-migrations": "npx drizzle-kit generate",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:check": "drizzle-kit check",
+    "db:drop": "drizzle-kit drop",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "author": "Mario Brusarosco",
   "license": "ISC",

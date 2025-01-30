@@ -1,6 +1,6 @@
 import express from 'express';
-import { API_DASHBOARD } from '../api';
 import ApplicationRouter from '@/router';
+import { API_DASHBOARD } from "@/domains/dashboard/api"
 
 const RouterV1 = express.Router();
 RouterV1.get('/', API_DASHBOARD.getDashboardDeprecated);

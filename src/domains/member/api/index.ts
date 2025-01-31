@@ -10,18 +10,19 @@ import { SERVICES_PERFORMANCE_V2 } from '@/domains/performance/services';
 import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
 import { QUERIES_MEMBER } from '../queries';
 import Profiling from '@/services/profiling';
+import { MemberService } from '../services';
+import { CreateMemberInput } from './typing';
 
 const getMember = async (req: Request, res: Response) => {
-  const memberId = Utils.getAuthenticatedUserId(req, res);
-
   try {
-    const [member] = await db
-      .select({ nickName: T_Member.nickName, email: T_Member.email, id: T_Member.id })
-      .from(T_Member)
-      .where(eq(T_Member.id, memberId));
+    const memberId = Utils.getAuthenticatedUserId(req, res);
+    const member = await MemberService.getMemberById(memberId);
 
-    res.status(200).send(member);
-    return;
+    if (!member) {
+      return res.status(404).send({ message: 'Member not found' });
+    }
+
+    return res.status(200).send(member);
   } catch (error: any) {
     console.error('[ERROR] [getMember]', error);
     return handleInternalServerErrorResponse(res, error);
@@ -30,71 +31,57 @@ const getMember = async (req: Request, res: Response) => {
 
 const getMemberV2 = async (req: Request, res: Response) => {
   try {
-    const memberId = Utils.getAuthenticatedUserId(req, res)
-    const member = await QUERIES_MEMBER.getMember(memberId);
+    const memberId = Utils.getAuthenticatedUserId(req, res);
+    const member = await MemberService.getMemberById(memberId);
 
-    res.status(200).send(member);
+    if (!member) {
+      return res.status(404).send({ message: 'Member not found' });
+    }
+
+    return res.status(200).send(member);
   } catch (error: any) {
     Profiling.error('[API_MEMBER]', error);
-    handleInternalServerErrorResponse(res, error);
+    return handleInternalServerErrorResponse(res, error);
   }
-}
+};
 
-const createMember = async (req: CreateMemberRequest, res: Response) => {
+const createMember = async (req: Request, res: Response) => {
   try {
-    const body = req.body;
-    const newMember = await MemberController.createMember(body);
+    const input: CreateMemberInput = req.body;
+    const member = await MemberService.createMember(input);
 
-    if (newMember === null) return null;
+    if (!member) {
+      return res.status(400).send({ message: 'Failed to create member' });
+    }
 
-    Utils.signUserCookieBased({ memberId: newMember.id, res });
-
-    res.status(200).send(newMember);
-    return;
+    return res.status(201).send(member);
   } catch (error: any) {
     console.error('[ERROR] [createMember]', error);
-    handleInternalServerErrorResponse(res, error);
-    return;
+    return handleInternalServerErrorResponse(res, error);
   }
 };
 
 const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
   try {
     const memberId = Utils.getAuthenticatedUserId(req, res);
-    console.log('getGeneralTournamentPerformance API', memberId);
-
-    const memberTournaments = await QUERIES_PERFORMANCE.tournament.getMemberGeneralPerformance(
-      memberId
-    );
-
-    res.status(200).send(memberTournaments);
-    return;
+    const performance = await MemberService.getGeneralTournamentPerformance(memberId);
+    return res.status(200).send(performance);
   } catch (error: any) {
-    console.error('Error fetching matches:', error);
-    handleInternalServerErrorResponse(res, error);
-    return;
+    console.error('[ERROR] [getGeneralTournamentPerformance]', error);
+    return handleInternalServerErrorResponse(res, error);
   }
 };
 
 const getGeneralTournamentPerformanceV2 = async (req: Request, res: Response) => {
   try {
     const memberId = Utils.getAuthenticatedUserId(req, res);
-
-    // Trigger the update for the member's performance
-    await SERVICES_PERFORMANCE_V2.tournament.updateGeneralPerformance(memberId);
-
-    // Fetch the updated performance data
-    const tournamentPerformance = await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
-
-    res.status(200).send({
-      tournaments: tournamentPerformance
-    });
-    return;
+    const performance = await MemberService.getGeneralTournamentPerformanceV2(memberId);
+    return res.status(200).send(performance);
   } catch (error: any) {
     Profiling.error('[API_MEMBER]', error);
-    handleInternalServerErrorResponse(res, error);
+    return handleInternalServerErrorResponse(res, error);
   }
-}
+};
 
 const getMemberPerformanceForAllTournaments = async (req: Request, res: Response) => {
   try {
@@ -111,10 +98,10 @@ const getMemberPerformanceForAllTournaments = async (req: Request, res: Response
 };
 
 export const API_MEMBER = {
-  getGeneralTournamentPerformance,
   getMember,
-  createMember,
-  getMemberPerformanceForAllTournaments,
   getMemberV2,
-  getGeneralTournamentPerformanceV2
+  createMember,
+  getGeneralTournamentPerformance,
+  getGeneralTournamentPerformanceV2,
+  getMemberPerformanceForAllTournaments
 };

@@ -1,30 +1,42 @@
-import {
-  DB_SelectLeaguePerformance,
-  DB_SelectTournamentPerformance,
-} from '@/domains/performance/schema';
+import { T_Member } from '@/domains/member/schema';
+import { DB_SelectLeaguePerformance, DB_SelectTournamentPerformance } from '@/domains/performance/schema';
+import { DB_SelectTournament } from '@/domains/tournament/schema';
+import { SERVICES_PERFORMANCE_V2 } from '@/domains/performance/services';
+import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
+import db from '@/services/database';
+import { eq } from 'drizzle-orm';
 import { CreateMemberInput } from '../api/typing';
 import { QUERIES_MEMBER } from '../queries';
 import Profiling from '@/services/profiling';
-import { DB_SelectTournament } from '@/domains/tournament/schema';
 
-const getMember = async (memberId: string) => {
-  try {
-    return QUERIES_MEMBER.getMember(memberId);
-  } catch (error: any) {
-    Profiling.error('[ERROR] [QUERIES_MEMBER]', error);
+const getMemberById = async (memberId: string) => {
+  const [member] = await db
+    .select({ nickName: T_Member.nickName })
+    .from(T_Member)
+    .where(eq(T_Member.id, memberId));
 
-    return null;
-  }
+  return member;
 };
 
 const createMember = async (input: CreateMemberInput) => {
-  try {
-    return QUERIES_MEMBER.createMember(input);
-  } catch (error: any) {
-    Profiling.error('[ERROR] [QUERIES_MEMBER]', error);
+  const [member] = await db.insert(T_Member).values(input).returning();
+  return member;
+};
 
-    return null;
-  }
+const getGeneralTournamentPerformance = async (memberId: string) => {
+  return await QUERIES_PERFORMANCE.tournament.getMemberGeneralPerformance(memberId);
+};
+
+const getGeneralTournamentPerformanceV2 = async (memberId: string) => {
+  // First update the performance
+  await SERVICES_PERFORMANCE_V2.tournament.updateGeneralPerformance(memberId);
+  
+  // Then fetch the updated data
+  const tournamentPerformance = await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
+  
+  return {
+    tournaments: tournamentPerformance
+  };
 };
 
 const getBestAndWorstPerformance = (
@@ -41,10 +53,10 @@ const getBestAndWorstPerformance = (
   return { best, worst };
 };
 
-
-
-export const SERVICES_MEMBER = {
-    getMember,
-    createMember,
-    getBestAndWorstPerformance,
-}
+export const MemberService = {
+  getMemberById,
+  createMember,
+  getBestAndWorstPerformance,
+  getGeneralTournamentPerformance,
+  getGeneralTournamentPerformanceV2,
+};

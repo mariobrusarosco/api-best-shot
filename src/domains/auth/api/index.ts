@@ -1,50 +1,37 @@
-import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import { Request, Response } from 'express';
-import { Utils } from '../utils';
-import { T_Member } from '@/domains/member/schema';
-import { eq } from 'drizzle-orm';
-import db from '@/services/database';
 import { AuthenticateMemberRequest } from '../typing';
+import { SERVICES_AUTH } from '../services';
 
 const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) => {
   try {
-    console.log('Authentication attempt with payload:', req.body);
-    
-    const publicId = req.body.publicId;
-    if (!publicId) {
-      console.error('Missing publicId in request body');
-      return res.status(400).json({ error: 'Missing publicId in request' });
+    const { publicId } = req.body;
+    const result = await SERVICES_AUTH.authenticateUser(publicId, res);
+
+    if (!result) {
+      return res
+        .status(404)
+        .send({ message: 'No user found to authenticate' });
     }
 
-    console.log('Searching for member with publicId:', publicId);
-    const [member] = await db
-      .select()
-      .from(T_Member)
-      .where(eq(T_Member.publicId, publicId));
-
-    if (!member) {
-      console.error('No member found with publicId:', publicId);
-      return res.status(404).json({ error: 'No user found to authenticate' });
-    }
-
-    console.log('Member found:', { id: member.id, publicId: member.publicId });
-    const token = Utils.signUserCookieBased({ memberId: member.id, res });
-    return res.status(200).json({ token });
+    return res.status(200).send(result.token);
   } catch (error: any) {
-    console.error('[AUTH - POST] Authentication error:', error);
-    console.error('Stack trace:', error.stack);
-    handleInternalServerErrorResponse(res, error);
+    console.error(`[AUTH - authenticateUser] ${error}`);
+    return res
+      .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
+      .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
   }
 };
 
-const unauthenticateUser = async (req: Request, res: Response) => {
+const unauthenticateUser = (req: Request, res: Response) => {
   try {
-    Utils.clearUserCookie(res);
-
-    return res.status(200).send('User unauthenticated');
+    SERVICES_AUTH.unauthenticateUser(res);
+    return res.status(200).send({ message: 'Successfully logged out' });
   } catch (error: any) {
-    console.error(`[AUTH - DELETE] ${error}`);
-    handleInternalServerErrorResponse(res, error);
+    console.error(`[AUTH - unauthenticateUser] ${error}`);
+    return res
+      .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
+      .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
   }
 };
 

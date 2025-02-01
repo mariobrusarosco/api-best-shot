@@ -2,12 +2,12 @@ import { SofascoreMatches } from '@/domains/data-provider/providers/sofascore/ma
 import { SofascoreTournamentRound } from '@/domains/data-provider/providers/sofascore/tournament-rounds';
 import { DB_InsertMatch } from '@/domains/match/schema';
 import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
-import { TournamentQueries } from '@/domains/tournament/queries';
+import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { sleep } from '@/utils';
 
 const create = async (tournamentId: string) => {
-  const tournament = await TournamentQueries.tournament(tournamentId);
+  const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (!tournament) throw new Error('Tournament not found');
 
   const roundList = await TournamentRoundsQueries.getAllRounds(tournamentId);
@@ -38,7 +38,7 @@ const create = async (tournamentId: string) => {
 };
 
 const update = async (tournamentId: string) => {
-  const tournament = await TournamentQueries.tournament(tournamentId);
+  const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (!tournament) throw new Error('Tournament not found');
 
   const roundList = await TournamentRoundsQueries.getAllRounds(tournamentId);
@@ -72,7 +72,7 @@ const update = async (tournamentId: string) => {
 };
 
 const updateRound = async (tournamentId: string, roundSlug: string) => {
-  const tournament = await TournamentQueries.tournament(tournamentId);
+  const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (!tournament) throw new Error('Tournament not found');
 
   const round = await TournamentRoundsQueries.getRound({

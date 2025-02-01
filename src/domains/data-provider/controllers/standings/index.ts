@@ -1,16 +1,16 @@
-import { TournamentQueries } from '@/domains/tournament/queries';
+import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { SofascoreStandings } from '../../providers/sofascore/standings';
 
 const create = async (tournamentId: string) => {
-  const tournament = await TournamentQueries.tournament(tournamentId);
+  const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (!tournament) throw new Error('Tournament not found');
 
   const mode = tournament.mode;
   const label = tournament.label;
 
   console.log(
-    `[LOG] - [DATA PROVIDER] - [START] - CREATING STANDINDS FOR TOURNAMENT ${label}`
+    `[LOG] - [DATA PROVIDER] - [START] - CREATING STANDINGS FOR TOURNAMENT ${label}`
   );
 
   if (mode === 'knockout-only') {
@@ -36,7 +36,7 @@ const create = async (tournamentId: string) => {
   const query = await SofascoreStandings.createOnDatabase(mappedStandings);
 
   Profiling.log(
-    `[DATA PROVIDER] - [STANDINGS] - CREATING STANDINDS FOR TOURNAMENT ${label}`,
+    `[DATA PROVIDER] - [STANDINGS] - CREATING STANDINGS FOR TOURNAMENT ${label}`,
     {
       standings: mappedStandings,
     }
@@ -46,7 +46,7 @@ const create = async (tournamentId: string) => {
 };
 
 const update = async (tournamentId: string) => {
-  const tournament = await TournamentQueries.tournament(tournamentId);
+  const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (!tournament) throw new Error('Tournament not found');
 
   const mode = tournament.mode;
@@ -54,7 +54,7 @@ const update = async (tournamentId: string) => {
   const standingsMode = tournament.standings;
 
   console.log(
-    `[LOG] - [DATA PROVIDER] - [STANDINGS] - UPDATING STANDINDS FOR TOURNAMENT ${label}`
+    `[LOG] - [DATA PROVIDER] - [STANDINGS] - UPDATING STANDINGS FOR TOURNAMENT ${label}`
   );
 
   if (mode === 'knockout-only') {
@@ -82,7 +82,7 @@ const update = async (tournamentId: string) => {
   const query = await SofascoreStandings.upsertOnDatabase(mappedStandings);
 
   Profiling.log(
-    `[DATA PROVIDER] - [STANDINGS] - UPDATING STANDINDS FOR TOURNAMENT ${label}`,
+    `[DATA PROVIDER] - [STANDINGS] - UPDATING STANDINGS FOR TOURNAMENT ${label}`,
     {
       standings: mappedStandings,
     }

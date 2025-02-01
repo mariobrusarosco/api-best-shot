@@ -1,11 +1,11 @@
 import { SofascoreTournamentRound } from '@/domains/data-provider/providers/sofascore/tournament-rounds';
 import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
-import { TournamentQueries } from '@/domains/tournament/queries';
+import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { MatchesController } from '../matches';
 
 const create = async (tournamentId: string) => {
-  const tournament = await TournamentQueries.tournament(tournamentId);
+  const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (tournament === undefined) throw new Error('Tournament not found');
 
   Profiling.log(
@@ -31,7 +31,7 @@ const create = async (tournamentId: string) => {
 };
 
 const update = async (tournamentId: string) => {
-  const tournament = await TournamentQueries.tournament(tournamentId);
+  const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (tournament === undefined) throw new Error('Tournament not found');
 
   Profiling.log(
@@ -59,7 +59,7 @@ const getRoundProviderData = async (tournamentId: string, roundSlug: string) => 
 };
 
 const knockoutRoundsUpdate = async (tournamentId: string) => {
-  const tournament = await TournamentQueries.tournament(tournamentId);
+  const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (tournament === undefined) throw new Error('Tournament not found');
 
   Profiling.log(

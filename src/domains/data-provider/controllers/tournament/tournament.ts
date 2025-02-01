@@ -1,8 +1,9 @@
 import { CreateTournamentInput } from '@/domains/data-provider/api/tournament/typing';
 import { API_SOFASCORE } from '@/domains/data-provider/providers/sofascore';
-import { TournamentQueries } from '@/domains/tournament/queries';
+import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { SchedulerController } from '../scheduler';
+import { DB_InsertTournament } from '@/domains/tournament/schema';
 
 const createTournament = async ({ input }: { input: CreateTournamentInput }) => {
   try {
@@ -16,7 +17,7 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
       logo,
     });
 
-    const tournament = await TournamentQueries.tournament(queryResult.id!);
+    const tournament = await QUERIES_TOURNAMENT.tournament(queryResult.id!);
     if (!tournament) throw new Error('Tournament not created');
 
     const tournamentMode = tournament.mode;
@@ -50,7 +51,7 @@ const updateTournament = async ({ input }: { input: CreateTournamentInput }) => 
       logo,
     });
 
-    const tournament = await TournamentQueries.tournament(updatedTournament.id!);
+    const tournament = await QUERIES_TOURNAMENT.tournament(updatedTournament.id!);
     const tournamentMode = tournament?.mode;
 
     if (

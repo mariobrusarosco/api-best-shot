@@ -1,5 +1,5 @@
 import { DB_InsertTeam } from '@/domains/team/schema';
-import { TournamentQueries } from '@/domains/tournament/queries';
+import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { SofascoreTeams } from '../../providers/sofascore/teams';
 import {
@@ -10,7 +10,7 @@ import {
 
 const create = async (tournamentId: string) => {
   try {
-    const tournament = await TournamentQueries.tournament(tournamentId);
+    const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
     if (tournament === undefined) throw new Error('Tournament not found');
 
     const tournamentMode = tournament.mode;
@@ -47,7 +47,7 @@ const create = async (tournamentId: string) => {
 
 const update = async (tournamentId: string) => {
   try {
-    const tournament = await TournamentQueries.tournament(tournamentId);
+    const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
     if (tournament === undefined) throw new Error('Tournament not found');
 
     const tournamentMode = tournament.mode;

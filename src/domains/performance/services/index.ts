@@ -173,12 +173,13 @@ const updateLeaguePerformance = async (leagueId: string) => {
   }
 };
 
-
-export const SERVICES_Performance = {
-    updateMemberGuessesForTournament,
-    getMemberPerformance
+const updateTournamentPerformance = async (memberId: string, tournamentId: string, points: number) => {
+    return QUERIES_PERFORMANCE.tournament.updatePerformance(points, memberId, tournamentId);
 };
 
+export const SERVICES_PERFORMANCE = {
+    updateTournamentPerformance
+};
 
 export const SERVICES_PERFORMANCE_V2 = {
     tournament: {

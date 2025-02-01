@@ -8,12 +8,12 @@ export const isLeagueParticipant = async (
   req: Request,
   res: Response,
   leagueId: string
-) => {
+): Promise<boolean> => {
   const memberId = Utils.getAuthenticatedUserId(req, res);
-  const query = await db
+  const [role] = await db
     .select()
     .from(T_LeagueRole)
     .where(and(eq(T_LeagueRole.memberId, memberId), eq(T_LeagueRole.leagueId, leagueId)));
 
-  return query;
+  return !!role;
 };

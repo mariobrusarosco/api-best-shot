@@ -1,9 +1,10 @@
 import db from '@/services/database';
-import { T_Match, T_Tournament } from '@/services/database/schema';
+import { T_Match, T_Tournament, T_Team } from '@/services/database/schema';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
-import { and, asc, eq, gte, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, sql, aliasedTable } from 'drizzle-orm';
+import { defineTimebox } from '@/utils/timebox';
 dayjs.extend(utc);
 dayjs.extend(isToday);
 
@@ -107,6 +108,50 @@ const nearestMatch = async (filter: { tournamentId: string }) => {
   return match;
 };
 
+const getMatchesByTournament = async (tournamentId: string, roundId: string) => {
+    try {
+        const homeTeam = aliasedTable(T_Team, 'homeTeam');
+        const awayTeam = aliasedTable(T_Team, 'awayTeam');
+
+        return db
+            .select({
+                id: T_Match.id,
+                date: T_Match.date,
+                round: T_Match.roundSlug,
+                tournamentId: T_Match.tournamentId,
+                status: T_Match.status,
+                home: {
+                    id: T_Match.homeTeamId,
+                    score: T_Match.homeScore,
+                    shortName: homeTeam.shortName,
+                    badge: homeTeam.badge,
+                    name: homeTeam.name,
+                    penaltiesScore: T_Match.homePenaltiesScore
+                },
+                away: {
+                    id: T_Match.awayTeamId,
+                    score: T_Match.awayScore,
+                    shortName: awayTeam.shortName,
+                    badge: awayTeam.badge,
+                    name: awayTeam.name,
+                    penaltiesScore: T_Match.awayPenaltiesScore
+                },
+                timebox: sql<string>`${T_Match.date}`.mapWith(defineTimebox)
+            })
+            .from(T_Match)
+            .leftJoin(homeTeam, eq(T_Match.homeTeamId, homeTeam.externalId))
+            .leftJoin(awayTeam, eq(T_Match.awayTeamId, awayTeam.externalId))
+            .where(
+                and(
+                    eq(T_Match.tournamentId, tournamentId),
+                    eq(T_Match.roundSlug, roundId)
+                )
+            );
+    } catch (error: any) {
+        console.error('[MATCH QUERIES] - [getMatchesByTournament]', error);
+        throw error;
+    }
+};
 
 export const MatchQueries = {
   currentDayMatchesOnDatabase,
@@ -116,4 +161,5 @@ export const MatchQueries = {
 export const QUERIES_MATCH = {
   currentDayMatches,
   nearestMatch,
+  getMatchesByTournament
 };

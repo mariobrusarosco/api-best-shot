@@ -89,6 +89,10 @@ const inviteToLeague = async (data: { leagueId: string; guestId: string }) => {
 const getLeagueDetails = async (leagueId: string, memberId: string) => {
   const mainQuery = await QUERIES_LEAGUE.getLeagueDetails(leagueId);
   
+  if (!mainQuery || mainQuery.length === 0) {
+    throw ErrorMapper.LEAGUE_NOT_FOUND;
+  }
+
   const participants = mainQuery.map(row => ({
     role: row.league_role.role,
     nickName: row.member.nickName,

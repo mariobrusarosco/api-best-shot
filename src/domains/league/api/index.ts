@@ -79,15 +79,25 @@ const getLeague = async (req: Request, res: Response) => {
         const memberId = Utils.getAuthenticatedUserId(req, res);
         const { leagueId } = req.params;
         
-        const isParticipant = await isLeagueParticipant(req, res, leagueId);
-        if (!isParticipant) {
-            return res
-                .status(ErrorMapper.NOT_LEAGUE_MEMBER.status)
-                .send(ErrorMapper.NOT_LEAGUE_MEMBER.user);
-        }
+        try {
+            const isParticipant = await isLeagueParticipant(req, res, leagueId);
+            if (!isParticipant) {
+                return res
+                    .status(ErrorMapper.NOT_LEAGUE_MEMBER.status)
+                    .send(ErrorMapper.NOT_LEAGUE_MEMBER.user);
+            }
 
-        const leagueDetails = await SERVICES_LEAGUE.getLeagueDetails(leagueId, memberId);
-        return res.status(200).send(leagueDetails);
+            const leagueDetails = await SERVICES_LEAGUE.getLeagueDetails(leagueId, memberId);
+            return res.status(200).send(leagueDetails);
+        } catch (error) {
+            if (error === ErrorMapper.LEAGUE_NOT_FOUND || 
+                (error && typeof error === 'object' && 'status' in error && 'user' in error)) {
+                return res
+                    .status(ErrorMapper.LEAGUE_NOT_FOUND.status)
+                    .send(ErrorMapper.LEAGUE_NOT_FOUND.user);
+            }
+            throw error;
+        }
     } catch (error: any) {
         console.error(`[LEAGUE - getLeague] ${error}`);
         return res

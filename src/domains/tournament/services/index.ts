@@ -26,119 +26,105 @@
  * - No other exports allowed from this file
  */
 
-// Types
-interface TournamentRegistration {
-    tournamentId: string;
-    playerId: string;
-    division?: string;
-}
+import { QUERIES_TOURNAMENT } from '../queries';
+import { DB_InsertGuess } from '@/domains/guess/schema';
+import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
+import db from '@/services/database';
+import { T_Guess } from '@/domains/guess/schema';
+import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
 
-interface RegistrationResult {
-    success: boolean;
-    registrationId?: string;
-    error?: string;
-}
+const getAllTournaments = async () => {
+    return QUERIES_TOURNAMENT.allTournaments();
+};
 
-// Private functions/variables can be declared outside
-const somePrivateHelper = () => {
-    // Implementation
-}
+const getTournamentScore = async (memberId: string, tournamentId: string) => {
+    const guesses = await QUERIES_TOURNAMENT.getTournamentGuesses(memberId, tournamentId);
+    const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
 
-// Private helpers
-const validateRegistration = (registration: TournamentRegistration): boolean => {
-    return !!(registration.tournamentId && registration.playerId);
-}
+    return {
+        details: parsedGuesses,
+        points: getTotalPoints(parsedGuesses),
+    };
+};
 
-// Main services export
-const SERVICES_TOURNAMENT = {
-    /**
-     * Registers a player for a tournament
-     * Demonstrates interaction with:
-     * - Queries: Checking tournament capacity, saving registration
-     * - Other Services: Checking player eligibility
-     * - Utils: Date formatting, validation
-     */
-    async registerPlayerForTournament(
-        registration: TournamentRegistration
-    ): Promise<RegistrationResult> {
-        try {
-            // 1. Input validation
-            if (!validateRegistration(registration)) {
-                return {
-                    success: false,
-                    error: 'Invalid registration data'
-                };
-            }
+const getTotalPoints = (guesses?: ReturnType<typeof runGuessAnalysis>[]) => {
+    if (!guesses) return null;
+    return guesses.reduce((acc, value) => acc + value.total, 0);
+};
 
-            // 2. Call another service to check player eligibility
-            const playerEligible = await SERVICES_PLAYER.checkEligibility(
-                registration.playerId,
-                registration.tournamentId
-            );
+const setupTournament = async (memberId: string, tournamentId: string) => {
+    const matches = await QUERIES_TOURNAMENT.getTournamentMatches(tournamentId);
 
-            if (!playerEligible) {
-                return {
-                    success: false,
-                    error: 'Player not eligible for this tournament'
-                };
-            }
+    const guessesToInsert = matches.map(match => ({
+        matchId: match.id,
+        memberId,
+        awayScore: null,
+        homeScore: null,
+    } satisfies DB_InsertGuess));
 
-            // 3. Use queries to check tournament capacity
-            const tournamentFull = await QUERIES_TOURNAMENT.checkTournamentCapacity(
-                registration.tournamentId
-            );
+    await db.insert(T_Guess).values(guessesToInsert);
+    await QUERIES_TOURNAMENT.createTournamentPerformance(memberId, tournamentId);
 
-            if (tournamentFull) {
-                return {
-                    success: false,
-                    error: 'Tournament is at full capacity'
-                };
-            }
+    return true;
+};
 
-            // 4. Use utils for date formatting
-            const registrationDate = UTILS_DATE.formatISODate(new Date());
-
-            // 5. Save registration using queries
-            const registrationId = await QUERIES_TOURNAMENT.createRegistration({
-                ...registration,
-                registrationDate
-            });
-
-            // 6. Return success result
-            return {
-                success: true,
-                registrationId
-            };
-
-        } catch (error) {
-            return {
-                success: false,
-                error: 'Registration failed due to system error'
-            };
-        }
-    },
-
-    /**
-     * Gets tournament details with player statistics
-     * Demonstrates combining data from multiple services
-     */
-    async getTournamentWithStats(tournamentId: string) {
-        // 1. Get basic tournament info
-        const tournamentDetails = await QUERIES_TOURNAMENT.getTournamentById(
-            tournamentId
-        );
-
-        // 2. Get performance stats from another domain's service
-        const tournamentStats = await SERVICES_PERFORMANCE.getTournamentStats(
-            tournamentId
-        );
-
-        // 3. Combine and return data
-        return {
-            ...tournamentDetails,
-            statistics: tournamentStats
-        };
+const getTournamentPerformanceForMember = async (memberId: string, tournamentId: string) => {
+    const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
+    if (!tournament) {
+        throw new Error('Tournament not found');
     }
-}
 
-export { SERVICES_TOURNAMENT }
+    const performance = await QUERIES_PERFORMANCE.tournament.getPerformance(memberId, tournamentId);
+    if (!performance) {
+        throw new Error('Performance not found');
+    }
+
+    return performance;
+};
+
+const getMatchesWithNullGuess = async (memberId: string, tournamentId: string, round: string) => {
+    return QUERIES_TOURNAMENT.getMatchesWithNullGuess(memberId, tournamentId, round);
+};
+
+const getTournamentDetails = async (tournamentId: string) => {
+    return QUERIES_TOURNAMENT.tournament(tournamentId);
+};
+
+const getTournamentRounds = async (tournamentId: string) => {
+    return QUERIES_TOURNAMENT.allTournamentRounds(tournamentId);
+};
+
+const getKnockoutRounds = async (tournamentId: string) => {
+    return QUERIES_TOURNAMENT.knockoutRounds(tournamentId);
+};
+
+const checkOnboardingStatus = async (memberId: string, tournamentId: string) => {
+    return QUERIES_TOURNAMENT.checkOnboardingStatus(memberId, tournamentId);
+};
+
+const getTournamentStandings = async (tournamentId: string) => {
+    const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
+    if (!tournament) {
+        throw new Error('Tournament not found');
+    }
+
+    const standings = await QUERIES_TOURNAMENT.getTournamentStandings(tournamentId);
+    return {
+        teams: standings,
+        format: tournament.standings,
+        lastUpdated: standings[0]?.updatedAt,
+    };
+};
+
+export const SERVICES_TOURNAMENT = {
+    getAllTournaments,
+    getTournamentScore,
+    setupTournament,
+    getTournamentPerformanceForMember,
+    getMatchesWithNullGuess,
+    getTournamentDetails,
+    getTournamentRounds,
+    getKnockoutRounds,
+    checkOnboardingStatus,
+    getTournamentStandings
+};

@@ -1,7 +1,11 @@
 {
-    "folders": [
-        {
-            "path": "docs"
-        }
-    ]
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../best-shot"
+		}
+	],
+	"settings": {}
 }

@@ -4,33 +4,33 @@
     "module": "CommonJS",
     "lib": ["ES2017", "dom"],
     "outDir": "./dist",
-    "rootDir": "src",
+    "rootDir": "./src",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "types": ["node"],
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "skipLibCheck": true,
     "strictNullChecks": true,
     "sourceMap": true,
     "inlineSources": true,
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["src/*"]
     },
-    // Set `sourceRoot` to  "/" to strip the build path prefix
-    // from generated source code references.
-    // This improves issue grouping in Sentry.
-    // Set `sourceRoot` to  "/" to strip the build path prefix
-    // from generated source code references.
-    // This improves issue grouping in Sentry.
     "sourceRoot": "/",
     "typeRoots": ["./src/types", "./node_modules/@types"]
   },
-  "include": ["src", "global.d.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
   "files": ["src/types/express/index.d.ts"],
   "ts-node": {
     "require": ["tsconfig-paths/register"]
-  }
+  },
+  "replacements": [
+    {
+      "pattern": "@/domains/(.*)/routes",
+      "replacement": "./src/domains/$1/routes"
+    }
+  ]
 }

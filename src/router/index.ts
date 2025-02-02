@@ -20,23 +20,23 @@ class ApplicationRouter {
     public async init(app: Express): Promise<void> {
         this.app = app;
 
+        const domainsWithRoutes = [];
         const domainsPath = join(__dirname, '../domains');        
         const domains = readdirSync(domainsPath, { withFileTypes: true })
             .filter(dirent => dirent.isDirectory())
             .map(dirent => dirent.name);
-
+        
         for (const domain of domains) {
             try {
                 const resolvedPath = resolveAlias(`@/domains/${domain}/routes`);
-                const routes = await import(resolvedPath);
-                if (routes && routes.default) {
-                    this.app.use(`/api/v2/${domain}`, routes.default);
-                } else {
-                    console.warn(`No routes exported for domain: ${domain}`);
-                }
+                await import(resolvedPath);
             } catch (error) {
-                console.error(`Could not load routes for domain: ${domain}`, error);
+                domainsWithRoutes.push(domain);
             }
+        }
+
+        if (domainsWithRoutes.length > 0) {
+            console.warn(`Could not load routes for domains: ${domainsWithRoutes.join(', ')}`);
         }
     }
 

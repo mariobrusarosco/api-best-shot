@@ -1,6 +1,7 @@
 import { Express, Router } from 'express';
 import { readdirSync } from 'fs';
 import { join } from 'path';
+import { resolveAlias } from '@/utils/resolveAlias';
 
 
 class ApplicationRouter {
@@ -26,9 +27,15 @@ class ApplicationRouter {
 
         for (const domain of domains) {
             try {
-                await import(`@/domains/${domain}/routes`);
+                const resolvedPath = resolveAlias(`@/domains/${domain}/routes`);
+                const routes = await import(resolvedPath);
+                if (routes && routes.default) {
+                    this.app.use(`/api/v2/${domain}`, routes.default);
+                } else {
+                    console.warn(`No routes exported for domain: ${domain}`);
+                }
             } catch (error) {
-                console.warn(`Could not load routes for domain: ${domain}`);
+                console.error(`Could not load routes for domain: ${domain}`, error);
             }
         }
     }

@@ -32,19 +32,21 @@
      ```
 
 ### First-time Setup
-1. Create environment file:
+1. Create environment file and start database:
 ```bash
-npm run install:env
+docker compose up env-setup
 ```
 
-2. Start database:
+2. Verify successful setup:
 ```bash
-docker compose up -d postgres
-```
+# Check container status (should show 'exited (0)' for env-setup)
+docker compose ps --all
 
-2. Verify database is running:
-```bash
-docker ps | grep bestshot_db
+# Verify .env file exists
+ls -la .env
+
+# View environment variables
+cat .env
 ```
 
 The database will be available at:

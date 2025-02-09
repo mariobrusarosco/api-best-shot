@@ -1,5 +1,27 @@
-
 services:
+  env-setup:
+    image: alpine:latest
+    container_name: bestshot_env_setup
+    volumes:
+      - .:/app
+    command: >
+      sh -c "
+      if [ ! -f /app/.env ]; then
+        echo 'Creating .env file...'
+        echo 'DB_USER=dev_user' > /app/.env
+        echo 'DB_PASSWORD=dev_pass' >> /app/.env
+        echo 'DB_NAME=bestshot_dev' >> /app/.env
+        echo 'DB_HOST=postgres' >> /app/.env
+        echo 'DB_PORT=5432' >> /app/.env
+        echo 'Created .env file with development credentials'
+      else
+        echo '.env file already exists - skipping creation'
+      fi
+      "
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:15
     container_name: bestshot_db
@@ -13,6 +35,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - bestshot_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev_user -d bestshot_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   postgres_data:

@@ -56,7 +56,18 @@ The database will be available at:
 - Password: dev_pass
 - Database: bestshot_dev
 
+### Troubleshooting
 
+**Docker Not Running**:
+```bash
+ERROR: Docker daemon is not running.
+Please start Docker and try again.
+```
+
+**Database Not Running**:
+```bash
+docker compose up -d postgres
+```
 
 # Best Shot API
 
@@ -264,3 +275,15 @@ We're using **Railway** to host the project. The url are:
 [Postman URL](https://documenter.getpostman.com/view/2930329/VUjSGjLU#intro)
 
 ---
+
+## Development Commands
+
+Run database migrations:
+```bash
+docker compose run --rm migrations
+```
+
+Start the application:
+```bash
+npm start
+```

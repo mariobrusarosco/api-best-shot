@@ -4,20 +4,14 @@ services:
     container_name: bestshot_env_setup
     volumes:
       - .:/app
-    command: >
-      sh -c "
-      if [ ! -f /app/.env ]; then
-        echo 'Creating .env file...'
-        echo 'DB_USER=dev_user' > /app/.env
-        echo 'DB_PASSWORD=dev_pass' >> /app/.env
-        echo 'DB_NAME=bestshot_dev' >> /app/.env
-        echo 'DB_HOST=postgres' >> /app/.env
-        echo 'DB_PORT=5432' >> /app/.env
-        echo 'Created .env file with development credentials'
-      else
-        echo '.env file already exists - skipping creation'
-      fi
-      "
+    env_file:
+      - .env
+    entrypoint: 
+      - sh
+      - -c
+      - |
+        chmod +x /app/scripts/*.sh
+        /app/scripts/setup-env.sh
     depends_on:
       postgres:
         condition: service_healthy
@@ -26,20 +20,33 @@ services:
     image: postgres:15
     container_name: bestshot_db
     environment:
-      POSTGRES_USER: dev_user
-      POSTGRES_PASSWORD: dev_pass
-      POSTGRES_DB: bestshot_dev
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - bestshot_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev_user -d bestshot_dev"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+
+  migrations:
+    image: node:18
+    volumes:
+      - .:/app
+    working_dir: /app
+    entrypoint:
+      - sh
+      - -c
+      - |
+        chmod +x /app/scripts/*.sh
+        /app/scripts/migrate.sh
+
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:

@@ -6,12 +6,21 @@ services:
       - .:/app
     env_file:
       - .env
-    entrypoint: [
-      "sh",
-      "-c",
-      "chmod +x /app/scripts/*.sh && /app/scripts/check-docker.sh",
-      "/app/scripts/setup-env.sh"
-    ]
+    command: >
+      sh -c "
+      if ! docker info >/dev/null 2>&1; then
+        echo 'ERROR: Docker not running. Start Docker Desktop/Engine.'
+        exit 1
+      fi
+      if [ ! -f /app/.env ]; then
+        echo 'DB_USER=dev_user' > /app/.env
+        echo 'DB_PASSWORD=dev_pass' >> /app/.env
+        echo 'DB_NAME=bestshot_dev' >> /app/.env
+        echo 'DB_HOST=postgres' >> /app/.env
+        echo 'DB_PORT=5432' >> /app/.env
+        echo 'Created .env file'
+      fi
+      "
     depends_on:
       postgres:
         condition: service_healthy

@@ -65,6 +65,11 @@ The database will be available at:
 sudo systemctl status docker
 ```
 
+**Docker Not Detected**:
+```bash
+ERROR: Docker not running. Start Docker Desktop/Engine.
+```
+
 **Compose Version**:
 ```bash
 docker compose version

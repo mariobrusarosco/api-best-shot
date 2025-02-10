@@ -58,17 +58,17 @@ The database will be available at:
 
 ### Troubleshooting
 
-**Docker Not Running**:
-Windows users: Ensure Docker Desktop is fully started (system tray icon shows green status)
-Mac users: Check Docker Desktop is running in the menu bar
-Linux users: Verify Docker service is active:
+**Docker Connection Issues**:
+- Windows/Mac: Ensure Docker Desktop is running
+- Linux: Check Docker service status:
 ```bash
 sudo systemctl status docker
 ```
-The setup script will detect this automatically:
+
+**Compose Version**:
 ```bash
-ERROR: Docker daemon is not running.
-Please start Docker and try again.
+docker compose version
+# Should show v2.x
 ```
 
 **Database Not Running**:

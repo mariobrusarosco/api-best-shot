@@ -1,24 +1,25 @@
 #!/bin/sh
 
-# Check Docker runtime status
-if ! docker version >/dev/null 2>&1; then
-  echo "ERROR: Docker daemon is not running."
-  echo "Please start Docker Desktop and try again."
+# Check Docker socket connectivity
+if ! docker info --format '{{.ServerVersion}}' >/dev/null 2>&1; then
+  echo "ERROR: Could not connect to Docker daemon."
+  echo "Please ensure Docker is running and accessible."
   exit 1
 fi
 
-# Verify Docker Compose is available
-if ! docker compose version >/dev/null 2>&1; then
-  echo "ERROR: Docker Compose V2 is required."
+# Verify Docker Compose V2
+if ! docker compose version --short | grep -q '^2'; then
+  echo "ERROR: Docker Compose V2 required."
   echo "Update Docker Desktop or install compose plugin."
   exit 1
 fi
 
-if ! docker ps | grep -q bestshot_db; then
-  echo "ERROR: Database container not running."
-  echo "Start it with: docker compose up -d postgres"
+# Check database container status
+if ! docker compose ps --services --filter status=running | grep -q postgres; then
+  echo "ERROR: Database not running. Start with:"
+  echo "docker compose up -d postgres"
   exit 1
 fi
 
-echo "Docker checks passed!"
+echo "Docker checks passed."
 exit 0 

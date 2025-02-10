@@ -1,9 +1,16 @@
 #!/bin/sh
 
 # Check Docker runtime status
-if ! docker ps >/dev/null 2>&1; then
+if ! docker version >/dev/null 2>&1; then
   echo "ERROR: Docker daemon is not running."
   echo "Please start Docker Desktop and try again."
+  exit 1
+fi
+
+# Verify Docker Compose is available
+if ! docker compose version >/dev/null 2>&1; then
+  echo "ERROR: Docker Compose V2 is required."
+  echo "Update Docker Desktop or install compose plugin."
   exit 1
 fi
 

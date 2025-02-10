@@ -6,12 +6,12 @@ services:
       - .:/app
     env_file:
       - .env
-    entrypoint: 
-      - sh
-      - -c
-      - |
-        chmod +x /app/scripts/*.sh
-        /app/scripts/setup-env.sh
+    entrypoint: [
+      "sh",
+      "-c",
+      "chmod +x /app/scripts/*.sh && /app/scripts/check-docker.sh",
+      "/app/scripts/setup-env.sh"
+    ]
     depends_on:
       postgres:
         condition: service_healthy

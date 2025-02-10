@@ -1,9 +1,9 @@
 #!/bin/sh
 
 # Check Docker runtime status
-if ! docker info >/dev/null 2>&1; then
+if ! docker ps >/dev/null 2>&1; then
   echo "ERROR: Docker daemon is not running."
-  echo "Please start Docker and try again."
+  echo "Please start Docker Desktop and try again."
   exit 1
 fi
 

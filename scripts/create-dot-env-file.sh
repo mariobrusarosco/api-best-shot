@@ -1,39 +1,42 @@
 #!/bin/sh
 
-# Function to check if .env file exists
-check_dot_env_file() {
-  if [ -f /app/.env ]; then
-    echo "📝 [ENV VARS] - .env file already exists. Skipping creation."
+check_dot_env_exists() {
+  if [ -f "/app/.env" ]; then
     return 0
   fi
   return 1
 }
 
-create_dot_env_file() {
-  echo "📝 [ENV VARS] - Creating .env file..."
-  
-  echo "DB_USER=dev_user" > /app/.env
-  echo "DB_PASSWORD=dev_pass" >> /app/.env
-  echo "DB_NAME=bestshot_dev" >> /app/.env
-  echo "DB_HOST=postgres" >> /app/.env
-  echo "DB_PORT=5432" >> /app/.env
-  echo "NODE_ENV=development" >> /app/.env
-  echo "SENTRY_DSN=https://sentry.io/" >> /app/.env
-  echo "PORT=9090" >> /app/.env
-  echo "ACCESS_CONTROL_ALLOW_ORIGIN=*" >> /app/.env
-  echo "AWS_ACCESS_KEY_ID=1234567890" >> /app/.env
-  echo "AWS_SECRET_ACCESS_KEY=1234567890" >> /app/.env
-  echo "AWS_BUCKET_NAME=bestshot-dev" >> /app/.env
-  echo "JWT_SECRET=1234567890" >> /app/.env
-  echo "MEMBER_PUBLIC_ID_COOKIE=1234567890" >> /app/.env
 
-  echo "📝 [ENV VARS] .env file created successfully ✅!"
+create_dot_env_file() {
+  if check_dot_env_exists; then
+    FILE_NAME=".env.new-file-with-default-values"
+  else
+    FILE_NAME=".env"
+  fi
+
+  PATH_TO_ENV_FILE="/app/$FILE_NAME"
+  
+  echo "DB_USER=dev_user" > $PATH_TO_ENV_FILE
+  echo "DB_PASSWORD=dev_pass" >> $PATH_TO_ENV_FILE
+  echo "DB_NAME=bestshot_dev" >> $PATH_TO_ENV_FILE
+  echo "DB_HOST=postgres" >> $PATH_TO_ENV_FILE
+  echo "DB_PORT=5432" >> $PATH_TO_ENV_FILE
+  echo "NODE_ENV=development" >> $PATH_TO_ENV_FILE
+  echo "SENTRY_DSN=https://sentry.io/" >> $PATH_TO_ENV_FILE
+  echo "PORT=9090" >> $PATH_TO_ENV_FILE
+  echo "ACCESS_CONTROL_ALLOW_ORIGIN=*" >> $PATH_TO_ENV_FILE
+  echo "AWS_ACCESS_KEY_ID=1234567890" >> $PATH_TO_ENV_FILE
+  echo "AWS_SECRET_ACCESS_KEY=1234567890" >> $PATH_TO_ENV_FILE
+  echo "AWS_BUCKET_NAME=bestshot-dev" >> $PATH_TO_ENV_FILE
+  echo "JWT_SECRET=1234567890" >> $PATH_TO_ENV_FILE
+  echo "MEMBER_PUBLIC_ID_COOKIE=1234567890" >> $PATH_TO_ENV_FILE
+
+  echo "📝 [ENV VARS] - Created $FILE_NAME ✅"
   
   return 1
 }
 
 handle_dot_env_creation() {
-  if ! check_dot_env_file; then
-    create_dot_env_file
-  fi
+  create_dot_env_file
 }

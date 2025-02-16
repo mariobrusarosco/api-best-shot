@@ -7,6 +7,11 @@ services:
     volumes:
       - .:/app
     command: sh -c "chmod +x ./scripts/setup.sh && ./scripts/setup.sh"
+    healthcheck:
+      test: ["CMD", "test", "-f", "/app/.env"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   postgres:
     image: postgres:15
@@ -15,6 +20,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PORT: ${DB_PORT}
     ports:
       - "${DB_PORT}:5432"
     volumes:
@@ -24,7 +30,8 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
     depends_on:
-      - env-setup
+      env-setup:
+        condition: service_healthy
 
 volumes:
   postgres_data:

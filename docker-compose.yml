@@ -6,12 +6,15 @@ services:
     container_name: bestshot_env_setup
     volumes:
       - .:/app
-    command: sh -c "chmod +x ./scripts/setup.sh && ./scripts/setup.sh"
+    # Only create .env if it doesn't exist
+    command: sh -c "[ ! -f /app/.env ] && (chmod +x ./scripts/setup.sh && ./scripts/setup.sh) || echo '.env file already exists, skipping setup'"
     healthcheck:
       test: ["CMD", "test", "-f", "/app/.env"]
       interval: 10s
       timeout: 5s
       retries: 3
+    profiles:
+      - setup
 
   postgres:
     image: postgres:15
@@ -29,6 +32,9 @@ services:
       - bestshot_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+    depends_on:
+      env-setup:
+        condition: service_healthy
 
 volumes:
   postgres_data:

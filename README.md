@@ -26,16 +26,121 @@ Best Shot API is the backend service for the _Football App_ project [(more info)
 ## Development
 
 ### Environment Setup
-For detailed information about our development environment choices and rationale, see [Development Environment](./docs/development-environment.md).
 
-### Quick Start
+We use Docker Compose profiles to manage environment setup:
+
+#### First-time Setup
 ```bash
-# Start database
-docker compose up -d
+# Only needed once or when you want to reset to defaults
+docker compose --profile setup up env-setup
 
-# Start API
+# Verify .env was created
+cat .env
+```
+
+#### Regular Development
+```bash
+# Start only the database (won't touch existing .env)
+docker compose up -d
+```
+
+#### Environment Management
+- `.env` file is created only if it doesn't exist
+- Existing `.env` files are never overwritten automatically
+- You can manually reset to defaults by running the setup profile
+
+To modify your environment:
+1. Edit `.env` file directly
+2. Changes take effect on next `docker compose up`
+3. Database-related changes might require `docker compose down && docker compose up -d`
+
+### Development Workflow
+
+We use a hybrid development approach:
+- PostgreSQL runs in Docker for consistent database environment
+- API runs locally for faster development and better debugging
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                  Development Environment                 │
+├───────────────────────┐                ┌────────────────┤
+│    Docker Container   │                │   Local Machine │
+│    ┌─────────────┐   │                │                 │
+│    │  env-setup  │   │                │                 │
+│    │  (creates   │   │    generates   │                 │
+│    │   .env)     ├───┼───────────────►│  .env file     │
+│    └─────┬───────┘   │                │                 │
+│          │           │                │                 │
+│    ┌─────▼───────┐   │                │ ┌────────────┐ │
+│    │  PostgreSQL │   │                │ │    API     │ │
+│    │  Container  │◄──┼────────────────┼─┤   Local    │ │
+│    └─────────────┘   │    connects    │ │  Process   │ │
+│                      │                │ └────────────┘ │
+└───────────────────────┘                └────────────────┘
+```
+
+```
+┌──────────┐  ┌──────────┐  ┌───────────┐  ┌─────────┐
+│ Developer│  │env-setup │  │ PostgreSQL│  │   API   │
+└────┬─────┘  └────┬─────┘  └─────┬─────┘  └────┬────┘
+     │             │              │              │
+     │ docker compose up -d       │              │
+     ├─────────────►             │              │
+     │             │             │              │
+     │             │ create .env │              │
+     │             ├──────────┐  │              │
+     │             │          │  │              │
+     │             │◄─────────┘  │              │
+     │             │             │              │
+     │             │ start db    │              │
+     │             ├────────────►│              │
+     │             │             │              │
+     │ yarn dev    │             │              │
+     ├──────────────────────────────────────────►
+     │             │             │              │
+     │             │             │ connect      │
+     │             │◄─────────────┘
+     │             │             │              │
+     │ edit code   │             │              │
+     ├──────────────────────────────────────────►
+     │             │             │              │
+     │ hot reload  │             │              │
+     │◄──────────────────────────────────────────
+     │             │             │              │
+```
+
+#### 1. Start the Database
+```bash
+# This will:
+# 1. Set up environment variables
+# 2. Start PostgreSQL container
+docker compose up -d
+```
+
+#### 2. Start the API
+```bash
+# Install dependencies (if haven't already)
+yarn install
+
+# Start API with hot reloading
 yarn dev
 ```
+
+The API will be available at `http://localhost:9090`
+
+### Understanding the Setup
+
+#### Database Container (`docker compose up -d`)
+1. Creates/updates `.env` file with database credentials
+2. Starts PostgreSQL 15 container
+3. Creates persistent volume for data
+4. Exposes database on configured port (default: 5432)
+
+#### Local API (`yarn dev`)
+1. Validates environment variables
+2. Connects to containerized database
+3. Provides hot reloading for development
+4. Enables direct debugging through IDE
 
 ### Common Development Scenarios
 
@@ -111,6 +216,41 @@ yarn db:migrate         # Try again
 docker exec -it bestshot_db psql -U ${DB_USER} -d ${DB_NAME} -f ./scripts/seed-test-data.sql
 ```
 
+### Troubleshooting
+
+#### Environment Setup Issues
+```bash
+# Check if .env was created
+ls -la .env
+
+# Recreate .env file
+docker compose up env-setup
+```
+
+#### Database Issues
+```bash
+# Check container status
+docker compose ps
+
+# View database logs
+docker compose logs postgres
+
+# Reset database (WARNING: deletes all data)
+docker compose down -v
+docker compose up -d
+```
+
+#### API Issues
+```bash
+# Check environment variables
+yarn validate-env
+
+# Restart API with clean environment
+yarn dev
+
+# Check database connection
+docker exec bestshot_db pg_isready -U ${DB_USER} -d ${DB_NAME}
+```
 
 ## Layer Structure
 

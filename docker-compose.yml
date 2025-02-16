@@ -1,29 +1,12 @@
 services:
   env-setup:
-    image: alpine:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.env-setup
     container_name: bestshot_env_setup
     volumes:
       - .:/app
-    env_file:
-      - .env
-    command: >
-      sh -c "
-      if ! docker info >/dev/null 2>&1; then
-        echo 'ERROR: Docker not running. Start Docker Desktop/Engine.'
-        exit 1
-      fi
-      if [ ! -f /app/.env ]; then
-        echo 'DB_USER=dev_user' > /app/.env
-        echo 'DB_PASSWORD=dev_pass' >> /app/.env
-        echo 'DB_NAME=bestshot_dev' >> /app/.env
-        echo 'DB_HOST=postgres' >> /app/.env
-        echo 'DB_PORT=5432' >> /app/.env
-        echo 'Created .env file'
-      fi
-      "
-    depends_on:
-      postgres:
-        condition: service_healthy
+    command: sh -c "chmod +x ./scripts/setup.sh && ./scripts/setup.sh"
 
   postgres:
     image: postgres:15
@@ -40,26 +23,12 @@ services:
       - bestshot_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-
-  migrations:
-    image: node:18
-    volumes:
-      - .:/app
-    working_dir: /app
-    entrypoint:
-      - sh
-      - -c
-      - |
-        chmod +x /app/scripts/*.sh
-        /app/scripts/migrate.sh
-
     depends_on:
-      postgres:
-        condition: service_healthy
+      - env-setup
 
 volumes:
   postgres_data:
 
 networks:
   bestshot_network:
-    driver: bridge 
+    driver: bridge

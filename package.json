@@ -2,8 +2,13 @@
   "name": "api-best-shot",
   "version": "7.0.0",
   "description": "API - Best Shot",
+  "volta": {
+    "node": "18.17.1",
+    "yarn": "1.22.19"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register ./src/index.ts",
+    "dev-environment-validation": "node scripts/validate-env.js",
     "dev-demo": "ENV_PATH=.env.demo ts-node-dev -r tsconfig-paths/register ./src/index.ts",
     "build-demo": "rimraf ./dist && tsc && tsc-alias",
     "dev-prod": "ENV_PATH=.env.production ts-node-dev -r tsconfig-paths/register ./src/index.ts",

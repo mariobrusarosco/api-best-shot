@@ -438,15 +438,83 @@ npm start
 
 ### Prerequisites
 
-1. **Node.js**
-   - Required version: 18.x or higher
-   - Verify installation:
-     ```bash
-     node --version
-     ```
-   - Install via [Node.js official website](https://nodejs.org/) or use [nvm](https://github.com/nvm-sh/nvm)
+1. **Volta - Node.js Version Manager**
+   ```bash
+   # Unix-like systems (macOS, Linux)
+   curl https://get.volta.sh | bash
+   
+   # Windows
+   # Download and run installer from https://docs.volta.sh/guide/getting-started
+   ```
+   
+   #### Detailed Volta Setup
+   After installation:
+   1. Restart your terminal
+   2. Verify installation:
+      ```bash
+      volta --version
+      ```
+   3. Volta will automatically:
+      - Detect Node.js and Yarn versions from package.json
+      - Download and install required versions (Node.js 18.17.1, Yarn 1.22.19)
+      - Switch versions when you enter the project directory
+   
+   #### Troubleshooting Volta
+   
+   1. **Command Not Found**
+      ```bash
+      # Add Volta to PATH (Unix-like systems)
+      export VOLTA_HOME="$HOME/.volta"
+      export PATH="$VOLTA_HOME/bin:$PATH"
+      ```
+   
+   2. **Permission Issues**
+      ```bash
+      # Fix permissions (Unix-like systems)
+      sudo chown -R $USER: $HOME/.volta
+      ```
+   
+   3. **Version Not Switching**
+      ```bash
+      # Force tool installation
+      volta install node@18.17.1
+      volta install yarn@1.22.19
+      
+      # Verify current versions
+      node --version  # Should show 18.17.1
+      yarn --version  # Should show 1.22.19
+      ```
+   
+   #### Updating Versions with Volta
+   
+   To update Node.js or Yarn versions:
+   
+   1. Edit package.json volta section:
+      ```json
+      "volta": {
+        "node": "NEW_VERSION",
+        "yarn": "NEW_VERSION"
+      }
+      ```
+   
+   2. Volta will automatically:
+      - Detect the change
+      - Download new versions
+      - Switch to new versions
+   
+   3. Verify updates:
+      ```bash
+      volta list all  # Shows all installed versions
+      volta list     # Shows current versions
+      ```
 
-2. **Docker** 
+2. **Node.js and Yarn**
+   - ✨ Managed automatically by Volta
+   - Required versions:
+     - Node.js: 18.17.1
+     - Yarn: 1.22.19
+
+3. **Docker** 
    - Minimum: Docker Engine 20.10+ with Compose V2
    - Verify installation:
      ```bash
@@ -455,7 +523,7 @@ npm start
      ```
    - [Install Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes compose)
 
-3. **Git**
+4. **Git**
    - Required for version control
    - Verify installation:
      ```bash

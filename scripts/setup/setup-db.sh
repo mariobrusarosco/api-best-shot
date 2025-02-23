@@ -12,7 +12,8 @@ echo "⏳ Waiting for PostgreSQL to be ready..."
 for i in $(seq 1 30); do
     if pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; then
         echo "✅ PostgreSQL is ready"
-        break
+        echo "✨ Database setup completed successfully!"
+        exit 0
     fi
     
     if [ $i -eq 30 ]; then
@@ -22,6 +23,4 @@ for i in $(seq 1 30); do
     
     echo "⏳ Waiting... ($i/30)"
     sleep 1
-done
-
-echo "✨ Database setup completed successfully!" 
+done 

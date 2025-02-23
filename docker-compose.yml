@@ -5,9 +5,23 @@ services:
     volumes:
       - .:/app
     working_dir: /app/scripts/setup
-    command: sh -c "apk add --no-cache postgresql-client && chmod +x main.sh && ./main.sh ${SETUP_MODE:-initial}"
+    command: >
+      sh -c '
+        apk add --no-cache postgresql-client &&
+        chmod +x main.sh &&
+        if [ -n "$$SETUP_MODE" ] && [ "$$SETUP_MODE" = "update-setup" ]; then
+          ./main.sh update-setup;
+        else
+          ./main.sh initial-setup;
+        fi
+      '
     environment:
-      - SETUP_MODE=${SETUP_MODE:-initial}
+      - SETUP_MODE=${COMPOSE_PROFILES}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bestshot_network
     profiles:
       - initial-setup
       - update-setup
@@ -18,18 +32,27 @@ services:
     image: postgres:15
     container_name: bestshot_db
     environment:
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER:-dev_user}
+      DB_PASSWORD: ${DB_PASSWORD:-dev_pass}
+      DB_NAME: ${DB_NAME:-bestshot_dev}
+      DB_PORT: ${DB_PORT:-5432}
+      POSTGRES_USER: ${DB_USER:-dev_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_pass}
+      POSTGRES_DB: ${DB_NAME:-bestshot_dev}
     ports:
-      - "${DB_PORT}:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - bestshot_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dev_user} -d ${DB_NAME:-bestshot_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - initial-setup
+      - update-setup
 
 volumes:
   postgres_data:

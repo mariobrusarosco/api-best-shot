@@ -1,14 +1,34 @@
 #!/bin/sh
 
-# Get the setup mode (initial or update)
-SETUP_MODE=${1:-initial}
+# Get the setup mode from argument
+PROFILE=$1
 
-echo "🚀 Starting setup in ${SETUP_MODE} mode..."
+if [ -z "$PROFILE" ]; then
+    echo "❌ No profile specified"
+    echo "   Valid profiles are: initial-setup, update-setup"
+    exit 1
+fi
+
+case "$PROFILE" in
+  "initial-setup")
+    MODE="initial"
+    ;;
+  "update-setup")
+    MODE="update"
+    ;;
+  *)
+    echo "❌ Unknown profile: ${PROFILE}"
+    echo "   Valid profiles are: initial-setup, update-setup"
+    exit 1
+    ;;
+esac
+
+echo "🚀 Starting setup in ${MODE} mode..."
 
 # Make all scripts executable
 chmod +x ./*.sh
 
-case $SETUP_MODE in
+case $MODE in
   "initial")
     echo "📥 Running initial setup..."
     
@@ -26,9 +46,11 @@ case $SETUP_MODE in
     echo "🔄 Running update setup..."
     
     # Backup existing .env
-    if [ -f ../.env ]; then
-      cp ../.env ../.env.backup
+    if [ -f /app/.env ]; then
+      cp /app/.env /app/.env.backup
       echo "💾 Backed up existing .env to .env.backup"
+    else
+      echo "⚠️  No existing .env found, will create new one"
     fi
     
     # Update environment while preserving existing values
@@ -37,12 +59,6 @@ case $SETUP_MODE in
     # Validate environment
     ./validate-env.sh
     ;;
-    
-  *)
-    echo "❌ Unknown setup mode: ${SETUP_MODE}"
-    echo "   Valid modes are: initial, update"
-    exit 1
-    ;;
 esac
 
-echo "✨ Setup completed successfully!" 
+echo "✨ Setup completed in ${MODE} mode!" 

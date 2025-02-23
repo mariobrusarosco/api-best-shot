@@ -51,14 +51,7 @@ cd api-best-shot
 ### 2. Environment Setup
 
 ```bash
-# Run the setup script
-./scripts/dev-setup.sh
-
-# This will:
-# - Install correct Node.js version via Volta
-# - Install dependencies
-# - Create .env file
-# - Start required Docker services
+docker compose --profile setup up setup
 ```
 
 ### 3. Verify Setup

@@ -49,8 +49,8 @@ done
 
 # Exit with error if any required variables are missing
 if [ $ERRORS -gt 0 ]; then
-    echo "\n❌ Environment validation failed with ${ERRORS} error(s)"
+    echo "❌ Environment validation failed with ${ERRORS} error(s)"
     exit 1
 else
-    echo "\n✅ Environment validation passed"
+    echo "✅ Environment validation passed"
 fi 

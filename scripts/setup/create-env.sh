@@ -28,6 +28,9 @@ get_value() {
     if [ -n "$CURRENT_VALUE" ]; then
         echo "$CURRENT_VALUE"
     else
+        if [ -n "$PRESERVE_MODE" ]; then
+            echo "⚠️  Adding new variable: ${VAR_NAME}" >&2
+        fi
         echo "$DEFAULT_VALUE"
     fi
 }
@@ -57,6 +60,12 @@ AWS_BUCKET_NAME=$(get_value "AWS_BUCKET_NAME" "")                  # S3 bucket n
 
 # Monitoring (Required for Sentry)
 SENTRY_DSN=$(get_value "SENTRY_DSN" "")                       # Sentry Data Source Name
+
+# Sentry Configuration (Required for Sentry)
+SENTRY_AUTH_TOKEN=$(get_value "SENTRY_AUTH_TOKEN" "")          # Sentry authentication token
+SENTRY_ORG=$(get_value "SENTRY_ORG" "")                        # Sentry organization
+SENTRY_PROJECT=$(get_value "SENTRY_PROJECT" "")                # Sentry project
+
 EOF
 
 if [ -n "$PRESERVE_MODE" ]; then
@@ -69,4 +78,5 @@ echo "⚠️  Some required variables might be empty. Please verify:"
 echo "   - JWT_SECRET"
 echo "   - MEMBER_PUBLIC_ID_COOKIE"
 echo "   - AWS_* (if using AWS features)"
-echo "   - SENTRY_DSN (if using Sentry)" 
+echo "   - SENTRY_DSN (if using Sentry)"
+echo "   - SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT (if using Sentry)" 

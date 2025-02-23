@@ -1,18 +1,13 @@
 services:
-  env-setup:
-    build:
-      context: .
-      dockerfile: Dockerfile.env-setup
-    container_name: bestshot_env_setup
+  setup:
+    image: alpine:3.18
+    container_name: bestshot_setup
     volumes:
-      - .:/app
-    
-    command: sh -c "chmod +x ./scripts/setup.sh && ./scripts/setup.sh"
-    healthcheck:
-      test: ["CMD", "test", "-f", "/app/.env"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      - ./scripts/setup:/setup
+    working_dir: /setup
+    command: sh -c "chmod +x main.sh && ./main.sh ${SETUP_MODE:-initial}"
+    environment:
+      - SETUP_MODE=${SETUP_MODE:-initial}
     profiles:
       - setup
 

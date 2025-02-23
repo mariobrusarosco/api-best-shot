@@ -11,10 +11,10 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
 import accessControl from './domains/shared/middlewares/access-control';
-
-const PORT = process.env.PORT || 9090;
+import { env } from './config/env';
 
 const app = express();
+const port = env.PORT;
 
 // JSON Parser Middleware
 app.use(express.json());
@@ -36,9 +36,9 @@ async function startServer() {
   // Initialize router with auto-loading of routes
   await ApplicationRouter.init(app);
   
-  app.listen(PORT, () =>
-    console.log(`Listening on port ${PORT} --- API_VERSION: ${process.env.API_VERSION}`)
-  );
+  app.listen(port, () => {
+    console.log(`Server running on port ${port} in ${env.NODE_ENV} mode`);
+  });
 }
 
 startServer();

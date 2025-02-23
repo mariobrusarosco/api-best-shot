@@ -8,7 +8,16 @@
   },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register ./src/index.ts",
-    "dev-environment-validation": "node scripts/validate-env.js",
+    "dev:aws": "docker compose --profile aws up -d && ts-node-dev --respawn --transpile-only -r tsconfig-paths/register ./src/index.ts",
+    "dev:full": "docker compose --profile aws --profile monitoring up -d && ts-node-dev --respawn --transpile-only -r tsconfig-paths/register ./src/index.ts",
+    "dev:stop": "docker compose down",
+    "dev:clean": "docker compose down -v && rm -rf node_modules && yarn install",
+    "dev:status": "docker compose ps && volta list",
+    "aws:logs": "docker compose --profile aws logs -f aws-local",
+    "db:connect": "docker compose exec postgres psql -U ${DB_USER} -d ${DB_NAME}",
+    "db:logs": "docker compose logs -f postgres",
+    "db:reset": "docker compose down postgres -v && docker compose up -d postgres",
+    "create-env": "tsc && node scripts/create-env-file.js",
     "dev-demo": "ENV_PATH=.env.demo ts-node-dev -r tsconfig-paths/register ./src/index.ts",
     "build-demo": "rimraf ./dist && tsc && tsc-alias",
     "dev-prod": "ENV_PATH=.env.production ts-node-dev -r tsconfig-paths/register ./src/index.ts",
@@ -61,7 +70,8 @@
     "puppeteer": "^22.12.1",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.16.0",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",

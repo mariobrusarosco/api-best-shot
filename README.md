@@ -4,6 +4,12 @@
 
 Best Shot API is the backend service for the _Football App_ project [(more info)](https://github.com/mariobrusarosco/best-shot). It's built with modern technologies and best practices to provide reliable and efficient data services for football-related applications.
 
+We follow a hybrid development approach:
+- Infrastructure (PostgreSQL, AWS, Monitoring) runs in Docker
+- Development tools (Node.js, Yarn) run locally via Volta
+
+👉 See our [Service Implementation Roadmap](docs/service-implementation-roadmap.md) for upcoming features and infrastructure additions.
+
 ## Tech Stack
 
 - **Runtime**: Node.js
@@ -563,140 +569,19 @@ npm start
 
 ### Environment Configuration
 
-The project uses different environment configurations for development, demo, and production environments.
+The project uses a type-safe environment configuration system with runtime validation. We use different environment configurations for development, demo, and production environments.
+
+For detailed information about our environment configuration system, including:
+- Type-safe environment variables
+- Runtime validation
+- Best practices
+- Troubleshooting
+- Security considerations
+
+👉 See our [Environment Configuration Guide](docs/environment-configuration.md)
 
 #### Development Environment
 
 When you run `docker compose up env-setup`, a `.env` file will be automatically created with the following default configuration:
 
-```bash
-DB_USER=dev_user
-DB_PASSWORD=dev_pass
-DB_NAME=bestshot_dev
-DB_HOST=postgres
-DB_PORT=5432
 ```
-
-#### Available Environment Modes
-
-The project supports different environment modes that can be run using specific npm/yarn scripts:
-
-1. **Development** (default)
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
-
-2. **Demo Environment**
-   ```bash
-   npm run dev-demo
-   # or
-   yarn dev-demo
-   ```
-   - Uses `.env.demo` configuration
-
-3. **Production Environment**
-   ```bash
-   npm run dev-prod
-   # or
-   yarn dev-prod
-   ```
-   - Uses `.env.production` configuration
-   - Includes Sentry integration for error tracking
-
-### Database Configuration
-
-The development database will be available with these default settings:
-- Host: `localhost`
-- Port: `5432`
-- User: `dev_user`
-- Password: `dev_pass`
-- Database: `bestshot_dev`
-
-### Running the Application
-
-1. **Start the development server**
-   ```bash
-   # Using npm
-   npm run dev
-
-   # Using yarn
-   yarn dev
-   ```
-
-2. **Run database migrations**
-   ```bash
-   # Using npm
-   npm run db:migrate
-
-   # Using yarn
-   yarn db:migrate
-   ```
-
-The API will be available at `http://localhost:3000`
-
-### Troubleshooting
-
-#### Port Conflicts
-- The API uses port 3000 and PostgreSQL uses port 5432
-- Check if ports are in use:
-  ```bash
-  # Linux/Mac
-  lsof -i :3000
-  lsof -i :5432
-  
-  # Windows
-  netstat -ano | findstr :3000
-  netstat -ano | findstr :5432
-  ```
-
-#### Docker Issues
-- **Docker not running**:
-  ```bash
-  # Linux
-  sudo systemctl start docker
-  
-  # Mac/Windows
-  Start Docker Desktop application
-  ```
-
-- **Database container issues**:
-  ```bash
-  # Stop all containers
-  docker compose down
-  
-  # Remove volumes (if needed)
-  docker compose down -v
-  
-  # Start fresh
-  docker compose up -d
-  ```
-
-#### Database Connection Issues
-- Verify database is running:
-  ```bash
-  docker compose ps
-  ```
-- Check database logs:
-  ```bash
-  docker compose logs postgres
-  ```
-
-#### Environment Variables
-- If the `.env` file is missing or incorrect:
-  ```bash
-  # Re-run environment setup
-  docker compose up env-setup
-  ```
-
-#### Node.js and Dependencies
-- Clear node modules and reinstall:
-  ```bash
-  rm -rf node_modules
-  rm package-lock.json # or yarn.lock
-  npm install # or yarn install
-  ```
-
-For additional help, please check our [GitHub Issues](https://github.com/mariobrusarosco/api-best-shot/issues) or create a new issue.
-

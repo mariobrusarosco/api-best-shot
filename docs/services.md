@@ -7,11 +7,13 @@ Services are the core logic handlers for each domain in the Best Shot API. This 
 Services follow these key principles:
 
 ### Responsibilities
+
 - Receive data as input
 - Process/transform the data
 - Return processed data as output
 
 ### Integration Points
+
 - Can call Queries (database operations)
 - Can be called by APIs (endpoint handlers)
 - Can use Utils (shared functionality)

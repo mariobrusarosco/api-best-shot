@@ -9,7 +9,8 @@ services:
     environment:
       - SETUP_MODE=${SETUP_MODE:-initial}
     profiles:
-      - setup
+      - initial-setup
+      - update-setup
 
   postgres:
     image: postgres:15

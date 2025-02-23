@@ -1,29 +1,24 @@
 #!/bin/sh
 
-# Get the setup mode from argument
-PROFILE=$1
+# Get the mode from argument
+MODE=$1
 
-if [ -z "$PROFILE" ]; then
-    echo "❌ No profile specified"
-    echo "   Valid profiles are: initial-setup, update-setup"
+if [ -z "$MODE" ]; then
+    echo "❌ No mode specified"
+    echo "   Valid modes are: initial, update"
     exit 1
 fi
 
-case "$PROFILE" in
-  "initial-setup")
-    MODE="initial"
-    ;;
-  "update-setup")
-    MODE="update"
+case "$MODE" in
+  "initial"|"update")
+    echo "🚀 Starting setup in ${MODE} mode..."
     ;;
   *)
-    echo "❌ Unknown profile: ${PROFILE}"
-    echo "   Valid profiles are: initial-setup, update-setup"
+    echo "❌ Unknown mode: ${MODE}"
+    echo "   Valid modes are: initial, update"
     exit 1
     ;;
 esac
-
-echo "🚀 Starting setup in ${MODE} mode..."
 
 # Make all scripts executable
 chmod +x ./*.sh

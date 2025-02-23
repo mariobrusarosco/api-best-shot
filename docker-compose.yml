@@ -9,10 +9,10 @@ services:
       sh -c '
         apk add --no-cache postgresql-client &&
         chmod +x main.sh &&
-        if [ -n "$$SETUP_MODE" ] && [ "$$SETUP_MODE" = "update-setup" ]; then
-          ./main.sh update-setup;
+        if [ -n "$$SETUP_MODE" ]; then
+          ./main.sh $$SETUP_MODE;
         else
-          ./main.sh initial-setup;
+          ./main.sh initial;
         fi
       '
     environment:
@@ -23,8 +23,8 @@ services:
     networks:
       - bestshot_network
     profiles:
-      - initial-setup
-      - update-setup
+      - initial
+      - update
     tty: true
     stdin_open: true
 
@@ -51,8 +51,8 @@ services:
       timeout: 5s
       retries: 5
     profiles:
-      - initial-setup
-      - update-setup
+      - initial
+      - update
 
 volumes:
   postgres_data:

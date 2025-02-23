@@ -21,8 +21,8 @@ get_value() {
     local DEFAULT_VALUE=$2
     local CURRENT_VALUE=""
     
-    if [ -n "$PRESERVE_MODE" ] && [ -f ../../.env ]; then
-        CURRENT_VALUE=$(grep "^${VAR_NAME}=" ../../.env | cut -d '=' -f2)
+    if [ -n "$PRESERVE_MODE" ] && [ -f /app/.env ]; then
+        CURRENT_VALUE=$(grep "^${VAR_NAME}=" /app/.env | cut -d '=' -f2)
     fi
     
     if [ -n "$CURRENT_VALUE" ]; then
@@ -33,7 +33,7 @@ get_value() {
 }
 
 # Create or update .env file
-cat > ../../.env << EOF
+cat > /app/.env << EOF
 # Database Configuration
 DB_USER=$(get_value "DB_USER" "${DEFAULT_DB_USER}")         # Database username
 DB_PASSWORD=$(get_value "DB_PASSWORD" "${DEFAULT_DB_PASSWORD}")  # Database password

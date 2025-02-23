@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Check if .env exists
-if [ ! -f ../../.env ]; then
+if [ ! -f /app/.env ]; then
     echo "❌ No .env file found"
     exit 1
 fi
@@ -18,7 +18,7 @@ check_var() {
     local REQUIRED=$2
     local VALUE=""
     
-    VALUE=$(grep "^${VAR_NAME}=" ../../.env | cut -d '=' -f2)
+    VALUE=$(grep "^${VAR_NAME}=" /app/.env | cut -d '=' -f2)
     
     if [ -z "$VALUE" ]; then
         if [ "$REQUIRED" = "true" ]; then

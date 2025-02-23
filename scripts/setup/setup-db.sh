@@ -2,7 +2,7 @@
 
 # Source environment variables
 set -a
-. ../../.env
+. /app/.env
 set +a
 
 echo "🗄️  Setting up database..."

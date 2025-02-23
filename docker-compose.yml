@@ -3,14 +3,16 @@ services:
     image: alpine:3.18
     container_name: bestshot_setup
     volumes:
-      - ./scripts/setup:/setup
-    working_dir: /setup
-    command: sh -c "chmod +x main.sh && ./main.sh ${SETUP_MODE:-initial}"
+      - .:/app
+    working_dir: /app/scripts/setup
+    command: sh -c "apk add --no-cache postgresql-client && chmod +x main.sh && ./main.sh ${SETUP_MODE:-initial}"
     environment:
       - SETUP_MODE=${SETUP_MODE:-initial}
     profiles:
       - initial-setup
       - update-setup
+    tty: true
+    stdin_open: true
 
   postgres:
     image: postgres:15

@@ -12,8 +12,7 @@ echo "⏳ Waiting for PostgreSQL to be ready..."
 for i in $(seq 1 30); do
     if pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; then
         echo "✅ PostgreSQL is ready"
-        echo "✨ Database setup completed successfully!"
-        exit 0
+        break
     fi
     
     if [ $i -eq 30 ]; then
@@ -23,4 +22,19 @@ for i in $(seq 1 30); do
     
     echo "⏳ Waiting... ($i/30)"
     sleep 1
-done 
+done
+
+cd /app
+
+# Generate and run migrations
+echo "📝 Generating migrations..."
+npx drizzle-kit generate:pg
+
+echo "⬆️  Pushing migrations..."
+npx drizzle-kit push:pg
+
+# Run seed script
+echo "🌱 Seeding database..."
+npx ts-node seed.ts
+
+echo "✨ Database setup completed successfully!" 

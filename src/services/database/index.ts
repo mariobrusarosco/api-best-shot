@@ -3,7 +3,8 @@ import postgres from 'postgres';
 import * as schema from './schema';
 import { env } from '../../config/env';
 
-const client = postgres(env.DB_STRING_CONNECTION, {
+// Use the local connection string since we're running locally
+const client = postgres(env.DB_STRING_CONNECTION_LOCAL, {
   prepare: false,
 });
 

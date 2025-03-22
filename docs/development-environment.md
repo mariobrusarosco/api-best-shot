@@ -3,6 +3,7 @@
 ## Overview
 
 Best Shot API uses a hybrid approach combining the best of both worlds:
+
 - Docker for infrastructure (database, AWS local testing, monitoring)
 - Volta for development tooling (Node.js, Yarn)
 
@@ -29,7 +30,9 @@ Best Shot API uses a hybrid approach combining the best of both worlds:
 ## Prerequisites
 
 ### Required Tools
+
 1. **Docker & Docker Compose**
+
    ```bash
    # Verify installation
    docker --version        # Should be 20.10+
@@ -42,6 +45,7 @@ Best Shot API uses a hybrid approach combining the best of both worlds:
    ```
 
 ### Optional but Recommended
+
 1. **Visual Studio Code**
    - With Docker extension
    - With TypeScript extension
@@ -49,6 +53,7 @@ Best Shot API uses a hybrid approach combining the best of both worlds:
 ## Why Hybrid?
 
 ### Infrastructure via Docker 🐳
+
 - ✅ Consistent database environment
 - ✅ Local AWS testing capabilities
 - ✅ Monitoring tools when needed
@@ -56,6 +61,7 @@ Best Shot API uses a hybrid approach combining the best of both worlds:
 - ✅ Production-like environment
 
 ### Development via Volta ⚡
+
 - ✅ Native development speed
 - ✅ Consistent Node.js/Yarn versions
 - ✅ Better IDE integration
@@ -65,12 +71,15 @@ Best Shot API uses a hybrid approach combining the best of both worlds:
 ## Clear Boundaries
 
 ### What Runs in Docker
+
 1. **PostgreSQL Database**
+
    - Data persistence
    - Consistent port mapping
    - Isolated environment
 
 2. **AWS Local Stack** (Optional)
+
    - S3 bucket simulation
    - AWS service testing
    - Local endpoints
@@ -81,7 +90,9 @@ Best Shot API uses a hybrid approach combining the best of both worlds:
    - Development debugging
 
 ### What Runs Locally (via Volta)
+
 1. **Node.js Application**
+
    - API server
    - Business logic
    - Hot reloading
@@ -110,6 +121,7 @@ cd api-best-shot
 ### 2. Development Workflows
 
 #### Basic Development (Most Common)
+
 ```bash
 # Start database and API
 yarn dev                # Starts API with hot-reload
@@ -120,6 +132,7 @@ yarn dev:status        # Shows running containers and Node.js versions
 ```
 
 #### With AWS Testing
+
 ```bash
 # Start with AWS Local Stack
 yarn dev:aws          # Starts PostgreSQL + AWS Local Stack + API
@@ -129,6 +142,7 @@ yarn aws:logs         # Follows AWS Local Stack logs
 ```
 
 #### Full Environment
+
 ```bash
 # Start all services
 yarn dev:full         # Starts PostgreSQL + AWS + Sentry + API
@@ -138,6 +152,7 @@ yarn dev:stop         # Stops all containers gracefully
 ```
 
 #### Database Operations
+
 ```bash
 # Connect to database
 yarn db:connect       # Opens PostgreSQL CLI
@@ -150,6 +165,7 @@ yarn db:reset         # Removes and recreates database container
 ```
 
 #### Maintenance Operations
+
 ```bash
 # Complete environment reset
 yarn dev:clean       # Stops containers, removes volumes,
@@ -163,32 +179,39 @@ yarn dev:status      # Shows container status and
 ### Common Workflows
 
 1. **Daily Development**
+
    ```bash
    # Morning startup
-   yarn dev          # Start development
+   # API flow with hot-reload
+   yarn dev         
    
+   # Database flow
+   docker compose --profile dev up postgres
+
    # During the day
    yarn db:connect   # When you need database access
    yarn db:logs     # If you suspect database issues
-   
+
    # End of day
    yarn dev:stop    # Stop all services
    ```
 
 2. **AWS Development**
+
    ```bash
    # Start AWS environment
    yarn dev:aws     # Includes AWS Local Stack
-   
+
    # Monitor AWS
    yarn aws:logs    # Watch AWS Local Stack logs
    ```
 
 3. **Troubleshooting**
+
    ```bash
    # Check status
    yarn dev:status  # View all components
-   
+
    # Full reset if needed
    yarn dev:clean   # Reset everything
    ```
@@ -196,6 +219,7 @@ yarn dev:status      # Shows container status and
 ## Environment Management
 
 ### Docker Services
+
 - **PostgreSQL**: Main database (Required)
   ```bash
   # Status check
@@ -213,6 +237,7 @@ yarn dev:status      # Shows container status and
   ```
 
 ### Volta Management
+
 ```bash
 # Automatic version switching
 cd api-best-shot  # Volta reads package.json
@@ -223,11 +248,13 @@ yarn -v          # Shows 1.22.19
 ## Migration Path
 
 ### From Pure Docker Setup
+
 1. Install Volta
 2. Remove Node.js container
 3. Update scripts to use local Node.js
 
 ### From Pure Local Setup
+
 1. Install Docker
 2. Move database to container
 3. Add optional services as needed
@@ -235,6 +262,7 @@ yarn -v          # Shows 1.22.19
 ## Best Practices
 
 ### 1. Database Operations
+
 ```bash
 # Access database
 docker compose exec postgres psql -U ${DB_USER} -d ${DB_NAME}
@@ -245,6 +273,7 @@ docker compose up -d postgres
 ```
 
 ### 2. AWS Development
+
 ```bash
 # Start AWS Local Stack
 docker compose --profile aws up -d
@@ -254,6 +283,7 @@ AWS_ENDPOINT=http://localhost:4566
 ```
 
 ### 3. Node.js Development
+
 ```bash
 # Let Volta handle versions
 cd api-best-shot  # Automatic version switch
@@ -263,6 +293,7 @@ yarn dev         # Uses correct Node.js version
 ## Troubleshooting
 
 ### Docker Issues
+
 ```bash
 # Common fixes
 docker compose down -v    # Reset all containers
@@ -271,6 +302,7 @@ docker compose up -d     # Fresh start
 ```
 
 ### Volta Issues
+
 ```bash
 # Version issues
 volta list              # Check versions
@@ -278,6 +310,7 @@ volta install node@18.17.1  # Force version
 ```
 
 ### Development Issues
+
 ```bash
 # Complete reset
 ./scripts/dev-setup.sh --clean  # Fresh setup
@@ -286,17 +319,19 @@ volta install node@18.17.1  # Force version
 ## Adding New Services
 
 ### Infrastructure Service
+
 1. Add to docker-compose.yml
    ```yaml
    services:
      new-service:
        image: service-image
-       profiles: ["optional"]
+       profiles: ['optional']
    ```
 2. Update documentation
 3. Test integration
 
 ### Development Dependencies
+
 1. Add to package.json
 2. Let Volta handle versions
 3. Update documentation
@@ -304,11 +339,13 @@ volta install node@18.17.1  # Force version
 ## Team Collaboration
 
 ### New Team Member Setup
+
 1. Install prerequisites
 2. Run setup script
 3. Start developing
 
 ### Environment Updates
+
 1. Update .env.example
 2. Notify team
 3. Team members update .env
@@ -316,12 +353,14 @@ volta install node@18.17.1  # Force version
 ## Maintenance
 
 ### Regular Updates
+
 1. Update Volta versions in package.json
 2. Update Docker images in compose file
 3. Test locally
 4. Notify team
 
 ### Version Control
+
 - .env in .gitignore
 - docker-compose.yml in version control
 - package.json in version control

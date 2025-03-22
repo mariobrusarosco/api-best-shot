@@ -46,7 +46,7 @@ return { worstPerformance, bestPerformance };
 ```
 
 
-### 3. API Layer (`/domains/*/api/index.ts`)
+### 2. API Layer (`/domains/*/api/index.ts`)
 
 Exposes endpoints and handles HTTP concerns.
 

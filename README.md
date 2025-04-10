@@ -38,7 +38,7 @@ We use Docker Compose profiles to manage environment setup:
 #### First-time Setup
 ```bash
 # Only needed once or when you want to reset to defaults
-docker compose --profile setup up env-setup
+docker compose --profile initial up initial_setup
 
 # Verify .env was created
 cat .env

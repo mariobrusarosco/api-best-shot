@@ -274,6 +274,115 @@ Each service now has a unique container name to prevent conflicts:
 
 ---
 
+_**User**_
+
+Thank you!
+
+Can you add these you variables to the process where we:
+
+1) Create .env for the first time
+2) Update .env with the mandatory values when an engineer already has the .env but needs to check if the envs still correctly set
+
+---
+
+_**Assistant**_
+
+<details>
+            <summary>Listed directory scripts/setup • **4** results</summary>
+        
+| Name |
+|-------|
+| 📄 `create-env.sh` |
+| 📄 `main.sh` |
+| 📄 `setup-db.sh` |
+| 📄 `validate-env.sh` |
+
+</details>
+
+---
+
+Read file: scripts/setup/main.sh
+
+---
+
+Read file: scripts/setup/create-env.sh
+
+---
+
+```diff
+  DEFAULT_PORT="9090"
+  DEFAULT_NODE_ENV="development"
++ DEFAULT_DB_STRING_CONNECTION="postgresql://${DEFAULT_DB_USER}:${DEFAULT_DB_PASSWORD}@${DEFAULT_DB_HOST}:${DEFAULT_DB_PORT}/${DEFAULT_DB_NAME}"
++ DEFAULT_DB_STRING_CONNECTION_LOCAL="postgresql://${DEFAULT_DB_USER}:${DEFAULT_DB_PASSWORD}@localhost:${DEFAULT_DB_PORT}/${DEFAULT_DB_NAME}"
+  
+  # Check if we should preserve existing values
+  DB_HOST=$(get_value "DB_HOST" "${DEFAULT_DB_HOST}")         # Database host
+  DB_PORT=$(get_value "DB_PORT" "${DEFAULT_DB_PORT}")         # Database port
++ DB_STRING_CONNECTION=$(get_value "DB_STRING_CONNECTION" "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}")  # For Docker connectivity
++ DB_STRING_CONNECTION_LOCAL=$(get_value "DB_STRING_CONNECTION_LOCAL" "postgresql://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}")  # For local development tools
+  
+  # Application
+```
+
+---
+
+Read file: scripts/setup/validate-env.sh
+
+---
+
+```diff
+  
+  # Required variables to check
+- REQUIRED_VARS="DB_USER DB_PASSWORD DB_NAME DB_HOST DB_PORT NODE_ENV PORT"
++ REQUIRED_VARS="DB_USER DB_PASSWORD DB_NAME DB_HOST DB_PORT NODE_ENV PORT DB_STRING_CONNECTION DB_STRING_CONNECTION_LOCAL"
+  
+  # Optional but recommended variables
+```
+
+---
+
+I've added the database connection string variables to both scripts:
+
+1. In `create-env.sh`:
+   - Added default values for `DB_STRING_CONNECTION` and `DB_STRING_CONNECTION_LOCAL`
+   - Added these variables to the .env file generation with appropriate comments
+
+2. In `validate-env.sh`:
+   - Added both connection string variables to the list of required variables that get checked during validation
+
+Now when an engineer:
+1. Creates a new .env for the first time, both connection string variables will be included
+2. Updates an existing .env, the script will check if these variables exist and preserve their values or add them if missing
+
+Try running the setup again with:
+```
+docker compose --profile initial up initial_setup
+```
+
+---
+
+_**User**_
+
+Can you hard code the values?
+
+
+
+---
+
+_**Assistant**_
+
+I'll update the create-env.sh script to use hardcoded values for the database connection strings:
+
+---
+
+Cancelled
+
+---
+
+
+
+---
+
 
 
 ---

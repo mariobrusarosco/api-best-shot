@@ -8,6 +8,10 @@ DEFAULT_DB_HOST="postgres"
 DEFAULT_DB_PORT="5432"
 DEFAULT_PORT="9090"
 DEFAULT_NODE_ENV="development"
+DEFAULT_DB_STRING_CONNECTION="postgresql://dev_user:dev_pass@postgres:5432/bestshot_dev"
+DEFAULT_DB_STRING_CONNECTION_LOCAL="postgresql://dev_user:dev_pass@localhost:5432/bestshot_dev"
+MEMBER_PUBLIC_ID_COOKIE=best-shot-auth    
+ACCESS_CONTROL_ALLOW_ORIGIN="http://localhost:5173"
 
 # Check if we should preserve existing values
 PRESERVE_MODE=""
@@ -43,6 +47,9 @@ DB_PASSWORD=$(get_value "DB_PASSWORD" "${DEFAULT_DB_PASSWORD}")  # Database pass
 DB_NAME=$(get_value "DB_NAME" "${DEFAULT_DB_NAME}")         # Database name
 DB_HOST=$(get_value "DB_HOST" "${DEFAULT_DB_HOST}")         # Database host
 DB_PORT=$(get_value "DB_PORT" "${DEFAULT_DB_PORT}")         # Database port
+DB_STRING_CONNECTION=$(get_value "DB_STRING_CONNECTION" "postgresql://dev_user:dev_pass@postgres:5432/bestshot_dev")  # For Docker connectivity
+DB_STRING_CONNECTION_LOCAL=$(get_value "DB_STRING_CONNECTION_LOCAL" "postgresql://dev_user:dev_pass@localhost:5432/bestshot_dev")  # For local development tools
+
 
 # Application
 NODE_ENV=$(get_value "NODE_ENV" "${DEFAULT_NODE_ENV}")       # Environment (development, demo, production)
@@ -50,8 +57,8 @@ PORT=$(get_value "PORT" "${DEFAULT_PORT}")               # Application port
 
 # Security (Required)
 JWT_SECRET=$(get_value "JWT_SECRET" "")                        # Secret for JWT signing
-MEMBER_PUBLIC_ID_COOKIE=$(get_value "MEMBER_PUBLIC_ID_COOKIE" "")          # Cookie name for member ID
-ACCESS_CONTROL_ALLOW_ORIGIN=$(get_value "ACCESS_CONTROL_ALLOW_ORIGIN" "*")     # CORS origin
+MEMBER_PUBLIC_ID_COOKIE=$(get_value "MEMBER_PUBLIC_ID_COOKIE" "${MEMBER_PUBLIC_ID_COOKIE}")          # Cookie name for member ID
+ACCESS_CONTROL_ALLOW_ORIGIN=$(get_value "ACCESS_CONTROL_ALLOW_ORIGIN" "${ACCESS_CONTROL_ALLOW_ORIGIN}")     # CORS origin
 
 # AWS Configuration (Required for AWS features)
 AWS_ACCESS_KEY_ID=$(get_value "AWS_ACCESS_KEY_ID" "")                # AWS access key

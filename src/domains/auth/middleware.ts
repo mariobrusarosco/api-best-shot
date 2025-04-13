@@ -16,7 +16,6 @@ export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) 
 
     next();
   } catch (error) {
-    console.error('[AUTH MIDDLEWARE ERROR]', error);
     Profiling.error('[AUTH MIDDLEWARE ERROR]', error);
 
     res

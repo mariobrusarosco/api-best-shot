@@ -1,6 +1,5 @@
 import { T_Tournament } from '@/domains/tournament/schema';
 import {
-  foreignKey,
   numeric,
   pgTable,
   primaryKey,
@@ -37,10 +36,6 @@ export const T_Match = pgTable(
   table => {
     return {
       pk: primaryKey({ columns: [table.externalId, table.provider] }),
-      fkTournament: foreignKey({
-        columns: [table.provider, table.tournamentId],
-        foreignColumns: [T_Tournament.provider, T_Tournament.externalId], // Reference the composite key
-      }),
       indexes: {
         statusIndex: ['status'],
         tournamentRounds: ['tournamentId', 'roundSlug'],

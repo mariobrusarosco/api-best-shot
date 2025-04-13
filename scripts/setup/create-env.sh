@@ -5,11 +5,11 @@ DEFAULT_DB_USER="dev_user"
 DEFAULT_DB_PASSWORD="dev_pass"
 DEFAULT_DB_NAME="bestshot_dev"
 DEFAULT_DB_HOST="postgres"
-DEFAULT_DB_PORT="5432"
+DEFAULT_DB_PORT="5497"
 DEFAULT_PORT="9090"
 DEFAULT_NODE_ENV="development"
 DEFAULT_DB_STRING_CONNECTION="postgresql://dev_user:dev_pass@postgres:5432/bestshot_dev"
-DEFAULT_DB_STRING_CONNECTION_LOCAL="postgresql://dev_user:dev_pass@localhost:5432/bestshot_dev"
+DEFAULT_DB_STRING_CONNECTION_LOCAL="postgresql://dev_user:dev_pass@localhost:5497/bestshot_dev"
 MEMBER_PUBLIC_ID_COOKIE=best-shot-auth    
 ACCESS_CONTROL_ALLOW_ORIGIN="http://localhost:5173"
 
@@ -48,7 +48,7 @@ DB_NAME=$(get_value "DB_NAME" "${DEFAULT_DB_NAME}")         # Database name
 DB_HOST=$(get_value "DB_HOST" "${DEFAULT_DB_HOST}")         # Database host
 DB_PORT=$(get_value "DB_PORT" "${DEFAULT_DB_PORT}")         # Database port
 DB_STRING_CONNECTION=$(get_value "DB_STRING_CONNECTION" "postgresql://dev_user:dev_pass@postgres:5432/bestshot_dev")  # For Docker connectivity
-DB_STRING_CONNECTION_LOCAL=$(get_value "DB_STRING_CONNECTION_LOCAL" "postgresql://dev_user:dev_pass@localhost:5432/bestshot_dev")  # For local development tools
+DB_STRING_CONNECTION_LOCAL=$(get_value "DB_STRING_CONNECTION_LOCAL" "postgresql://dev_user:dev_pass@localhost:5497/bestshot_dev")  # For local development tools
 
 
 # Application

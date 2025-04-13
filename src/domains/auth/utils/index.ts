@@ -1,4 +1,5 @@
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
+import Profiling from '@/services/profiling';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -7,11 +8,23 @@ interface CustomRequest extends Request {
 }
 
 const decodeMemberToken = (token: string) => {
-  return jwt.verify(token || '', process.env['JWT_SECRET'] || '');
+  try {
+    console.log('[AUTH] - decode member token', token, process.env['JWT_SECRET']);
+    return jwt.verify(token || '', process.env['JWT_SECRET'] || '');
+  } catch (e) {
+    Profiling.error('[AUTH] - decode member token failed', e);
+    return null;
+  }
 };
 
-const getUserCookie = (req: CustomRequest) =>
-  req.cookies[process.env['MEMBER_PUBLIC_ID_COOKIE'] || ''] || null;
+const getUserCookie = (req: CustomRequest) => {
+  try {
+    return req.cookies[process.env['MEMBER_PUBLIC_ID_COOKIE'] || ''] || null;
+  } catch (e) {
+    Profiling.error('[AUTH] - get user cookie failed', e);
+    return null;
+  }
+};
 
 const signUserCookieBased = ({ memberId, res }: { memberId: string; res: Response }) => {
   try {

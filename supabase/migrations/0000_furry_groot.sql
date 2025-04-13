@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS "member" (
 	"last_name" text NOT NULL,
 	"nick_name" text NOT NULL,
 	"email" text NOT NULL,
+	"password" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "member_public_id_unique" UNIQUE("public_id"),
@@ -159,12 +160,6 @@ CREATE TABLE IF NOT EXISTS "tournament_standings" (
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "tournament_standings_shortame_tournament_id_pk" PRIMARY KEY("shortame","tournament_id")
 );
---> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "match" ADD CONSTRAINT "match_provider_tournament_id_tournament_provider_external_id_fk" FOREIGN KEY ("provider","tournament_id") REFERENCES "public"."tournament"("provider","external_id") ON DELETE no action ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
 --> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "unique_guess" ON "guess" USING btree ("match_id","member_id");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "unique_tournament" ON "league_tournament" USING btree ("league_id","tournament_id");--> statement-breakpoint

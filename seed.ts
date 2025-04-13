@@ -4,44 +4,44 @@ import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 
 async function seed() {
-  console.log('Starting seed...');
+  console.log('🌱 Starting seed...');
 
   try {
     // Create test member with password
     const hashedPassword = await bcrypt.hash('test123', 10);
     const now = new Date();
     
-    const memberDataWithPassword = {
+    // Create a unique publicId for Google OAuth
+    const testMemberWithOAuth = {
       id: uuidv4(),
-      publicId: uuidv4(),
-      email: 'sheldon@example.com',
-      password: hashedPassword, // With password
-      firstName: 'Sheldon',
-      lastName: 'Cooper',
-      nickName: 'Sheldon',
+      publicId: 'google-oauth2|102617786899713612616',
+      email: 'mariobrusarosco@gmail.com',
+      firstName: 'Mario',
+      lastName: 'Brusarosco de Almeida',
+      nickName: 'mariobrusarosco',
       createdAt: now,
       updatedAt: now
     };
 
-    // Create test member without password
-    const memberDataWithoutPassword = {
+    // Create test member with password
+    const testMemberWithPassword = {
       id: uuidv4(),
       publicId: uuidv4(),
-      email: 'leonard@example.com',
-      // No password field (demonstrating it's optional)
-      firstName: 'Leonard',
-      lastName: 'Hofstadter',
-      nickName: 'Leonard',
+      email: 'test@example.com',
+      password: hashedPassword,
+      firstName: 'Test',
+      lastName: 'User',
+      nickName: 'TestUser',
       createdAt: now,
       updatedAt: now
     };
 
-    // Insert both members
-    const resultWithPassword = await db.insert(T_Member).values(memberDataWithPassword).returning();
-    console.log('✅ Created test member with password:', resultWithPassword);
+    // Insert members
+    const resultOAuth = await db.insert(T_Member).values(testMemberWithOAuth).returning();
+    console.log('✅ Created OAuth member:', resultOAuth[0].email);
 
-    const resultWithoutPassword = await db.insert(T_Member).values(memberDataWithoutPassword).returning();
-    console.log('✅ Created test member without password:', resultWithoutPassword);
+    const resultPassword = await db.insert(T_Member).values(testMemberWithPassword).returning();
+    console.log('✅ Created member with password:', resultPassword[0].email);
 
     console.log('✨ Seed completed successfully!');
   } catch (error) {

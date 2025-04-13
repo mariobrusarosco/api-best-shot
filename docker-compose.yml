@@ -50,12 +50,12 @@ services:
       DB_USER: ${DB_USER:-dev_user}
       DB_PASSWORD: ${DB_PASSWORD:-dev_pass}
       DB_NAME: ${DB_NAME:-bestshot_dev}
-      DB_PORT: ${DB_PORT:-5432}
+      DB_PORT: ${DB_PORT:-5497}
       POSTGRES_USER: ${DB_USER:-dev_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_pass}
       POSTGRES_DB: ${DB_NAME:-bestshot_dev}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${DB_PORT:-5497}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -65,9 +65,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    profiles:
-      - initial
-      - update
 
 volumes:
   postgres_data:

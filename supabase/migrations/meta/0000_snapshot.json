@@ -1,5 +1,5 @@
 {
-  "id": "b06c6150-e8df-4f89-897e-6c8fef575680",
+  "id": "c64c39d6-34a6-496a-ab37-3b229a2ce9d5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -121,23 +121,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "match_provider_tournament_id_tournament_provider_external_id_fk": {
-          "name": "match_provider_tournament_id_tournament_provider_external_id_fk",
-          "tableFrom": "match",
-          "tableTo": "tournament",
-          "columnsFrom": [
-            "provider",
-            "tournament_id"
-          ],
-          "columnsTo": [
-            "provider",
-            "external_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {
         "match_external_id_provider_pk": {
           "name": "match_external_id_provider_pk",
@@ -473,6 +457,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",

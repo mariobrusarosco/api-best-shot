@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "7.0.1",
+  "version": "5.0.0",
   "description": "API - Best Shot",
   "volta": {
     "node": "18.17.1",

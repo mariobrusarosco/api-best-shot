@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node';
 const ENV = process.env.NODE_ENV;
 const enableProfiling = ENV === 'production' || ENV === 'demo';
 
-const Profiling = {
+export const Profiling = {
   error: (msg: string, error: unknown) => {
     const finalMessage = `[${ENV}] - [ERROR] - ${msg}`;
 
@@ -27,4 +27,4 @@ const Profiling = {
   },
 };
 
-export default Profiling;
+

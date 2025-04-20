@@ -1,37 +1,53 @@
-import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import { Request, Response } from 'express';
-import { AuthenticateMemberRequest } from '../typing';
+import { AuthenticateMemberRequest, PROFILLING_AUTH } from '../typing';
 import { SERVICES_AUTH } from '../services';
+import { z } from 'zod';
+import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import {  Profiling } from '@/services/profiling';
+import { ERRORS_AUTH } from '../error-handling/mapper';
 
 const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) => {
   try {
-    const { publicId } = req.body;
+    // Validate request body
+    const validationResult = authenticateUserSchema.safeParse(req.body);
+    const hasValidationError = !validationResult.success;
+   
+    if (hasValidationError) {
+      const errors = validationResult.error.format();
+
+      Profiling.error(PROFILLING_AUTH.AUTHENTICATE_USER, errors);
+      return res
+        .status(ERRORS_AUTH.VALIDATION_ERROR.status)
+        .send({ 
+          message: ERRORS_AUTH.VALIDATION_ERROR.user,
+        });
+    }
+    
+    // Extract validated data
+    const { publicId } = validationResult.data;
     const result = await SERVICES_AUTH.authenticateUser(publicId, res);
 
     if (!result) {
       return res
-        .status(404)
-        .send({ message: 'No user found to authenticate' });
+        .status(ERRORS_AUTH.USER_NOT_FOUND.status)
+        .send({ message: ERRORS_AUTH.USER_NOT_FOUND.user });
     }
 
     return res.status(200).send(result.token);
   } catch (error: any) {
-    console.error(`[AUTH - authenticateUser] ${error}`);
-    return res
-      .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
-      .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
+    Profiling.error(PROFILLING_AUTH.AUTHENTICATE_USER, error);
+    return handleInternalServerErrorResponse(res, error);
   }
 };
 
-const unauthenticateUser = (req: Request, res: Response) => {
+const unauthenticateUser = (_: Request, res: Response) => {
   try {
     SERVICES_AUTH.unauthenticateUser(res);
+    Profiling.log(PROFILLING_AUTH.UNAUTHENTICATE_USER, 'Successfully logged out');
     return res.status(200).send({ message: 'Successfully logged out' });
   } catch (error: any) {
-    console.error(`[AUTH - unauthenticateUser] ${error}`);
-    return res
-      .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
-      .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
+    Profiling.error(PROFILLING_AUTH.UNAUTHENTICATE_USER, error);
+    return handleInternalServerErrorResponse(res, error);
   }
 };
 
@@ -39,3 +55,8 @@ export const API_AUTH = {
   authenticateUser,
   unauthenticateUser,
 };
+
+const authenticateUserSchema = z.object({
+  publicId: z.string().min(1, 'Public ID is required')
+});
+

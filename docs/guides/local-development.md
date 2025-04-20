@@ -36,6 +36,39 @@ This guide helps developers start the project locally and understand how to acce
    yarn dev
    ```
 
+## Quick Start: All-in-One Development Environment
+
+To start the API, Database UI, and Frontend all at once, use the `dev:full` command:
+
+```bash
+yarn dev:full
+```
+
+This command:
+1. Starts the PostgreSQL database
+2. Runs the API server, Database UI, and Frontend application concurrently
+3. Color-codes the console output for each service (API in cyan, DATABASE in green, FRONTEND in magenta)
+
+![dev:full command output showing color-coded terminal output for API, Database, and Frontend services](../images/dev-full-output.png)
+*Image: Color-coded terminal output from the dev:full command. See docs/guides/capturing-terminal-output.md for instructions on how to capture and add this image.*
+
+### Benefits
+
+- **Single command** to start your entire development stack
+- **Color-coded logs** for easy identification of each service
+- **Automatic termination** of all services when one is stopped (using Ctrl+C)
+- **Real-time logs** from all services in one terminal window
+
+### Stopping the Development Environment
+
+To stop all services:
+
+```bash
+# First press Ctrl+C to stop the running processes
+# Then shut down the Docker containers
+yarn dev:stop
+```
+
 ## Accessing the API
 
 The API is available at:
@@ -70,8 +103,9 @@ http://localhost:4983
 
 ## Helpful Commands
 
-- `yarn dev`: Start the development server
-- `yarn db:studio`: Open the database UI
+- `yarn dev`: Start the API development server
+- `yarn dev:full`: Start all services (API, Database UI, Frontend) in one terminal
+- `yarn db:studio`: Open the database UI separately
 - `yarn db:seed`: Seed the database with initial data
 - `yarn db:push`: Push schema changes to the database
 - `yarn dev:status`: Check Docker container status

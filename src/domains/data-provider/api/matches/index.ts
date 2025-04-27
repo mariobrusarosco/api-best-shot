@@ -4,7 +4,7 @@ import {
 } from '@/domains/data-provider/api/matches/typing';
 import { MatchesController } from '@/domains/data-provider/controllers/matches';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import Profiling from '@/services/profiling';
+import { Profiling } from '@/services/profiling';
 import { Response } from 'express';
 
 const createMatches = async (req: MatchesRequest, res: Response) => {

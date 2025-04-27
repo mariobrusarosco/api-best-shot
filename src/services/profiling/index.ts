@@ -27,4 +27,7 @@ export const Profiling = {
   },
 };
 
+// Add default export for compatibility with default imports
+export default Profiling;
+
 

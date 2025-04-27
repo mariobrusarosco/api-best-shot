@@ -11,7 +11,7 @@ import {
 export const T_Tournament = pgTable(
   'tournament',
   {
-    id: uuid('id').defaultRandom(),
+    id: uuid('id').defaultRandom().primaryKey(),
     externalId: text('external_id').notNull(),
     baseUrl: text('base_url').notNull(),
     slug: text('slug').notNull().default(''),

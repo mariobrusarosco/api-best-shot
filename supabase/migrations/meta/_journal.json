@@ -8,6 +8,13 @@
       "when": 1744550786774,
       "tag": "0000_furry_groot",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1745757353657,
+      "tag": "0001_tournament_primary_key",
+      "breakpoints": true
     }
   ]
 }

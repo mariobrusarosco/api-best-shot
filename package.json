@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "5.0.1",
+  "version": "5.1.0",
   "description": "API - Best Shot",
   "volta": {
     "node": "18.17.1",
@@ -17,7 +17,6 @@
     "db:connect": "docker compose exec postgres psql -U ${DB_USER} -d ${DB_NAME}",
     "db:logs": "docker compose logs -f postgres",
     "db:reset": "docker compose down postgres -v && docker compose up -d postgres",
-    "create-env": "tsc && node scripts/create-env-file.js",
     "dev-demo": "ENV_PATH=.env.demo ts-node-dev -r tsconfig-paths/register ./src/index.ts",
     "build-demo": "rimraf ./dist && tsc && tsc-alias",
     "dev-prod": "ENV_PATH=.env.production ts-node-dev -r tsconfig-paths/register ./src/index.ts",
@@ -78,6 +77,7 @@
     "@types/cookie-parser": "^1.4.3",
     "@types/express": "^4.17.13",
     "@types/jsonwebtoken": "^9.0.2",
+    "@types/mime-types": "^2.1.4",
     "@types/node": "^20.12.8",
     "cheerio": "^1.0.0",
     "concurrently": "^9.1.2",

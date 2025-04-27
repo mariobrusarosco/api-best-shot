@@ -7,17 +7,21 @@ This guide explains how to handle database migrations in our project using Drizz
 ## Quick Start
 
 ```bash
-# Generate a new migration
-yarn db:generate
+# Generate a new migration after modifying your schema
+# e.g. yarn db:generate --name add_users_table
+yarn db:generate --name <descriptive_migration_name>
 
-# Apply pending migrations
+# Apply all pending migrations
 yarn db:migrate
 
-# Check database state
+# Seed the database (optional)
+yarn db:seed
+
+# Inspect applied migrations and database state
 yarn db:check
 
-# Use the automated script (recommended)
-./scripts/db-migrate.sh
+# Open Drizzle Studio in your browser
+yarn db:studio
 ```
 
 ## Best Practices
@@ -74,4 +78,54 @@ If you encounter issues:
 - Use meaningful names for migrations
 - Always backup data before major changes
 - Test migrations in development first
-- Use the automated script for consistency 
+- Use the automated script for consistency
+
+## Running Migrations Locally
+
+To run migrations locally, you need to have Docker Compose installed and set up.
+
+### Prerequisites
+
+1. Install Docker Compose
+2. Clone the project repository
+3. Set up environment variables
+
+### Docker Compose Commands
+
+1. Start the Docker containers:
+   ```bash
+   docker-compose up -d
+   ```
+2. Stop the Docker containers:
+   ```bash
+   docker-compose down
+   ```
+
+### Environment Setup
+
+1. Set up environment variables:
+   - `DATABASE_URL`: The connection string for your database
+   - `MIGRATION_DIR`: The directory containing your migration files
+
+### Seed Scripts
+
+1. Run seed scripts to populate the database:
+   ```bash
+   yarn db:seed
+   ```
+
+## Tips for Running Migrations Locally
+
+1. **Use Docker for Isolation**: Docker containers provide a clean environment for running migrations.
+2. **Set Up Environment Variables**: Ensure that the `DATABASE_URL` and `MIGRATION_DIR` environment variables are set correctly.
+3. **Test Seed Scripts**: Before running migrations, test seed scripts to ensure data integrity.
+4. **Monitor Logs**: Keep an eye on Docker logs and migration logs for any issues.
+5. **Backup Data**: Always backup data before running migrations.
+
+## Tips for Running Migrations in Production
+
+1. **Use Automated Scripts**: Automated scripts are designed to handle production environments efficiently.
+2. **Monitor Logs**: Keep an eye on production logs for any issues.
+3. **Backup Data**: Always backup data before running migrations.
+4. **Test in Staging**: Before running migrations in production, test in a staging environment.
+5. **Communicate**: Communicate with stakeholders about upcoming migrations. 

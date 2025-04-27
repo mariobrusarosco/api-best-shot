@@ -41,6 +41,7 @@ coverage/
 .temp/
 .tmp/
 *.pem
+aws
 
 # Files
 error.log

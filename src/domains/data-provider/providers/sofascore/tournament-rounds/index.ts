@@ -3,15 +3,45 @@ import { IApiProvider } from '@/domains/data-provider/typing';
 import { DB_InsertTournamentRound, T_TournamentRound } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import axios from 'axios';
+import { Profiling } from '@/services/profiling';
+import puppeteer from 'puppeteer';
 
 export const SofascoreTournamentRound: IApiProvider['rounds'] = {
   fetchShallowListOfRoundsFromProvider: async baseUrl => {
     const roundsUrl = `${baseUrl}/rounds`;
     console.log(`[LOG] - [START] - FETCHING SHALLOW LIST OF ROUNDS - AT: ${roundsUrl}`);
 
-    const response = await axios.get(roundsUrl);
-    const data = response.data;
-
+    // Define browser-like headers to bypass potential 403
+    const headers = {
+      'Accept': 'application/json, text/plain, */*',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36',
+      'Referer': 'https://www.sofascore.com/',
+    };
+    let data;
+    try {
+      // First attempt with Axios using browser headers
+      const response = await axios.get(roundsUrl, { headers });
+      data = response.data;
+      console.log('[LOG] - [SUCCESS] - SHALLOW LIST OF ROUNDS DONE via Axios');
+    } catch (axiosError) {
+      Profiling.error('Axios request failed for rounds, falling back to Puppeteer', axiosError);
+      // Fallback to Puppeteer to perform fetch in browser context
+      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      try {
+        const page = await browser.newPage();
+        // Use fetch inside the page to retrieve JSON
+        const content = await page.evaluate(async (url, headers) => {
+          const resp = await fetch(url, { headers });
+          if (!resp.ok) throw new Error(`HTTP error ${resp.status}`);
+          return await resp.text();
+        }, roundsUrl, headers);
+        data = JSON.parse(content);
+        console.log('[LOG] - [SUCCESS] - SHALLOW LIST OF ROUNDS DONE via Puppeteer');
+      } finally {
+        await browser.close();
+      }
+    }
+    
     console.log('[LOG] - [SUCCESS] - SHALLOW LIST OF ROUNDS DONE: ', data);
     return data;
   },

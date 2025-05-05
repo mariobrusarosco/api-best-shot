@@ -15,6 +15,13 @@
       "when": 1745757353657,
       "tag": "0001_tournament_primary_key",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1746407120181,
+      "tag": "0002_tournament_updates",
+      "breakpoints": true
     }
   ]
 }

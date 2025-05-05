@@ -1,12 +1,15 @@
 import express from 'express';
 import ApplicationRouter from '@/router';
 import { AuthMiddleware } from '@/domains/auth/middleware';
-import { API_TEAMS } from '@/domains/data-provider/api/teams';
-import { API_TOURNAMENT } from '@/domains/data-provider/api/tournament';
-import { API_TOURNAMENT_ROUNDS } from '@/domains/data-provider/api/tournament-round';
-import { API_MATCHES } from '../api/matches';
-import { API_SCHEDULER } from '../api/scheduler';
-import { API_STANDINGS } from '../api/standings/standings';
+import {
+    API_TEAMS,
+    API_TOURNAMENT,
+    API_TOURNAMENT_ROUNDS,
+    API_MATCHES,
+    API_SCHEDULER,
+    API_STANDINGS,
+    API_TOURNAMENT_V2
+} from '../api';
 
 const RouterV1 = express.Router();
 RouterV1.use(AuthMiddleware);
@@ -39,8 +42,8 @@ RouterV1.post('/scheduler', API_SCHEDULER.dailyRoutine);
 ApplicationRouter.register("api/v1/data-provider", RouterV1);
 
 const RouterV2 = express.Router();
-RouterV2.use(AuthMiddleware);
-// Copy same routes as V1...
-// (repeat all the same routes)
+// RouterV2.use(AuthMiddleware);
+
+RouterV2.post('/tournaments', API_TOURNAMENT_V2.setup);
 
 ApplicationRouter.register("api/v2/data-provider", RouterV2);

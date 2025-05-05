@@ -1,7 +1,7 @@
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import Profiling from '@/services/profiling';
 import { Response } from 'express';
-import { StandingsController } from '../../controllers/standings';
+import { StandingsController } from '../../../controllers/standings';
 import { StandingsRequest } from './typing';
 
 const createStandings = async (req: StandingsRequest, res: Response) => {

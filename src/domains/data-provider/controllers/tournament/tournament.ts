@@ -1,4 +1,4 @@
-import { CreateTournamentInput } from '@/domains/data-provider/api/tournament/typing';
+import { CreateTournamentInput } from '@/domains/data-provider/api/v1/tournament/typing';
 import { API_SOFASCORE } from '@/domains/data-provider/providers/sofascore';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';

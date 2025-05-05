@@ -18,7 +18,7 @@ export const T_Tournament = pgTable(
     provider: text('provider').notNull(),
     season: text('season').notNull(),
     mode: text('mode').notNull(),
-    standings: text('standings').notNull().default(''),
+    standingsMode: text('standings_mode').notNull().default(''),
     label: text('label').notNull(),
     logo: text('logo').notNull().default(''),
     createdAt: timestamp('created_at').notNull().defaultNow(),

@@ -1,12 +1,12 @@
-import { TournamentRequest } from '@/domains/data-provider/api/tournament/typing';
+import { TournamentRequest } from '@/domains/data-provider/api/v1/tournament/typing';
 import { TournamentController } from '@/domains/data-provider/controllers/tournament/tournament';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import Profiling from '@/services/profiling';
 import { Response } from 'express';
-import { MatchesController } from '../../controllers/matches';
-import { StandingsController } from '../../controllers/standings';
-import { TeamsController } from '../../controllers/teams';
-import { TournamentRoundController } from '../../controllers/tournament-rounds/tournament-round';
+import { MatchesController } from '../../../controllers/matches';
+import { StandingsController } from '../../../controllers/standings';
+import { TeamsController } from '../../../controllers/teams';
+import { TournamentRoundController } from '../../../controllers/tournament-rounds/tournament-round';
 
 const setup = async (req: TournamentRequest, res: Response) => {
   try {

@@ -9,7 +9,7 @@ const create = async (tournamentId: string) => {
   if (tournament === undefined) throw new Error('Tournament not found');
 
   Profiling.log(
-    '[LOG] - [DATA PROVIDER] - CREATING TOURNAMENT ROUNDS FOR: ',
+    'CREATING TOURNAMENT ROUNDS FOR: ',
     tournament.label
   );
 

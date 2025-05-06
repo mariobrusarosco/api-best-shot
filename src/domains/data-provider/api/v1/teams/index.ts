@@ -1,4 +1,4 @@
-import { TournamentRoundRequest } from '@/domains/data-provider/api/tournament-round/typing';
+import { TournamentRoundRequest } from '@/domains/data-provider/api/v1/tournament-round/typing';
 import { TeamsController } from '@/domains/data-provider/controllers/teams';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import Profiling from '@/services/profiling';

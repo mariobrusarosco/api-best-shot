@@ -41,6 +41,7 @@ ACCESS_CONTROL_ALLOW_ORIGIN=*     # CORS origin
 AWS_ACCESS_KEY_ID=                # AWS access key
 AWS_SECRET_ACCESS_KEY=            # AWS secret key
 AWS_BUCKET_NAME=                  # S3 bucket name
+AWS_CLOUDFRONT_URL=               # AWS CloudFront domain for serving assets
 
 # Monitoring (Required for Sentry)
 SENTRY_DSN=                       # Sentry Data Source Name

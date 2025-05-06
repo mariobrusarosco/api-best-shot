@@ -11,14 +11,14 @@ import {
 export const T_Tournament = pgTable(
   'tournament',
   {
-    id: uuid('id').defaultRandom(),
+    id: uuid('id').defaultRandom().primaryKey(),
     externalId: text('external_id').notNull(),
     baseUrl: text('base_url').notNull(),
     slug: text('slug').notNull().default(''),
     provider: text('provider').notNull(),
     season: text('season').notNull(),
     mode: text('mode').notNull(),
-    standings: text('standings').notNull().default(''),
+    standingsMode: text('standings_mode').notNull().default(''),
     label: text('label').notNull(),
     logo: text('logo').notNull().default(''),
     createdAt: timestamp('created_at').notNull().defaultNow(),

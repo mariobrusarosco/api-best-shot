@@ -1,7 +1,8 @@
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
-import Profiling from '@/services/profiling';
+import { Profiling } from '@/services/profiling';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import { PROFILLING_AUTH } from '../constants/profiling';
 
 interface CustomRequest extends Request {
   isPublic?: boolean;
@@ -9,21 +10,27 @@ interface CustomRequest extends Request {
 
 const decodeMemberToken = (token: string) => {
   try {
-    console.log('[AUTH] - decode member token', token, process.env['JWT_SECRET']);
-    return jwt.verify(token || '', process.env['JWT_SECRET'] || '');
-  } catch (e) {
-    Profiling.error('[AUTH] - decode member token failed', e);
-    return null;
+    return jwt.verify(token, process.env.JWT_SECRET!);
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      Profiling.error(PROFILLING_AUTH.EXPIRED_TOKEN, error);
+      throw new Error('Token expired');
+    } 
+    
+    Profiling.error(PROFILLING_AUTH.INVALID_TOKEN, error);
+    throw new Error('Invalid token');
   }
 };
 
 const getUserCookie = (req: CustomRequest) => {
-  try {
-    return req.cookies[process.env['MEMBER_PUBLIC_ID_COOKIE'] || ''] || null;
-  } catch (e) {
-    Profiling.error('[AUTH] - get user cookie failed', e);
-    return null;
+  const cookie = req.cookies[process.env.MEMBER_PUBLIC_ID_COOKIE!];
+
+  if (!cookie) {
+    Profiling.error(PROFILLING_AUTH.INVALID_TOKEN, 'No auth cookie found');
+    throw new Error('Not authenticated');
   }
+
+  return cookie;
 };
 
 const signUserCookieBased = ({ memberId, res }: { memberId: string; res: Response }) => {
@@ -71,4 +78,21 @@ export const Utils = {
   signUserCookieBased,
   decodeMemberToken,
   getAuthenticatedUserId,
+  createTokenResponse: (userId: string, nickName: string, email: string) => {
+    try {
+      const token = jwt.sign(
+        { id: userId, nickName, email },
+        process.env.JWT_SECRET!,
+        { expiresIn: '30d' }
+      );
+      
+      // Log successful token creation
+      Profiling.log(PROFILLING_AUTH.TOKEN_REFRESHED, { userId });
+      
+      return token;
+    } catch (error) {
+      Profiling.error(PROFILLING_AUTH.CREATE_TOKEN, error);
+      throw error;
+    }
+  },
 };

@@ -1,7 +1,7 @@
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import Profiling from '@/services/profiling';
 import { Request, Response } from 'express';
-import { SchedulerController } from '../../controllers/scheduler';
+import { SchedulerController } from '../../../controllers/scheduler';
 
 const dailyRoutine = async (req: Request, res: Response) => {
   try {

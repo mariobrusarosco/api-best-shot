@@ -1,0 +1,1 @@
+ALTER TABLE "tournament" RENAME COLUMN "standings" TO "standings_mode";

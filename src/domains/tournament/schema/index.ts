@@ -29,11 +29,10 @@ export const T_Tournament = pgTable(
   },
   table => {
     return {
-      pk: primaryKey({ columns: [table.id] }),
       uniqueProviderExternalId: uniqueIndex('unique_provider_external_id').on(
         table.provider,
         table.externalId
-      ), // Unique constraint on composite key
+      ),
     };
   }
 );

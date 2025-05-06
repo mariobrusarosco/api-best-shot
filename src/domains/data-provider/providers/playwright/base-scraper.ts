@@ -131,7 +131,7 @@ export class BaseScraper {
         directory: 'data-providers'
       });
     } catch (error) {
-      Profiling.error('[BaseScraper] Error uploading asset:', error);
+      console.error('[BaseScraper] Error uploading asset:', error);
       return `dummy-path/${payload.filename}`;
     }
   }

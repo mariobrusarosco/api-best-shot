@@ -4,7 +4,7 @@ import { Profiling } from "@/services/profiling";
 import { DB_InsertTeam, T_Team } from '@/domains/team/schema';
 import db from '@/services/database';
 import { sql } from 'drizzle-orm';
-import { sleep } from "@/utils";
+import { safeString, sleep } from "@/utils";
 
 export class TeamsService {
     private scraper: BaseScraper;
@@ -31,9 +31,11 @@ export class TeamsService {
                 filename: `team-${team.id}`
             });
 
+            if(!team.id) throw new Error(`[TeamsService] - [ERROR] - [ENHANCE TEAM WITH LOGO] - [TEAM ID IS NULL] - [TEAM] ${team.name}`);
+
             return {
                 name: team.name,
-                externalId: String(team.id),
+                externalId: safeString(team.id) as string,
                 shortName: team.nameCode,
                 badge: this.getCloudFrontUrl(s3Key),
                 provider: 'sofa'

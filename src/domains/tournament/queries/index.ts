@@ -15,7 +15,6 @@ const allTournaments = async () => {
         logo: T_Tournament.logo,
       })
       .from(T_Tournament)
-      .where(eq(T_Tournament.provider, 'sofa'));
   } catch (error: any) {
     console.error('[Query_Tournament] - [queryAllMemberTournaments]', error);
     throw error;
@@ -32,7 +31,7 @@ const tournament = async (tournamentId: string) => {
         baseUrl: T_Tournament.baseUrl,
         provider: T_Tournament.provider,
         mode: T_Tournament.mode,
-        standings: T_Tournament.standings,
+        standingsMode: T_Tournament.standingsMode,
       })
       .from(T_Tournament)
       .where(and(eq(T_Tournament.provider, 'sofa'), eq(T_Tournament.id, tournamentId)));

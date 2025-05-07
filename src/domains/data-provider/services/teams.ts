@@ -3,20 +3,13 @@ import { BaseScraper } from "../providers/playwright/base-scraper";
 import { Profiling } from "@/services/profiling";
 import { DB_InsertTeam, T_Team } from '@/domains/team/schema';
 import db from '@/services/database';
-import { sql } from 'drizzle-orm';
 import { safeString, sleep } from "@/utils";
 
 export class TeamsService {
     private scraper: BaseScraper;
-    private readonly cloudFrontDomain: string;
 
     constructor(scraper: BaseScraper) {
         this.scraper = scraper;
-        this.cloudFrontDomain = process.env.AWS_CLOUDFRONT_URL || '';
-    }
-
-    private getCloudFrontUrl(s3Key: string): string {
-        return `https://${this.cloudFrontDomain}/${s3Key}`;
     }
 
     private getTeamLogoUrl(teamId: string | number): string {
@@ -37,7 +30,7 @@ export class TeamsService {
                 name: team.name,
                 externalId: safeString(team.id) as string,
                 shortName: team.nameCode,
-                badge: this.getCloudFrontUrl(s3Key),
+                badge: this.scraper.getCloudFrontUrl(s3Key),
                 provider: 'sofa'
             } satisfies DB_InsertTeam;
         } catch (error) {

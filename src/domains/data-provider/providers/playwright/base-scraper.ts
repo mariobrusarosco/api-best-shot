@@ -64,22 +64,6 @@ export class BaseScraper {
     return this.page.waitForSelector(selector, { timeout });
   }
 
-  protected async getText(selector: string) {
-    if (!this.page) {
-      throw new Error('Page not initialized');
-    }
-    const element = await this.page.$(selector);
-    return element ? element.textContent() : null;
-  }
-
-  protected async getTexts(selector: string) {
-    if (!this.page) {
-      throw new Error('Page not initialized');
-    }
-    const elements = await this.page.$$(selector);
-    return Promise.all(elements.map(element => element.textContent()));
-  }
-
   protected async getAttribute(selector: string, attribute: string) {
     if (!this.page) {
       throw new Error('Page not initialized');

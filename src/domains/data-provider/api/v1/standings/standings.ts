@@ -10,10 +10,11 @@ const createStandings = async (req: StandingsRequest, res: Response) => {
   try {
     const standings = await StandingsController.create(tournamentId);
 
-    Profiling.log(
-      `[LOG] - [DATA PROVIDER] - [CREATE STANDINGS FOR TOURNAMENT] - [${tournamentId}]`,
-      standings
-    );
+    Profiling.log({
+      msg: `[LOG] - [DATA PROVIDER] - [CREATE STANDINGS FOR TOURNAMENT] - [${tournamentId}]`,
+      data: standings,
+      color: 'FgGreen'
+    });
 
     return res.status(200).send(standings);
   } catch (error: any) {
@@ -30,10 +31,11 @@ const updateStandings = async (req: any, res: Response) => {
   const tournamentId = req.params.tournamentId;
   try {
     const standings = await StandingsController.update(tournamentId);
-    Profiling.log(
-      `[LOG] - [DATA PROVIDER] - [UPDATE STANDINGS FOR TOURNAMENT] - [${tournamentId}]`,
-      standings
-    );
+    Profiling.log({
+      msg: `[LOG] - [DATA PROVIDER] - [UPDATE STANDINGS FOR TOURNAMENT] - [${tournamentId}]`,
+      data: standings,
+      color: 'FgGreen'
+    });
 
     return res.status(200).send(standings);
   } catch (error: any) {

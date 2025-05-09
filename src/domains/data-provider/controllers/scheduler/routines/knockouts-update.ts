@@ -42,9 +42,13 @@ export const scheduleKnockoutsUpdateRoutine = async (schedule: {
     const command = new CreateScheduleCommand(params);
     const response = await client.send(command);
 
-    Profiling.log('[DATA PROVIDER] - [KNOCKOUTS UPDATE]', {
-      targetArn,
-      scheduled: response.ScheduleArn,
+    Profiling.log({
+      msg: '[DATA PROVIDER] - [KNOCKOUTS UPDATE]',
+      data: {
+        targetArn,
+        scheduled: response.ScheduleArn,
+      },
+      color: 'FgGreen'
     });
 
     return response.ScheduleArn;

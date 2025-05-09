@@ -53,7 +53,10 @@ export class S3FileStorage {
         })
       );
 
-      Profiling.log(`[S3FileStorage] File uploaded successfully: ${key}`);
+      Profiling.log({
+        msg: `[S3FileStorage] File uploaded successfully: ${key}`,
+        color: 'FgGreen'
+      });
       return key;
 
     } catch (error) {

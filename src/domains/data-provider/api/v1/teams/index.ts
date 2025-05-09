@@ -9,10 +9,11 @@ const createTeams = async (req: TournamentRoundRequest, res: Response) => {
   try {
     const teams = await TeamsController.create(tournamentId);
 
-    Profiling.log(
-      `[LOG] - [DATA PROVIDER] - [CREATE TEAMS FOR TOURNAMENT] - [${tournamentId}]`,
-      teams
-    );
+    Profiling.log({
+      msg: `[LOG] - [DATA PROVIDER] - [CREATE TEAMS FOR TOURNAMENT] - [${tournamentId}]`,
+      data: teams,
+      color: 'FgGreen'
+    });
 
     return res.status(200).send(teams);
   } catch (error: any) {
@@ -31,10 +32,11 @@ const updateTeams = async (req: any, res: Response) => {
   try {
     const teams = await TeamsController.update(tournamentId);
 
-    Profiling.log(
-      `[LOG] - [DATA PROVIDER] - [UPDATE TEAMS FOR TOURNAMENT] - [${tournamentId}]`,
-      teams
-    );
+    Profiling.log({
+      msg: `[LOG] - [DATA PROVIDER] - [UPDATE TEAMS FOR TOURNAMENT] - [${tournamentId}]`,
+      data: teams,
+      color: 'FgGreen'
+    });
     return res.status(200).send(teams);
   } catch (error: any) {
     Profiling.error(

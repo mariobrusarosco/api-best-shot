@@ -28,9 +28,13 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
       await SchedulerController.createKnockoutsUpdatesRoutine(tournament);
     }
 
-    Profiling.log('[DATA PROVIDER] - [TOURNAMENT] - CREATE', {
-      tournamentId: tournament.id,
-      tournamentLabel: tournament.label,
+    Profiling.log({
+      msg: '[DATA PROVIDER] - [TOURNAMENT] - CREATE',
+      data: {
+        tournamentId: tournament.id,
+        tournamentLabel: tournament.label,
+      },
+      color: 'FgGreen'
     });
 
     return tournament;
@@ -61,9 +65,13 @@ const updateTournament = async ({ input }: { input: CreateTournamentInput }) => 
       await SchedulerController.createKnockoutsUpdatesRoutine(tournament);
     }
 
-    Profiling.log('[DATA PROVIDER] - [TOURNAMENT] - UPDATE', {
-      tournamentId: updatedTournament.id,
-      tournamentLabel: updatedTournament.label,
+    Profiling.log({
+      msg: '[DATA PROVIDER] - [TOURNAMENT] - UPDATE',
+      data: {
+        tournamentId: updatedTournament.id,
+        tournamentLabel: updatedTournament.label,
+      },
+      color: 'FgGreen'
     });
 
     return updatedTournament;

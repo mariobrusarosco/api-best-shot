@@ -14,17 +14,20 @@ const create = async (tournamentId: string) => {
   );
 
   if (mode === 'knockout-only') {
-    Profiling.log('Knockout-only tournaments do not have standings');
+    Profiling.log({
+      msg: 'Knockout-only tournaments do not have standings',
+      color: 'FgYellow'
+    });
     return null;
   }
 
   const data = await SofascoreStandings.fetchStandingsFromProvider(tournament.baseUrl);
 
   if (!data) {
-    Profiling.log(
-      `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`
-    );
-
+    Profiling.log({
+      msg: `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`,
+      color: 'FgYellow'
+    });
     return null;
   }
 
@@ -35,12 +38,11 @@ const create = async (tournamentId: string) => {
   );
   const query = await SofascoreStandings.createOnDatabase(mappedStandings);
 
-  Profiling.log(
-    `[DATA PROVIDER] - [STANDINGS] - CREATING STANDINGS FOR TOURNAMENT ${label}`,
-    {
-      standings: mappedStandings,
-    }
-  );
+  Profiling.log({
+    msg: `[DATA PROVIDER] - [STANDINGS] - CREATING STANDINGS FOR TOURNAMENT ${label}`,
+    data: { standings: mappedStandings },
+    color: 'FgGreen'
+  });
 
   return query;
 };
@@ -58,19 +60,20 @@ const update = async (tournamentId: string) => {
   );
 
   if (mode === 'knockout-only') {
-    Profiling.log(
-      '[DATA PROVIDER] - [STANDINGS] - KNOCKOUT-ONLY TOURNAMENT DO NOT HAVE STANDINGS'
-    );
+    Profiling.log({
+      msg: '[DATA PROVIDER] - [STANDINGS] - KNOCKOUT-ONLY TOURNAMENT DO NOT HAVE STANDINGS',
+      color: 'FgYellow'
+    });
     return null;
   }
 
   const data = await SofascoreStandings.fetchStandingsFromProvider(tournament.baseUrl);
 
   if (!data) {
-    Profiling.log(
-      `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`
-    );
-
+    Profiling.log({
+      msg: `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`,
+      color: 'FgYellow'
+    });
     return null;
   }
 
@@ -81,12 +84,11 @@ const update = async (tournamentId: string) => {
   );
   const query = await SofascoreStandings.upsertOnDatabase(mappedStandings);
 
-  Profiling.log(
-    `[DATA PROVIDER] - [STANDINGS] - UPDATING STANDINGS FOR TOURNAMENT ${label}`,
-    {
-      standings: mappedStandings,
-    }
-  );
+  Profiling.log({
+    msg: `[DATA PROVIDER] - [STANDINGS] - UPDATING STANDINGS FOR TOURNAMENT ${label}`,
+    data: { standings: mappedStandings },
+    color: 'FgGreen'
+  });
 
   return query;
 };

@@ -14,7 +14,11 @@ const create = async (tournamentId: string) => {
   let matches: DB_InsertMatch[] = [];
 
   for (const round of roundList) {
-    Profiling.log('[LOG] - [DATA PROVIDER] - FETCHING ROUND:', round.providerUrl);
+    Profiling.log({
+      msg: '[LOG] - [DATA PROVIDER] - FETCHING ROUND:',
+      data: round.providerUrl,
+      color: 'FgBlue'
+    });
     await sleep(3000);
 
     const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(
@@ -32,7 +36,11 @@ const create = async (tournamentId: string) => {
 
   const query = await SofascoreMatches.createOnDatabase(matches);
 
-  Profiling.log('[DATA PROVIDER] - [MATCHES] - [CREATE ALL MACTHES]', { matches });
+  Profiling.log({
+    msg: '[DATA PROVIDER] - [MATCHES] - [CREATE ALL MACTHES]',
+    data: { matches },
+    color: 'FgGreen'
+  });
 
   return query;
 };
@@ -66,7 +74,11 @@ const update = async (tournamentId: string) => {
 
   const query = await SofascoreMatches.upsertOnDatabase(matches);
 
-  Profiling.log('[DATA PROVIDER] - [MATCHES] - [UPDATE ALL MACTHES]', { matches });
+  Profiling.log({
+    msg: '[DATA PROVIDER] - [MATCHES] - [UPDATE ALL MACTHES]',
+    data: { matches },
+    color: 'FgGreen'
+  });
 
   return query;
 };
@@ -91,9 +103,10 @@ const updateRound = async (tournamentId: string, roundSlug: string) => {
   });
 
   const query = await SofascoreMatches.upsertOnDatabase(matches);
-  Profiling.log('[DATA PROVIDER] - [MATCHES] - [UPDATE MACTHES OF A ROUND]', {
-    matches,
-    round,
+  Profiling.log({
+    msg: '[DATA PROVIDER] - [MATCHES] - [UPDATE MACTHES OF A ROUND]',
+    data: { matches, round },
+    color: 'FgGreen'
   });
   return query;
 };

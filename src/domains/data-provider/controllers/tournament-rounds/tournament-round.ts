@@ -8,10 +8,11 @@ const create = async (tournamentId: string) => {
   const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (tournament === undefined) throw new Error('Tournament not found');
 
-  Profiling.log(
-    'CREATING TOURNAMENT ROUNDS FOR: ',
-    tournament.label
-  );
+  Profiling.log({
+    msg: 'CREATING TOURNAMENT ROUNDS FOR: ',
+    data: tournament.label,
+    color: 'FgBlue'
+  });
 
   const shallowListOfRounds =
     await SofascoreTournamentRound.fetchShallowListOfRoundsFromProvider(
@@ -23,10 +24,11 @@ const create = async (tournamentId: string) => {
   );
   const roundsInserted = await SofascoreTournamentRound.createOnDatabase(roundsToInsert);
 
-  Profiling.log(
-    '[LOG] - [DATA PROVIDER] - CREATED TOURNAMENT ROUNDS FOR: ',
-    tournament.label
-  );
+  Profiling.log({
+    msg: '[LOG] - [DATA PROVIDER] - CREATED TOURNAMENT ROUNDS FOR: ',
+    data: tournament.label,
+    color: 'FgGreen'
+  });
   return roundsInserted;
 };
 
@@ -34,10 +36,11 @@ const update = async (tournamentId: string) => {
   const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (tournament === undefined) throw new Error('Tournament not found');
 
-  Profiling.log(
-    '[LOG] - [DATA PROVIDER] - UPDATING TOURNAMENT ROUNDS FOR: ',
-    tournament.label
-  );
+  Profiling.log({
+    msg: '[LOG] - [DATA PROVIDER] - UPDATING TOURNAMENT ROUNDS FOR: ',
+    data: tournament.label,
+    color: 'FgBlue'
+  });
 
   const rounds = await SofascoreTournamentRound.fetchShallowListOfRoundsFromProvider(
     tournament.baseUrl
@@ -62,10 +65,11 @@ const knockoutRoundsUpdate = async (tournamentId: string) => {
   const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (tournament === undefined) throw new Error('Tournament not found');
 
-  Profiling.log(
-    '[LOG] - [DATA PROVIDER] - [START] - UPDATING KNOCKOUT ROUNDS FOR: ',
-    tournament.label
-  );
+  Profiling.log({
+    msg: '[LOG] - [DATA PROVIDER] - [START] - UPDATING KNOCKOUT ROUNDS FOR: ',
+    data: tournament.label,
+    color: 'FgBlue'
+  });
 
   const listOfRoundsFromDataProvider =
     await SofascoreTournamentRound.mapShallowListOfRounds(

@@ -13,10 +13,11 @@ const createMatches = async (req: MatchesRequest, res: Response) => {
   try {
     const matches = await MatchesController.create(tournamentId);
 
-    Profiling.log(
-      `[LOG] - [DATA PROVIDER] - [CREATE MATCHES FOR ENTIRE TOURNAMENT] - [${tournamentId}]`,
-      matches
-    );
+    Profiling.log({
+      msg: `[LOG] - [DATA PROVIDER] - [CREATE MATCHES FOR ENTIRE TOURNAMENT] - [${tournamentId}]`,
+      data: matches,
+      color: 'FgGreen'
+    });
 
     return res.status(200).send(matches);
   } catch (error: any) {
@@ -33,10 +34,11 @@ const updateMatches = async (req: MatchesRequest, res: Response) => {
   const tournamentId = req.params.tournamentId;
   try {
     const matches = await MatchesController.update(tournamentId);
-    console.log(
-      `[LOG] - [DATA PROVIDER] - [UPDATE MATCHES FOR ENTIRE TOURNAMENT] - [${tournamentId}]`,
-      matches
-    );
+    Profiling.log({
+      msg: `[LOG] - [DATA PROVIDER] - [UPDATE MATCHES FOR ENTIRE TOURNAMENT] - [${tournamentId}]`,
+      data: matches,
+      color: 'FgGreen'
+    });
 
     return res.status(200).send(matches);
   } catch (error: any) {
@@ -55,10 +57,11 @@ const updateMatchesForRound = async (req: MatchesForRoundRequest, res: Response)
   try {
     const matches = await MatchesController.updateRound(tournamentId, roundSlug);
 
-    Profiling.log(
-      `[LOG] - [DATA PROVIDER] - [MATCHES UPDATE FOR ROUND] - [${tournamentId}] - [${roundSlug}]`,
-      matches
-    );
+    Profiling.log({
+      msg: `[LOG] - [DATA PROVIDER] - [MATCHES UPDATE FOR ROUND] - [${tournamentId}] - [${roundSlug}]`,
+      data: matches,
+      color: 'FgGreen'
+    });
 
     return res.status(200).send(matches);
   } catch (error: any) {

@@ -2,7 +2,7 @@ import { Express, Router } from 'express';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { resolveAlias } from '@/utils/resolveAlias';
-
+import Profiling from '@/services/profiling';
 
 class ApplicationRouter {
     private static instance: ApplicationRouter;
@@ -36,7 +36,7 @@ class ApplicationRouter {
         }
 
         if (domainsWithRoutes.length > 0) {
-            console.warn(`Could not load routes for domains: ${domainsWithRoutes.join(', ')}`);
+            Profiling.log({msg: `Could not load routes for domains: ${domainsWithRoutes.join(', ')}`, color: 'FgRed'});
         }
     }
 

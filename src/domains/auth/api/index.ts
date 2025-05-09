@@ -43,7 +43,11 @@ const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) =
 const unauthenticateUser = (_: Request, res: Response) => {
   try {
     SERVICES_AUTH.unauthenticateUser(res);
-    Profiling.log(PROFILLING_AUTH.UNAUTHENTICATE_USER, 'Successfully logged out');
+    Profiling.log({
+      msg: PROFILLING_AUTH.UNAUTHENTICATE_USER,
+      data: 'Successfully logged out',
+      color: 'FgGreen'
+    });
     return res.status(200).send({ message: 'Successfully logged out' });
   } catch (error: any) {
     Profiling.error(PROFILLING_AUTH.UNAUTHENTICATE_USER, error);

@@ -43,9 +43,13 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
     const command = new CreateScheduleCommand(params);
     const response = await client.send(command);
 
-    Profiling.log(`[DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE]`, {
-      targetArn,
-      scheduled: response.ScheduleArn,
+    Profiling.log({
+      msg: `[DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE]`,
+      data: {
+        targetArn,
+        scheduled: response.ScheduleArn,
+      },
+      color: 'FgGreen'
     });
 
     return response.ScheduleArn;

@@ -31,19 +31,31 @@ export type FetchAndStoreAssetPayload = {
       let ContentType: string | undefined;
   
       if (payload.logoPngBase64) {
-        Profiling.log('[fetchAndStoreAssetFromApi] - Creating a new asset from base64', payload.logoPngBase64);
+        Profiling.log({
+          msg: '[fetchAndStoreAssetFromApi] - Creating a new asset from base64',
+          data: payload.logoPngBase64,
+          color: 'FgGreen'
+        });
         Body = Buffer.from(payload.logoPngBase64 || '', 'base64');
         ContentType = 'image/png';
         Key = `data-providers/${payload.filename}.png`;
       } else {
-          Profiling.log('[fetchAndStoreAssetFromApi] - Creating a new asset from url', payload.logoUrl);
+          Profiling.log({
+            msg: '[fetchAndStoreAssetFromApi] - Creating a new asset from url',
+            data: payload.logoUrl,
+            color: 'FgGreen'
+          });
           try {
               const puppeteerResult = await fetchImageWithPuppeteer(payload.logoUrl || '');
               Body = puppeteerResult.buffer;
               ContentType = puppeteerResult.contentType;
               const ext = mime.extension(ContentType);
               Key = `data-providers/${payload?.filename}.${ext || 'png'}`;
-              Profiling.log('[fetchAndStoreAssetFromApi] - Asset created successfully', { Key, ContentType, Body });
+              Profiling.log({
+                msg: '[fetchAndStoreAssetFromApi] - Asset created successfully',
+                data: { Key, ContentType, Body },
+                color: 'FgGreen'
+              });
         } catch (error: unknown) {
           const fetchError = error as Error;
           Profiling.error('Fetch error details:', {
@@ -71,7 +83,10 @@ export type FetchAndStoreAssetPayload = {
             Expires: new Date(Date.now() + 15768000 * 1000),
           })
         );
-        Profiling.log(`[fetchAndStoreAssetFromApi] - File uploaded successfully: ${Key}`);
+        Profiling.log({
+          msg: `[fetchAndStoreAssetFromApi] - File uploaded successfully: ${Key}`,
+          color: 'FgGreen'
+        });
         return Key;
       } catch (s3Error: any) {
         Profiling.error('Error uploading to S3:', s3Error);

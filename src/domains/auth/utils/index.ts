@@ -87,7 +87,11 @@ export const Utils = {
       );
       
       // Log successful token creation
-      Profiling.log(PROFILLING_AUTH.TOKEN_REFRESHED, { userId });
+      Profiling.log({
+        msg: PROFILLING_AUTH.TOKEN_REFRESHED,
+        data: { userId },
+        color: 'FgGreen'
+      });
       
       return token;
     } catch (error) {

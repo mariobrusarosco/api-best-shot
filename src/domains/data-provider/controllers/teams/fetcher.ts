@@ -27,13 +27,14 @@ export const fetchAndMapTeamsForRegularSeason = async (
     tournament.provider
   );
 
-  Profiling.log(
-    `[DATA PROVIDER] - [TEAMS] - [FETCHING AND MAPPING] - [FOR REGULAR SEASON OF TOURNAMENT:${tournament.label}]`,
-    {
+  Profiling.log({
+    msg: `[DATA PROVIDER] - [TEAMS] - [FETCHING AND MAPPING] - [FOR REGULAR SEASON OF TOURNAMENT:${tournament.label}]`,
+    data: {
       tournamentLabel: tournament.label,
       teams: mappedTeamsFromStandings,
-    }
-  );
+    },
+    color: 'FgBlue'
+  });
 
   return mappedTeamsFromStandings;
 };
@@ -64,9 +65,13 @@ export const fetchAndMapTeamsFromKnockoutRounds = async (
     await sleep(3000);
   }
 
-  Profiling.log('[DATA PROVIDER] - [TEAMS] - [FETCH] - [FROM KNOCKOUT ROUNDS]', {
-    tournamentLabel: tournament.label,
-    teams: ALL_TEAMS,
+  Profiling.log({
+    msg: '[DATA PROVIDER] - [TEAMS] - [FETCH] - [FROM KNOCKOUT ROUNDS]',
+    data: {
+      tournamentLabel: tournament.label,
+      teams: ALL_TEAMS,
+    },
+    color: 'FgBlue'
   });
 
   return ALL_TEAMS;

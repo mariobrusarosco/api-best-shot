@@ -34,9 +34,13 @@ const create = async (tournamentId: string) => {
       return await SofascoreTeams.createOnDatabase(TEAMS);
     }
 
-    Profiling.log('[DATA PROVIDER] - [TEAMS] - CREATE SUCCESS', {
-      tournamentLabel: tournament.label,
-      team: TEAMS,
+    Profiling.log({
+      msg: '[DATA PROVIDER] - [TEAMS] - CREATE SUCCESS',
+      data: {
+        tournamentLabel: tournament.label,
+        team: TEAMS,
+      },
+      color: 'FgGreen'
     });
 
     return TEAMS;
@@ -71,9 +75,13 @@ const update = async (tournamentId: string) => {
       await SofascoreTeams.upsertOnDatabase(TEAMS);
     }
 
-    Profiling.log('[DATA PROVIDER] - [TEAMS] - UPDATE SUCCESS', {
-      tournamentLabel: tournament.label,
-      team: TEAMS,
+    Profiling.log({
+      msg: '[DATA PROVIDER] - [TEAMS] - UPDATE SUCCESS',
+      data: {
+        tournamentLabel: tournament.label,
+        team: TEAMS,
+      },
+      color: 'FgGreen'
     });
 
     return TEAMS;

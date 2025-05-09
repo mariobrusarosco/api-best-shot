@@ -16,8 +16,10 @@ const setup = async (req: TournamentRequest, res: Response) => {
             });
         }
 
-        Profiling.log('[DATA PROVIDER] - [V2] - [TOURNAMENT] - CREATE SUCCESS', {
-            tournament
+        Profiling.log({
+            msg: '[DATA PROVIDER] - [V2] - [TOURNAMENT] - CREATE SUCCESS',
+            data: { tournament },
+            color: 'FgGreen'
         });
 
         return res.status(200).json({ tournament });

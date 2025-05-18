@@ -105,10 +105,6 @@ const getTournamentDetails = async (tournamentId: string) => {
   return QUERIES_TOURNAMENT.tournament(tournamentId);
 };
 
-const getTournamentRounds = async (tournamentId: string) => {
-  return QUERIES_TOURNAMENT.allTournamentRounds(tournamentId);
-};
-
 const getKnockoutRounds = async (tournamentId: string) => {
   return QUERIES_TOURNAMENT.knockoutRounds(tournamentId);
 };
@@ -151,7 +147,6 @@ export const SERVICES_TOURNAMENT = {
   getTournamentPerformanceForMember,
   getMatchesWithNullGuess,
   getTournamentDetails,
-  getTournamentRounds,
   getKnockoutRounds,
   checkOnboardingStatus,
   getTournamentStandings,

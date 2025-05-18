@@ -25,7 +25,7 @@ export class MatchesService {
 
       for (const round of rounds) {
         console.log(
-          `[SOFASCORE] - [INFO] - [GET TOURNAMENT MATCHES] - [ROUND] ${round.id}`
+          `[SOFASCORE] - [INFO] - [GET TOURNAMENT MATCHES] - [ROUND] ${round.label}`
         );
 
         await this.scraper.sleep(2500);
@@ -33,8 +33,8 @@ export class MatchesService {
         await this.scraper.goto(round.providerUrl);
         const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_MATCHES;
         const matches = this.mapMatches(rawContent, tournamentId);
-        
-        console.log()
+
+        console.log();
 
         roundsWithMatches.push(matches);
       }

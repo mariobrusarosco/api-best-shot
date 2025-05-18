@@ -61,18 +61,6 @@ const tournament = async (tournamentId: string) => {
   }
 };
 
-const allTournamentRounds = async (tournamentId: string) => {
-  try {
-    return db
-      .select()
-      .from(T_TournamentRound)
-      .where(eq(T_TournamentRound.tournamentId, tournamentId));
-  } catch (error: any) {
-    console.error('[TournamentQueries] - [allAvailableRounds]', error);
-    throw error;
-  }
-};
-
 const knockoutRounds = async (tournamentId: string) => {
   try {
     return db
@@ -216,7 +204,6 @@ export type TournamentQuery = Awaited<ReturnType<typeof tournament>>;
 export const QUERIES_TOURNAMENT = {
   allTournaments,
   tournament,
-  allTournamentRounds,
   knockoutRounds,
   checkOnboardingStatus,
   getTournamentMatches,

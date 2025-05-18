@@ -67,4 +67,5 @@ export const TournamentRoundsQueries = {
 };
 
 export const QUERIES_TOURNAMENT_ROUND = {
+  getAllRounds,
 };

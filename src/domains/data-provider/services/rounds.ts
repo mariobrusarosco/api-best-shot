@@ -32,7 +32,7 @@ export class RoundDataProviderService {
   ): DB_InsertTournamentRound[] {
     try {
       return roundsResponse.rounds.map((round, index) => {
-        const isKnockoutRound = !!round?.slug;
+        const isKnockoutRound = !!round?.slug && !round?.prefix;
         const isSpecialRound = !!round?.prefix;
         let endpoint = `${baseUrl}/events/round/${round.round}`;
         const slug = round?.slug;

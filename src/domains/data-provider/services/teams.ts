@@ -1,8 +1,7 @@
 import type { ENDPOINT_STANDINGS } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { Profiling } from '@/services/profiling';
-import { DB_InsertTeam, T_Team } from '@/domains/team/schema';
-import db from '@/services/database';
+import { DB_InsertTeam } from '@/domains/team/schema';
 import { safeString, sleep } from '@/utils';
 import { QUERIES_TEAMS } from '@/domains/team/queries';
 

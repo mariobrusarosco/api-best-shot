@@ -1,13 +1,13 @@
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import type { TournamentRequest } from './typing';
-import { TournamentService } from '@/domains/data-provider/services/tournaments';
+import { TournamentDataProviderService } from '@/domains/data-provider/services/tournaments';
 import { Response } from 'express';
 import Profiling from '@/services/profiling';
 
 const create = async (req: TournamentRequest, res: Response) => {
   try {
-    const tournamentService = new TournamentService();
-    const tournament = await tournamentService.init(req.body);
+    const dataProviderService = new TournamentDataProviderService();
+    const tournament = await dataProviderService.init(req.body);
 
     if (!tournament) {
       return res.status(400).json({

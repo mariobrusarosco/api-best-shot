@@ -7,11 +7,13 @@ import {
 } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { CreateTournamentInput } from '../api/v2/tournament/typing';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 
-export class TournamentService {
-  public async createOnDatabase(data: DB_InsertTournament) {
+export class TournamentDataProviderService {
+  public async createOnDatabase(input: DB_InsertTournament) {
     try {
-      const [tournament] = await db.insert(T_Tournament).values(data).returning();
+      const tournament = await SERVICES_TOURNAMENT.createTournament(input);
+
       return tournament;
     } catch (error) {
       console.error('[SOFASCORE] - [ERROR] - [CREATE TOURNAMENT]', error);

@@ -21,7 +21,7 @@ export class BaseScraper {
   }
 
   // https://www.sofascore.com/api/v1/unique-tournament/7/season/61644/statistics/info
-  async init() {
+  private async init() {
     try {
       this.browser = await chromium.launch({
         headless: process.env.NODE_ENV === 'production',
@@ -32,10 +32,16 @@ export class BaseScraper {
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
       });
       this.page = await this.context.newPage();
+      return this;
     } catch (error) {
       console.error('Failed to initialize scraper:', error);
       throw error;
     }
+  }
+
+  public static async createInstance() {
+    const instance = new BaseScraper();
+    return await instance.init();
   }
 
   async close() {

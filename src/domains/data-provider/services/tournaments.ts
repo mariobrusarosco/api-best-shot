@@ -8,8 +8,11 @@ import {
 import db from '@/services/database';
 import { CreateTournamentInput } from '../api/v2/tournament/typing';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { BaseScraper } from '../providers/playwright/base-scraper';
 
 export class TournamentDataProviderService {
+  constructor(private scraper: BaseScraper) {}
+
   public async createOnDatabase(input: DB_InsertTournament) {
     try {
       const tournament = await SERVICES_TOURNAMENT.createTournament(input);
@@ -46,7 +49,18 @@ export class TournamentDataProviderService {
   }
 
   public async init(payload: CreateTournamentInput) {
-    const logo = this.getTournamentLogoUrl(payload.tournamentPublicId);
+    const logoUrl = this.getTournamentLogoUrl(payload.tournamentPublicId);
+    const s3Key = await this.scraper.uploadAsset({
+      logoUrl,
+      filename: `tournament-${payload.tournamentPublicId}`,
+    });
+    const logo = this.scraper.getCloudFrontUrl(s3Key);
+
+    if (!payload.tournamentPublicId)
+      throw new Error(
+        `[TournamentDataProviderService] - [ERROR] - [INIT] - [TOURNAMENT PUBLIC ID IS NULL]`
+      );
+
     const tournament = await this.createOnDatabase({
       externalId: payload.tournamentPublicId,
       baseUrl: payload.baseUrl,

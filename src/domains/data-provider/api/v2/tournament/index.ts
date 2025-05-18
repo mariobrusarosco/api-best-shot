@@ -3,10 +3,13 @@ import type { TournamentRequest } from './typing';
 import { TournamentDataProviderService } from '@/domains/data-provider/services/tournaments';
 import { Response } from 'express';
 import Profiling from '@/services/profiling';
+import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 
 const create = async (req: TournamentRequest, res: Response) => {
   try {
-    const dataProviderService = new TournamentDataProviderService();
+    const scraper = await BaseScraper.createInstance();
+
+    const dataProviderService = new TournamentDataProviderService(scraper);
     const tournament = await dataProviderService.init(req.body);
 
     if (!tournament) {

@@ -9,6 +9,7 @@ import {
   API_SCHEDULER,
   API_STANDINGS,
   API_TOURNAMENT_V2,
+  API_TOURNAMENT_ROUNDS_V2,
 } from '../api';
 
 const RouterV1 = express.Router();
@@ -50,6 +51,10 @@ ApplicationRouter.register('api/v1/data-provider', RouterV1);
 const RouterV2 = express.Router();
 // RouterV2.use(AuthMiddleware);
 
+// TOURNAMENTS
 RouterV2.post('/tournaments/create', API_TOURNAMENT_V2.create);
+
+// TOURNAMENT ROUNDS
+RouterV2.post('/rounds/create', API_TOURNAMENT_ROUNDS_V2.create);
 
 ApplicationRouter.register('api/v2/data-provider', RouterV2);

@@ -118,8 +118,6 @@ export class RoundDataProviderService {
   }
 
   public async init(tournamentId: string, tournamentBaseUrl: string) {
-    await this.scraper.init();
-
     console.log(
       '[LOG] - [SofascoreTournamentRounds] - INIT',
       tournamentId,

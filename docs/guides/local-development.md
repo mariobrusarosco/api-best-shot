@@ -5,27 +5,32 @@ This guide helps developers start the project locally and understand how to acce
 ## Setting Up the Project
 
 1. Clone the repository
+
    ```bash
    git clone https://github.com/mariobrusarosco/api-best-shot.git
    cd api-best-shot
    ```
 
 2. Install dependencies
+
    ```bash
    yarn install
    ```
 
 3. Set up environment variables
+
    ```bash
    docker compose --profile setup up env-setup
    ```
 
 4. Start the database
+
    ```bash
    docker compose up -d postgres
    ```
 
 5. Run database migrations and seed
+
    ```bash
    yarn db:push
    yarn db:seed
@@ -45,12 +50,13 @@ yarn dev:full
 ```
 
 This command:
+
 1. Starts the PostgreSQL database
 2. Runs the API server, Database UI, and Frontend application concurrently
 3. Color-codes the console output for each service (API in cyan, DATABASE in green, FRONTEND in magenta)
 
 ![dev:full command output showing color-coded terminal output for API, Database, and Frontend services](../images/dev-full-output.png)
-*Image: Color-coded terminal output from the dev:full command. See docs/guides/capturing-terminal-output.md for instructions on how to capture and add this image.*
+_Image: Color-coded terminal output from the dev:full command. See docs/guides/capturing-terminal-output.md for instructions on how to capture and add this image._
 
 ### Benefits
 
@@ -72,6 +78,7 @@ yarn dev:stop
 ## Accessing the API
 
 The API is available at:
+
 ```
 http://localhost:9090
 ```
@@ -79,6 +86,7 @@ http://localhost:9090
 The API uses port 9090 as configured in the .env file (PORT=9090).
 
 ### Available Endpoints
+
 - Base URL: `http://localhost:9090`
 - API documentation is available at the root endpoint
 
@@ -91,12 +99,14 @@ yarn db:studio
 ```
 
 This will start Drizzle Studio's web interface which provides a visual way to:
+
 - Browse database tables
 - Manage data records
 - Run queries
 - Visualize schema
 
 The Database UI will be available at the URL shown in your terminal after running the command, typically:
+
 ```
 http://localhost:4983
 ```
@@ -115,6 +125,7 @@ http://localhost:4983
 ## Troubleshooting
 
 If you encounter issues with database connection when using `yarn db:studio`, make sure:
+
 1. The Postgres Docker container is running (`docker compose ps`)
 2. Your `.env` file contains the correct DB_STRING_CONNECTION_LOCAL value
 3. The database port isn't blocked by another application
@@ -122,8 +133,10 @@ If you encounter issues with database connection when using `yarn db:studio`, ma
 ### Common Errors
 
 #### "getaddrinfo EAI_AGAIN postgres"
+
 This error occurs when trying to connect to the database using the Docker service name "postgres" from outside the Docker network.
 
-**Solution**: 
+**Solution**:
+
 - Check that your `.env` file has the correct DB_STRING_CONNECTION_LOCAL value pointing to localhost
-- If using `yarn db:studio`, make sure the database is running with `docker compose ps` 
+- If using `yarn db:studio`, make sure the database is running with `docker compose ps`

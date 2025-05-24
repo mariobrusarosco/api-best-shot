@@ -11,7 +11,11 @@ import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 
 export class TournamentDataProviderService {
-  constructor(private scraper: BaseScraper) {}
+  private scraper: BaseScraper;
+
+  constructor(scraper: BaseScraper) {
+    this.scraper = scraper;
+  }
 
   public async createOnDatabase(input: DB_InsertTournament) {
     try {

@@ -5,27 +5,22 @@ import { BaseScraper } from '../providers/playwright/base-scraper';
 // import { TournamentService } from "./tournaments";
 // import { RoundService } from "./rounds";
 // import { MatchesService } from "./matches";
-import { CreateTournamentInput, TournamentRequest } from '../api/v2/tournament/typing';
+import { CreateTournamentInput } from '../api/v2/tournament/typing';
 import { TeamsService } from './teams';
-import { RoundService } from './rounds';
+import { RoundDataProviderService } from './rounds';
 import { StandingsService } from './standings';
-import { TournamentService } from './tournaments';
+import { TournamentDataProviderService } from './tournaments';
 import { MatchesService } from './match';
 // import { TeamsService } from "./teams";
 export class SofaScoreScraper extends BaseScraper {
-  constructor() {
-    super();
-  }
-
   public async createTournament(payload: CreateTournamentInput) {
     try {
-      const scraper = new BaseScraper();
-      await scraper.init();
+      const scraper = await BaseScraper.createInstance();
       console.log('TOURNAMENT CREATION - [START]', payload);
 
-      const tournamentService = new TournamentService();
+      const tournamentService = new TournamentDataProviderService(scraper);
       const standingsService = new StandingsService(scraper);
-      const roundService = new RoundService(scraper);
+      const roundService = new RoundDataProviderService(scraper);
       const teamsService = new TeamsService(scraper);
       const matchesService = new MatchesService(scraper);
 

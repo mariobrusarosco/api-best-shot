@@ -7,6 +7,26 @@ This guide explains the linting and formatting setup for the API Best Shot proje
 - ESLint: For code linting with TypeScript support
 - Prettier: For code formatting
 - ESLint-Prettier Integration: To avoid conflicts between ESLint and Prettier
+- Husky: For Git hooks management
+- lint-staged: For running checks on staged files only
+
+## Available Scripts
+
+The following npm scripts are available for code quality checks:
+
+```bash
+# Check TypeScript types without emitting files
+yarn compile
+
+# Run ESLint on all TypeScript files
+yarn lint
+
+# Fix ESLint issues automatically
+yarn lint:fix
+
+# Format all supported files with Prettier
+yarn format
+```
 
 ## Configuration Files
 
@@ -33,7 +53,7 @@ This guide explains the linting and formatting setup for the API Best Shot proje
   "plugins": ["@typescript-eslint", "prettier"],
   "rules": {
     "prettier/prettier": "error",
-    "no-unused-vars": "on",
+    "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
@@ -77,20 +97,34 @@ dist
 build
 ```
 
-## Available Scripts
+## Pre-commit Validation Process
 
-The following npm scripts are available for linting and formatting:
+Before each commit, the following checks are performed automatically in this order:
 
-```bash
-# Check for linting issues
-yarn lint
+1. TypeScript Type Checking (`yarn compile`):
 
-# Fix linting issues automatically
-yarn lint:fix
+   - Runs on the entire project
+   - Ensures there are no type errors
+   - Blocks commit if any type errors are found
 
-# Format all TypeScript, JSON, and Markdown files
-yarn format
-```
+2. Staged Files Processing (via lint-staged):
+   - For TypeScript files (_.ts, _.tsx):
+     - ESLint fixes any fixable issues
+     - Prettier formats the code
+   - For JSON and Markdown files (_.json, _.md):
+     - Prettier formats the files
+
+If any of these checks fail, the commit will be blocked until you fix the issues.
+
+## Best Practices
+
+1. Keep your code clean by following the linting rules
+2. Use the available scripts for specific tasks:
+   - `yarn compile` to verify types
+   - `yarn lint` to check for code style issues
+   - `yarn lint:fix` to automatically fix common issues
+   - `yarn format` to format all supported files
+3. Keep `.prettierignore` updated with any new build output directories
 
 ## Dependencies
 
@@ -103,21 +137,10 @@ The following development dependencies are required:
   "@typescript-eslint/eslint-plugin": "^6.21.0",
   "eslint-config-prettier": "^9.1.0",
   "eslint-plugin-prettier": "^5.1.3",
-  "prettier": "^3.2.5"
+  "prettier": "^3.2.5",
+  "husky": "^8.0.3",
+  "lint-staged": "^15.2.0"
 }
-```
-
-## Key Features
-
-1. **TypeScript Support**: Full TypeScript linting support with specific rules for type checking.
-2. **Modern JavaScript**: ES2022 features support.
-3. **Automatic Formatting**: Prettier integration ensures consistent code formatting.
-4. **Intelligent Rules**:
-   - Allows underscore-prefixed unused variables
-   - Warns about `any` type usage
-   - Flexible function return type annotations
-   - Consistent code style enforcement
-
 ## Pre-commit Hooks
 
 The project uses Husky and lint-staged to automatically check code quality before each commit. This ensures that no code with linting or formatting issues is committed to the repository.
@@ -126,26 +149,14 @@ The project uses Husky and lint-staged to automatically check code quality befor
 
 The pre-commit hooks are automatically installed when you run `yarn install` thanks to the `prepare` script in package.json.
 
-### What Gets Checked
-
-Before each commit, the following checks are performed automatically:
-
-1. For TypeScript files (_.ts, _.tsx):
-
-   - ESLint will check and fix issues
-   - Prettier will format the code
-
-2. For JSON and Markdown files (_.json, _.md):
-   - Prettier will format the files
-
-If any of these checks fail, the commit will be blocked until you fix the issues.
-
 ## Best Practices
 
 1. Keep your code clean by following the linting rules
 2. Let the pre-commit hooks do their job - they'll catch any formatting issues
 3. If needed, you can run checks manually:
+   - `yarn type-check` to check TypeScript types
    - `yarn lint` to check for potential issues
    - `yarn lint:fix` to automatically fix common issues
    - `yarn format` to format all supported files
 4. Keep `.prettierignore` updated with any new build output directories
+```

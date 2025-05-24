@@ -12,7 +12,7 @@ Responsible for raw database operations and data access.
 
 **Example from Performance Domain:**
 
-```typescript
+````typescript
 // /domains/performance/query/index.ts
 const queryPerformanceOfAllMemberTournaments = async (memberId: string) => {
 return await db
@@ -43,8 +43,7 @@ const worstPerformance = .minBy(memberPerformance, p => Number(p.points));
 const bestPerformance = .maxBy(memberPerformance, p => Number(p.points));
 return { worstPerformance, bestPerformance };
 };
-```
-
+````
 
 ### 2. API Layer (`/domains/*/api/index.ts`)
 
@@ -52,31 +51,31 @@ Exposes endpoints and handles HTTP concerns.
 
 **Example from Performance Domain:**
 
-
 ```typescript
 // /domains/performance/api/index.ts
 router.get('/performance/:memberId', async (req, res) => {
-    const { memberId } = req.params;
-    const performance = await SERVICES_PERFORMANCE.getMemberPerformanceExtremes(memberId);
-    return res.json(performance);
+  const { memberId } = req.params;
+  const performance = await SERVICES_PERFORMANCE.getMemberPerformanceExtremes(memberId);
+  return res.json(performance);
 });
 ```
-
-
 
 ## Benefits of This Architecture
 
 1. **Separation of Concerns**
+
    - Query Layer: Focuses solely on database operations
    - Service Layer: Handles business logic and data transformation
    - API Layer: Manages HTTP interactions
 
 2. **Maintainability**
+
    - Each layer has a single responsibility
    - Changes in one layer don't necessarily affect others
    - Easier to understand and modify code
 
 3. **Testability**
+
    - Layers can be tested independently
    - Easy to mock dependencies
    - Clear boundaries for unit tests
@@ -89,11 +88,13 @@ router.get('/performance/:memberId', async (req, res) => {
 ## Best Practices
 
 1. **Query Layer**
+
    - Keep queries simple and focused
    - Return raw data without transformation
    - Handle database-specific logic here
 
 2. **Service Layer**
+
    - Transform data for business use
    - Handle error cases
    - Implement business rules
@@ -120,6 +121,7 @@ This flow ensures clean separation of concerns and maintainable code.
 ## Contributing
 
 When adding new features:
+
 1. Place database queries in the Query layer
 2. Put business logic in the Service layer
 3. Add endpoints in the API layer

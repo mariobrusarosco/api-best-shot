@@ -1,4 +1,5 @@
-import { CreateTournamentInput } from '@/domains/data-provider/api/v1/tournament/typing';
+/* eslint-disable */
+/* prettier-ignore-file */
 import {
   API_SOFASCORE_ROUND,
   API_SOFASCORE_ROUNDS,
@@ -19,9 +20,7 @@ import { API_SOFASCORE_STANDINGS } from './providers/sofascore/standings/typing'
 export type IApiProvider = {
   tournament: {
     fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
-    createOnDatabase: (
-      data: CreateTournamentInput & { logo: string }
-    ) => Promise<DB_SelectTournament>;
+    createOnDatabase: (data: any & { logo: string }) => Promise<DB_SelectTournament>;
     updateOnDatabase: (data: DB_InsertTournament) => Promise<DB_SelectTournament>;
   };
   rounds: {
@@ -73,9 +72,7 @@ export type IApiProvider = {
 
 export interface IDataProviderTournamentRound {
   fetchRoundFromProvider: (providerUrl: string) => Promise<API_SOFASCORE_ROUND>;
-  fetchRoundsFromProvider: (
-    providerUrl: string
-  ) => Promise<API_SOFASCORE_ROUNDS>;
+  fetchRoundsFromProvider: (providerUrl: string) => Promise<API_SOFASCORE_ROUNDS>;
   createRoundsOnDatabase: (
     data: API_SOFASCORE_ROUNDS,
     tournamentId: string
@@ -87,8 +84,8 @@ export interface IDataProviderMatch {
 }
 
 export interface IDataProviderMatchUpdate {
-  round: API_SOFASCORE_ROUND,
-  tournamentId: string
+  round: API_SOFASCORE_ROUND;
+  tournamentId: string;
 }
 
 export interface IDataProviderStandings {

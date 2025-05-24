@@ -31,7 +31,7 @@ const create = async (tournamentId: string) => {
   const mappedStandings = await SofascoreStandings.mapStandings(
     data,
     tournamentId,
-    tournament.standings
+    tournament.standingsMode
   );
   const query = await SofascoreStandings.createOnDatabase(mappedStandings);
 
@@ -51,7 +51,7 @@ const update = async (tournamentId: string) => {
 
   const mode = tournament.mode;
   const label = tournament.label;
-  const standingsMode = tournament.standings;
+  const standingsMode = tournament.standingsMode;
 
   console.log(
     `[LOG] - [DATA PROVIDER] - [STANDINGS] - UPDATING STANDINGS FOR TOURNAMENT ${label}`

@@ -32,7 +32,6 @@ import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import db from '@/services/database';
 import { T_Guess } from '@/domains/guess/schema';
 import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
-import { CreateTournamentInput } from '@/domains/tournament/typing';
 import { DB_InsertTournament } from '../schema';
 
 const getAllTournaments = async () => {
@@ -64,7 +63,7 @@ const setupTournament = async (memberId: string, tournamentId: string) => {
         memberId,
         awayScore: null,
         homeScore: null,
-      } satisfies DB_InsertGuess)
+      }) satisfies DB_InsertGuess
   );
 
   await db.insert(T_Guess).values(guessesToInsert);
@@ -140,6 +139,16 @@ const createTournament = async (payload: DB_InsertTournament) => {
   return QUERIES_TOURNAMENT.createTournament(payload);
 };
 
+const getTournamentRounds = async (tournamentId: string) => {
+  const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
+
+  if (!tournament) {
+    throw new Error('Tournament not found');
+  }
+
+  return tournament.rounds;
+};
+
 export const SERVICES_TOURNAMENT = {
   getAllTournaments,
   getTournamentScore,
@@ -152,4 +161,5 @@ export const SERVICES_TOURNAMENT = {
   getTournamentStandings,
   getTournament,
   createTournament,
+  getTournamentRounds,
 };

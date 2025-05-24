@@ -1,44 +1,42 @@
-import { TournamentRequest } from '@/domains/data-provider/api/v1/tournament/typing';
 import { TournamentController } from '@/domains/data-provider/controllers/tournament/tournament';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import Profiling from '@/services/profiling';
 import { Response } from 'express';
-import { MatchesController } from '../../../controllers/matches';
-import { StandingsController } from '../../../controllers/standings';
-import { TeamsController } from '../../../controllers/teams';
 import { TournamentRoundController } from '../../../controllers/tournament-rounds/tournament-round';
+import { TournamentRequest } from '@/domains/tournament/typing';
 
 const setup = async (req: TournamentRequest, res: Response) => {
   try {
     let tournament;
     let rounds;
-    let teams;
-    let matches;
-    let standings;
 
     try {
       // SETUP TOURNAMENT
       tournament = await TournamentController.createTournament({
         input: req.body,
-      });  
+      });
       Profiling.log('[DATA PROVIDER] - [SETUP 1]- [CREATE TOURNAMENT] - [SUCCESS]', {
         tournament,
       });
     } catch (error: any) {
-      Profiling.error('[DATA PROVIDER] - [SETUP 1]- [CREATE TOURNAMENT] - [ERROR]', { error });
+      Profiling.error('[DATA PROVIDER] - [SETUP 1]- [CREATE TOURNAMENT] - [ERROR]', {
+        error,
+      });
     }
 
     if (!tournament)
       throw new Error('[ERROR] - [DATA PROVIDER] - [SETUP] - Tournament not created');
 
-    try {   
+    try {
       // SETUP TOURNAMENTS ROUNDS
       rounds = await TournamentRoundController.create(tournament.id!);
       Profiling.log('[DATA PROVIDER] - [SETUP 2] - [CREATE ROUNDS] - [SUCCESS]', {
         rounds,
       });
     } catch (error: any) {
-      Profiling.error('[DATA PROVIDER] - [SETUP 2] - [CREATE ROUNDS] - [ERROR]', { error });
+      Profiling.error('[DATA PROVIDER] - [SETUP 2] - [CREATE ROUNDS] - [ERROR]', {
+        error,
+      });
     }
 
     // try {
@@ -51,7 +49,6 @@ const setup = async (req: TournamentRequest, res: Response) => {
     //   Profiling.error('[DATA PROVIDER] - [SETUP 3] - [CREATE TEAMS] - [ERROR]', { error });
     // }
 
-      
     // SETUP MATCHES
     // matches = await MatchesController.create(tournament.id!);
     // Profiling.log('[DATA PROVIDER] - [SETUP 4] - [CREATE MATCHES] - [SUCCESS]', {

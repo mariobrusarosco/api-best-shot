@@ -1,6 +1,5 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import type { ENDPOINT_ROUNDS } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
-import { CreateTournamentInput } from '../api/v2/tournament/typing';
 import db from '@/services/database';
 import {
   DB_InsertTournamentRound,
@@ -9,7 +8,11 @@ import {
 } from '@/domains/tournament/schema';
 
 export class RoundDataProviderService {
-  constructor(private scraper: BaseScraper) {}
+  private scraper: BaseScraper;
+
+  constructor(scraper: BaseScraper) {
+    this.scraper = scraper;
+  }
 
   public async getTournamentRounds(baseUrl: string) {
     try {

@@ -24,7 +24,7 @@
     "serve-prod": "node -r dotenv/config ./dist/index.js",
     "build": "rimraf ./dist && tsc && tsc-alias",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org mario-79 --project api-best-shot-production ./dist && sentry-cli sourcemaps upload --org mario-79 --project api-best-shot-production ./dist",
-    "compile": "tsc ./src --noEmit",
+    "compile": "tsc --noEmit",
     "scrapper": "tsx watch ./src/scrapper.ts",
     "api-lookup": "tsx watch ./src/api-lookup.ts",
     "db:seed": "ts-node seed.ts",

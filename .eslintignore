@@ -1,0 +1,11 @@
+# Dependencies
+node_modules
+dist
+
+# Config files
+drizzle.config.ts
+playwright.config.ts
+seed.ts
+
+# Supabase
+supabase

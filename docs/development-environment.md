@@ -183,8 +183,8 @@ yarn dev:status      # Shows container status and
    ```bash
    # Morning startup
    # API flow with hot-reload
-   yarn dev         
-   
+   yarn dev
+
    # Database flow
    docker compose --profile dev up postgres
 

@@ -3,13 +3,16 @@
 ## Prerequisites
 
 ### Required Software
+
 1. **Git**
+
    ```bash
    # Verify installation
    git --version  # Should be 2.0.0 or higher
    ```
 
 2. **Docker & Docker Compose**
+
    ```bash
    # Verify installations
    docker --version        # Should be 20.10.0 or higher
@@ -17,19 +20,23 @@
    ```
 
 3. **Volta** (Node.js Version Manager)
+
    ```bash
    # Install Volta
    curl https://get.volta.sh | bash
-   
+
    # Restart your terminal, then verify
    volta --version
    ```
 
 ### Optional but Recommended
+
 1. **Visual Studio Code**
+
    - Download from: https://code.visualstudio.com
-   
+
    Recommended extensions:
+
    - Docker
    - TypeScript and JavaScript Language Features
    - ESLint
@@ -81,6 +88,7 @@ yarn dev
 ## Common Development Tasks
 
 ### Database Operations
+
 ```bash
 # Connect to database CLI
 yarn db:connect
@@ -93,6 +101,7 @@ yarn db:reset
 ```
 
 ### Environment Management
+
 ```bash
 # View current environment
 yarn dev:status
@@ -105,6 +114,7 @@ yarn dev:clean
 ```
 
 ### Code Quality
+
 ```bash
 # Type checking
 yarn compile
@@ -129,11 +139,13 @@ api-best-shot/
 ## Configuration Files
 
 1. **Environment Variables** (`.env`)
+
    - Created by setup script
    - Contains database credentials
    - AWS and Sentry configuration
 
 2. **TypeScript** (`tsconfig.json`)
+
    - Strict type checking
    - Path aliases
    - ES2020 target
@@ -148,6 +160,7 @@ api-best-shot/
 ### Common Issues
 
 1. **Docker Issues**
+
    ```bash
    # If containers won't start
    docker compose down -v
@@ -155,6 +168,7 @@ api-best-shot/
    ```
 
 2. **Node.js Version Issues**
+
    ```bash
    # Force correct versions
    volta install node@18.17.1
@@ -162,10 +176,11 @@ api-best-shot/
    ```
 
 3. **Database Connection Issues**
+
    ```bash
    # Check database status
    docker compose ps postgres
-   
+
    # View logs
    yarn db:logs
    ```
@@ -201,4 +216,4 @@ api-best-shot/
 - The project uses a hybrid approach (Docker + Local development)
 - Docker handles infrastructure (database, etc.)
 - Local development for faster feedback
-- Volta ensures consistent Node.js versions 
+- Volta ensures consistent Node.js versions

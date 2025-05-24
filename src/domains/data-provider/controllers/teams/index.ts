@@ -11,7 +11,7 @@ import {
 const create = async (tournamentId: string) => {
   try {
     const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
-    if (tournament === undefined) throw new Error('Tournament not found');
+    if (tournament === null) throw new Error('Tournament not found');
 
     const tournamentMode = tournament.mode;
     let TEAMS = [] as DB_InsertTeam[];
@@ -48,7 +48,7 @@ const create = async (tournamentId: string) => {
 const update = async (tournamentId: string) => {
   try {
     const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
-    if (tournament === undefined) throw new Error('Tournament not found');
+    if (tournament === null) throw new Error('Tournament not found');
 
     const tournamentMode = tournament.mode;
     let TEAMS = [] as DB_InsertTeam[];

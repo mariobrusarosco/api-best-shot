@@ -9,6 +9,7 @@ The application implements a domain-driven routing system using a singleton patt
 ### Singleton Router
 
 The application uses a singleton `ApplicationRouter` class that:
+
 - Ensures only one router instance exists throughout the application
 - Manages route registration for the Express application
 - Automatically discovers and loads routes from domain directories
@@ -16,15 +17,15 @@ The application uses a singleton `ApplicationRouter` class that:
 ```typescript
 // Core implementation
 class ApplicationRouter {
-    private static instance: ApplicationRouter;
-    private app: Express | null = null;
+  private static instance: ApplicationRouter;
+  private app: Express | null = null;
 
-    public static getInstance(): ApplicationRouter {
-        if (!ApplicationRouter.instance) {
-            ApplicationRouter.instance = new ApplicationRouter();
-        }
-        return ApplicationRouter.instance;
+  public static getInstance(): ApplicationRouter {
+    if (!ApplicationRouter.instance) {
+      ApplicationRouter.instance = new ApplicationRouter();
     }
+    return ApplicationRouter.instance;
+  }
 }
 ```
 
@@ -49,7 +50,7 @@ import ApplicationRouter from '@/router';
 
 const router = Router();
 router.get('/your-endpoint', (req, res) => {
-    // Your route handler
+  // Your route handler
 });
 
 ApplicationRouter.register('domain-name', router);
@@ -73,6 +74,7 @@ src/
 ## Error Handling
 
 The router implements several safety features:
+
 - Graceful handling of missing route files
 - Warning messages for unloadable domain routes
 - Validation of Express app initialization before route registration
@@ -80,6 +82,7 @@ The router implements several safety features:
 ## Global Middleware
 
 The application comes preconfigured with essential middleware:
+
 - Express JSON parser
 - Cookie parser
 - CORS configuration
@@ -89,6 +92,7 @@ The application comes preconfigured with essential middleware:
 ## Configuration
 
 The routing system uses several environment variables:
+
 - `PORT`: Server port (default: 9090)
 - `ACCESS_CONTROL_ALLOW_ORIGIN`: CORS origin configuration
 - `API_VERSION`: API version tracking

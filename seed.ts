@@ -10,7 +10,7 @@ async function seed() {
     // Create test member with password
     const hashedPassword = await bcrypt.hash('test123', 10);
     const now = new Date();
-    
+
     // Create a unique publicId for Google OAuth
     const testMemberWithOAuth = {
       id: uuidv4(),
@@ -20,7 +20,7 @@ async function seed() {
       lastName: 'Brusarosco de Almeida',
       nickName: 'mariobrusarosco',
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
 
     // Create test member with password
@@ -33,14 +33,17 @@ async function seed() {
       lastName: 'User',
       nickName: 'TestUser',
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
 
     // Insert members
     const resultOAuth = await db.insert(T_Member).values(testMemberWithOAuth).returning();
     console.log('✅ Created OAuth member:', resultOAuth[0].email);
 
-    const resultPassword = await db.insert(T_Member).values(testMemberWithPassword).returning();
+    const resultPassword = await db
+      .insert(T_Member)
+      .values(testMemberWithPassword)
+      .returning();
     console.log('✅ Created member with password:', resultPassword[0].email);
 
     console.log('✨ Seed completed successfully!');
@@ -55,4 +58,4 @@ seed()
   .catch(error => {
     console.error('❌ Unexpected error:', error);
     process.exit(1);
-  }); 
+  });

@@ -25,9 +25,4 @@ jobs:
 
       - name: Apply migrations
         run: |
-          # Hard-coded solution for now - with URL-encoded special characters
-          # We'll move this to a secret once it's confirmed working
-          # DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION }}
-
-          # Execute using environment variable directly
-          DB_STRING_CONNECTION="postgresql://postgres.pppzfkndwrtekdyfknym:W%23TgSCcVER4m%257@aws-0-us-east-1.pooler.supabase.com:6543/postgres" npx drizzle-kit migrate
+          DB_STRING_CONNECTION="${{ secrets.DB_STRING_CONNECTION_TEMP }}" npx drizzle-kit migrate

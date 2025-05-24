@@ -6,7 +6,7 @@ import { MatchesController } from '../matches';
 
 const create = async (tournamentId: string) => {
   const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
-  if (tournament === undefined) throw new Error('Tournament not found');
+  if (tournament === null) throw new Error('Tournament not found');
 
   Profiling.log({
     msg: 'CREATING TOURNAMENT ROUNDS FOR: ',
@@ -34,7 +34,7 @@ const create = async (tournamentId: string) => {
 
 const update = async (tournamentId: string) => {
   const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
-  if (tournament === undefined) throw new Error('Tournament not found');
+  if (tournament === null) throw new Error('Tournament not found');
 
   Profiling.log({
     msg: '[LOG] - [DATA PROVIDER] - UPDATING TOURNAMENT ROUNDS FOR: ',
@@ -63,7 +63,7 @@ const getRoundProviderData = async (tournamentId: string, roundSlug: string) => 
 
 const knockoutRoundsUpdate = async (tournamentId: string) => {
   const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
-  if (tournament === undefined) throw new Error('Tournament not found');
+  if (tournament === null) throw new Error('Tournament not found');
 
   Profiling.log({
     msg: '[LOG] - [DATA PROVIDER] - [START] - UPDATING KNOCKOUT ROUNDS FOR: ',
@@ -78,9 +78,8 @@ const knockoutRoundsUpdate = async (tournamentId: string) => {
       ),
       tournament
     );
-  const listOfRoundsFromDatabase = await TournamentRoundsQueries.getAllRounds(
-    tournamentId
-  );
+  const listOfRoundsFromDatabase =
+    await TournamentRoundsQueries.getAllRounds(tournamentId);
 
   const newDetectedRounds = listOfRoundsFromDataProvider.filter(round => {
     return !listOfRoundsFromDatabase.find(

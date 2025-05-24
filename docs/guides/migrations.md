@@ -3,11 +3,13 @@
 This guide explains how to work with database migrations in our project, which uses both Drizzle ORM for schema definitions and Supabase for database management.
 
 ## Technology Stack
+
 - **Drizzle ORM**: Used for type-safe schema definitions
 - **Supabase**: Used for database hosting
 - **drizzle-kit**: CLI tool for managing migrations
 
 ## Project Structure
+
 ```
 ├── src/
 │   └── domains/
@@ -20,23 +22,21 @@ This guide explains how to work with database migrations in our project, which u
 ## Creating New Tables
 
 ### 1. Define Schema in Drizzle
+
 First, define your table schema in the appropriate domain folder using Drizzle's type-safe schema builder:
 
 ```typescript
 import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core';
 
-export const YourTable = pgTable(
-  'table_name',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    name: text('name').notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at')
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-  }
-);
+export const YourTable = pgTable('table_name', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: text('name').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
 
 // Export types for type safety
 export type DB_InsertYourTable = typeof YourTable.$inferInsert;
@@ -45,6 +45,7 @@ export type DB_SelectYourTable = typeof YourTable.$inferSelect;
 ```
 
 ### 2. Generate Migration
+
 After defining your schema, use drizzle-kit to generate the migration:
 
 ```bash
@@ -60,6 +61,7 @@ This will create a new migration file in the `drizzle` directory with a timestam
 ```
 
 ### 3. Apply Migration
+
 To apply the migration to your database:
 
 ```bash
@@ -69,19 +71,18 @@ npx drizzle-kit migrate
 ## Modifying Existing Tables
 
 ### 1. Update Drizzle Schema
+
 First, modify the table definition in your Drizzle schema file:
 
 ```typescript
-export const ExistingTable = pgTable(
-  'existing_table',
-  {
-    // ... existing columns ...
-    newColumn: text('new_column').notNull().default(''),
-  }
-);
+export const ExistingTable = pgTable('existing_table', {
+  // ... existing columns ...
+  newColumn: text('new_column').notNull().default(''),
+});
 ```
 
 ### 2. Generate and Apply Migration
+
 Generate a new migration for your changes:
 
 ```bash
@@ -105,22 +106,25 @@ npx drizzle-kit migrate
 
 ### Common Issues
 
-1. **Migration Failed**: 
+1. **Migration Failed**:
+
    - Check the drizzle-kit output for detailed error messages
    - Verify your schema definitions
    - Ensure database connection is properly configured
 
-2. **Type Mismatch**: 
+2. **Type Mismatch**:
+
    - Ensure your schema types match your database requirements
    - Check the Drizzle documentation for correct type mappings
 
-3. **Constraint Violations**: 
+3. **Constraint Violations**:
    - When adding NOT NULL constraints, ensure existing data complies
    - Use appropriate default values in your schema definitions
 
 ## Need Help?
 
 If you encounter issues:
+
 1. Check the drizzle-kit documentation
 2. Review your schema definitions
 3. Test migrations in a development environment first
@@ -144,7 +148,8 @@ export default {
 ```
 
 This configuration tells drizzle-kit:
+
 - Where to find your schema files
 - Where to output migration files
 - Which database driver to use
-- How to connect to your database 
+- How to connect to your database

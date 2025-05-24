@@ -27,16 +27,19 @@ yarn db:studio
 ## Best Practices
 
 1. **One Change, One Migration**
+
    - Make one schema change at a time
    - Generate a separate migration for each change
    - Use clear, descriptive names for your changes
 
 2. **Review Before Applying**
+
    - Always review generated migrations before applying
    - Check for unintended changes
    - Verify column names and types
 
 3. **Testing Migrations**
+
    - Test migrations locally first
    - Use `db:check` to verify state
    - Keep track of applied migrations
@@ -128,4 +131,4 @@ To run migrations locally, you need to have Docker Compose installed and set up.
 2. **Monitor Logs**: Keep an eye on production logs for any issues.
 3. **Backup Data**: Always backup data before running migrations.
 4. **Test in Staging**: Before running migrations in production, test in a staging environment.
-5. **Communicate**: Communicate with stakeholders about upcoming migrations. 
+5. **Communicate**: Communicate with stakeholders about upcoming migrations.

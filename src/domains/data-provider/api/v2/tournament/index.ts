@@ -1,20 +1,16 @@
-import { handleInternalServerErrorResponse } from "@/domains/shared/error-handling/httpResponsesHelper";
-import { TournamentRequest } from "./typing";
-import { SofaScoreScraper } from "@/domains/data-provider/services";
-import { Response } from "express";
-import Profiling from "@/services/profiling";
+import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import type { TournamentRequest } from './typing';
+import { TournamentDataProviderService } from '@/domains/data-provider/services/tournaments';
+import { Response } from 'express';
+import Profiling from '@/services/profiling';
+import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 
-const setup = async (req: TournamentRequest, res: Response) => {
-    try {
-        const service = new SofaScoreScraper();
-        const tournament = await service.createTournament(req.body);
+const create = async (req: TournamentRequest, res: Response) => {
+  try {
+    const scraper = await BaseScraper.createInstance();
 
-        if (!tournament) {
-            return res.status(400).json({ 
-                error: 'Failed to create tournament',
-                message: 'Tournament creation failed'
-            });
-        }
+    const dataProviderService = new TournamentDataProviderService(scraper);
+    const tournament = await dataProviderService.init(req.body);
 
         Profiling.log({
             msg: '[DATA PROVIDER] - [V2] - [TOURNAMENT] - CREATE SUCCESS',
@@ -30,7 +26,7 @@ const setup = async (req: TournamentRequest, res: Response) => {
 };
 
 const API_TOURNAMENT = {
-    setup,
+  create,
 };
 
 export default API_TOURNAMENT;

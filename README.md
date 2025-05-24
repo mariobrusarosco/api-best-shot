@@ -5,6 +5,7 @@
 Best Shot API is the backend service for the _Football App_ project [(more info)](https://github.com/mariobrusarosco/best-shot). It's built with modern technologies and best practices to provide reliable and efficient data services for football-related applications.
 
 We follow a hybrid development approach:
+
 - Infrastructure (PostgreSQL, AWS, Monitoring) runs in Docker
 - Development tools (Node.js, Yarn) run locally via Volta
 
@@ -36,6 +37,7 @@ We follow a hybrid development approach:
 We use Docker Compose profiles to manage environment setup:
 
 #### First-time Setup
+
 ```bash
 # Only needed once or when you want to reset to defaults
 docker compose --profile initial up initial_setup
@@ -45,17 +47,20 @@ cat .env
 ```
 
 #### Regular Development
+
 ```bash
 # Start only the database (won't touch existing .env)
 docker compose up -d
 ```
 
 #### Environment Management
+
 - `.env` file is created only if it doesn't exist
 - Existing `.env` files are never overwritten automatically
 - You can manually reset to defaults by running the setup profile
 
 To modify your environment:
+
 1. Edit `.env` file directly
 2. Changes take effect on next `docker compose up`
 3. Database-related changes might require `docker compose down && docker compose up -d`
@@ -63,6 +68,7 @@ To modify your environment:
 ### Development Workflow
 
 We use a hybrid development approach:
+
 - PostgreSQL runs in Docker for consistent database environment
 - API runs locally for faster development and better debugging
 
@@ -116,6 +122,7 @@ We use a hybrid development approach:
 ```
 
 #### 1. Start the Database
+
 ```bash
 # This will:
 # 1. Set up environment variables
@@ -124,6 +131,7 @@ docker compose up -d
 ```
 
 #### 2. Start the API
+
 ```bash
 # Install dependencies (if haven't already)
 yarn install
@@ -137,12 +145,14 @@ The API will be available at `http://localhost:9090`
 ### Understanding the Setup
 
 #### Database Container (`docker compose up -d`)
+
 1. Creates/updates `.env` file with database credentials
 2. Starts PostgreSQL 15 container
 3. Creates persistent volume for data
 4. Exposes database on configured port (default: 5432)
 
 #### Local API (`yarn dev`)
+
 1. Validates environment variables
 2. Connects to containerized database
 3. Provides hot reloading for development
@@ -151,6 +161,7 @@ The API will be available at `http://localhost:9090`
 ### Common Development Scenarios
 
 #### 1. Daily Development
+
 ```bash
 # Morning startup
 docker compose up -d postgres  # Start DB in background
@@ -163,6 +174,7 @@ yarn dev                      # Start local API
 ```
 
 #### 2. Database Operations
+
 ```bash
 # Access database CLI
 docker exec -it bestshot_db psql -U ${DB_USER} -d ${DB_NAME}
@@ -176,6 +188,7 @@ docker compose up -d     # Fresh database
 ```
 
 #### 3. Team Collaboration
+
 ```bash
 # When new migrations are added
 docker compose down      # Stop containers
@@ -185,6 +198,7 @@ yarn dev               # Start API
 ```
 
 #### 4. Multiple Database Instances
+
 ```bash
 # Run second instance for testing
 DB_PORT=5433 docker compose -f docker-compose.test.yml up -d
@@ -192,6 +206,7 @@ DB_PORT=5433 yarn dev
 ```
 
 #### 5. Database Troubleshooting
+
 ```bash
 # Check database health
 docker compose ps
@@ -206,6 +221,7 @@ docker compose down -v          # Complete reset
 ```
 
 #### 6. Running Migrations
+
 ```bash
 # Apply migrations
 yarn db:migrate
@@ -217,6 +233,7 @@ yarn db:migrate         # Try again
 ```
 
 #### 7. Performance Testing
+
 ```bash
 # Load test data
 docker exec -it bestshot_db psql -U ${DB_USER} -d ${DB_NAME} -f ./scripts/seed-test-data.sql
@@ -225,6 +242,7 @@ docker exec -it bestshot_db psql -U ${DB_USER} -d ${DB_NAME} -f ./scripts/seed-t
 ### Troubleshooting
 
 #### Environment Setup Issues
+
 ```bash
 # Check if .env was created
 ls -la .env
@@ -234,6 +252,7 @@ docker compose up env-setup
 ```
 
 #### Database Issues
+
 ```bash
 # Check container status
 docker compose ps
@@ -247,6 +266,7 @@ docker compose up -d
 ```
 
 #### API Issues
+
 ```bash
 # Check environment variables
 yarn validate-env
@@ -261,6 +281,7 @@ docker exec bestshot_db pg_isready -U ${DB_USER} -d ${DB_NAME}
 ## Contributing
 
 When adding new features:
+
 1. Place database queries in the Query layer
 2. Put business logic in the Service layer
 3. Add endpoints in the API layer
@@ -276,16 +297,12 @@ When running the application in development mode, the API is exposed on _http://
 yarn drizzle-kit studio
 ```
 
-
-
 ## Further Reading
 
 - [Domain-Driven Design](https://martinfowler.com/bliki/DomainDrivenDesign.html)
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [Separation of Concerns](https://en.wikipedia.org/wiki/Separation_of_concerns)
-Now, the **API** is exposed on _http://localhost:9090_
-
-
+  Now, the **API** is exposed on _http://localhost:9090_
 
 ## Running a migration
 
@@ -315,31 +332,35 @@ We're using **Railway** to host the project. The url are:
 ## Development Commands
 
 Run database migrations:
+
 ```bash
 docker compose run --rm migrations
 ```
 
 Start the application:
+
 ```bash
 npm start
 ```
-
 
 ## Getting Started
 
 ### Prerequisites
 
 1. **Volta - Node.js Version Manager**
+
    ```bash
    # Unix-like systems (macOS, Linux)
    curl https://get.volta.sh | bash
-   
+
    # Windows
    # Download and run installer from https://docs.volta.sh/guide/getting-started
    ```
-   
+
    #### Detailed Volta Setup
+
    After installation:
+
    1. Restart your terminal
    2. Verify installation:
       ```bash
@@ -349,37 +370,36 @@ npm start
       - Detect Node.js and Yarn versions from package.json
       - Download and install required versions (Node.js 18.17.1, Yarn 1.22.19)
       - Switch versions when you enter the project directory
-   
+
    #### Troubleshooting Volta
-   
+
    1. **Command Not Found**
       ```bash
       # Add Volta to PATH (Unix-like systems)
       export VOLTA_HOME="$HOME/.volta"
       export PATH="$VOLTA_HOME/bin:$PATH"
       ```
-   
    2. **Permission Issues**
       ```bash
       # Fix permissions (Unix-like systems)
       sudo chown -R $USER: $HOME/.volta
       ```
-   
    3. **Version Not Switching**
+
       ```bash
       # Force tool installation
       volta install node@18.17.1
       volta install yarn@1.22.19
-      
+
       # Verify current versions
       node --version  # Should show 18.17.1
       yarn --version  # Should show 1.22.19
       ```
-   
+
    #### Updating Versions with Volta
-   
+
    To update Node.js or Yarn versions:
-   
+
    1. Edit package.json volta section:
       ```json
       "volta": {
@@ -387,12 +407,10 @@ npm start
         "yarn": "NEW_VERSION"
       }
       ```
-   
    2. Volta will automatically:
       - Detect the change
       - Download new versions
       - Switch to new versions
-   
    3. Verify updates:
       ```bash
       volta list all  # Shows all installed versions
@@ -400,12 +418,14 @@ npm start
       ```
 
 2. **Node.js and Yarn**
+
    - ✨ Managed automatically by Volta
    - Required versions:
      - Node.js: 18.17.1
      - Yarn: 1.22.19
 
-3. **Docker** 
+3. **Docker**
+
    - Minimum: Docker Engine 20.10+ with Compose V2
    - Verify installation:
      ```bash
@@ -425,12 +445,14 @@ npm start
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/mariobrusarosco/api-best-shot.git
    cd api-best-shot
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    # or
@@ -438,12 +460,14 @@ npm start
    ```
 
 3. **Set up environment**
+
    ```bash
    # Create and start the development environment
    docker compose up env-setup
    ```
 
 4. **Verify environment setup**
+
    ```bash
    # Check if .env file was created
    ls -la .env
@@ -457,6 +481,7 @@ npm start
 The project uses a type-safe environment configuration system with runtime validation. We use different environment configurations for development, demo, and production environments.
 
 For detailed information about our environment configuration system, including:
+
 - Type-safe environment variables
 - Runtime validation
 - Best practices
@@ -469,7 +494,7 @@ For detailed information about our environment configuration system, including:
 
 When you run `docker compose up env-setup`, a `.env` file will be automatically created with the following default configuration:
 
-```
+````
 
 ## Developer Guide
 
@@ -481,24 +506,28 @@ This guide helps you start the project locally and access its components.
    ```bash
    git clone https://github.com/mariobrusarosco/api-best-shot.git
    cd api-best-shot
-   ```
+````
 
 2. Install dependencies
+
    ```bash
    yarn install
    ```
 
 3. Set up environment variables
+
    ```bash
    docker compose --profile setup up env-setup
    ```
 
 4. Start the database
+
    ```bash
    docker compose up -d postgres
    ```
 
 5. Run database migrations and seed
+
    ```bash
    yarn db:push
    yarn db:seed
@@ -512,6 +541,7 @@ This guide helps you start the project locally and access its components.
 ### Accessing the API
 
 The API is available at:
+
 ```
 http://localhost:9090
 ```
@@ -532,12 +562,14 @@ yarn db:studio
 ```
 
 This will start Drizzle Studio's web interface which provides a visual way to:
+
 - Browse database tables
 - Manage data records
 - Run queries
 - Visualize schema
 
 The Database UI will be available at the URL shown in your terminal after running the command, typically:
+
 ```
 http://localhost:4983
 ```
@@ -555,6 +587,7 @@ http://localhost:4983
 ### Troubleshooting
 
 If you encounter issues with database connection when using `yarn db:studio`, make sure:
+
 1. The Postgres Docker container is running (`docker compose ps`)
 2. Your `.env` file contains the correct DB_STRING_CONNECTION_LOCAL value
 3. The database port isn't blocked by another application

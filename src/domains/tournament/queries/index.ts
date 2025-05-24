@@ -1,6 +1,11 @@
 import db from '@/services/database';
 import { and, eq, sql } from 'drizzle-orm';
-import { T_Tournament, T_TournamentRound, T_TournamentStandings } from '../schema';
+import {
+  DB_InsertTournament,
+  T_Tournament,
+  T_TournamentRound,
+  T_TournamentStandings,
+} from '@/domains/tournament/schema';
 import { T_TournamentPerformance } from '@/domains/performance/schema';
 import { T_Match } from '@/domains/match/schema';
 import { T_Guess } from '@/domains/guess/schema';
@@ -14,8 +19,7 @@ const allTournaments = async () => {
         label: T_Tournament.label,
         logo: T_Tournament.logo,
       })
-      .from(T_Tournament)
-      .where(eq(T_Tournament.provider, 'sofa'));
+      .from(T_Tournament);
   } catch (error: any) {
     console.error('[Query_Tournament] - [queryAllMemberTournaments]', error);
     throw error;
@@ -32,10 +36,14 @@ const tournament = async (tournamentId: string) => {
         baseUrl: T_Tournament.baseUrl,
         provider: T_Tournament.provider,
         mode: T_Tournament.mode,
-        standings: T_Tournament.standings,
+        standingsMode: T_Tournament.standingsMode,
       })
       .from(T_Tournament)
-      .where(and(eq(T_Tournament.provider, 'sofa'), eq(T_Tournament.id, tournamentId)));
+      .where(eq(T_Tournament.id, tournamentId));
+
+    if (!tournament) {
+      return null;
+    }
 
     const rounds = await db
       .select({
@@ -49,18 +57,6 @@ const tournament = async (tournamentId: string) => {
     return { ...tournament, rounds };
   } catch (error: any) {
     console.error('[Query_Tournament] - [queryTournament]', error);
-    throw error;
-  }
-};
-
-const allTournamentRounds = async (tournamentId: string) => {
-  try {
-    return db
-      .select()
-      .from(T_TournamentRound)
-      .where(eq(T_TournamentRound.tournamentId, tournamentId));
-  } catch (error: any) {
-    console.error('[TournamentQueries] - [allAvailableRounds]', error);
     throw error;
   }
 };
@@ -103,10 +99,7 @@ const checkOnboardingStatus = async (memberId: string, tournamentId: string) => 
 
 const getTournamentMatches = async (tournamentId: string) => {
   try {
-    return db
-      .select()
-      .from(T_Match)
-      .where(eq(T_Match.tournamentId, tournamentId));
+    return db.select().from(T_Match).where(eq(T_Match.tournamentId, tournamentId));
   } catch (error: any) {
     console.error('[TournamentQueries] - [getTournamentMatches]', error);
     throw error;
@@ -119,19 +112,18 @@ const getTournamentGuesses = async (memberId: string, tournamentId: string) => {
       .select()
       .from(T_Guess)
       .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
-      .where(
-        and(
-          eq(T_Guess.memberId, memberId), 
-          eq(T_Match.tournamentId, tournamentId)
-        )
-      );
+      .where(and(eq(T_Guess.memberId, memberId), eq(T_Match.tournamentId, tournamentId)));
   } catch (error: any) {
     console.error('[TournamentQueries] - [getTournamentGuesses]', error);
     throw error;
   }
 };
 
-const getMatchesWithNullGuess = async (memberId: string, tournamentId: string, round: string) => {
+const getMatchesWithNullGuess = async (
+  memberId: string,
+  tournamentId: string,
+  round: string
+) => {
   try {
     const rows = await db
       .select()
@@ -140,12 +132,7 @@ const getMatchesWithNullGuess = async (memberId: string, tournamentId: string, r
         T_Guess,
         and(eq(T_Match.id, T_Guess.matchId), eq(T_Guess.memberId, memberId))
       )
-      .where(
-        and(
-          eq(T_Match.tournamentId, tournamentId), 
-          eq(T_Match.roundSlug, round)
-        )
-      );
+      .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round)));
 
     return rows.filter(row => row.guess === null);
   } catch (error: any) {
@@ -164,7 +151,7 @@ const createTournamentPerformance = async (memberId: string, tournamentId: strin
         points: String(0),
       })
       .returning();
-    
+
     return performance;
   } catch (error: any) {
     console.error('[TournamentQueries] - [createTournamentPerformance]', error);
@@ -191,7 +178,7 @@ const getTournamentStandings = async (tournamentId: string) => {
         ga: T_TournamentStandings.ga,
         gd: T_TournamentStandings.gd,
         provider: T_TournamentStandings.provider,
-        updatedAt: T_TournamentStandings.updatedAt
+        updatedAt: T_TournamentStandings.updatedAt,
       })
       .from(T_TournamentStandings)
       .where(eq(T_TournamentStandings.tournamentId, tournamentId))
@@ -202,17 +189,27 @@ const getTournamentStandings = async (tournamentId: string) => {
   }
 };
 
+const createTournament = async (input: DB_InsertTournament) => {
+  try {
+    const [tournament] = await db.insert(T_Tournament).values(input).returning();
+    return tournament;
+  } catch (error) {
+    console.error('[TournamentQueries] - [createTournament]', error);
+    throw error;
+  }
+};
+
 export type TournamentQuery = Awaited<ReturnType<typeof tournament>>;
 
 export const QUERIES_TOURNAMENT = {
   allTournaments,
   tournament,
-  allTournamentRounds,
   knockoutRounds,
   checkOnboardingStatus,
   getTournamentMatches,
   getTournamentGuesses,
   getMatchesWithNullGuess,
   createTournamentPerformance,
-  getTournamentStandings
+  getTournamentStandings,
+  createTournament,
 };

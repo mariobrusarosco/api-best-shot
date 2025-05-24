@@ -19,6 +19,7 @@ The profiling system consists of two main components:
 2. **Profiling Service**: A simplified interface for logging errors and messages throughout the application
 
 The system automatically determines whether to send data to Sentry or log to the console based on the current environment:
+
 - **Development**: Logs to the console for local debugging
 - **Production/Demo**: Sends data to Sentry for monitoring and alerting
 
@@ -43,6 +44,7 @@ try {
 ```
 
 This will:
+
 - In development: Log to the console with environment context
 - In production/demo: Send the error to Sentry with full context
 
@@ -55,10 +57,10 @@ Use the `log` method to log informational messages:
 Profiling.log('User signup successful');
 
 // Log with additional data
-Profiling.log('Payment processed', { 
-  amount: 50.00,
+Profiling.log('Payment processed', {
+  amount: 50.0,
   currency: 'USD',
-  userId: 'user-123'
+  userId: 'user-123',
 });
 ```
 
@@ -85,7 +87,7 @@ export enum PROFILLING_AUTH {
   AUTHENTICATE_USER = '[AUTH] Failed to authenticate user',
   VALIDATE_TOKEN = '[AUTH] Failed to validate token',
   CREATE_TOKEN = '[AUTH] Failed to create token',
-  REFRESH_TOKEN = '[AUTH] Failed to refresh token'
+  REFRESH_TOKEN = '[AUTH] Failed to refresh token',
 }
 
 // src/domains/user/constants/profiling.ts
@@ -93,7 +95,7 @@ export enum PROFILLING_USER {
   CREATE_USER = '[USER] Failed to create user',
   UPDATE_USER = '[USER] Failed to update user profile',
   FETCH_USER = '[USER] Failed to fetch user data',
-  DELETE_USER = '[USER] Failed to delete user'
+  DELETE_USER = '[USER] Failed to delete user',
 }
 ```
 
@@ -116,6 +118,7 @@ const authenticateUser = async (req: Request, res: Response) => {
 ```
 
 #### Real-world Example with Request Validation
+
 Follow the steps below to log a validation error:
 
 1. Validate the request body
@@ -127,16 +130,16 @@ Follow the steps below to log a validation error:
 ```typescript
 const validationResult = authenticateUserSchema.safeParse(req.body); // Step 1: Validate the request body
 const hasValidationError = !validationResult.success; // Step 2: Check if there are validation errors
-   
+
 if (hasValidationError) {
   const errors = validationResult.error.format(); // Step 3: Format the validation errors
 
   // Use the standardized error key from the enum
   Profiling.error(PROFILLING_AUTH.AUTHENTICATE_USER, errors); // Step 4: Log the validation errors
-  
+
   return res // Step 5: Return the validation errors
     .status(AuthErrorMapper.VALIDATION_ERROR.status)
-    .send({ 
+    .send({
       message: AuthErrorMapper.VALIDATION_ERROR.user,
     });
 }
@@ -145,6 +148,7 @@ if (hasValidationError) {
 ### When to Use Profiling
 
 1. **Error Handling**: Always use `Profiling.error()` in catch blocks
+
    ```typescript
    try {
      // Code that might fail
@@ -155,6 +159,7 @@ if (hasValidationError) {
    ```
 
 2. **Important Events**: Log significant application events
+
    ```typescript
    Profiling.log(PROFILLING_AUTH.USER_AUTHENTICATED, { userId });
    ```
@@ -175,10 +180,10 @@ Always include relevant context with your logs:
 Profiling.error(PROFILLING_TOURNAMENT.CREATE_FAILED, { tournamentId, error });
 
 // Better - includes structured data
-Profiling.error(PROFILLING_TOURNAMENT.CREATE_FAILED, { 
+Profiling.error(PROFILLING_TOURNAMENT.CREATE_FAILED, {
   tournamentId,
   error,
-  attemptCount
+  attemptCount,
 });
 ```
 
@@ -218,7 +223,7 @@ const createResource = async (req: Request, res: Response) => {
 ### Service Layer Logging
 
 ```typescript
-const processData = async (data) => {
+const processData = async data => {
   try {
     Profiling.log(PROFILLING_DATA.PROCESSING_STARTED, { size: data.length });
     // Processing logic
@@ -245,4 +250,4 @@ When troubleshooting issues:
 ## Additional Resources
 
 - [Sentry Documentation](https://docs.sentry.io/)
-- [Node.js Error Handling Best Practices](https://www.joyent.com/node-js/production/design/errors) 
+- [Node.js Error Handling Best Practices](https://www.joyent.com/node-js/production/design/errors)

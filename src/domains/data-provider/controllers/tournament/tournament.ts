@@ -1,11 +1,10 @@
-import { CreateTournamentInput } from '@/domains/data-provider/api/v1/tournament/typing';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_SOFASCORE } from '@/domains/data-provider/providers/sofascore';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { SchedulerController } from '../scheduler';
-import { DB_InsertTournament } from '@/domains/tournament/schema';
 
-const createTournament = async ({ input }: { input: CreateTournamentInput }) => {
+const createTournament = async ({ input }: { input: any }) => {
   try {
     const logo = await API_SOFASCORE.tournament.fetchAndStoreLogo({
       logoPngBase64: input.logoPngBase64,
@@ -43,7 +42,7 @@ const createTournament = async ({ input }: { input: CreateTournamentInput }) => 
   }
 };
 
-const updateTournament = async ({ input }: { input: CreateTournamentInput }) => {
+const updateTournament = async ({ input }: { input: any }) => {
   try {
     const logo = await API_SOFASCORE.tournament.fetchAndStoreLogo({
       logoPngBase64: input.logoPngBase64,

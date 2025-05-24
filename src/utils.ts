@@ -18,7 +18,7 @@ export const safeISODate = (date: any) => {
 };
 
 
-export const safeString = (str: any, fallback: string = '') =>
+export const safeString = (str: any, fallback: string | null = '') =>
   str === null || str === undefined ? fallback : String(str);
 
 export const toNumberOrNull = (val: string | null | undefined) => {

@@ -46,7 +46,7 @@ export const fetchAndMapTeamsFromKnockoutRounds = async (
     tournamentId: tournament.id!,
   });
 
-  let ALL_TEAMS = [];
+  const ALL_TEAMS = [];
 
   for (const round of knockoutRoundsList) {
     console.log('[LOG] - [START] - FETCHING ROUND:', round.providerUrl);

@@ -25,8 +25,10 @@ const create = async (req: TeamsRequest, res: Response) => {
       });
     }
 
-    Profiling.log('[DATA PROVIDER] - [V2] - [TEAMS] - CREATE SUCCESS', {
-      teams,
+    Profiling.log({
+      msg: '[DATA PROVIDER] - [V2] - [TEAMS] - CREATE SUCCESS',
+      data: { teams },
+      color: 'FgGreen',
     });
 
     return res.status(200).json({ teams });

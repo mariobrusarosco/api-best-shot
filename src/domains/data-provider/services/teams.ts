@@ -88,20 +88,22 @@ export class TeamsService {
   }
 
   public async createOnDatabase(teams: DB_InsertTeam[]) {
-    Profiling.log(`[LOG] - [START] - CREATING TEAMS ON DATABASE`);
+    Profiling.log({ msg: `[LOG] - [START] - CREATING TEAMS ON DATABASE` });
 
     const createdTeams = await QUERIES_TEAMS.createTeams(teams);
 
-    Profiling.log(`[LOG] - [START] - CREATED TEAMS ${createdTeams.length} ON DATABASE`);
+    Profiling.log({
+      msg: `[LOG] - [START] - CREATED TEAMS ${createdTeams.length} ON DATABASE`,
+    });
 
     return createdTeams;
   }
 
   public async upsertOnDatabase(teams: DB_InsertTeam[]) {
-    Profiling.log('[LOG] - [START] - UPSERTING TEAMS ON DATABASE');
+    Profiling.log({ msg: '[LOG] - [START] - UPSERTING TEAMS ON DATABASE' });
 
     await QUERIES_TEAMS.updateTeams(teams);
-    Profiling.log('[LOG] - [SUCCESS] - UPSERTING TEAMS ON DATABASE');
+    Profiling.log({ msg: '[LOG] - [SUCCESS] - UPSERTING TEAMS ON DATABASE' });
   }
 
   public async init(baseUrl: string) {
@@ -111,10 +113,10 @@ export class TeamsService {
     // Process teams sequentially
     for (const team of teams) {
       try {
-        Profiling.log(`[LOG] - [START] - ENHANCING TEAM ${team.name}`);
+        Profiling.log({ msg: `[LOG] - [START] - ENHANCING TEAM ${team.name}` });
         const enhancedTeam = await this.enhanceTeamWithLogo(team);
         enhancedTeams.push(enhancedTeam);
-        Profiling.log(`[LOG] - [SUCCESS] - ENHANCED TEAM ${team.name}`);
+        Profiling.log({ msg: `[LOG] - [SUCCESS] - ENHANCED TEAM ${team.name}` });
         await sleep(1000);
       } catch (error) {
         Profiling.error(`Failed to enhance team ${team.name}:`, error);

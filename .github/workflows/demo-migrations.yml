@@ -20,12 +20,41 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies & tooling
-        run: |
-          npm install
-          npm install -g drizzle-orm drizzle-kit pg
+      - name: Install Yarn
+        run: npm install -g yarn
+          
+      # Cache dependencies based on yarn.lock hash
+      - name: Get yarn.lock hash
+        id: yarn-lock-hash
+        run: echo "hash=${{ hashFiles('yarn.lock') }}" >> $GITHUB_OUTPUT
 
-      - name: Apply migrations
-        run: drizzle-kit migrate
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        id: cache-deps
+        with:
+          path: node_modules
+          key: modules-${{ steps.yarn-lock-hash.outputs.hash }}
+          
+      - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: yarn install
+
+      # Option 1: Using drizzle-kit push (direct schema application)
+      - name: Push schema changes to database
+        run: |
+          yarn add -D drizzle-kit
+          yarn drizzle-kit push:pg --dialect=postgresql --schema=./src/services/database/schema.ts --url="$DB_STRING_CONNECTION"
         env:
           DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION }}
+          
+        
+      # Option 2: Using SQL migrations (commented out, but available if needed)
+      # - name: Generate migrations
+      #   run: npx drizzle-kit generate --dialect=postgresql --schema=./src/services/database/schema.ts
+      #   env:
+      #     DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION }}
+      # 
+      # - name: Apply migrations
+      #   run: npx drizzle-kit migrate --dialect=postgresql
+      #   env:
+      #     DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION }}

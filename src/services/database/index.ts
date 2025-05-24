@@ -3,15 +3,34 @@ import postgres from 'postgres';
 import * as schema from './schema';
 import { env } from '../../config/env';
 
-// Choose the appropriate connection string based on environment
+// Get the database connection string
 const getConnectionString = () => {
-  // Use Docker connection string when in Docker/production environments
-  if (env.NODE_ENV === 'production' || env.NODE_ENV === 'demo') {
-    return env.DB_STRING_CONNECTION;
+  // Get the connection string from environment
+  let connectionString = env.DB_STRING_CONNECTION;
+
+  // In development environment, handle Docker vs local connection
+  if (env.NODE_ENV === 'development') {
+    // If running locally (not in Docker), replace 'postgres' hostname with 'localhost'
+    // and ensure correct port mapping
+    if (connectionString.includes('@postgres:')) {
+      try {
+        const url = new URL(connectionString);
+        // Check if we're trying to connect from host to container
+        if (url.hostname === 'postgres') {
+          url.hostname = 'localhost';
+          url.port = env.DB_PORT.toString();
+          connectionString = url.toString();
+          console.log(
+            `🔄 Adjusted connection string for local development: ${connectionString}`
+          );
+        }
+      } catch (e) {
+        console.warn('⚠️ Could not parse database connection string', e);
+      }
+    }
   }
-  
-  // Use local connection string for development
-  return env.DB_STRING_CONNECTION_LOCAL;
+
+  return connectionString;
 };
 
 // Configuration options for postgres client
@@ -25,7 +44,7 @@ const pgOptions = {
 // Initialize database client
 const initializeDbClient = () => {
   const connectionString = getConnectionString();
-  
+
   try {
     console.log(`🔌 Connecting to database in ${env.NODE_ENV} environment...`);
     return postgres(connectionString, pgOptions);

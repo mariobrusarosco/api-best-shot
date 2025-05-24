@@ -93,6 +93,8 @@ export class MatchesService {
 
   public async init(rounds: DB_SelectTournamentRound[], tournamentId: string) {
     const rawMatches = await this.getTournamentMatches(rounds, tournamentId);
+
+    console.log('[LOG] - [DATA PROVIDER] - [START] - CREATING MATCHES ON DATABASE');
     const query = await this.createOnDatabase(rawMatches);
 
     return query;

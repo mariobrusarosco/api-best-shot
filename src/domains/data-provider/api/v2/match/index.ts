@@ -27,8 +27,10 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
       });
     }
 
-    Profiling.log('[DATA PROVIDER] - [V2] - [MATCHES] - CREATE SUCCESS', {
-      matches,
+    Profiling.log({
+      msg: '[DATA PROVIDER] - [V2] - [MATCHES] - CREATE SUCCESS',
+      data: { matches },
+      color: 'FgGreen',
     });
 
     return res.status(200).json({ matches });

@@ -32,5 +32,5 @@ jobs:
 
       - name: Run migrations on demo
         env:
-          DATABASE_URL_DEMO: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx drizzle-kit push --url ${DATABASE_URL}

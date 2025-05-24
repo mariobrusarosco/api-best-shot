@@ -7,11 +7,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  migrate:
+  apply_migrations:
     runs-on: ubuntu-latest
+    environment: demo
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v3
 
       - name: Set up Node.js
@@ -19,18 +20,12 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Cache Node.js modules
-        uses: actions/cache@v3
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+      - name: Install dependencies & tooling
+        run: |
+          npm install
+          npm install -g drizzle-orm drizzle-kit pg
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run migrations on demo
+      - name: Apply migrations
+        run: drizzle-kit migrate
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: npx drizzle-kit push --url ${DATABASE_URL}
+          DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION }}

@@ -28,5 +28,5 @@ jobs:
 
       - name: Run migrations on production
         env:
-          DATABASE_URL_PROD: ${{ secrets.DATABASE_URL_PRODUCTION }}
-        run: npx drizzle-kit push --url $DATABASE_URL_PRODUCTION
+          DATABASE_URL_PROD: ${{ secrets.DB_STRING_CONNECTION_PRODUCTION }}
+        run: npx drizzle-kit push --url $DB_STRING_CONNECTION_PRODUCTION

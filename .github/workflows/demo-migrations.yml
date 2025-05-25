@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'supabase/migrations/**'
   workflow_dispatch:
 
 jobs:
@@ -25,4 +27,4 @@ jobs:
 
       - name: Apply migrations
         run: |
-          DB_STRING_CONNECTION="${{ secrets.DB_STRING_CONNECTION_TEMP }}" npx drizzle-kit migrate
+          DB_STRING_CONNECTION="${{ secrets.DB_STRING_CONNECTION_DEMO }}" npx drizzle-kit migrate

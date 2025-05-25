@@ -14,20 +14,7 @@
     "sourceType": "module",
     "project": ["./tsconfig.json"]
   },
-  "overrides": [
-    {
-      "files": ["*.config.ts"],
-      "rules": {
-        "@typescript-eslint/no-explicit-any": "off"
-      }
-    },
-    {
-      "files": ["scripts/**/*.ts"],
-      "rules": {
-        "@typescript-eslint/no-explicit-any": "off"
-      }
-    }
-  ],
+
   "plugins": ["@typescript-eslint"],
   "rules": {
     "@typescript-eslint/no-explicit-any": "warn",

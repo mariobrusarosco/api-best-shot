@@ -1,7 +1,6 @@
 import db from '../src/services/database';
 import { seedDatabase } from '../src/db/seeds';
 
-// Simple script to run the seedDatabase function
 async function main() {
   try {
     await seedDatabase(db);

@@ -35,28 +35,35 @@ export class RoundDataProviderService {
   ): DB_InsertTournamentRound[] {
     try {
       return roundsResponse.rounds.map((round, index) => {
-        const isKnockoutRound = !!round?.slug && !round?.prefix;
         const isSpecialRound = !!round?.prefix;
-        let endpoint = `${baseUrl}/events/round/${round.round}`;
-        const slug = round?.slug;
+        const isKnockoutRound = !isSpecialRound && !!round?.name;
+        const isRegularRound = !isSpecialRound && !isKnockoutRound;
+
         const order = index + 1;
-        const prefix = round?.prefix;
-        const label = round.name || order.toString() || prefix;
+        let endpoint = `${baseUrl}/events/round/${round.round}`;
+        let slug = '';
+        let label = '';
 
-        if (isKnockoutRound) endpoint += `/slug/${slug}`;
-        if (isSpecialRound) endpoint += `/slug/${slug}/prefix/${prefix}`;
-
-        let finalSlug = order.toString();
-        if (slug) finalSlug += `-${slug}`;
-        if (prefix) finalSlug += `-${prefix}`;
+        if (isKnockoutRound) {
+          endpoint += `/slug/${round.slug}`;
+          slug += `${round.slug}`;
+          label = round.name || order.toString();
+        } else if (isSpecialRound) {
+          endpoint += `/slug/${round.slug}/prefix/${round.prefix}`;
+          slug += `${round.prefix}-${round.slug}`;
+          label = round.prefix!;
+        } else if (isRegularRound) {
+          slug += round.round;
+          label = round.round.toString();
+        }
 
         return {
           providerUrl: endpoint,
           tournamentId: tournamentId,
           order: order.toString(),
           label: label,
-          slug: finalSlug,
-          knockoutId: prefix,
+          slug: slug.toLowerCase(),
+          knockoutId: round.prefix,
           type: isKnockoutRound ? 'knockout' : 'season',
           name: round.name,
         } as DB_InsertTournamentRound;

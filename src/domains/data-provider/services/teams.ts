@@ -4,6 +4,9 @@ import { Profiling } from '@/services/profiling';
 import { DB_InsertTeam } from '@/domains/team/schema';
 import { safeString, sleep } from '@/utils';
 import { QUERIES_TEAMS } from '@/domains/team/queries';
+import { TournamentQuery } from '@/domains/tournament/queries';
+import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 
 export class TeamsService {
   private scraper: BaseScraper;
@@ -72,15 +75,47 @@ export class TeamsService {
     return groups.flatMap(group => group.teams);
   }
 
-  public async getTeams(baseUrl: string) {
+  public async fetchTeamsFromStandings(baseUrl: string) {
     try {
       const url = `${baseUrl}/standings/total`;
       await this.scraper.goto(url);
+      Profiling.log({
+        msg: '[LOG] - [START] - FETCHING TEAMS FROM STANDINGS AT:',
+        data: { url },
+        color: 'FgBlue',
+      });
       const rawContent = await this.scraper.getPageContent();
 
       const teams = await this.mapTournamentTeams(rawContent);
 
       return teams;
+    } catch (error) {
+      console.error('[SOFASCORE] - [ERROR] - [GET TOURNAMENT TEAMS]', error);
+      throw error;
+    }
+  }
+
+  public async fetchTeamsFromKnockoutRounds(tournamentId: string) {
+    try {
+      // Query tournament rounds with "type"  "knockout"
+      const rounds = await TournamentRoundsQueries.getKnockoutRounds({
+        tournamentId,
+      });
+
+      const ALL_KNOCKOUT_TEAMS = [];
+
+      for (const round of rounds) {
+        console.log('[LOG] - [START] - FETCHING ROUND:', round.providerUrl);
+        await this.scraper.goto(round.providerUrl);
+        const rawContent = await this.scraper.getPageContent();
+        const teams = await this.mapTournamentTeams(rawContent);
+
+        ALL_KNOCKOUT_TEAMS.push(...teams);
+        console.log('[LOG] - [END] - FETCHING ROUND:');
+        await sleep(3000);
+      }
+
+      return ALL_KNOCKOUT_TEAMS;
     } catch (error) {
       console.error('[SOFASCORE] - [ERROR] - [GET TOURNAMENT TEAMS]', error);
       throw error;
@@ -106,12 +141,27 @@ export class TeamsService {
     Profiling.log({ msg: '[LOG] - [SUCCESS] - UPSERTING TEAMS ON DATABASE' });
   }
 
-  public async init(baseUrl: string) {
-    const teams = await this.getTeams(baseUrl);
+  public async init(
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
+  ) {
+    const teamsFromStandings = await this.fetchTeamsFromStandings(tournament.baseUrl);
+    const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(
+      tournament.baseUrl
+    );
+    const allTeams = [...teamsFromStandings, ...teamsFromKnockoutRounds];
+
+    Profiling.log({
+      msg: `[LOG] - Number of teams from standings: ${teamsFromStandings.length}`,
+    });
+    Profiling.log({
+      msg: `[LOG] - Number of teams from knockout rounds: ${teamsFromKnockoutRounds.length}`,
+    });
+    Profiling.log({ msg: `[LOG] - Number of teams to be processed: ${allTeams.length}` });
+
     const enhancedTeams: DB_InsertTeam[] = [];
 
     // Process teams sequentially
-    for (const team of teams) {
+    for (const team of allTeams) {
       try {
         Profiling.log({ msg: `[LOG] - [START] - ENHANCING TEAM ${team.name}` });
         const enhancedTeam = await this.enhanceTeamWithLogo(team);

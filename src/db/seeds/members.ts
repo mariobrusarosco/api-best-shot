@@ -11,7 +11,6 @@ export async function members(db: PostgresJsDatabase<typeof schema>) {
   const hashedPassword = await bcrypt.hash('test123', 10);
 
   const seedMembers = [
-    // Admin user with OAuth
     {
       id: uuidv4(),
       publicId: 'google-oauth2|102617786899713612616',
@@ -22,7 +21,6 @@ export async function members(db: PostgresJsDatabase<typeof schema>) {
       createdAt: now,
       updatedAt: now,
     },
-    // Test user with password
     {
       id: uuidv4(),
       publicId: uuidv4(),

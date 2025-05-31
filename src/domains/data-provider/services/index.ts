@@ -8,10 +8,10 @@ import { BaseScraper } from '../providers/playwright/base-scraper';
 import { CreateTournamentInput } from '../api/v2/tournament/typing';
 import { TeamsService } from './teams';
 import { RoundDataProviderService } from './rounds';
-import { StandingsService } from './standings';
 import { TournamentDataProviderService } from './tournaments';
 import { MatchesService } from './match';
-// import { TeamsService } from "./teams";
+import { StandingsDataProviderService } from './standings';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 export class SofaScoreScraper extends BaseScraper {
   public async createTournament(payload: CreateTournamentInput) {
     try {
@@ -19,7 +19,7 @@ export class SofaScoreScraper extends BaseScraper {
       console.log('TOURNAMENT CREATION - [START]', payload);
 
       const tournamentService = new TournamentDataProviderService(scraper);
-      const standingsService = new StandingsService(scraper);
+      const standingsService = new StandingsDataProviderService(scraper);
       const roundService = new RoundDataProviderService(scraper);
       const teamsService = new TeamsService(scraper);
       const matchesService = new MatchesService(scraper);
@@ -31,7 +31,8 @@ export class SofaScoreScraper extends BaseScraper {
       //Step 3: Standings Service
       const standings = await standingsService.init(tournament.baseUrl, tournament.id);
       //Step 4: Teams Service
-      const teams = await teamsService.init(tournament.baseUrl);
+      const tournamentTemp = await SERVICES_TOURNAMENT.getTournament(tournament.id);
+      const teams = await teamsService.init(tournamentTemp);
       //Step 5: Matches Service
       const matches = await matchesService.init(rounds, tournament.id);
 

@@ -1,18 +1,23 @@
 import type { ENDPOINT_STANDINGS } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { TeamsService } from './teams';
-import { DB_InsertTournamentStandings, T_TournamentStandings } from '@/domains/tournament/schema';
+import {
+  DB_InsertTournamentStandings,
+  T_TournamentStandings,
+} from '@/domains/tournament/schema';
 import { safeString } from '@/utils';
 import db from '@/services/database';
 
-export class StandingsService {
+export class StandingsDataProviderService {
   private scraper: BaseScraper;
 
   constructor(scraper: BaseScraper) {
     this.scraper = scraper;
   }
 
-  public async mapTournamentStandings(standingsResponse: ENDPOINT_STANDINGS, tournamentId: string) {
+  public async mapTournamentStandings(
+    standingsResponse: ENDPOINT_STANDINGS,
+    tournamentId: string
+  ) {
     try {
       const standings = standingsResponse.standings.map(group => {
         const groupsStandings = group.rows.map(row => ({
@@ -40,7 +45,9 @@ export class StandingsService {
         };
       });
 
-      return standings.flatMap(group => group.standings) as DB_InsertTournamentStandings[];
+      return standings.flatMap(
+        group => group.standings
+      ) as DB_InsertTournamentStandings[];
     } catch (error) {
       console.error('[SOFASCORE] - [ERROR] - [MAP TOURNAMENT STANDINGS]', error);
       throw error;
@@ -65,8 +72,8 @@ export class StandingsService {
     return query;
   }
 
-  public async init(baseUrl: string, tournamentId: string) {
-    const rawStandings = await this.getStandings(baseUrl);
+  public async init(tournamentId: string, tournamentBaseUrl: string) {
+    const rawStandings = await this.getStandings(tournamentBaseUrl);
     const standings = await this.mapTournamentStandings(rawStandings, tournamentId);
     const query = await this.createOnDatabase(standings);
 

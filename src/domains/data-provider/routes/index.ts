@@ -11,6 +11,7 @@ import {
   API_TOURNAMENT_V2,
   API_TOURNAMENT_ROUNDS_V2,
   API_TEAMS_V2,
+  API_STANDINGS_V2,
   API_MATCH_V2,
 } from '../api';
 
@@ -61,5 +62,7 @@ RouterV2.post('/rounds/create', API_TOURNAMENT_ROUNDS_V2.create);
 RouterV2.post('/teams/create', API_TEAMS_V2.create);
 // MATCHES
 RouterV2.post('/matches/create', API_MATCH_V2.create);
+// STANDINGS
+RouterV2.post('/standings/create', API_STANDINGS_V2.create);
 
 ApplicationRouter.register('api/v2/data-provider', RouterV2);

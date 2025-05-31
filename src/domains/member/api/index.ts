@@ -1,14 +1,7 @@
 import { Utils } from '@/domains/auth/utils';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import db from '@/services/database';
-import { eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
-import { MemberController } from '../controllers/member-controller';
-import { T_Member } from '../schema';
-import { CreateMemberRequest } from './typing';
 import { SERVICES_PERFORMANCE_V2 } from '@/domains/performance/services';
-import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
-import { QUERIES_MEMBER } from '../queries';
 import Profiling from '@/services/profiling';
 import { MemberService } from '../services';
 import { CreateMemberInput } from './typing';
@@ -86,7 +79,8 @@ const getGeneralTournamentPerformanceV2 = async (req: Request, res: Response) =>
 const getMemberPerformanceForAllTournaments = async (req: Request, res: Response) => {
   try {
     const memberId = Utils.getAuthenticatedUserId(req, res);
-    const bestAndWorstPerformance = await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
+    const bestAndWorstPerformance =
+      await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
 
     res.status(200).send(bestAndWorstPerformance);
     return;
@@ -103,5 +97,5 @@ export const API_MEMBER = {
   createMember,
   getGeneralTournamentPerformance,
   getGeneralTournamentPerformanceV2,
-  getMemberPerformanceForAllTournaments
+  getMemberPerformanceForAllTournaments,
 };

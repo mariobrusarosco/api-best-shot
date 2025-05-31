@@ -2,15 +2,15 @@ import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-s
 import Profiling from '@/services/profiling';
 import { Response } from 'express';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { StandingsRequest } from '@/domains/data-provider/api/v2/standings/typing';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 
 const create = async (req: StandingsRequest, res: Response) => {
   try {
     const scraper = await BaseScraper.createInstance();
-
     const dataProviderService = new StandingsDataProviderService(scraper);
+
     if (!req.body.tournamentId) {
       return res.status(400).send({ error: 'Tournament ID is required' });
     }

@@ -1,3 +1,6 @@
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { sql } from 'drizzle-orm';
+import * as schema from '../../services/database/schema';
 // For now, we're only seeding members as requested
 import { members } from './members';
 
@@ -10,8 +13,21 @@ const seeders = [
 ];
 
 // Using any type to avoid TypeScript errors with database schema mismatches
-export async function seedDatabase(db: unknown) {
+export async function seedDatabase(db: PostgresJsDatabase<typeof schema>) {
   console.log('🌱 Starting database seeding...');
+
+  try {
+    // Attempt a simple query to verify the database connection
+    await db.execute(sql`SELECT 1`);
+    console.log('✅ Database connection verified.');
+  } catch (connectionError) {
+    console.error(
+      '❌ Failed to connect to the database. Aborting seeding process.',
+      connectionError
+    );
+    // Re-throw the error to be caught by the calling script (run-seeds.ts) and exit
+    throw connectionError;
+  }
 
   for (const seeder of seeders) {
     try {

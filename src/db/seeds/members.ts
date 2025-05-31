@@ -1,10 +1,12 @@
-// Using any type for database to avoid TypeScript errors with schema mismatches
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import * as schema from '../../services/database/schema';
 import { eq } from 'drizzle-orm';
 import { T_Member } from '../../domains/member/schema';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 
-export async function members(db: any) {
+export async function members(db: PostgresJsDatabase<typeof schema>) {
+  let failures = 0;
   const now = new Date();
   const hashedPassword = await bcrypt.hash('test123', 10);
 
@@ -75,7 +77,18 @@ export async function members(db: any) {
       }
     } catch (error) {
       console.error(`  ✗ Failed to create member ${member.email}:`, error);
+      failures++;
       // Continue with other members even if one fails
     }
   }
+
+  if (failures > 0) {
+    const errorMsg = `${failures} member(s) failed to seed. Check logs for details.`;
+    console.error(`DEBUG: members.ts: ${errorMsg} - Preparing to reject promise.`);
+    return Promise.reject(new Error(errorMsg));
+  }
+  console.log(
+    'DEBUG: members.ts: All members processed, no failures detected. Resolving promise.'
+  );
+  return Promise.resolve();
 }

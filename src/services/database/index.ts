@@ -45,6 +45,42 @@ const pgOptions = {
 const initializeDbClient = () => {
   const connectionString = getConnectionString();
 
+  // --- BEGIN DEBUGGING ---
+  if (!connectionString || connectionString.trim() === '') {
+    console.error(
+      '❌ DEBUG: DB_STRING_CONNECTION is empty or undefined in initializeDbClient.'
+    );
+    // Optionally, throw an immediate error to make it clear
+    // throw new Error('DEBUG: DB_STRING_CONNECTION is empty or undefined.');
+  } else {
+    console.log(
+      `ℹ️ DEBUG: initializeDbClient: Received connection string (length: ${connectionString.length}). Starts with 'postgresql://': ${connectionString.startsWith('postgresql://')}`
+    );
+    try {
+      new URL(connectionString); // Try parsing it directly
+      console.log(
+        'ℹ️ DEBUG: initializeDbClient: Connection string successfully parsed by new URL() before passing to postgres lib.'
+      );
+    } catch (parsingError: any) {
+      console.error(
+        '❌ DEBUG: initializeDbClient: Failed to parse connection string with new URL() before passing to postgres lib. Error:',
+        parsingError.message
+      );
+      // Log the input if it's different or if it's the '***' masking to confirm
+      if (parsingError.input) {
+        console.error(
+          '   DEBUG: Parsing error input was (masked if sensitive by URL parser):',
+          parsingError.input === connectionString
+            ? '(same as connectionString)'
+            : parsingError.input
+        );
+      }
+      // Optionally, re-throw to stop before postgres() tries, to isolate the error source
+      // throw new Error(`DEBUG: Failed to parse DB_STRING_CONNECTION internally: ${parsingError.message}`);
+    }
+  }
+  // --- END DEBUGGING ---
+
   try {
     console.log(`🔌 Connecting to database in ${env.NODE_ENV} environment...`);
     return postgres(connectionString, pgOptions);

@@ -31,4 +31,4 @@ jobs:
         run: NODE_ENV=demo ENV_PATH=.env.demo yarn tsx scripts/run-seeds.ts
         env:
           # Add any sensitive environment variables here - they'll be taken from GitHub secrets
-          DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION_DEMO }}
+          DB_STRING_CONNECTION: ${{ vars.DB_STRING_CONNECTION_DEMO }}

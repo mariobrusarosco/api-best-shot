@@ -29,7 +29,6 @@
     "scrapper": "yarn tsx watch ./src/scrapper.ts",
     "api-lookup": "yarn tsx watch ./src/api-lookup.ts",
     "db:seed": "yarn tsx scripts/run-seeds.ts",
-    "db:seed:demo": "NODE_ENV=demo ENV_PATH=.env.demo yarn tsx scripts/run-seeds.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:check": "drizzle-kit check",

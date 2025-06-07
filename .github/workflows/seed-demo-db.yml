@@ -27,9 +27,6 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Install pg for connection test
-        run: yarn add pg
-
       - name: Debug Connection Info
         run: |
           echo "Attempting to connect to database with:"
@@ -49,33 +46,4 @@ jobs:
           DB_NAME: ${{ vars.DB_NAME }}
           NODE_ENV: demo
         run: |
-          echo "Testing database connection..."
-          node -e "
-          const { Client } = require('pg');
-          const client = new Client({
-            host: process.env.DB_HOST,
-            port: process.env.DB_PORT,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME,
-            ssl: true
-          });
-
-          client.connect()
-            .then(() => {
-              console.log('✅ Successfully connected to database!');
-              client.end();
-              process.exit(0);
-            })
-            .catch(err => {
-              console.error('❌ Connection failed:', err.message);
-              process.exit(1);
-            });"
-
-          if [ $? -eq 0 ]; then
-            echo "Running seed script..."
-            yarn tsx scripts/run-seeds.ts
-          else
-            echo "Skipping seed due to connection failure"
-            exit 1
-          fi
+          yarn db:seed

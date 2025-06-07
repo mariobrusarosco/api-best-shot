@@ -16,16 +16,18 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile --prefer-offline --network-timeout 30000
 
       - name: Debug Connection Info
         run: |
@@ -39,11 +41,30 @@ jobs:
 
       - name: Seed Demo Database
         env:
+          # Database
           DB_HOST: ${{ vars.DB_HOST }}
           DB_PORT: ${{ vars.DB_PORT }}
           DB_USER: ${{ vars.DB_USER }}
           DB_PASSWORD: ${{ vars.DB_PASSWORD }}
           DB_NAME: ${{ vars.DB_NAME }}
+
+          # App
           NODE_ENV: demo
+          PORT: ${{ vars.PORT || '9090' }}
+          API_VERSION: ${{ vars.API_VERSION }}
+
+          # Security
+          JWT_SECRET: ${{ vars.JWT_SECRET }}
+          MEMBER_PUBLIC_ID_COOKIE: ${{ vars.MEMBER_PUBLIC_ID_COOKIE }}
+          ACCESS_CONTROL_ALLOW_ORIGIN: ${{ vars.ACCESS_CONTROL_ALLOW_ORIGIN }}
+
+          # AWS
+          AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ vars.AWS_SECRET_ACCESS_KEY }}
+          AWS_BUCKET_NAME: ${{ vars.AWS_BUCKET_NAME }}
+          AWS_CLOUDFRONT_URL: ${{ vars.AWS_CLOUDFRONT_URL }}
+
+          # Monitoring
+          SENTRY_DSN: ${{ vars.SENTRY_DSN }}
         run: |
           yarn db:seed

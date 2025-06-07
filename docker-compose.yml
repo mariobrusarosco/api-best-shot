@@ -20,6 +20,7 @@ services:
       - initial
     tty: true
     stdin_open: true
+    env_file: .env
 
   update_setup:
     image: alpine:3.18
@@ -42,26 +43,24 @@ services:
       - update
     tty: true
     stdin_open: true
+    env_file: .env
 
   postgres:
     image: postgres:15
     container_name: bestshot_db
+    env_file: .env
     environment:
-      DB_USER: ${DB_USER:-dev_user}
-      DB_PASSWORD: ${DB_PASSWORD:-dev_pass}
-      DB_NAME: ${DB_NAME:-bestshot_dev}
-      DB_PORT: ${DB_PORT:-5497}
-      POSTGRES_USER: ${DB_USER:-dev_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_pass}
-      POSTGRES_DB: ${DB_NAME:-bestshot_dev}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "${DB_PORT:-5497}:5432"
+      - '${DB_PORT}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - bestshot_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dev_user} -d ${DB_NAME:-bestshot_dev}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER} -d ${DB_NAME}']
       interval: 5s
       timeout: 5s
       retries: 5

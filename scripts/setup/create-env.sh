@@ -8,8 +8,6 @@ DEFAULT_DB_HOST="postgres"
 DEFAULT_DB_PORT="5497"
 DEFAULT_PORT="9090"
 DEFAULT_NODE_ENV="development"
-DEFAULT_DB_STRING_CONNECTION="postgresql://dev_user:dev_pass@postgres:5432/bestshot_dev"
-DEFAULT_DB_STRING_CONNECTION_LOCAL="postgresql://dev_user:dev_pass@localhost:5497/bestshot_dev"
 MEMBER_PUBLIC_ID_COOKIE=best-shot-auth    
 ACCESS_CONTROL_ALLOW_ORIGIN="http://localhost:5173"
 
@@ -47,9 +45,6 @@ DB_PASSWORD=$(get_value "DB_PASSWORD" "${DEFAULT_DB_PASSWORD}")  # Database pass
 DB_NAME=$(get_value "DB_NAME" "${DEFAULT_DB_NAME}")         # Database name
 DB_HOST=$(get_value "DB_HOST" "${DEFAULT_DB_HOST}")         # Database host
 DB_PORT=$(get_value "DB_PORT" "${DEFAULT_DB_PORT}")         # Database port
-DB_STRING_CONNECTION=$(get_value "DB_STRING_CONNECTION" "postgresql://dev_user:dev_pass@postgres:5432/bestshot_dev")  # For Docker connectivity
-DB_STRING_CONNECTION_LOCAL=$(get_value "DB_STRING_CONNECTION_LOCAL" "postgresql://dev_user:dev_pass@localhost:5497/bestshot_dev")  # For local development tools
-
 
 # Application
 NODE_ENV=$(get_value "NODE_ENV" "${DEFAULT_NODE_ENV}")       # Environment (development, demo, production)
@@ -64,27 +59,21 @@ ACCESS_CONTROL_ALLOW_ORIGIN=$(get_value "ACCESS_CONTROL_ALLOW_ORIGIN" "${ACCESS_
 AWS_ACCESS_KEY_ID=$(get_value "AWS_ACCESS_KEY_ID" "")                # AWS access key
 AWS_SECRET_ACCESS_KEY=$(get_value "AWS_SECRET_ACCESS_KEY" "")            # AWS secret key
 AWS_BUCKET_NAME=$(get_value "AWS_BUCKET_NAME" "")                  # S3 bucket name
-AWS_CLOUDFRONT_URL=$(get_value "AWS_CLOUDFRONT_URL" "")            # AWS CloudFront domain for serving assets
+AWS_CLOUDFRONT_URL=$(get_value "AWS_CLOUDFRONT_URL" "")
 
 # Monitoring (Required for Sentry)
-SENTRY_DSN=$(get_value "SENTRY_DSN" "")                       # Sentry Data Source Name
+SENTRY_DSN=$(get_value "SENTRY_DSN" "empty")                       # Sentry Data Source Name
 
 # Sentry Configuration (Required for Sentry)
-SENTRY_AUTH_TOKEN=$(get_value "SENTRY_AUTH_TOKEN" "")          # Sentry authentication token
-SENTRY_ORG=$(get_value "SENTRY_ORG" "")                        # Sentry organization
-SENTRY_PROJECT=$(get_value "SENTRY_PROJECT" "")                # Sentry project
+SENTRY_AUTH_TOKEN=$(get_value "SENTRY_AUTH_TOKEN" "empty")          # Sentry authentication token
+SENTRY_ORG=$(get_value "SENTRY_ORG" "empty")                        # Sentry organization
+SENTRY_PROJECT=$(get_value "SENTRY_PROJECT" "empty")                # Sentry project
 
+USE_PUPPETEER_FIRST=$(get_value "USE_PUPPETEER_FIRST" "true")
 EOF
 
-if [ -n "$PRESERVE_MODE" ]; then
-    echo "✅ Updated .env file while preserving existing values"
-else
-    echo "✅ Created new .env file with default values"
-fi
-
-echo "⚠️  Some required variables might be empty. Please verify:"
+echo "✅ Created .env file with default values"
+echo "⚠️  Some required variables are empty. Please set them before running the application:"
 echo "   - JWT_SECRET"
-echo "   - MEMBER_PUBLIC_ID_COOKIE"
 echo "   - AWS_* (if using AWS features)"
-echo "   - SENTRY_DSN (if using Sentry)"
-echo "   - SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT (if using Sentry)" 
+echo "   - SENTRY_* (if using Sentry)" 

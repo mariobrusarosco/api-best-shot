@@ -1,155 +1,140 @@
 # Database Migrations Guide
 
-This guide explains how to work with database migrations in our project, which uses both Drizzle ORM for schema definitions and Supabase for database management.
+## Overview
 
-## Technology Stack
+Best Shot API uses Drizzle ORM for database migrations. This guide explains how to:
 
-- **Drizzle ORM**: Used for type-safe schema definitions
-- **Supabase**: Used for database hosting
-- **drizzle-kit**: CLI tool for managing migrations
+- Create migrations
+- Apply migrations
+- Handle migration errors
+- Set up migrations in CI/CD
 
-## Project Structure
+## Local Development
 
-```
-├── src/
-│   └── domains/
-│       └── [domain]/
-│           └── schema/
-│               └── index.ts    # Drizzle schema definitions
-└── drizzle/                   # Generated migration files
-```
-
-## Creating New Tables
-
-### 1. Define Schema in Drizzle
-
-First, define your table schema in the appropriate domain folder using Drizzle's type-safe schema builder:
-
-```typescript
-import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core';
-
-export const YourTable = pgTable('table_name', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  name: text('name').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at')
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
-
-// Export types for type safety
-export type DB_InsertYourTable = typeof YourTable.$inferInsert;
-export type DB_UpdateYourTable = typeof YourTable.$inferInsert;
-export type DB_SelectYourTable = typeof YourTable.$inferSelect;
-```
-
-### 2. Generate Migration
-
-After defining your schema, use drizzle-kit to generate the migration:
+### Creating Migrations
 
 ```bash
-npx drizzle-kit generate --name init_tables
+# Generate migration files
+npx drizzle-kit generate:pg
+
+# Push migrations to database
+npx drizzle-kit push:pg
 ```
 
-This will create a new migration file in the `drizzle` directory with a timestamp and your specified name:
+### Environment Setup
 
-```
-📦 drizzle
- ├ 📂 meta
- └ 📜 0000_init_tables.sql
-```
+Required environment variables:
 
-### 3. Apply Migration
-
-To apply the migration to your database:
-
-```bash
-npx drizzle-kit migrate
+```env
+DB_HOST=localhost      # Database host
+DB_PORT=5497          # Database port
+DB_USER=dev_user      # Database username
+DB_PASSWORD=dev_pass  # Database password
+DB_NAME=bestshot_dev  # Database name
 ```
 
-## Modifying Existing Tables
+For local development, these values are provided by Docker Compose.
 
-### 1. Update Drizzle Schema
+## CI/CD Setup
 
-First, modify the table definition in your Drizzle schema file:
+### Environment Variables
 
-```typescript
-export const ExistingTable = pgTable('existing_table', {
-  // ... existing columns ...
-  newColumn: text('new_column').notNull().default(''),
-});
+For demo and production environments, set these secrets in GitHub:
+
+```env
+DB_HOST      # Supabase database host
+DB_PORT      # Usually 5432 for Supabase
+DB_USER      # Database username
+DB_PASSWORD  # Database password
+DB_NAME      # Database name
 ```
 
-### 2. Generate and Apply Migration
+### GitHub Actions
 
-Generate a new migration for your changes:
+The workflow will:
 
-```bash
-npx drizzle-kit generate --name add_new_column
+1. Install dependencies
+2. Run migrations using environment variables
+3. Log results
+
+Example workflow:
+
+```yaml
+name: Database Migrations
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: demo # or production
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Apply migrations
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          NODE_ENV: demo # or production
+        run: npx drizzle-kit push:pg
 ```
-
-Then apply it:
-
-```bash
-npx drizzle-kit migrate
-```
-
-## Best Practices
-
-1. **Descriptive Names**: Use clear, descriptive names for your migrations (e.g., `add_user_email`, `create_products_table`)
-2. **Review Generated SQL**: Always review the generated SQL in the migration files before applying
-3. **Version Control**: Commit both schema changes and generated migrations
-4. **Testing**: Test migrations on a development database before applying to production
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Migration Failed**:
+1. **Connection Errors**
 
-   - Check the drizzle-kit output for detailed error messages
-   - Verify your schema definitions
-   - Ensure database connection is properly configured
+   - Check if database is running
+   - Verify environment variables
+   - Ensure correct host (localhost for local, Supabase host for demo/prod)
 
-2. **Type Mismatch**:
+2. **Permission Issues**
 
-   - Ensure your schema types match your database requirements
-   - Check the Drizzle documentation for correct type mappings
+   - Verify database user permissions
+   - Check if user can create/alter tables
 
-3. **Constraint Violations**:
-   - When adding NOT NULL constraints, ensure existing data complies
-   - Use appropriate default values in your schema definitions
+3. **Migration Conflicts**
+   - Review migration files
+   - Check current database state
+   - Consider resetting local database
 
-## Need Help?
+### Resetting Local Database
 
-If you encounter issues:
+```bash
+# Stop containers
+docker compose down -v
 
-1. Check the drizzle-kit documentation
-2. Review your schema definitions
-3. Test migrations in a development environment first
-4. Consult the team for complex schema changes
+# Start fresh
+docker compose up -d
 
-## Configuration
-
-Create a `drizzle.config.ts` file in your project root:
-
-```typescript
-import type { Config } from 'drizzle-kit';
-
-export default {
-  schema: './src/domains/**/schema/index.ts',
-  out: './drizzle',
-  driver: 'pg',
-  dbCredentials: {
-    connectionString: process.env.DATABASE_URL!,
-  },
-} satisfies Config;
+# Apply migrations
+npx drizzle-kit push:pg
 ```
 
-This configuration tells drizzle-kit:
+## Best Practices
 
-- Where to find your schema files
-- Where to output migration files
-- Which database driver to use
-- How to connect to your database
+1. **Always Review Migrations**
+
+   - Check generated SQL
+   - Test migrations locally
+   - Back up production data
+
+2. **Use Meaningful Names**
+
+   - Prefix with timestamp
+   - Describe changes clearly
+   - Example: `20230615_add_user_roles.sql`
+
+3. **Keep Migrations Small**
+
+   - One logical change per migration
+   - Easier to review and rollback
+   - Better error handling
+
+4. **Test Migration Process**
+   - Test locally first
+   - Use demo environment
+   - Verify rollback procedures

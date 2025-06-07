@@ -26,5 +26,11 @@ jobs:
         run: yarn install
 
       - name: Apply migrations
-        run: |
-          DB_STRING_CONNECTION="${{ secrets.DB_STRING_CONNECTION_DEMO }}" npx drizzle-kit migrate
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          NODE_ENV: demo
+        run: npx drizzle-kit push:pg

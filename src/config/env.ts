@@ -43,7 +43,6 @@ const envSchema = z.object({
 
   // Monitoring
   SENTRY_DSN: z.string().min(1, 'Sentry DSN is required'),
-  DB_STRING_CONNECTION: z.string().min(1, 'Database string connection is required'),
 });
 
 // Parse and validate environment variables

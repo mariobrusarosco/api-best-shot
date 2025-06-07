@@ -22,6 +22,7 @@ export function getDrizzleClient() {
       user: env.DB_USER,
       password: env.DB_PASSWORD,
       database: env.DB_NAME,
+      ssl: env.NODE_ENV !== 'development',
       ...pgOptions,
     });
     return drizzle(client, { schema });

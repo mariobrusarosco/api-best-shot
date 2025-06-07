@@ -29,42 +29,43 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile --prefer-offline --network-timeout 30000
 
-      - name: Debug Connection Info
-        run: |
-          echo "Attempting to connect to database with:"
-          echo "NODE_ENV: demo"
-          echo "DB_HOST: ${{ vars.DB_HOST }}"
-          echo "DB_PORT: ${{ vars.DB_PORT }}"
-          echo "DB_USER: ${{ vars.DB_USER }}"
-          echo "DB_NAME: ${{ vars.DB_NAME }}"
-          echo "DB_PASSWORD: ${{ vars.DB_PASSWORD }}"
-
-      - name: Seed Demo Database
+      - name: Check API Health
         env:
-          # Database
-          DB_HOST: ${{ vars.DB_HOST }}
-          DB_PORT: ${{ vars.DB_PORT }}
-          DB_USER: ${{ vars.DB_USER }}
-          DB_PASSWORD: ${{ vars.DB_PASSWORD }}
-          DB_NAME: ${{ vars.DB_NAME }}
-
-          # App
-          NODE_ENV: demo
-          PORT: ${{ vars.PORT || '9090' }}
-          API_VERSION: ${{ vars.API_VERSION }}
-
-          # Security
-          JWT_SECRET: ${{ vars.JWT_SECRET }}
-          MEMBER_PUBLIC_ID_COOKIE: ${{ vars.MEMBER_PUBLIC_ID_COOKIE }}
-          ACCESS_CONTROL_ALLOW_ORIGIN: ${{ vars.ACCESS_CONTROL_ALLOW_ORIGIN }}
-
-          # AWS
-          AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ vars.AWS_SECRET_ACCESS_KEY }}
-          AWS_BUCKET_NAME: ${{ vars.AWS_BUCKET_NAME }}
-          AWS_CLOUDFRONT_URL: ${{ vars.AWS_CLOUDFRONT_URL }}
-
-          # Monitoring
-          SENTRY_DSN: ${{ vars.SENTRY_DSN }}
+          API_URL: ${{ vars.API_URL || 'https://api-best-shot-demo.mariobrusarosco.com' }}
         run: |
-          yarn db:seed
+          echo "🔍 Checking API health..."
+          response=$(curl -s -w "\n%{http_code}" "$API_URL/api/v1/admin/health")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+
+          echo "Health check response: $body"
+          echo "HTTP Status: $http_code"
+
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ API is healthy and ready!"
+          else
+            echo "❌ API health check failed with status $http_code"
+            exit 1
+          fi
+
+      - name: Seed Demo Database via API
+        env:
+          API_URL: ${{ vars.API_URL || 'https://api-best-shot-demo.mariobrusarosco.com' }}
+        run: |
+          echo "🌱 Calling seeding API endpoint..."
+          response=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/v1/admin/seed" \
+            -H "Content-Type: application/json")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+
+          echo "Response: $body"
+          echo "HTTP Status: $http_code"
+
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ Database seeded successfully!"
+          else
+            echo "❌ Seeding failed with status $http_code"
+            exit 1
+          fi

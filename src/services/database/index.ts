@@ -8,6 +8,11 @@ const pgOptions = {
   max: 10,
   idle_timeout: 20,
   connect_timeout: 10,
+  connection: {
+    application_name: 'best-shot-api',
+    // Force IPv4 for better compatibility
+    options: `-c prefer_hostaddr=true -c inet_client_addr_family=ipv4`,
+  },
 };
 
 /**

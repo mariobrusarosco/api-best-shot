@@ -30,9 +30,11 @@ export function getDrizzleClient() {
       ssl: env.NODE_ENV !== 'development',
       ...pgOptions,
     });
-    return drizzle(client, { schema });
+    const drizzleClient = drizzle(client, { schema });
+    console.log('✅ Database connection established successfully!');
+    return drizzleClient;
   } catch (error) {
-    console.error('❌ Failed to initialize database connection:', error);
+    console.error('💥 Database connection failed:', error);
     throw error;
   }
 }

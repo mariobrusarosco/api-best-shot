@@ -19,18 +19,12 @@ const pgOptions = {
 export function getDrizzleClient() {
   try {
     console.log(`🔌 Connecting to database in ${env.NODE_ENV} environment...`);
-    const client = postgres({
-      host: env.DB_HOST,
-      port: env.DB_PORT,
-      user: env.DB_USER,
-      password: env.DB_PASSWORD,
-      database: env.DB_NAME,
+    // Build connection string
+    const connectionString = `postgres://${env.DB_USER}:${env.DB_PASSWORD}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`;
+    const client = postgres(connectionString, {
       ssl: env.NODE_ENV !== 'development',
       ...pgOptions,
       connect_timeout: 10,
-      connection: {
-        ...pgOptions.connection,
-      },
     });
     const drizzleClient = drizzle(client, { schema });
     console.log('✅ Database connection established successfully!');

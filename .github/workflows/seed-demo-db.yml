@@ -13,21 +13,13 @@ jobs:
     if: ${{ github.event.inputs.confirmation == 'yes' }}
     runs-on: ubuntu-latest
     environment: demo
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile --prefer-offline --network-timeout 30000
 
       - name: Check API Health
         env:
@@ -52,10 +44,12 @@ jobs:
       - name: Seed Demo Database via API
         env:
           API_URL: ${{ vars.API_URL || 'https://api-best-shot-demo.mariobrusarosco.com' }}
+          SEED_DB_TOKEN: ${{ secrets.SEED_DB_TOKEN }}
         run: |
-          echo "🌱 Calling seeding API endpoint..."
+          echo "🌱 Calling seeding API endpoint with authentication..."
           response=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/v1/admin/seed" \
-            -H "Content-Type: application/json")
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $SEED_DB_TOKEN")
 
           http_code=$(echo "$response" | tail -n1)
           body=$(echo "$response" | head -n -1)
@@ -69,3 +63,4 @@ jobs:
             echo "❌ Seeding failed with status $http_code"
             exit 1
           fi
+        timeout-minutes: 5

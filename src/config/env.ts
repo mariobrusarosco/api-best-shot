@@ -43,6 +43,9 @@ const envSchema = z.object({
 
   // Monitoring
   SENTRY_DSN: z.string().min(1, 'Sentry DSN is required'),
+
+  // Admin Operations
+  SEED_DB_TOKEN: z.string().min(1, 'Seed database token is required'),
 });
 
 // Parse and validate environment variables

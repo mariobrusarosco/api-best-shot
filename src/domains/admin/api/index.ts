@@ -3,13 +3,14 @@ import db from '@/services/database';
 import { T_Member } from '@/domains/member/schema';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
+import { env } from '@/config/env';
 
 export const API_ADMIN = {
   healthCheck: async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: 'Admin API is healthy',
-      environment: process.env.NODE_ENV,
+      environment: env.NODE_ENV,
       timestamp: new Date().toISOString(),
     });
   },
@@ -17,10 +18,21 @@ export const API_ADMIN = {
   seedDatabase: async (req: Request, res: Response) => {
     try {
       // Security check - only allow in demo environment
-      if (process.env.NODE_ENV !== 'demo') {
+      if (env.NODE_ENV !== 'demo' && env.NODE_ENV !== 'development') {
         return res.status(403).json({
-          error: 'Seeding is only allowed in demo environment',
-          environment: process.env.NODE_ENV,
+          error: 'Seeding is only allowed in demo, development ',
+          environment: env.NODE_ENV,
+        });
+      }
+
+      // Token validation
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+      if (token !== env.SEED_DB_TOKEN) {
+        return res.status(403).json({
+          error: 'Invalid token',
+          message: 'The provided token is not valid for seeding operations',
         });
       }
 
@@ -87,7 +99,7 @@ export const API_ADMIN = {
         success: true,
         message: 'Database seeded successfully',
         membersCreated: members.length,
-        environment: process.env.NODE_ENV,
+        environment: env.NODE_ENV,
       });
     } catch (error) {
       console.error('❌ Error seeding database:', error);

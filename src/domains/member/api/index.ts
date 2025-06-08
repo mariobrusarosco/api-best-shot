@@ -33,7 +33,10 @@ const getMemberV2 = async (req: Request, res: Response) => {
 
     return res.status(200).send(member);
   } catch (error: any) {
-    Profiling.error('[API_MEMBER]', error);
+    Profiling.error({
+      source: 'MEMBER_API_getMemberV2',
+      error,
+    });
     return handleInternalServerErrorResponse(res, error);
   }
 };
@@ -71,7 +74,10 @@ const getGeneralTournamentPerformanceV2 = async (req: Request, res: Response) =>
     const performance = await MemberService.getGeneralTournamentPerformanceV2(memberId);
     return res.status(200).send(performance);
   } catch (error: any) {
-    Profiling.error('[API_MEMBER]', error);
+    Profiling.error({
+      source: 'MEMBER_API_getGeneralTournamentPerformanceV2',
+      error,
+    });
     return handleInternalServerErrorResponse(res, error);
   }
 };

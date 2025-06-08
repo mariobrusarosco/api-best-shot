@@ -13,7 +13,7 @@ const createStandings = async (req: StandingsRequest, res: Response) => {
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [CREATE STANDINGS FOR TOURNAMENT] - [${tournamentId}]`,
       data: standings,
-      color: 'FgGreen'
+      color: 'FgGreen',
     });
 
     return res.status(200).send(standings);
@@ -34,7 +34,7 @@ const updateStandings = async (req: any, res: Response) => {
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [UPDATE STANDINGS FOR TOURNAMENT] - [${tournamentId}]`,
       data: standings,
-      color: 'FgGreen'
+      color: 'FgGreen',
     });
 
     return res.status(200).send(standings);

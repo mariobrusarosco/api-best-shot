@@ -11,10 +11,11 @@ RouterV1.get('/performance', AuthMiddleware, API_MEMBER.getGeneralTournamentPerf
 const RouterV2 = express.Router();
 RouterV2.get('/', AuthMiddleware, API_MEMBER.getMemberV2);
 RouterV2.post('/', API_MEMBER.createMember);
-RouterV2.get('/performance', AuthMiddleware, API_MEMBER.getGeneralTournamentPerformanceV2);
+RouterV2.get(
+  '/performance',
+  AuthMiddleware,
+  API_MEMBER.getGeneralTournamentPerformanceV2
+);
 
 ApplicationRouter.register('api/v1/member', RouterV1);
 ApplicationRouter.register('api/v2/member', RouterV2);
-
-
-

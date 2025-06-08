@@ -1,2 +1,1 @@
-export const API_SCORE = {
-}; 
+export const API_SCORE = {};

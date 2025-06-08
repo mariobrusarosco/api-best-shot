@@ -13,7 +13,6 @@ export type CreateTournamentInput = {
   logoUrl?: string;
   logoPngBase64?: string;
   standingsMode: 'unique-group' | 'multi-group';
-  
 };
 
 type UpdateTournamentInput = CreateTournamentInput;

@@ -16,7 +16,7 @@ const createMatches = async (req: MatchesRequest, res: Response) => {
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [CREATE MATCHES FOR ENTIRE TOURNAMENT] - [${tournamentId}]`,
       data: matches,
-      color: 'FgGreen'
+      color: 'FgGreen',
     });
 
     return res.status(200).send(matches);
@@ -37,7 +37,7 @@ const updateMatches = async (req: MatchesRequest, res: Response) => {
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [UPDATE MATCHES FOR ENTIRE TOURNAMENT] - [${tournamentId}]`,
       data: matches,
-      color: 'FgGreen'
+      color: 'FgGreen',
     });
 
     return res.status(200).send(matches);
@@ -60,7 +60,7 @@ const updateMatchesForRound = async (req: MatchesForRoundRequest, res: Response)
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [MATCHES UPDATE FOR ROUND] - [${tournamentId}] - [${roundSlug}]`,
       data: matches,
-      color: 'FgGreen'
+      color: 'FgGreen',
     });
 
     return res.status(200).send(matches);

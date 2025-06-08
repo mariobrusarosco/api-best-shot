@@ -14,11 +14,11 @@ const setup = async (req: TournamentRequest, res: Response) => {
       // SETUP TOURNAMENT
       tournament = await TournamentController.createTournament({
         input: req.body,
-      });  
+      });
       Profiling.log({
         msg: '[DATA PROVIDER] - [SETUP 1]- [CREATE TOURNAMENT] - [SUCCESS]',
         data: { tournament },
-        color: 'FgGreen'
+        color: 'FgGreen',
       });
     } catch (error: any) {
       Profiling.error('[DATA PROVIDER] - [SETUP 1]- [CREATE TOURNAMENT] - [ERROR]', {
@@ -35,7 +35,7 @@ const setup = async (req: TournamentRequest, res: Response) => {
       Profiling.log({
         msg: '[DATA PROVIDER] - [SETUP 2] - [CREATE ROUNDS] - [SUCCESS]',
         data: { rounds },
-        color: 'FgGreen'
+        color: 'FgGreen',
       });
     } catch (error: any) {
       Profiling.error('[DATA PROVIDER] - [SETUP 2] - [CREATE ROUNDS] - [ERROR]', {

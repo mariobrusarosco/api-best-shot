@@ -19,14 +19,17 @@ const create = async (req: StandingsRequest, res: Response) => {
     const standings = await dataProviderService.init(tournament.id, tournament.baseUrl);
 
     Profiling.log({
-      msg: '[DATA PROVIDER] - [V2] - [STANDINGS] - CREATE SUCCESS',
+      msg: 'CREATE SUCCESS',
       data: { tournament },
-      color: 'FgGreen',
+      source: 'DATA_PROVIDER_V2_STANDINGS_create',
     });
 
     return res.status(200).json({ standings });
   } catch (error: any) {
-    Profiling.error('[DATA PROVIDER] - [V2] - [STANDINGS] - CREATE FAILED', error);
+    Profiling.error({
+      source: 'DATA_PROVIDER_V2_STANDINGS_create',
+      error,
+    });
     return handleInternalServerErrorResponse(res, error);
   }
 };

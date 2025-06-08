@@ -28,14 +28,17 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
     }
 
     Profiling.log({
-      msg: '[DATA PROVIDER] - [V2] - [MATCHES] - CREATE SUCCESS',
+      msg: 'CREATE SUCCESS',
       data: { matches },
-      color: 'FgGreen',
+      source: 'DATA_PROVIDER_V2_MATCHES_create',
     });
 
     return res.status(200).json({ matches });
   } catch (error: any) {
-    Profiling.error('[DATA PROVIDER] - [V2] - [MATCHES] - CREATE FAILED', error);
+    Profiling.error({
+      source: 'DATA_PROVIDER_V2_MATCHES_create',
+      error,
+    });
     return handleInternalServerErrorResponse(res, error);
   }
 };

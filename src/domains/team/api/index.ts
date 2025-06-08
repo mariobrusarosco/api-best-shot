@@ -1,2 +1,1 @@
-export const API_TEAMS = {
-}; 
+export const API_TEAMS = {};

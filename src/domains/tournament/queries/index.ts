@@ -92,7 +92,10 @@ const checkOnboardingStatus = async (memberId: string, tournamentId: string) => 
 
     return !!tournamentPerformance;
   } catch (error: any) {
-    Profiling.error('checkOnboardingStatus', error);
+    Profiling.error({
+      source: 'TOURNAMENT_QUERIES_checkOnboardingStatus',
+      error,
+    });
     return false;
   }
 };

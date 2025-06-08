@@ -33,7 +33,7 @@ export const fetchAndMapTeamsForRegularSeason = async (
       tournamentLabel: tournament.label,
       teams: mappedTeamsFromStandings,
     },
-    color: 'FgBlue'
+    color: 'FgBlue',
   });
 
   return mappedTeamsFromStandings;
@@ -71,7 +71,7 @@ export const fetchAndMapTeamsFromKnockoutRounds = async (
       tournamentLabel: tournament.label,
       teams: ALL_TEAMS,
     },
-    color: 'FgBlue'
+    color: 'FgBlue',
   });
 
   return ALL_TEAMS;

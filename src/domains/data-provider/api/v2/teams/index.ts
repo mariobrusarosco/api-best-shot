@@ -33,14 +33,17 @@ const create = async (req: TeamsRequest, res: Response) => {
     }
 
     Profiling.log({
-      msg: '[DATA PROVIDER] - [V2] - [TEAMS] - CREATE SUCCESS',
+      msg: 'CREATE SUCCESS',
       data: { teams },
-      color: 'FgGreen',
+      source: 'DATA_PROVIDER_V2_TEAMS_create',
     });
 
     return res.status(200).json({ teams });
   } catch (error: any) {
-    Profiling.error('[DATA PROVIDER] - [V2] - [TEAMS] - CREATE FAILED', error);
+    Profiling.error({
+      source: 'DATA_PROVIDER_V2_TEAMS_create',
+      error,
+    });
     return handleInternalServerErrorResponse(res, error);
   }
 };

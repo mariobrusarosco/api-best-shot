@@ -7,14 +7,17 @@ const dailyRoutine = async (req: Request, res: Response) => {
   try {
     const daily = await SchedulerController.createDailyScoresAndStandingsRoutine();
     Profiling.log({
-      msg: '[DATA PROVIDER] - [DAILY SCHEDULER]',
+      msg: 'DAILY SCHEDULER SUCCESS',
       data: { report: [...daily.keys()] },
-      color: 'FgGreen'
+      source: 'DATA_PROVIDER_SCHEDULER_dailyScheduler',
     });
 
     return res.status(200).send(daily);
   } catch (error: any) {
-    Profiling.error('[DATA PROVIDER] - [DAILY SCHEDULER]', error);
+    Profiling.error({
+      source: 'DATA_PROVIDER_SCHEDULER_dailyScheduler',
+      error,
+    });
     handleInternalServerErrorResponse(res, error);
   }
 };

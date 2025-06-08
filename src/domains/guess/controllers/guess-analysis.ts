@@ -15,7 +15,6 @@ export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) =
     .utc()
     .isSameOrAfter(dayjs.utc(match.date).toDate());
 
-
   const guessPaused = match.status === 'not-defined';
   const guessExpired = hasNullGuesses && hasLostTimewindowToGuess;
   const notStartedGuess = match.status === 'open' && hasNullGuesses;
@@ -220,11 +219,12 @@ const getMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   else if (homeMatch < awayMatch) matchOutcome = { label: 'AWAY_WIN' };
   else matchOutcome = { label: 'DRAW' };
 
-
-  console.log({ homeGuess, homeMatch, awayGuess, awayMatch, matchOutcome, guessPrediction },  guessPrediction.label === matchOutcome.label
-    ? GUESS_STATUSES.CORRECT
-    : GUESS_STATUSES.INCORRECT,);
-
+  console.log(
+    { homeGuess, homeMatch, awayGuess, awayMatch, matchOutcome, guessPrediction },
+    guessPrediction.label === matchOutcome.label
+      ? GUESS_STATUSES.CORRECT
+      : GUESS_STATUSES.INCORRECT
+  );
 
   return {
     label: matchOutcome.label,

@@ -8,7 +8,6 @@ import _ from 'lodash';
 import { queryMemberTournamentGuesses } from '../controller';
 import { DB_InsertTournamentPerformance, T_TournamentPerformance } from '../schema';
 
-
 const queryPerformanceForTournament = async (memberId: string, tournamentId: string) => {
   const guesses = await db
     .select()

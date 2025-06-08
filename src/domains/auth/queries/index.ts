@@ -7,10 +7,10 @@ const getMemberByPublicId = async (publicId: string) => {
     .select()
     .from(T_Member)
     .where(eq(T_Member.publicId, publicId));
-  
+
   return member;
 };
 
 export const QUERIES_AUTH = {
   getMemberByPublicId,
-}; 
+};

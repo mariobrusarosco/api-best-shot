@@ -13,11 +13,17 @@ const decodeMemberToken = (token: string) => {
     return jwt.verify(token, process.env.JWT_SECRET!);
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      Profiling.error(PROFILLING_AUTH.EXPIRED_TOKEN, error);
+      Profiling.error({
+        source: PROFILLING_AUTH.EXPIRED_TOKEN,
+        error,
+      });
       throw new Error('Token expired');
-    } 
-    
-    Profiling.error(PROFILLING_AUTH.INVALID_TOKEN, error);
+    }
+
+    Profiling.error({
+      source: PROFILLING_AUTH.INVALID_TOKEN,
+      error,
+    });
     throw new Error('Invalid token');
   }
 };
@@ -26,7 +32,10 @@ const getUserCookie = (req: CustomRequest) => {
   const cookie = req.cookies[process.env.MEMBER_PUBLIC_ID_COOKIE!];
 
   if (!cookie) {
-    Profiling.error(PROFILLING_AUTH.INVALID_TOKEN, 'No auth cookie found');
+    Profiling.error({
+      source: PROFILLING_AUTH.INVALID_TOKEN,
+      error: 'No auth cookie found',
+    });
     throw new Error('Not authenticated');
   }
 
@@ -80,22 +89,23 @@ export const Utils = {
   getAuthenticatedUserId,
   createTokenResponse: (userId: string, nickName: string, email: string) => {
     try {
-      const token = jwt.sign(
-        { id: userId, nickName, email },
-        process.env.JWT_SECRET!,
-        { expiresIn: '30d' }
-      );
-      
+      const token = jwt.sign({ id: userId, nickName, email }, process.env.JWT_SECRET!, {
+        expiresIn: '30d',
+      });
+
       // Log successful token creation
       Profiling.log({
         msg: PROFILLING_AUTH.TOKEN_REFRESHED,
         data: { userId },
-        color: 'FgGreen'
+        source: 'AUTH_UTILS_createTokenResponse',
       });
-      
+
       return token;
     } catch (error) {
-      Profiling.error(PROFILLING_AUTH.CREATE_TOKEN, error);
+      Profiling.error({
+        source: PROFILLING_AUTH.CREATE_TOKEN,
+        error,
+      });
       throw error;
     }
   },

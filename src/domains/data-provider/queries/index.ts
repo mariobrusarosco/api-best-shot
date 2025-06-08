@@ -1,2 +1,1 @@
-export const QUERIES_DATA_PROVIDER = {
-}; 
+export const QUERIES_DATA_PROVIDER = {};

@@ -1,1 +1,1 @@
-// Shared domain services 
+// Shared domain services

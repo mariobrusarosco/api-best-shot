@@ -1,9 +1,9 @@
-import { QUERIES_SCORE } from "../queries";
+import { QUERIES_SCORE } from '../queries';
 
-// Score domain services 
+// Score domain services
 export const SERVICES_SCORE = {
-    getScore: async (leagueId: string) => {
-        const query = await QUERIES_SCORE.getLeagueScore(leagueId);
-        return query;
-    }
-}
+  getScore: async (leagueId: string) => {
+    const query = await QUERIES_SCORE.getLeagueScore(leagueId);
+    return query;
+  },
+};

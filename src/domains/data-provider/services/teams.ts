@@ -45,10 +45,10 @@ export class TeamsService {
         provider: 'sofa',
       } satisfies DB_InsertTeam;
     } catch (error) {
-      Profiling.error(
-        `[TeamsService] Failed to enhance team ${team.name} with logo:`,
-        error
-      );
+      Profiling.error({
+        source: 'TEAMS_SERVICE_enhanceTeamWithLogo',
+        error: `Failed to enhance team ${team.name} with logo: ${error}`,
+      });
       throw error;
     }
   }
@@ -169,7 +169,10 @@ export class TeamsService {
         Profiling.log({ msg: `[LOG] - [SUCCESS] - ENHANCED TEAM ${team.name}` });
         await sleep(1000);
       } catch (error) {
-        Profiling.error(`Failed to enhance team ${team.name}:`, error);
+        Profiling.error({
+          source: 'DATA_PROVIDER_TEAMS_enhanceTeamWithLogo',
+          error: `Failed to enhance team ${team.name}: ${error}`,
+        });
         // Continue with next team even if one fails
         continue;
       }

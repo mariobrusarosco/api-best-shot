@@ -1,2 +1,1 @@
-export const QUERIES_SHARED = {
-}; 
+export const QUERIES_SHARED = {};

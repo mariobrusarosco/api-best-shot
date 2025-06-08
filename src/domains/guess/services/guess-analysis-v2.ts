@@ -11,30 +11,34 @@ import { QUERIES_GUESS } from '../queries';
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
 
-
-export const runGuessAnalysis_V2 = (guesses: Awaited<ReturnType<typeof QUERIES_GUESS.selectMemberGuessesForTournament>>) => {
+export const runGuessAnalysis_V2 = (
+  guesses: Awaited<ReturnType<typeof QUERIES_GUESS.selectMemberGuessesForTournament>>
+) => {
   return guesses.map(row => {
     const hasNullGuesses = row.guess.homeScore === null || row.guess.awayScore === null;
     const hasLostTimewindowToGuess = dayjs()
       .utc()
       .isSameOrAfter(dayjs.utc(row.match.date).toDate());
-  
+
     const guessPaused = row.match.status === 'not-defined';
     const guessExpired = hasNullGuesses && hasLostTimewindowToGuess;
     const notStartedGuess = row.match.status === 'open' && hasNullGuesses;
     const waitingForGame = row.match.status === 'open' && !hasNullGuesses;
-  
-    if (guessPaused) return generatePausedGuess(row.guess, row.match, { hasLostTimewindowToGuess });
+
+    if (guessPaused)
+      return generatePausedGuess(row.guess, row.match, { hasLostTimewindowToGuess });
     if (guessExpired)
       return generateExpiredGuess(row.guess, row.match, { hasLostTimewindowToGuess });
     if (notStartedGuess)
       return generateNotStartedGuess(row.guess, row.match, { hasLostTimewindowToGuess });
     if (waitingForGame)
-      return generateWaitingForGameGuess(row.guess, row.match, { hasLostTimewindowToGuess });
-  
+      return generateWaitingForGameGuess(row.guess, row.match, {
+        hasLostTimewindowToGuess,
+      });
+
     return generateFinalizedGuess(row.guess, row.match, { hasLostTimewindowToGuess });
   });
-}
+};
 
 const generateExpiredGuess = (
   guess: DB_SelectGuess,
@@ -224,11 +228,12 @@ const getMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   else if (homeMatch < awayMatch) matchOutcome = { label: 'AWAY_WIN' };
   else matchOutcome = { label: 'DRAW' };
 
-
-  console.log({ homeGuess, homeMatch, awayGuess, awayMatch, matchOutcome, guessPrediction },  guessPrediction.label === matchOutcome.label
-    ? GUESS_STATUSES.CORRECT
-    : GUESS_STATUSES.INCORRECT,);
-
+  console.log(
+    { homeGuess, homeMatch, awayGuess, awayMatch, matchOutcome, guessPrediction },
+    guessPrediction.label === matchOutcome.label
+      ? GUESS_STATUSES.CORRECT
+      : GUESS_STATUSES.INCORRECT
+  );
 
   return {
     label: matchOutcome.label,

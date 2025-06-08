@@ -28,17 +28,20 @@ const createTournament = async ({ input }: { input: any }) => {
     }
 
     Profiling.log({
-      msg: '[DATA PROVIDER] - [TOURNAMENT] - CREATE',
+      msg: 'TOURNAMENT CREATE SUCCESS',
       data: {
         tournamentId: tournament.id,
         tournamentLabel: tournament.label,
       },
-      color: 'FgGreen'
+      source: 'DATA_PROVIDER_TOURNAMENT_CONTROLLER_create',
     });
 
     return tournament;
   } catch (error: any) {
-    Profiling.error('[DATA PROVIDER]', error);
+    Profiling.error({
+      source: 'DATA_PROVIDER_TOURNAMENT_CONTROLLER_create',
+      error,
+    });
   }
 };
 
@@ -65,17 +68,20 @@ const updateTournament = async ({ input }: { input: any }) => {
     }
 
     Profiling.log({
-      msg: '[DATA PROVIDER] - [TOURNAMENT] - UPDATE',
+      msg: 'TOURNAMENT UPDATE SUCCESS',
       data: {
         tournamentId: updatedTournament.id,
         tournamentLabel: updatedTournament.label,
       },
-      color: 'FgGreen'
+      source: 'DATA_PROVIDER_TOURNAMENT_CONTROLLER_update',
     });
 
     return updatedTournament;
   } catch (error: any) {
-    Profiling.error('[DATA PROVIDER] - [TOURNAMENT] - UPDATE', { error });
+    Profiling.error({
+      source: 'DATA_PROVIDER_TOURNAMENT_CONTROLLER_update',
+      error,
+    });
   }
 };
 

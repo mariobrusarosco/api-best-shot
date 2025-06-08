@@ -81,6 +81,7 @@
     "lodash": "^4.17.21",
     "mime-types": "^2.1.35",
     "openai": "^4.89.0",
+    "picocolors": "^1.1.1",
     "postgres": "^3.4.4",
     "puppeteer": "^22.12.1",
     "tsconfig-paths": "^4.2.0",

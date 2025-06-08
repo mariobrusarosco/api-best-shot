@@ -1,2 +1,1 @@
-export const API_TOURNAMENT_ROUND = {
-}; 
+export const API_TOURNAMENT_ROUND = {};

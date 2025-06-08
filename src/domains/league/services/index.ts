@@ -1,11 +1,11 @@
-import { QUERIES_PERFORMANCE } from "@/domains/performance/queries";
-import { QUERIES_LEAGUE } from "../queries";
-import { ErrorMapper } from "../error-handling/mapper";
+import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
+import { QUERIES_LEAGUE } from '../queries';
+import { ErrorMapper } from '../error-handling/mapper';
 
 const getLeagueStandings = async (leagueId: string) => {
-   const query = await QUERIES_PERFORMANCE.league.getPerformance(leagueId);
+  const query = await QUERIES_PERFORMANCE.league.getPerformance(leagueId);
 
-   const standings = query.reduce<
+  const standings = query.reduce<
     Record<
       string,
       { id: string; logo: string; members: { member: string; points: string }[] }
@@ -28,7 +28,7 @@ const getLeagueStandings = async (leagueId: string) => {
       acc[id].members.push({ member: member as string, points: points as string });
     }
     return acc;
-  }, {});   
+  }, {});
 
   return standings;
 };
@@ -42,9 +42,13 @@ const getMemberLeagues = async (memberId: string) => {
   return QUERIES_LEAGUE.getMemberLeagues(memberId);
 };
 
-const createLeague = async (data: { label: string; description: string; founderId: string }) => {
+const createLeague = async (data: {
+  label: string;
+  description: string;
+  founderId: string;
+}) => {
   const league = await QUERIES_LEAGUE.createLeague(data);
-  
+
   if (!league) {
     throw new Error('League not created');
   }
@@ -88,7 +92,7 @@ const inviteToLeague = async (data: { leagueId: string; guestId: string }) => {
 
 const getLeagueDetails = async (leagueId: string, memberId: string) => {
   const mainQuery = await QUERIES_LEAGUE.getLeagueDetails(leagueId);
-  
+
   if (!mainQuery || mainQuery.length === 0) {
     throw ErrorMapper.LEAGUE_NOT_FOUND;
   }
@@ -118,17 +122,18 @@ const getLeagueDetails = async (leagueId: string, memberId: string) => {
   };
 };
 
-const updateLeagueTournaments = async (updateInput: { leagueId: string; tournamentId: string; status: string }[]) => {
+const updateLeagueTournaments = async (
+  updateInput: { leagueId: string; tournamentId: string; status: string }[]
+) => {
   return QUERIES_LEAGUE.updateLeagueTournaments(updateInput);
 };
 
 export const SERVICES_LEAGUE = {
-    getLeagueStandings,
-    getLeaguePerformanceLastUpdated,
-    getMemberLeagues,
-    createLeague,
-    inviteToLeague,
-    getLeagueDetails,
-    updateLeagueTournaments
+  getLeagueStandings,
+  getLeaguePerformanceLastUpdated,
+  getMemberLeagues,
+  createLeague,
+  inviteToLeague,
+  getLeagueDetails,
+  updateLeagueTournaments,
 };
-

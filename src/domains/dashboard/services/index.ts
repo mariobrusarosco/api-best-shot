@@ -1,4 +1,4 @@
-import { QUERIES_MATCH } from "@/domains/match/queries";
+import { QUERIES_MATCH } from '@/domains/match/queries';
 
 const getDashboard = async () => {
   const currentDayMatches = await QUERIES_MATCH.currentDayMatches();
@@ -18,4 +18,3 @@ const getDashboard = async () => {
 export const SERVICES_DASHBOARD = {
   getDashboard,
 };
-

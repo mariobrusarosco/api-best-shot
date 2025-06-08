@@ -12,17 +12,20 @@ const create = async (req: TournamentRequest, res: Response) => {
     const dataProviderService = new TournamentDataProviderService(scraper);
     const tournament = await dataProviderService.init(req.body);
 
-        Profiling.log({
-            msg: '[DATA PROVIDER] - [V2] - [TOURNAMENT] - CREATE SUCCESS',
-            data: { tournament },
-            color: 'FgGreen'
-        });
+    Profiling.log({
+      msg: 'CREATE SUCCESS',
+      data: { tournament },
+      source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
+    });
 
-        return res.status(200).json({ tournament });
-    } catch (error: any) {
-        Profiling.error('[DATA PROVIDER] - [V2] - [TOURNAMENT] - CREATE FAILED', error);
-        return handleInternalServerErrorResponse(res, error);
-    }
+    return res.status(200).json({ tournament });
+  } catch (error: any) {
+    Profiling.error({
+      source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
+      error,
+    });
+    return handleInternalServerErrorResponse(res, error);
+  }
 };
 
 const API_TOURNAMENT = {

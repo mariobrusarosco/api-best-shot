@@ -1,2 +1,1 @@
-export const QUERIES_DASHBOARD = {
-}; 
+export const QUERIES_DASHBOARD = {};

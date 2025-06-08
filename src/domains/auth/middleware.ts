@@ -17,7 +17,10 @@ export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) 
 
     next();
   } catch (error) {
-    Profiling.error(PROFILLING_AUTH.AUTH_MIDDLEWARE_ERROR, error);
+    Profiling.error({
+      source: PROFILLING_AUTH.AUTH_MIDDLEWARE_ERROR,
+      error,
+    });
 
     res
       .status(GlobalErrorMapper.NOT_AUTHORIZED.status)

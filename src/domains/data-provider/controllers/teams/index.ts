@@ -35,17 +35,20 @@ const create = async (tournamentId: string) => {
     }
 
     Profiling.log({
-      msg: '[DATA PROVIDER] - [TEAMS] - CREATE SUCCESS',
+      msg: 'CREATE SUCCESS',
       data: {
         tournamentLabel: tournament.label,
         team: TEAMS,
       },
-      color: 'FgGreen'
+      source: 'DATA_PROVIDER_TEAMS_CONTROLLER_create',
     });
 
     return TEAMS;
   } catch (error: any) {
-    Profiling.error('[DATA PROVIDER] - [TEAMS] - TEAM CREATE FAILED', error);
+    Profiling.error({
+      source: 'DATA_PROVIDER_TEAMS_CONTROLLER_create',
+      error,
+    });
   }
 };
 
@@ -76,17 +79,20 @@ const update = async (tournamentId: string) => {
     }
 
     Profiling.log({
-      msg: '[DATA PROVIDER] - [TEAMS] - UPDATE SUCCESS',
+      msg: 'UPDATE SUCCESS',
       data: {
         tournamentLabel: tournament.label,
         team: TEAMS,
       },
-      color: 'FgGreen'
+      source: 'DATA_PROVIDER_TEAMS_CONTROLLER_update',
     });
 
     return TEAMS;
   } catch (error: any) {
-    Profiling.error('[DATA PROVIDER] - [TEAMS] - TEAM UPDATE FAILED', error);
+    Profiling.error({
+      source: 'DATA_PROVIDER_TEAMS_CONTROLLER_update',
+      error,
+    });
   }
 };
 

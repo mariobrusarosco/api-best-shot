@@ -1,5 +1,8 @@
 import { T_Member } from '@/domains/member/schema';
-import { DB_SelectLeaguePerformance, DB_SelectTournamentPerformance } from '@/domains/performance/schema';
+import {
+  DB_SelectLeaguePerformance,
+  DB_SelectTournamentPerformance,
+} from '@/domains/performance/schema';
 import { DB_SelectTournament } from '@/domains/tournament/schema';
 import { SERVICES_PERFORMANCE_V2 } from '@/domains/performance/services';
 import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
@@ -30,12 +33,13 @@ const getGeneralTournamentPerformance = async (memberId: string) => {
 const getGeneralTournamentPerformanceV2 = async (memberId: string) => {
   // First update the performance
   await SERVICES_PERFORMANCE_V2.tournament.updateGeneralPerformance(memberId);
-  
+
   // Then fetch the updated data
-  const tournamentPerformance = await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
-  
+  const tournamentPerformance =
+    await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
+
   return {
-    tournaments: tournamentPerformance
+    tournaments: tournamentPerformance,
   };
 };
 

@@ -11,7 +11,7 @@ const create = async (tournamentId: string) => {
   Profiling.log({
     msg: 'CREATING TOURNAMENT ROUNDS FOR: ',
     data: tournament.label,
-    color: 'FgBlue'
+    color: 'FgBlue',
   });
 
   const shallowListOfRounds =
@@ -27,7 +27,7 @@ const create = async (tournamentId: string) => {
   Profiling.log({
     msg: '[LOG] - [DATA PROVIDER] - CREATED TOURNAMENT ROUNDS FOR: ',
     data: tournament.label,
-    color: 'FgGreen'
+    color: 'FgGreen',
   });
   return roundsInserted;
 };
@@ -39,7 +39,7 @@ const update = async (tournamentId: string) => {
   Profiling.log({
     msg: '[LOG] - [DATA PROVIDER] - UPDATING TOURNAMENT ROUNDS FOR: ',
     data: tournament.label,
-    color: 'FgBlue'
+    color: 'FgBlue',
   });
 
   const rounds = await SofascoreTournamentRound.fetchShallowListOfRoundsFromProvider(
@@ -68,7 +68,7 @@ const knockoutRoundsUpdate = async (tournamentId: string) => {
   Profiling.log({
     msg: '[LOG] - [DATA PROVIDER] - [START] - UPDATING KNOCKOUT ROUNDS FOR: ',
     data: tournament.label,
-    color: 'FgBlue'
+    color: 'FgBlue',
   });
 
   const listOfRoundsFromDataProvider =

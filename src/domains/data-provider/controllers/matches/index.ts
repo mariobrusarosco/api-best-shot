@@ -17,7 +17,7 @@ const create = async (tournamentId: string) => {
     Profiling.log({
       msg: '[LOG] - [DATA PROVIDER] - FETCHING ROUND:',
       data: round.providerUrl,
-      color: 'FgBlue'
+      color: 'FgBlue',
     });
     await sleep(3000);
 
@@ -39,7 +39,7 @@ const create = async (tournamentId: string) => {
   Profiling.log({
     msg: '[DATA PROVIDER] - [MATCHES] - [CREATE ALL MACTHES]',
     data: { matches },
-    color: 'FgGreen'
+    color: 'FgGreen',
   });
 
   return query;
@@ -77,7 +77,7 @@ const update = async (tournamentId: string) => {
   Profiling.log({
     msg: '[DATA PROVIDER] - [MATCHES] - [UPDATE ALL MACTHES]',
     data: { matches },
-    color: 'FgGreen'
+    color: 'FgGreen',
   });
 
   return query;
@@ -106,7 +106,7 @@ const updateRound = async (tournamentId: string, roundSlug: string) => {
   Profiling.log({
     msg: '[DATA PROVIDER] - [MATCHES] - [UPDATE MACTHES OF A ROUND]',
     data: { matches, round },
-    color: 'FgGreen'
+    color: 'FgGreen',
   });
   return query;
 };

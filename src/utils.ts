@@ -17,7 +17,6 @@ export const safeISODate = (date: any) => {
   return date === null || date === undefined ? null : new Date(date).toISOString();
 };
 
-
 export const safeString = (str: any, fallback: string | null = '') =>
   str === null || str === undefined ? fallback : String(str);
 
@@ -33,8 +32,10 @@ export const toNumberOrZero = (val: string | null | undefined) => {
   return Number(val);
 };
 
-
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Re-export asset fetch functions and types
-export { fetchAndStoreAssetFromApi, FetchAndStoreAssetPayload } from './utils/assets-fetch';
+export {
+  fetchAndStoreAssetFromApi,
+  FetchAndStoreAssetPayload,
+} from './utils/assets-fetch';

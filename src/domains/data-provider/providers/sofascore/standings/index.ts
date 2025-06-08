@@ -108,4 +108,3 @@ const mapTeamStandings = (
     provider: 'sofa',
   } satisfies DB_InsertTournamentStandings;
 };
-

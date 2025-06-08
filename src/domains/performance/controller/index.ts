@@ -235,8 +235,6 @@ export const queryMemberTournamentGuesses = async (
   return guesses.map(row => runGuessAnalysis(row.guess, row.match));
 };
 
-
-
 export const updateLeagueTournamentsForMember = async (
   memberId: string,
   leagueId: string

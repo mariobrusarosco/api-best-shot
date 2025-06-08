@@ -77,7 +77,10 @@ async function getMemberGuesses({
 
     return parsedGuesses;
   } catch (error: any) {
-    Profiling.error('GETTING MEMBER GUESSES', error);
+    Profiling.error({
+      source: 'GUESS_CONTROLLERS_getMemberGuesses',
+      error,
+    });
   }
 }
 
@@ -127,23 +130,21 @@ async function createGuess(req: CreateGuessRequest, res: Response) {
   }
 }
 
-const selectMemberGuessesForTournament = async (memberId: string, tournamentId: string) => {
-    const guesses = await db
-        .select()
-        .from(T_Guess)
-        .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
-        .where(
-            and(
-                eq(T_Match.tournamentId, tournamentId),
-                eq(T_Guess.memberId, memberId)
-            )
-        );
+const selectMemberGuessesForTournament = async (
+  memberId: string,
+  tournamentId: string
+) => {
+  const guesses = await db
+    .select()
+    .from(T_Guess)
+    .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
+    .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Guess.memberId, memberId)));
 
-    return guesses;
-}
+  return guesses;
+};
 
 export const QUERIES_Guess = {
-    selectMemberGuessesForTournament
+  selectMemberGuessesForTournament,
 };
 
 export default GuessController;

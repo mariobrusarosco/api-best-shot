@@ -1,42 +1,50 @@
 import { Request, Response } from 'express';
-import { AuthenticateMemberRequest, PROFILLING_AUTH } from '../typing';
+import { AuthenticateMemberRequest } from '../typing';
 import { SERVICES_AUTH } from '../services';
 import { z } from 'zod';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import {  Profiling } from '@/services/profiling';
-import { ERRORS_AUTH } from '../error-handling/mapper';
+import { Profiling } from '@/services/profiling';
+import { ErrorMapper } from '../error-handling/mapper';
 
 const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) => {
   try {
     // Validate request body
     const validationResult = authenticateUserSchema.safeParse(req.body);
     const hasValidationError = !validationResult.success;
-   
+
     if (hasValidationError) {
       const errors = validationResult.error.format();
 
-      Profiling.error(PROFILLING_AUTH.AUTHENTICATE_USER, errors);
-      return res
-        .status(ERRORS_AUTH.VALIDATION_ERROR.status)
-        .send({ 
-          message: ERRORS_AUTH.VALIDATION_ERROR.user,
-        });
+      Profiling.error({
+        source: 'AUTH_API_authenticateUser',
+        error: errors,
+      });
+
+      return res.status(ErrorMapper.VALIDATION_ERROR.status).send({
+        message: ErrorMapper.VALIDATION_ERROR.user,
+      });
     }
-    
+
     // Extract validated data
     const { publicId } = validationResult.data;
     const result = await SERVICES_AUTH.authenticateUser(publicId, res);
 
     if (!result) {
       return res
-        .status(ERRORS_AUTH.USER_NOT_FOUND.status)
-        .send({ message: ERRORS_AUTH.USER_NOT_FOUND.user });
+        .status(ErrorMapper.USER_NOT_FOUND.status)
+        .send({ message: ErrorMapper.USER_NOT_FOUND.user });
     }
 
     return res.status(200).send(result.token);
   } catch (error: any) {
-    Profiling.error(PROFILLING_AUTH.AUTHENTICATE_USER, error);
-    return handleInternalServerErrorResponse(res, error);
+    Profiling.error({
+      source: 'AUTH_API_authenticateUser',
+      error,
+    });
+
+    return res.status(ErrorMapper.USER_NOT_FOUND.status).send({
+      message: ErrorMapper.USER_NOT_FOUND.user,
+    });
   }
 };
 
@@ -44,13 +52,15 @@ const unauthenticateUser = (_: Request, res: Response) => {
   try {
     SERVICES_AUTH.unauthenticateUser(res);
     Profiling.log({
-      msg: PROFILLING_AUTH.UNAUTHENTICATE_USER,
-      data: 'Successfully logged out',
-      color: 'FgGreen'
+      msg: 'Successfully logged out',
+      source: 'AUTH_API_unauthenticateUser',
     });
     return res.status(200).send({ message: 'Successfully logged out' });
   } catch (error: any) {
-    Profiling.error(PROFILLING_AUTH.UNAUTHENTICATE_USER, error);
+    Profiling.error({
+      source: 'AUTH_API_unauthenticateUser',
+      error,
+    });
     return handleInternalServerErrorResponse(res, error);
   }
 };
@@ -61,6 +71,5 @@ export const API_AUTH = {
 };
 
 const authenticateUserSchema = z.object({
-  publicId: z.string().min(1, 'Public ID is required')
+  publicId: z.string().min(1, 'Public ID is required'),
 });
-

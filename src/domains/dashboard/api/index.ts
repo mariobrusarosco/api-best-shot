@@ -14,7 +14,6 @@ const getDashboardDeprecated = async (req: Request, res: Response) => {
   }
 };
 
-
 const getDashboard = async (_: Request, res: Response) => {
   const dashboard = await SERVICES_DASHBOARD.getDashboard();
 

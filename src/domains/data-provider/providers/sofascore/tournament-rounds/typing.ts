@@ -1,6 +1,6 @@
 // Endpoint example: https://api.sofascore.com/api/v1/unique-tournament/16/season/325/rounds
 
-import { API_SOFASCORE_MATCH } from "../matches/typing";
+import { API_SOFASCORE_MATCH } from '../matches/typing';
 
 export interface API_SOFASCORE_ROUNDS {
   currentRound: {

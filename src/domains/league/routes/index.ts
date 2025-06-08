@@ -13,7 +13,7 @@ RouterV1.patch('/:leagueId/tournaments', API_LEAGUE.updateLeagueTournaments);
 RouterV1.get('/:leagueId/performance', API_LEAGUE.getLeagueStandings);
 RouterV1.patch('/:leagueId/performance', API_LEAGUE.updateLeaguePerformance);
 
-ApplicationRouter.register("api/v1/leagues", RouterV1);
+ApplicationRouter.register('api/v1/leagues', RouterV1);
 
 const RouterV2 = express.Router();
 RouterV2.use(AuthMiddleware);
@@ -25,4 +25,4 @@ RouterV2.patch('/:leagueId/tournaments', API_LEAGUE.updateLeagueTournaments);
 RouterV2.get('/:leagueId/performance', API_LEAGUE.getLeagueStandings);
 RouterV2.patch('/:leagueId/performance', API_LEAGUE.updateLeaguePerformance);
 
-ApplicationRouter.register("api/v2/leagues", RouterV2);
+ApplicationRouter.register('api/v2/leagues', RouterV2);

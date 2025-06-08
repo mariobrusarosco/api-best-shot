@@ -12,7 +12,7 @@ const createTeams = async (req: TournamentRoundRequest, res: Response) => {
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [CREATE TEAMS FOR TOURNAMENT] - [${tournamentId}]`,
       data: teams,
-      color: 'FgGreen'
+      color: 'FgGreen',
     });
 
     return res.status(200).send(teams);
@@ -35,7 +35,7 @@ const updateTeams = async (req: any, res: Response) => {
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [UPDATE TEAMS FOR TOURNAMENT] - [${tournamentId}]`,
       data: teams,
-      color: 'FgGreen'
+      color: 'FgGreen',
     });
     return res.status(200).send(teams);
   } catch (error: any) {

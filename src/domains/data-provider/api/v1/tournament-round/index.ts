@@ -11,7 +11,7 @@ const createRounds = async (req: TournamentRoundRequest, res: Response) => {
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [CREATE ROUNDS FOR TOURNAMENT] - [${tournamentId}]`,
       data: rounds,
-      color: 'FgGreen'
+      color: 'FgGreen',
     });
     return res.status(200).send(rounds);
   } catch (error: any) {
@@ -31,7 +31,7 @@ const updateRounds = async (req: TournamentRoundRequest, res: Response) => {
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [UPDATE ROUNDS FOR TOURNAMENT] - [${tournamentId}]`,
       data: rounds,
-      color: 'FgGreen'
+      color: 'FgGreen',
     });
     return res.status(200).send(rounds);
   } catch (error: any) {
@@ -51,7 +51,7 @@ const knockoutRoundsUpdate = async (req: TournamentRoundRequest, res: Response) 
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [UPDATE KNOCKOUT ROUNDS FOR TOURNAMENT] - [${tournamentId}]`,
       data: rounds,
-      color: 'FgGreen'
+      color: 'FgGreen',
     });
     return res.status(200).send(rounds);
   } catch (error: any) {

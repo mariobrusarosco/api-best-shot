@@ -1,12 +1,9 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
-import { env } from '@/config/env';
+import { env } from '../../config/env';
 
-const connectionString = `postgresql://${env.DB_USER}:${encodeURIComponent(env.DB_PASSWORD)}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`;
-console.log({ connectionString });
-
-const client = postgres(connectionString, {
+const client = postgres(env.DB_STRING_CONNECTION, {
   prepare: false,
 });
 

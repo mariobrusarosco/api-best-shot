@@ -30,7 +30,6 @@ export function getDrizzleClient() {
       connect_timeout: 10,
       connection: {
         ...pgOptions.connection,
-        options: `-c inet_client_addr_family=ipv4`,
       },
     });
     const drizzleClient = drizzle(client, { schema });

@@ -27,6 +27,11 @@ export function getDrizzleClient() {
       database: env.DB_NAME,
       ssl: env.NODE_ENV !== 'development',
       ...pgOptions,
+      connect_timeout: 10,
+      connection: {
+        ...pgOptions.connection,
+        options: `-c inet_client_addr_family=ipv4`,
+      },
     });
     const drizzleClient = drizzle(client, { schema });
     console.log('✅ Database connection established successfully!');

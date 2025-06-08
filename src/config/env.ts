@@ -8,7 +8,6 @@ dotenv.config({ path: envPath });
 // Define environment schema with Zod
 const envSchema = z.object({
   // Database
-  DATABASE_URL: z.string().min(1, 'Database URL is required'),
   DB_USER: z.string().min(1, 'Database username is required'),
   DB_PASSWORD: z.string().min(1, 'Database password is required'),
   DB_NAME: z.string().min(1, 'Database name is required'),

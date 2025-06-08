@@ -19,8 +19,8 @@ const pgOptions = {
 export function getDrizzleClient() {
   try {
     console.log(`🔌 Connecting to database in ${env.NODE_ENV} environment...`);
-    // Build connection string
-    const connectionString = `postgres://${env.DB_USER}:${env.DB_PASSWORD}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`;
+    // Build connection string with URL-encoded components
+    const connectionString = `postgres://${encodeURIComponent(env.DB_USER)}:${encodeURIComponent(env.DB_PASSWORD)}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`;
     const client = postgres(connectionString, {
       ssl: env.NODE_ENV !== 'development',
       ...pgOptions,

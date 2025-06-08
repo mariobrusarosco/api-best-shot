@@ -5,11 +5,15 @@ import { env } from '../../config/env';
 
 const pgOptions = {
   prepare: false,
-  max: 10,
-  idle_timeout: 20,
-  connect_timeout: 10,
+  max: 1, // Limit to single connection
+  idle_timeout: 0, // Disable idle timeout
+  connect_timeout: 30, // Increase timeout
+  keepAlive: true, // Keep connection alive
   connection: {
     application_name: 'best-shot-api',
+    keepalive: true,
+    tcp_keepalives_idle: 60,
+    tcp_keepalives_interval: 10,
   },
 };
 
@@ -19,10 +23,19 @@ const pgOptions = {
 export function getDrizzleClient() {
   try {
     console.log(`🔌 Connecting to database in ${env.NODE_ENV} environment...`);
-    // Build connection string with URL-encoded components
-    const connectionString = `postgres://${encodeURIComponent(env.DB_USER)}:${encodeURIComponent(env.DB_PASSWORD)}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`;
-    const client = postgres(connectionString, {
-      ssl: env.NODE_ENV !== 'development',
+    const client = postgres({
+      host: env.DB_HOST,
+      port: env.DB_PORT,
+      user: env.DB_USER,
+      password: env.DB_PASSWORD,
+      database: env.DB_NAME,
+      ssl:
+        env.NODE_ENV !== 'development'
+          ? {
+              rejectUnauthorized: true,
+              mode: 'require',
+            }
+          : false,
       ...pgOptions,
       connect_timeout: 10,
     });

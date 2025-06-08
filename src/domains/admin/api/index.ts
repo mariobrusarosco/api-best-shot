@@ -63,11 +63,7 @@ export const API_ADMIN = {
 
       console.log('🌱 Starting database seeding...');
 
-      // 1. Truncate the member table
-      await db.delete(T_Member);
-      console.log('🧹 Member table truncated.');
-
-      // 2. Prepare the four members
+      // Prepare the members
       const now = new Date();
       const hashedPassword = await bcrypt.hash('test123', 10);
       const members = [

@@ -4,15 +4,25 @@ import { T_Member } from '@/domains/member/schema';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import { env } from '@/config/env';
+import jwt from 'jsonwebtoken';
 
 export const API_ADMIN = {
   healthCheck: async (req: Request, res: Response) => {
-    res.status(200).json({
-      success: true,
-      message: 'Admin API is healthy',
-      environment: env.NODE_ENV,
-      timestamp: new Date().toISOString(),
-    });
+    try {
+      res.status(200).json({
+        success: true,
+        message: 'Admin API is healthy',
+        environment: env.NODE_ENV,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error checking health:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to check health',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   },
 
   seedDatabase: async (req: Request, res: Response) => {
@@ -26,13 +36,28 @@ export const API_ADMIN = {
       }
 
       // Token validation
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+      const authHeader = req.headers.authorization || '';
+      const tokenString = authHeader.replace('Bearer ', '');
 
-      if (token !== env.SEED_DB_TOKEN) {
+      try {
+        console.log('Attempting to verify token...');
+        const token = jwt.verify(tokenString, env.JWT_SECRET);
+        console.log('Token verified successfully');
+
+        if (!token) {
+          return res.status(403).json({
+            error: 'Invalid token - token payload is empty',
+            message: 'The provided token is not valid for seeding operations',
+          });
+        }
+      } catch (error) {
+        console.error('Token verification failed:', error);
         return res.status(403).json({
           error: 'Invalid token',
-          message: 'The provided token is not valid for seeding operations',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Unknown error during token verification',
         });
       }
 

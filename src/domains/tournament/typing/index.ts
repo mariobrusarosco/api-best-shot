@@ -14,7 +14,7 @@ export type CreateTournamentInput = {
   logoPngBase64?: string;
 };
 
-type UpdateTournamentInput = CreateTournamentInput;
+export type UpdateTournamentInput = CreateTournamentInput;
 
 export type TeamOnStandings = {
   externalId: string;

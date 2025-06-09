@@ -13,38 +13,38 @@ const createStandings = async (req: StandingsRequest, res: Response) => {
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [CREATE STANDINGS FOR TOURNAMENT] - [${tournamentId}]`,
       data: standings,
-      color: 'FgGreen',
+      source: 'DATA_PROVIDER_API_STANDINGS_getStandings',
     });
 
     return res.status(200).send(standings);
-  } catch (error: any) {
-    Profiling.error(
-      `[ERROR] - [DATA PROVIDER] - [CREATE STANDINGS FOR  TOURNAMENT] - [${tournamentId}]`,
-      error
-    );
+  } catch (error: unknown) {
+    Profiling.error({
+      source: 'DATA_PROVIDER_API_STANDINGS_getStandings',
+      error: error as Error,
+    });
 
-    handleInternalServerErrorResponse(res, error);
+    handleInternalServerErrorResponse(res, error as Error);
   }
 };
 
-const updateStandings = async (req: any, res: Response) => {
+const updateStandings = async (req: StandingsRequest, res: Response) => {
   const tournamentId = req.params.tournamentId;
   try {
     const standings = await StandingsController.update(tournamentId);
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [UPDATE STANDINGS FOR TOURNAMENT] - [${tournamentId}]`,
       data: standings,
-      color: 'FgGreen',
+      source: 'DATA_PROVIDER_API_STANDINGS_getStandings',
     });
 
     return res.status(200).send(standings);
-  } catch (error: any) {
-    Profiling.error(
-      `[ERROR] - [DATA PROVIDER] - [UPDATE STANDINGS FOR  TOURNAMENT] - [${tournamentId}]`,
-      error
-    );
+  } catch (error: unknown) {
+    Profiling.error({
+      source: 'DATA_PROVIDER_API_STANDINGS_getStandings',
+      error: error as Error,
+    });
 
-    handleInternalServerErrorResponse(res, error);
+    handleInternalServerErrorResponse(res, error as Error);
   }
 };
 

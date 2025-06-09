@@ -4,7 +4,6 @@ import { Profiling } from '@/services/profiling';
 import { DB_InsertTeam } from '@/domains/team/schema';
 import { safeString, sleep } from '@/utils';
 import { QUERIES_TEAMS } from '@/domains/team/queries';
-import { TournamentQuery } from '@/domains/tournament/queries';
 import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 
@@ -80,65 +79,107 @@ export class TeamsService {
       const url = `${baseUrl}/standings/total`;
       await this.scraper.goto(url);
       Profiling.log({
-        msg: '[LOG] - [START] - FETCHING TEAMS FROM STANDINGS AT:',
+        msg: '[START] - FETCHING TEAMS FROM STANDINGS',
+        source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
         data: { url },
-        color: 'FgBlue',
       });
       const rawContent = await this.scraper.getPageContent();
-
       const teams = await this.mapTournamentTeams(rawContent);
 
+      Profiling.log({
+        msg: '[SUCCESS] - FETCHED TEAMS FROM STANDINGS',
+        source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
+        data: { teamsCount: teams.length },
+      });
+
       return teams;
-    } catch (error) {
-      console.error('[SOFASCORE] - [ERROR] - [GET TOURNAMENT TEAMS]', error);
+    } catch (error: unknown) {
+      Profiling.error({
+        source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
+        error: error as Error,
+      });
       throw error;
     }
   }
 
   public async fetchTeamsFromKnockoutRounds(tournamentId: string) {
     try {
-      // Query tournament rounds with "type"  "knockout"
       const rounds = await TournamentRoundsQueries.getKnockoutRounds({
         tournamentId,
+      });
+
+      Profiling.log({
+        msg: '[START] - FETCHING TEAMS FROM KNOCKOUT ROUNDS',
+        source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
+        data: { roundsCount: rounds.length },
       });
 
       const ALL_KNOCKOUT_TEAMS = [];
 
       for (const round of rounds) {
-        console.log('[LOG] - [START] - FETCHING ROUND:', round.providerUrl);
+        Profiling.log({
+          msg: '[START] - FETCHING ROUND',
+          data: { roundUrl: round.providerUrl },
+          source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
+        });
+
         await this.scraper.goto(round.providerUrl);
         const rawContent = await this.scraper.getPageContent();
         const teams = await this.mapTournamentTeams(rawContent);
-
         ALL_KNOCKOUT_TEAMS.push(...teams);
-        console.log('[LOG] - [END] - FETCHING ROUND:');
+
+        Profiling.log({
+          msg: '[SUCCESS] - FETCHED ROUND',
+          source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
+          data: { teamsCount: teams.length },
+        });
+
         await sleep(3000);
       }
 
+      Profiling.log({
+        msg: '[SUCCESS] - FETCHED ALL KNOCKOUT TEAMS',
+        source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
+        data: { totalTeams: ALL_KNOCKOUT_TEAMS.length },
+      });
+
       return ALL_KNOCKOUT_TEAMS;
-    } catch (error) {
-      console.error('[SOFASCORE] - [ERROR] - [GET TOURNAMENT TEAMS]', error);
+    } catch (error: unknown) {
+      Profiling.error({
+        source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
+        error: error as Error,
+      });
       throw error;
     }
   }
 
   public async createOnDatabase(teams: DB_InsertTeam[]) {
-    Profiling.log({ msg: `[LOG] - [START] - CREATING TEAMS ON DATABASE` });
+    Profiling.log({
+      msg: `[START] - CREATING TEAMS ON DATABASE`,
+      source: 'DATA_PROVIDER_TEAMS_createTeamsOnDatabase',
+    });
 
     const createdTeams = await QUERIES_TEAMS.createTeams(teams);
 
     Profiling.log({
-      msg: `[LOG] - [START] - CREATED TEAMS ${createdTeams.length} ON DATABASE`,
+      msg: `[START] - CREATED TEAMS ${createdTeams.length} ON DATABASE`,
+      source: 'DATA_PROVIDER_TEAMS_createTeamsOnDatabase',
     });
 
     return createdTeams;
   }
 
   public async upsertOnDatabase(teams: DB_InsertTeam[]) {
-    Profiling.log({ msg: '[LOG] - [START] - UPSERTING TEAMS ON DATABASE' });
+    Profiling.log({
+      msg: '[START] - UPSERTING TEAMS ON DATABASE',
+      source: 'DATA_PROVIDER_TEAMS_upsertTeamsOnDatabase',
+    });
 
     await QUERIES_TEAMS.updateTeams(teams);
-    Profiling.log({ msg: '[LOG] - [SUCCESS] - UPSERTING TEAMS ON DATABASE' });
+    Profiling.log({
+      msg: '[SUCCESS] - UPSERTING TEAMS ON DATABASE',
+      source: 'DATA_PROVIDER_TEAMS_upsertTeamsOnDatabase',
+    });
   }
 
   public async init(
@@ -151,22 +192,33 @@ export class TeamsService {
     const allTeams = [...teamsFromStandings, ...teamsFromKnockoutRounds];
 
     Profiling.log({
-      msg: `[LOG] - Number of teams from standings: ${teamsFromStandings.length}`,
+      msg: `Number of teams from standings: ${teamsFromStandings.length}`,
+      source: 'DATA_PROVIDER_TEAMS_processTeams',
     });
     Profiling.log({
-      msg: `[LOG] - Number of teams from knockout rounds: ${teamsFromKnockoutRounds.length}`,
+      msg: `Number of teams from knockout rounds: ${teamsFromKnockoutRounds.length}`,
+      source: 'DATA_PROVIDER_TEAMS_processTeams',
     });
-    Profiling.log({ msg: `[LOG] - Number of teams to be processed: ${allTeams.length}` });
+    Profiling.log({
+      msg: `Number of teams to be processed: ${allTeams.length}`,
+      source: 'DATA_PROVIDER_TEAMS_processTeams',
+    });
 
     const enhancedTeams: DB_InsertTeam[] = [];
 
     // Process teams sequentially
     for (const team of allTeams) {
       try {
-        Profiling.log({ msg: `[LOG] - [START] - ENHANCING TEAM ${team.name}` });
+        Profiling.log({
+          msg: `[START] - ENHANCING TEAM ${team.name}`,
+          source: 'DATA_PROVIDER_TEAMS_processTeams',
+        });
         const enhancedTeam = await this.enhanceTeamWithLogo(team);
         enhancedTeams.push(enhancedTeam);
-        Profiling.log({ msg: `[LOG] - [SUCCESS] - ENHANCED TEAM ${team.name}` });
+        Profiling.log({
+          msg: `[SUCCESS] - ENHANCED TEAM ${team.name}`,
+          source: 'DATA_PROVIDER_TEAMS_processTeams',
+        });
         await sleep(1000);
       } catch (error) {
         Profiling.error({

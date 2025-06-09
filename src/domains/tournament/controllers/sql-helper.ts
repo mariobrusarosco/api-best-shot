@@ -1,8 +1,9 @@
 import { isNullable } from '@/utils';
 import { DB_InsertTournament } from '../schema';
+import { RawMatch, RawTeam } from '../typing/sql';
 
 export const SQLHelper = {
-  parseMatch: (match: any) => {
+  parseMatch: (match: RawMatch) => {
     return {
       ...match,
       externalId: String(match.externalId),
@@ -13,7 +14,7 @@ export const SQLHelper = {
       homeScore: isNullable(match.home.score) ? null : String(match.home.score),
     };
   },
-  parseTeam: (team: any) => {
+  parseTeam: (team: RawTeam) => {
     return {
       name: team.name,
       shortName: team.shortName,

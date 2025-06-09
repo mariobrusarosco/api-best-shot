@@ -12,21 +12,21 @@ const createTeams = async (req: TournamentRoundRequest, res: Response) => {
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [CREATE TEAMS FOR TOURNAMENT] - [${tournamentId}]`,
       data: teams,
-      color: 'FgGreen',
+      source: 'DATA_PROVIDER_API_TEAMS_getTeams',
     });
 
     return res.status(200).send(teams);
-  } catch (error: any) {
-    Profiling.error(
-      `[ERROR] - [DATA PROVIDER] - [CREATE TEAMS FOR  TOURNAMENT] - [${tournamentId}]`,
-      error
-    );
+  } catch (error: unknown) {
+    Profiling.error({
+      source: 'DATA_PROVIDER_API_TEAMS_getTeams',
+      error: error as Error,
+    });
 
-    handleInternalServerErrorResponse(res, error);
+    handleInternalServerErrorResponse(res, error as Error);
   }
 };
 
-const updateTeams = async (req: any, res: Response) => {
+const updateTeams = async (req: TournamentRoundRequest, res: Response) => {
   const tournamentId = req.params.tournamentId;
 
   try {
@@ -35,16 +35,16 @@ const updateTeams = async (req: any, res: Response) => {
     Profiling.log({
       msg: `[LOG] - [DATA PROVIDER] - [UPDATE TEAMS FOR TOURNAMENT] - [${tournamentId}]`,
       data: teams,
-      color: 'FgGreen',
+      source: 'DATA_PROVIDER_API_TEAMS_getTeams',
     });
     return res.status(200).send(teams);
-  } catch (error: any) {
-    Profiling.error(
-      `[ERROR] - [DATA PROVIDER] - [UPDATE TEAMS FOR  TOURNAMENT] - [${tournamentId}]`,
-      error
-    );
+  } catch (error: unknown) {
+    Profiling.error({
+      source: 'DATA_PROVIDER_API_TEAMS_getTeams',
+      error: error as Error,
+    });
 
-    handleInternalServerErrorResponse(res, error);
+    handleInternalServerErrorResponse(res, error as Error);
   }
 };
 

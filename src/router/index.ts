@@ -38,7 +38,7 @@ class ApplicationRouter {
     if (domainsWithRoutes.length > 0) {
       Profiling.log({
         msg: `Could not load routes for domains: ${domainsWithRoutes.join(', ')}`,
-        color: 'FgRed',
+        source: 'ApplicationRouter.init',
       });
     }
   }

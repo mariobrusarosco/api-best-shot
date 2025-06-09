@@ -34,7 +34,7 @@ const getLeagues = async (req: Request, res: Response) => {
     const memberId = Utils.getAuthenticatedUserId(req, res);
     const leagues = await SERVICES_LEAGUE.getMemberLeagues(memberId);
     return res.status(200).send(leagues);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[LEAGUE - getLeagues] ${error}`);
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
@@ -54,7 +54,7 @@ const createLeague = async (req: Request, res: Response) => {
     });
 
     return res.status(201).send(league);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[LEAGUE - createLeague] ${error}`);
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
@@ -67,9 +67,11 @@ const inviteToLeague = async (req: Request, res: Response) => {
     const { leagueId, guestId } = req.body;
     await SERVICES_LEAGUE.inviteToLeague({ leagueId, guestId });
     return res.status(201).send('user invited to league');
-  } catch (error: any) {
-    if (error === ErrorMapper.NOT_APP_MEMBER) {
-      return res.status(error.status).send(error.user);
+  } catch (error: unknown) {
+    if (error instanceof Error && 'status' in error && 'user' in error) {
+      return res
+        .status((error as { status: number }).status)
+        .send((error as { user: string }).user);
     }
     console.error(`[LEAGUE - inviteToLeague] ${error}`);
     return res
@@ -104,7 +106,7 @@ const getLeague = async (req: Request, res: Response) => {
       }
       throw error;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[LEAGUE - getLeague] ${error}`);
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
@@ -117,7 +119,7 @@ const updateLeagueTournaments = async (req: Request, res: Response) => {
     const { updateInput } = req.body;
     const result = await SERVICES_LEAGUE.updateLeagueTournaments(updateInput);
     return res.status(200).send(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[LEAGUE - updateLeagueTournaments] ${error}`);
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)

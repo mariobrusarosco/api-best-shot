@@ -55,7 +55,7 @@ export class S3FileStorage {
 
       Profiling.log({
         msg: `[S3FileStorage] File uploaded successfully: ${key}`,
-        color: 'FgGreen',
+        source: 'DATA_PROVIDER_FILE_STORAGE',
       });
       return key;
     } catch (error) {

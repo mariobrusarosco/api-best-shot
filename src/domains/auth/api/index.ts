@@ -36,7 +36,7 @@ const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) =
     }
 
     return res.status(200).send(result.token);
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'AUTH_API_authenticateUser',
       error,
@@ -56,7 +56,7 @@ const unauthenticateUser = (_: Request, res: Response) => {
       source: 'AUTH_API_unauthenticateUser',
     });
     return res.status(200).send({ message: 'Successfully logged out' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'AUTH_API_unauthenticateUser',
       error,

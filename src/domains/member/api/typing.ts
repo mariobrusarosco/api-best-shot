@@ -5,8 +5,8 @@ import { DB_InsertMember } from '../schema';
 export type CreateMemberInput = Omit<DB_InsertMember, 'id' | 'createdAt' | 'updatedAt'>;
 
 export type CreateMemberRequest = Request<
-  {},
-  {},
+  Record<string, never>,
+  Record<string, never>,
   CreateMemberInput,
   AuthenticateMemberRequest['query']
 >;

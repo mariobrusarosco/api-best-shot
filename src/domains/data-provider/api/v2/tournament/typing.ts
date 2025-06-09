@@ -15,4 +15,4 @@ export type CreateTournamentInput = {
   standingsMode: 'unique-group' | 'multi-group';
 };
 
-type UpdateTournamentInput = CreateTournamentInput;
+export type UpdateTournamentInput = CreateTournamentInput;

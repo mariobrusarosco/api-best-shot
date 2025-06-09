@@ -44,7 +44,7 @@ export interface API_SOFASCORE_STANDINGS {
     };
     type: string;
     name: string;
-    descriptions: [];
+    descriptions: never[];
     tieBreakingRule: {
       text: string;
       id: number;
@@ -81,7 +81,7 @@ export interface API_SOFASCORE_STANDING_TEAM {
       nameTranslation: {
         ru: string;
       };
-      shortNameTranslation: {};
+      shortNameTranslation: Record<string, never>;
     };
   };
   descriptions: [];

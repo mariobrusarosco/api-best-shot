@@ -1,6 +1,11 @@
 import { Request } from 'express';
 
-export type CreateGuessRequest = Request<{}, {}, GuessInput & { publicId: string }, {}>;
+export type CreateGuessRequest = Request<
+  Record<string, never>,
+  Record<string, never>,
+  GuessInput & { publicId: string },
+  Record<string, never>
+>;
 
 export type GuessInput = {
   id: string;
@@ -24,6 +29,22 @@ export const GUESS_STATUSES = {
 } as const;
 
 export type GUESS_STATUS = (typeof GUESS_STATUSES)[keyof typeof GUESS_STATUSES];
+
+export interface GuessAnalysis {
+  status: string;
+  fullMatch: {
+    status: 'correct' | 'incorrect';
+  };
+}
+
+export interface GuessesByOutcome {
+  correct: number;
+  incorrect: number;
+}
+
+export interface GuessesByStatus {
+  [key: string]: number;
+}
 
 export type MemberGuessesRequest = Request<
   {

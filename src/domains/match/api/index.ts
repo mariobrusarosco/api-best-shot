@@ -7,7 +7,7 @@ const getMatchesByTournament = async (req: Request, res: Response) => {
     const { tournamentId, roundId } = req.params;
     const matches = await SERVICES_MATCH.getMatchesByTournament(tournamentId, roundId);
     return res.status(200).send(matches);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[MATCH - getMatchesByTournament]', error);
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)

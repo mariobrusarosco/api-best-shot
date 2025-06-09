@@ -3,7 +3,7 @@ import { DB_SelectMatch } from '@/domains/match/schema';
 import { QUERIES_GUESS } from '@/domains/guess/queries';
 import { QUERIES_PERFORMANCE } from '../queries';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
-import _, { matches } from 'lodash';
+import _ from 'lodash';
 import db from '@/services/database';
 import {
   T_LeaguePerformance,
@@ -16,7 +16,6 @@ import Profiling from '@/services/profiling';
 import { and, eq } from 'drizzle-orm';
 import { queryMemberTournamentGuesses } from '../controller';
 import { DB_Performance } from '../database';
-import { QUERIES_MATCH } from '@/domains/match/queries';
 
 interface GuessWithMatch {
   guess: DB_SelectGuess;
@@ -29,20 +28,6 @@ const calculatePoints = (guesses: GuessWithMatch[]): string => {
     SERVICES_GUESS_V2.getTotalPointsFromTournamentGuesses(parsedGuesses);
 
   return totalPoints?.toString() ?? '0';
-};
-
-const updateMemberGuessesForTournament = async (
-  memberId: string,
-  tournamentId: string
-): Promise<GuessWithMatch[]> => {
-  const memberGuesses = await QUERIES_GUESS.selectMemberGuessesForTournament(
-    memberId,
-    tournamentId
-  );
-  const points = parseFloat(calculatePoints(memberGuesses));
-  await QUERIES_PERFORMANCE.tournament.updatePerformance(points, memberId, tournamentId);
-
-  return memberGuesses;
 };
 
 const getMemberPerformance = async (memberId: string, tournamentId: string) => {
@@ -62,31 +47,40 @@ const getMemberPerformance = async (memberId: string, tournamentId: string) => {
       points: performance?.points ?? '0',
       lastUpdated: performance?.updatedAt ?? null,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'PERFORMANCE_SERVICES_getMemberPerformance',
-      error,
+      error: error as Error,
     });
+    throw error;
   }
 };
 
 const getMemberBestAndWorstPerformance = async (memberId: string) => {
-  const tournamentPerformance =
-    await QUERIES_PERFORMANCE.tournament.getMemberGeneralPerformance(memberId);
-  if (!tournamentPerformance.length) {
-    return { worstPerformance: null, bestPerformance: null };
+  try {
+    const tournamentPerformance =
+      await QUERIES_PERFORMANCE.tournament.getMemberGeneralPerformance(memberId);
+    if (!tournamentPerformance.length) {
+      return { worstPerformance: null, bestPerformance: null };
+    }
+    const mapped = tournamentPerformance.map(row => ({
+      points: Number(row.tournament_performance.points),
+      label: row.tournament?.label,
+      id: row.tournament?.id,
+      logo: row.tournament?.logo,
+    }));
+
+    const worstPerformance = _.minBy(mapped, p => Number(p.points));
+    const bestPerformance = _.maxBy(mapped, p => Number(p.points));
+
+    return { worstPerformance, bestPerformance };
+  } catch (error: unknown) {
+    Profiling.error({
+      source: 'PERFORMANCE_SERVICES_getMemberBestAndWorstPerformance',
+      error: error as Error,
+    });
+    throw error;
   }
-  const mapped = tournamentPerformance.map(row => ({
-    points: Number(row.tournament_performance.points),
-    label: row.tournament?.label,
-    id: row.tournament?.id,
-    logo: row.tournament?.logo,
-  }));
-
-  const worstPerformance = _.minBy(mapped, p => Number(p.points));
-  const bestPerformance = _.maxBy(mapped, p => Number(p.points));
-
-  return { worstPerformance, bestPerformance };
 };
 
 const updateMemberPerformance = async (memberId: string, tournamentId: string) => {
@@ -201,8 +195,9 @@ const updateLeaguePerformance = async (leagueId: string) => {
     const result = await Promise.all(promises);
     console.log('promises -', promises, 'result', _.orderBy(result, 'points', ['desc']));
     return { leaderBoard: _.orderBy(result, 'points', ['desc']) };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ERROR] - updateLeaguePerformance', error);
+    throw error;
   }
 };
 
@@ -246,10 +241,10 @@ export const SERVICES_PERFORMANCE_V2 = {
 
         const results = await Promise.all(promises);
         return results.map(parsePerformance);
-      } catch (error: any) {
+      } catch (error: unknown) {
         Profiling.error({
           source: 'PERFORMANCE_SERVICES_updateGeneralPerformance',
-          error,
+          error: error as Error,
         });
         throw error;
       }

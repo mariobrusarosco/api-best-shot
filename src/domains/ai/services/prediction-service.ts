@@ -11,11 +11,6 @@ import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { zodResponseFormat } from 'openai/helpers/zod';
 
-// OpenAI client initialization
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 const client = new OpenAI();
 
 const MatchAnalysisResponse = z.object({
@@ -28,7 +23,9 @@ const MatchAnalysisResponse = z.object({
   confidence: z.number(),
 });
 
-export const getAIPredictionForMatch = async (matchId: string): Promise<any> => {
+export const getAIPredictionForMatch = async (
+  matchId: string
+): Promise<z.infer<typeof MatchAnalysisResponse>> => {
   // 1. Fetch match data
   const [match] = await db.select().from(T_Match).where(eq(T_Match.id, matchId));
 
@@ -104,7 +101,11 @@ export const getAIPredictionForMatch = async (matchId: string): Promise<any> => 
     temperature: 0.3,
   });
 
-  return response.choices[0].message.parsed;
+  const result = response.choices[0].message.parsed;
+  if (!result) {
+    throw new Error('Failed to parse AI response');
+  }
+  return result;
 };
 
 // Helper function to generate the prompt

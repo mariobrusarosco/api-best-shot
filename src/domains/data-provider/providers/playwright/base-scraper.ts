@@ -1,6 +1,5 @@
 import { Browser, BrowserContext, chromium, Page } from 'playwright';
 import { S3FileStorage } from '../file-storage';
-import { Profiling } from '@/services/profiling';
 import mime from 'mime-types';
 
 export type FetchAndStoreAssetPayload = {

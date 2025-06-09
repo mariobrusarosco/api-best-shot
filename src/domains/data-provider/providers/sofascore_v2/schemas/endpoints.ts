@@ -237,7 +237,7 @@ export interface ENDPOINT_MATCHES {
         nameTranslation: {
           ru: string;
         };
-        shortNameTranslation: {};
+        shortNameTranslation: Record<string, never>;
       };
     };
     awayTeam: {
@@ -272,7 +272,7 @@ export interface ENDPOINT_MATCHES {
         nameTranslation: {
           ru: string;
         };
-        shortNameTranslation: {};
+        shortNameTranslation: Record<string, never>;
       };
     };
     homeScore: {

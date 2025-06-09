@@ -7,6 +7,11 @@ import { and, eq } from 'drizzle-orm';
 import _ from 'lodash';
 import { queryMemberTournamentGuesses } from '../controller';
 import { DB_InsertTournamentPerformance, T_TournamentPerformance } from '../schema';
+import type {
+  GuessAnalysis,
+  GuessesByOutcome,
+  GuessesByStatus,
+} from '../../../domains/guess/typing';
 
 const queryPerformanceForTournament = async (memberId: string, tournamentId: string) => {
   const guesses = await db
@@ -16,7 +21,7 @@ const queryPerformanceForTournament = async (memberId: string, tournamentId: str
     .where(and(eq(T_Guess.memberId, memberId), eq(T_Match.tournamentId, tournamentId)));
 
   const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
-  const guessesByOutcome = parsedGuesses.reduce(
+  const guessesByOutcome = parsedGuesses.reduce<GuessesByOutcome>(
     (acc, guess) => {
       const updateCount = (status: string) => {
         if (status === 'correct') acc.correct++;
@@ -31,8 +36,8 @@ const queryPerformanceForTournament = async (memberId: string, tournamentId: str
   );
 
   const guessesByStatus = _.groupBy(parsedGuesses, ({ status }) => status);
-  const guessesByStatusQty = (
-    Object.entries(guessesByStatus) as [string, any[]][]
+  const guessesByStatusQty: GuessesByStatus = (
+    Object.entries(guessesByStatus) as [string, GuessAnalysis[]][]
   ).reduce((acc, [key, body]) => ({ ...acc, [key]: body?.length }), {});
 
   return {

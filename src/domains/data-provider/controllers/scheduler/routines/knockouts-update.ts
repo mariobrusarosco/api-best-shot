@@ -14,7 +14,7 @@ dayjs.extend(isToday);
 const client = new SchedulerClient({ region: 'us-east-1' });
 
 export const scheduleKnockoutsUpdateRoutine = async (schedule: {
-  targetInput: Object;
+  targetInput: Record<string, unknown>;
   id: string;
 }) => {
   try {

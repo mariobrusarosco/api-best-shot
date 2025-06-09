@@ -6,7 +6,6 @@ import {
 import db from '@/services/database';
 import axios, { AxiosError } from 'axios';
 import { API_SOFASCORE_STANDINGS, API_SOFASCORE_STANDING_TEAM } from './typing';
-import { DB_InsertTeam } from '@/domains/team/schema';
 
 export const SofascoreStandings: IApiProvider['standings'] = {
   fetchStandingsFromProvider: async (baseUrl: string) => {

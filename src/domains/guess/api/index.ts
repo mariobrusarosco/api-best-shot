@@ -16,7 +16,7 @@ const getMemberGuesses = async (req: MemberGuessesRequest, res: Response) => {
       tournamentId,
     });
     return res.status(200).send(memberGuesses);
-  } catch (error: any) {
+  } catch (error: unknown) {
     handleInternalServerErrorResponse(res, error);
   }
 };

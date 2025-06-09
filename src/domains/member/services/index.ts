@@ -9,8 +9,6 @@ import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
 import db from '@/services/database';
 import { eq } from 'drizzle-orm';
 import { CreateMemberInput } from '../api/typing';
-import { QUERIES_MEMBER } from '../queries';
-import Profiling from '@/services/profiling';
 
 const getMemberById = async (memberId: string) => {
   const [member] = await db

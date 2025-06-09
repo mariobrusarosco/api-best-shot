@@ -22,8 +22,9 @@ const updateTeams = async (teams: DB_InsertTeam[]) => {
         });
 
       Profiling.log({
-        msg: '[LOG] - [SofascoreTeams] - UPSERTING TEAM',
+        msg: '[SofascoreTeams] - UPSERTING TEAM',
         data: team,
+        source: 'TEAM_QUERIES_updateTeams',
       });
     }
   });

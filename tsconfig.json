@@ -23,7 +23,7 @@
   },
   "include": ["src/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist"],
-  "files": ["src/types/express/index.d.ts", "drizzle.config.ts"],
+  "files": ["src/types/express/index.d.ts", "drizzle.config.ts", "global.d.ts"],
   "ts-node": {
     "require": ["tsconfig-paths/register"]
   },

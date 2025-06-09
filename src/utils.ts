@@ -1,23 +1,19 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import axios from 'axios';
-import mime from 'mime-types';
-import { Profiling } from './services/profiling';
-import puppeteer from 'puppeteer';
+// No imports needed for these utility functions
 
-export const isNullable = (value: any) => {
+export const isNullable = (value: unknown) => {
   return value === null || value === undefined;
 };
 
-export const safeDate = (date: any) =>
-  date === null || date === undefined ? null : new Date(date);
+export const safeDate = (date: string | number | Date | null | undefined) =>
+  date === null || date === undefined ? null : new Date(date as string | number | Date);
 
-export const safeISODate = (date: any) => {
-  console.log(date, typeof date, new Date(date), typeof new Date(date));
-
-  return date === null || date === undefined ? null : new Date(date).toISOString();
+export const safeISODate = (date: string | number | Date | null | undefined) => {
+  if (date === null || date === undefined) return null;
+  const parsedDate = new Date(date as string | number | Date);
+  return parsedDate.toISOString();
 };
 
-export const safeString = (str: any, fallback: string | null = '') =>
+export const safeString = (str: unknown, fallback: string | null = '') =>
   str === null || str === undefined ? fallback : String(str);
 
 export const toNumberOrNull = (val: string | null | undefined) => {

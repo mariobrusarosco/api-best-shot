@@ -76,7 +76,7 @@ async function getMemberGuesses({
     const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
 
     return parsedGuesses;
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'GUESS_CONTROLLERS_getMemberGuesses',
       error,
@@ -124,7 +124,7 @@ async function createGuess(req: CreateGuessRequest, res: Response) {
     const parsed = runGuessAnalysis(guessAndMatch.guess, guessAndMatch.match);
 
     res.status(200).send(parsed);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ERROR] [GUESS] [CREATING GUESS]');
     return handleInternalServerErrorResponse(res, error);
   }

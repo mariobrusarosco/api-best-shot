@@ -15,7 +15,7 @@ const client = new SchedulerClient({ region: 'us-east-1' });
 
 export const scheduleScoresAndStandingsRoutine = async (schedule: {
   cronExpression: string;
-  targetInput: Object;
+  targetInput: Record<string, unknown>;
   id: string;
 }) => {
   try {

@@ -16,7 +16,7 @@ const getMember = async (req: Request, res: Response) => {
     }
 
     return res.status(200).send(member);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ERROR] [getMember]', error);
     return handleInternalServerErrorResponse(res, error);
   }
@@ -32,7 +32,7 @@ const getMemberV2 = async (req: Request, res: Response) => {
     }
 
     return res.status(200).send(member);
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'MEMBER_API_getMemberV2',
       error,
@@ -51,7 +51,7 @@ const createMember = async (req: Request, res: Response) => {
     }
 
     return res.status(201).send(member);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ERROR] [createMember]', error);
     return handleInternalServerErrorResponse(res, error);
   }
@@ -62,7 +62,7 @@ const getGeneralTournamentPerformance = async (req: Request, res: Response) => {
     const memberId = Utils.getAuthenticatedUserId(req, res);
     const performance = await MemberService.getGeneralTournamentPerformance(memberId);
     return res.status(200).send(performance);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ERROR] [getGeneralTournamentPerformance]', error);
     return handleInternalServerErrorResponse(res, error);
   }
@@ -73,7 +73,7 @@ const getGeneralTournamentPerformanceV2 = async (req: Request, res: Response) =>
     const memberId = Utils.getAuthenticatedUserId(req, res);
     const performance = await MemberService.getGeneralTournamentPerformanceV2(memberId);
     return res.status(200).send(performance);
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'MEMBER_API_getGeneralTournamentPerformanceV2',
       error,
@@ -90,7 +90,7 @@ const getMemberPerformanceForAllTournaments = async (req: Request, res: Response
 
     res.status(200).send(bestAndWorstPerformance);
     return;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching matches:', error);
     handleInternalServerErrorResponse(res, error);
     return;

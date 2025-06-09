@@ -16,10 +16,10 @@ export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) 
     };
 
     next();
-  } catch (error) {
+  } catch (error: unknown) {
     Profiling.error({
       source: PROFILLING_AUTH.AUTH_MIDDLEWARE_ERROR,
-      error,
+      error: error as Error,
     });
 
     res

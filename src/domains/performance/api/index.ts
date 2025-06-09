@@ -15,7 +15,7 @@ const updateTournamentPerformance = async (req: Request, res: Response) => {
       points
     );
     return res.status(200).send('SUCCESS');
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[PERFORMANCE - updateTournamentPerformance]', error);
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)

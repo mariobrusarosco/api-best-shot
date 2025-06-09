@@ -5,7 +5,6 @@ import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import utc from 'dayjs/plugin/utc';
 import { GUESS_STATUS, GUESS_STATUSES } from '../typing';
-import { runGuessAnalysis } from '../controllers/guess-analysis';
 import { QUERIES_GUESS } from '../queries';
 
 dayjs.extend(utc);

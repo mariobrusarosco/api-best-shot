@@ -9,16 +9,16 @@ const createRounds = async (req: TournamentRoundRequest, res: Response) => {
   try {
     const rounds = await TournamentRoundController.create(tournamentId);
     Profiling.log({
-      msg: `[LOG] - [DATA PROVIDER] - [CREATE ROUNDS FOR TOURNAMENT] - [${tournamentId}]`,
+      msg: `[DATA PROVIDER] - [CREATE ROUNDS FOR TOURNAMENT] - [${tournamentId}]`,
       data: rounds,
-      color: 'FgGreen',
+      source: 'DATA_PROVIDER_TOURNAMENT_ROUND_createRounds',
     });
     return res.status(200).send(rounds);
-  } catch (error: any) {
-    Profiling.error(
-      `[ERROR] - [DATA PROVIDER] - [CREATE ROUNDS FOR  TOURNAMENT] - [${tournamentId}]`,
-      error
-    );
+  } catch (error: unknown) {
+    Profiling.error({
+      source: 'DATA_PROVIDER_TOURNAMENT_ROUND_createRounds',
+      error: error as Error,
+    });
 
     handleInternalServerErrorResponse(res, error);
   }
@@ -29,16 +29,16 @@ const updateRounds = async (req: TournamentRoundRequest, res: Response) => {
   try {
     const rounds = await TournamentRoundController.update(tournamentId);
     Profiling.log({
-      msg: `[LOG] - [DATA PROVIDER] - [UPDATE ROUNDS FOR TOURNAMENT] - [${tournamentId}]`,
+      msg: `[DATA PROVIDER] - [UPDATE ROUNDS FOR TOURNAMENT] - [${tournamentId}]`,
       data: rounds,
-      color: 'FgGreen',
+      source: 'DATA_PROVIDER_TOURNAMENT_ROUND_updateRounds',
     });
     return res.status(200).send(rounds);
-  } catch (error: any) {
-    Profiling.error(
-      `[ERROR] - [DATA PROVIDER] - [UPDATE STANDINGS FOR  TOURNAMENT] - [${tournamentId}]`,
-      error
-    );
+  } catch (error: unknown) {
+    Profiling.error({
+      source: 'DATA_PROVIDER_TOURNAMENT_ROUND_updateRounds',
+      error: error as Error,
+    });
 
     handleInternalServerErrorResponse(res, error);
   }
@@ -49,16 +49,16 @@ const knockoutRoundsUpdate = async (req: TournamentRoundRequest, res: Response) 
   try {
     const rounds = await TournamentRoundController.knockoutRoundsUpdate(tournamentId);
     Profiling.log({
-      msg: `[LOG] - [DATA PROVIDER] - [UPDATE KNOCKOUT ROUNDS FOR TOURNAMENT] - [${tournamentId}]`,
+      msg: `[DATA PROVIDER] - [UPDATE KNOCKOUT ROUNDS FOR TOURNAMENT] - [${tournamentId}]`,
       data: rounds,
-      color: 'FgGreen',
+      source: 'DATA_PROVIDER_TOURNAMENT_ROUND_knockoutRoundsUpdate',
     });
     return res.status(200).send(rounds);
-  } catch (error: any) {
-    Profiling.error(
-      `[ERROR] - [DATA PROVIDER] - [UPDATE KNOCKOUT ROUNDS FOR  TOURNAMENT] - [${tournamentId}]`,
-      Error
-    );
+  } catch (error: unknown) {
+    Profiling.error({
+      source: 'DATA_PROVIDER_TOURNAMENT_ROUND_knockoutRoundsUpdate',
+      error: error as Error,
+    });
 
     handleInternalServerErrorResponse(res, error);
   }

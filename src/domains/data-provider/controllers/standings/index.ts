@@ -16,7 +16,7 @@ const create = async (tournamentId: string) => {
   if (mode === 'knockout-only') {
     Profiling.log({
       msg: 'Knockout-only tournaments do not have standings',
-      color: 'FgYellow',
+      source: 'DATA_PROVIDER_STANDINGS_CONTROLLER',
     });
     return null;
   }
@@ -26,7 +26,7 @@ const create = async (tournamentId: string) => {
   if (!data) {
     Profiling.log({
       msg: `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`,
-      color: 'FgYellow',
+      source: 'DATA_PROVIDER_STANDINGS_CONTROLLER',
     });
     return null;
   }
@@ -41,7 +41,7 @@ const create = async (tournamentId: string) => {
   Profiling.log({
     msg: `[DATA PROVIDER] - [STANDINGS] - CREATING STANDINGS FOR TOURNAMENT ${label}`,
     data: { standings: mappedStandings },
-    color: 'FgGreen',
+    source: 'DATA_PROVIDER_STANDINGS_CONTROLLER',
   });
 
   return query;
@@ -62,7 +62,7 @@ const update = async (tournamentId: string) => {
   if (mode === 'knockout-only') {
     Profiling.log({
       msg: '[DATA PROVIDER] - [STANDINGS] - KNOCKOUT-ONLY TOURNAMENT DO NOT HAVE STANDINGS',
-      color: 'FgYellow',
+      source: 'DATA_PROVIDER_STANDINGS_CONTROLLER',
     });
     return null;
   }
@@ -72,7 +72,7 @@ const update = async (tournamentId: string) => {
   if (!data) {
     Profiling.log({
       msg: `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`,
-      color: 'FgYellow',
+      source: 'DATA_PROVIDER_STANDINGS_CONTROLLER',
     });
     return null;
   }
@@ -87,7 +87,7 @@ const update = async (tournamentId: string) => {
   Profiling.log({
     msg: `[DATA PROVIDER] - [STANDINGS] - UPDATING STANDINGS FOR TOURNAMENT ${label}`,
     data: { standings: mappedStandings },
-    color: 'FgGreen',
+    source: 'DATA_PROVIDER_STANDINGS_CONTROLLER',
   });
 
   return query;

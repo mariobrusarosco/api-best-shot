@@ -19,7 +19,7 @@ async function authenticateUser(req: AuthenticateMemberRequest, res: Response) {
     const token = Utils.signUserCookieBased({ memberId: member.id, res });
 
     return res.status(200).send(token);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[AUTH - authenticateUser] ${error}`);
 
     return res

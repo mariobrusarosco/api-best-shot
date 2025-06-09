@@ -9,7 +9,11 @@ import puppeteer from 'puppeteer';
 export const SofascoreTournamentRound: IApiProvider['rounds'] = {
   fetchShallowListOfRoundsFromProvider: async baseUrl => {
     const roundsUrl = `${baseUrl}/rounds`;
-    console.log(`[LOG] - [START] - FETCHING SHALLOW LIST OF ROUNDS - AT: ${roundsUrl}`);
+    Profiling.log({
+      msg: `[START] - FETCHING SHALLOW LIST OF ROUNDS`,
+      data: { roundsUrl },
+      source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
+    });
 
     // Define browser-like headers to bypass potential 403
     const headers = {
@@ -23,12 +27,15 @@ export const SofascoreTournamentRound: IApiProvider['rounds'] = {
       // First attempt with Axios using browser headers
       const response = await axios.get(roundsUrl, { headers });
       data = response.data;
-      console.log('[LOG] - [SUCCESS] - SHALLOW LIST OF ROUNDS DONE via Axios');
+      Profiling.log({
+        msg: '[SUCCESS] - SHALLOW LIST OF ROUNDS DONE via Axios',
+        source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
+      });
     } catch (axiosError) {
-      Profiling.error(
-        'Axios request failed for rounds, falling back to Puppeteer',
-        axiosError
-      );
+      Profiling.error({
+        source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
+        error: axiosError as Error,
+      });
       // Fallback to Puppeteer to perform fetch in browser context
       const browser = await puppeteer.launch({
         headless: true,
@@ -47,21 +54,36 @@ export const SofascoreTournamentRound: IApiProvider['rounds'] = {
           headers
         );
         data = JSON.parse(content);
-        console.log('[LOG] - [SUCCESS] - SHALLOW LIST OF ROUNDS DONE via Puppeteer');
+        Profiling.log({
+          msg: '[SUCCESS] - SHALLOW LIST OF ROUNDS DONE via Puppeteer',
+          source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
+        });
       } finally {
         await browser.close();
       }
     }
 
-    console.log('[LOG] - [SUCCESS] - SHALLOW LIST OF ROUNDS DONE: ', data);
+    Profiling.log({
+      msg: '[SUCCESS] - SHALLOW LIST OF ROUNDS DONE',
+      data,
+      source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
+    });
     return data;
   },
   fetchRoundFromProvider: async providerUrl => {
-    console.log(`[LOG] - [START] AT: ${providerUrl}`);
+    Profiling.log({
+      msg: '[START] - FETCHING ROUND',
+      data: { providerUrl },
+      source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
+    });
 
     const response = await axios.get(providerUrl);
     const data = response.data;
-    console.log(`[LOG] - [END] AT: ${providerUrl}`);
+    Profiling.log({
+      msg: '[END] - FETCHING ROUND',
+      data: { providerUrl },
+      source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
+    });
 
     return data;
   },
@@ -75,14 +97,18 @@ export const SofascoreTournamentRound: IApiProvider['rounds'] = {
     return rounds;
   },
   upsertOnDatabase: async roundsToUpdate => {
-    console.log('[LOG] - [SofascoreTournamentRounds] - UPSERTING ROUNDS ON DATABASE');
+    Profiling.log({
+      msg: '[START] - UPSERTING ROUNDS ON DATABASE',
+      source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
+    });
 
     return await db.transaction(async tx => {
       for (const round of roundsToUpdate) {
-        console.log(
-          '[LOG] - [SofascoreTournamentRounds],' + ' - UPSERTING ROUND: ',
-          round
-        );
+        Profiling.log({
+          msg: '[PROGRESS] - UPSERTING ROUND',
+          data: round,
+          source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
+        });
 
         await tx
           .insert(T_TournamentRound)
@@ -94,7 +120,11 @@ export const SofascoreTournamentRound: IApiProvider['rounds'] = {
             },
           });
 
-        console.log('[LOG] - [SofascoreTournamentRounds] - UPSERTING ROUND: ', round);
+        Profiling.log({
+          msg: '[SUCCESS] - UPSERTING ROUND',
+          data: round,
+          source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
+        });
       }
     });
   },

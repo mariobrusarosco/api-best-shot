@@ -142,7 +142,7 @@ const getMatchesByTournament = async (tournamentId: string, roundId: string) => 
       .leftJoin(homeTeam, eq(T_Match.homeTeamId, homeTeam.externalId))
       .leftJoin(awayTeam, eq(T_Match.awayTeamId, awayTeam.externalId))
       .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, roundId)));
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[MATCH QUERIES] - [getMatchesByTournament]', error);
     throw error;
   }

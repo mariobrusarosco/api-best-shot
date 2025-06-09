@@ -3,7 +3,7 @@ import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import { TournamentQuery } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { sleep } from '@/utils';
-import { error } from 'console';
+
 import { SofascoreStandings } from '../../providers/sofascore/standings';
 import { SofascoreTournamentRound } from '../../providers/sofascore/tournament-rounds';
 
@@ -15,17 +15,20 @@ export const fetchAndMapTeamsForRegularSeason = async (
   );
 
   if (!standings) {
-    Profiling.error(
-      `[DATA PROVIDER] - [TEAMS] - [FETCHING TEAMS FOR A REGULAR SEASON] - ${tournament.label} DOES NOT HAVE A STANDING IN PLACE YET`,
-      error
-    );
+    Profiling.error({
+      source: 'DATA_PROVIDER_TEAMS_FETCHER',
+      error: new Error(
+        `[DATA PROVIDER] - [TEAMS] - [FETCHING TEAMS FOR A REGULAR SEASON] - ${tournament.label} DOES NOT HAVE A STANDING IN PLACE YET`
+      ),
+    });
     return [];
   }
 
-  const mappedTeamsFromStandings = await SofascoreTeams.mapTeamsFromStandings(
-    standings,
-    tournament.provider
-  );
+  const getTeamsFromStandings = async (tournament: NonNullable<TournamentQuery>) => {
+    return SofascoreTeams.mapTeamsFromStandings(standings, tournament.provider);
+  };
+
+  const mappedTeamsFromStandings = await getTeamsFromStandings(tournament);
 
   Profiling.log({
     msg: `[DATA PROVIDER] - [TEAMS] - [FETCHING AND MAPPING] - [FOR REGULAR SEASON OF TOURNAMENT:${tournament.label}]`,
@@ -33,7 +36,7 @@ export const fetchAndMapTeamsForRegularSeason = async (
       tournamentLabel: tournament.label,
       teams: mappedTeamsFromStandings,
     },
-    color: 'FgBlue',
+    source: 'DATA_PROVIDER_TEAMS_FETCHER',
   });
 
   return mappedTeamsFromStandings;
@@ -71,7 +74,7 @@ export const fetchAndMapTeamsFromKnockoutRounds = async (
       tournamentLabel: tournament.label,
       teams: ALL_TEAMS,
     },
-    color: 'FgBlue',
+    source: 'DATA_PROVIDER_TEAMS_FETCHER',
   });
 
   return ALL_TEAMS;

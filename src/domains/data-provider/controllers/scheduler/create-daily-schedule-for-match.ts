@@ -39,7 +39,7 @@ const generateScheduleId = (
 
   return `${env}${tournamentLabel}_${estimatedEndOfMatch.format('YYYY_MM_DD_HH_mm')}`
     .toLowerCase()
-    .replace(/[\s\/\-]+/g, '_');
+    .replace(/[\s/-]+/g, '_');
 };
 
 const buildSchedule = (

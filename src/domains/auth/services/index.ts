@@ -2,7 +2,6 @@
 import { Utils } from '@/domains/auth/utils';
 import { Response } from 'express';
 import { QUERIES_AUTH } from '../queries';
-import { ErrorMapper } from '@/domains/auth/error-handling/mapper';
 
 const authenticateUser = async (publicId: string, res: Response) => {
   const member = await QUERIES_AUTH.getMemberByPublicId(publicId);

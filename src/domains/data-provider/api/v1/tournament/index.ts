@@ -16,13 +16,14 @@ const setup = async (req: TournamentRequest, res: Response) => {
         input: req.body,
       });
       Profiling.log({
-        msg: '[DATA PROVIDER] - [SETUP 1]- [CREATE TOURNAMENT] - [SUCCESS]',
+        msg: '[SETUP 1] - CREATE TOURNAMENT - SUCCESS',
         data: { tournament },
-        color: 'FgGreen',
+        source: 'DATA_PROVIDER_TOURNAMENT_setup',
       });
-    } catch (error: any) {
-      Profiling.error('[DATA PROVIDER] - [SETUP 1]- [CREATE TOURNAMENT] - [ERROR]', {
-        error,
+    } catch (error: unknown) {
+      Profiling.error({
+        source: 'DATA_PROVIDER_TOURNAMENT_setup',
+        error: error as Error,
       });
     }
 
@@ -33,13 +34,14 @@ const setup = async (req: TournamentRequest, res: Response) => {
       // SETUP TOURNAMENTS ROUNDS
       rounds = await TournamentRoundController.create(tournament.id!);
       Profiling.log({
-        msg: '[DATA PROVIDER] - [SETUP 2] - [CREATE ROUNDS] - [SUCCESS]',
+        msg: '[SETUP 2] - CREATE ROUNDS - SUCCESS',
         data: { rounds },
-        color: 'FgGreen',
+        source: 'DATA_PROVIDER_TOURNAMENT_setup',
       });
-    } catch (error: any) {
-      Profiling.error('[DATA PROVIDER] - [SETUP 2] - [CREATE ROUNDS] - [ERROR]', {
-        error,
+    } catch (error: unknown) {
+      Profiling.error({
+        source: 'DATA_PROVIDER_TOURNAMENT_setup',
+        error: error as Error,
       });
     }
 
@@ -66,8 +68,8 @@ const setup = async (req: TournamentRequest, res: Response) => {
     // });
 
     return res.status(200).send('[SETUP COMPLETED]');
-  } catch (error: any) {
-    handleInternalServerErrorResponse(res, error);
+  } catch (error: unknown) {
+    handleInternalServerErrorResponse(res, error as Error);
   }
 };
 
@@ -80,8 +82,8 @@ const update = async (req: TournamentRequest, res: Response) => {
     if (!updatedTournament) throw new Error('Tournament not updated');
 
     return res.status(200).send(updatedTournament);
-  } catch (error: any) {
-    handleInternalServerErrorResponse(res, error);
+  } catch (error: unknown) {
+    handleInternalServerErrorResponse(res, error as Error);
   }
 };
 

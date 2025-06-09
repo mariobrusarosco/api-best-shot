@@ -1,4 +1,3 @@
-import { T_Tournament } from '@/domains/tournament/schema';
 import { numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Match = pgTable(

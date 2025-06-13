@@ -5,26 +5,29 @@ const ENV = process.env.NODE_ENV;
 const enableProfiling = ENV === 'production' || ENV === 'demo';
 
 export const Profiling = {
-  error: ({ source, error }: { source: string; error: unknown }) => {
-    const finalMessage = `[${ENV}] - [ERROR] - [${source}] - ${error}`;
+  error: ({ source, error }: { source?: string; error: unknown }) => {
+    const finalMessage = `[${ENV}] - [ERROR] - [${source}]`;
 
     if (enableProfiling) {
       return Sentry.captureException(finalMessage, { extra: { error } });
     }
 
-    console.log(pc.red(pc.bold(finalMessage)));
+    console.log(pc.red(pc.bold(finalMessage)), error);
   },
-  log: ({ msg, data, source }: { msg: string; data?: any; source: string }) => {
-    const finalMessage = `[${ENV}] - [LOG] - [${source}] - ${msg}`;
-
+  log: ({ msg, data, source }: { msg: string; data?: any; source?: string }) => {
     if (enableProfiling) {
-      return Sentry.captureMessage(finalMessage, {
+      return Sentry.captureMessage('[LOG]', {
         level: 'log',
-        extra: { data },
+        extra: { data, msg, source },
       });
     }
 
-    console.log(pc.green(finalMessage), data);
+    console.log('\n');
+    console.log(pc.bgWhite(pc.bold('------START LOG------')));
+    console.log(pc.magenta(`MSG: ${msg}`));
+    console.log(pc.yellow(`DATA: ${JSON.stringify(data, null, 2)}`));
+    console.log(pc.bgWhite(pc.bold('------END LOG------')));
+    console.log('\n');
   },
 };
 

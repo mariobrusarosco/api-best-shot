@@ -64,7 +64,7 @@ export class RoundDataProviderService {
           label: label,
           slug: slug.toLowerCase(),
           knockoutId: round.prefix,
-          type: isKnockoutRound ? 'knockout' : 'season',
+          type: isKnockoutRound || isSpecialRound ? 'knockout' : 'season',
           name: round.name,
         } as DB_InsertTournamentRound;
       });

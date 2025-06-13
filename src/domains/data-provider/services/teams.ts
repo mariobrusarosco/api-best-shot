@@ -1,4 +1,8 @@
-import type { ENDPOINT_STANDINGS } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
+import type {
+  ENDPOINT_ROUND,
+  ENDPOINT_STANDINGS,
+  I_TEAM_FROM_ROUND,
+} from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { Profiling } from '@/services/profiling';
 import { DB_InsertTeam } from '@/domains/team/schema';
@@ -6,6 +10,7 @@ import { safeString, sleep } from '@/utils';
 import { QUERIES_TEAMS } from '@/domains/team/queries';
 import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { round } from 'lodash';
 
 export class TeamsService {
   private scraper: BaseScraper;
@@ -18,28 +23,18 @@ export class TeamsService {
     return `https://api.sofascore.app/api/v1/team/${teamId}/image`;
   }
 
-  private async enhanceTeamWithLogo(team: {
-    id: string | number;
-    name: string;
-    shortName: string;
-    nameCode: string;
-  }) {
+  private async enhanceTeamWithLogo(team: DB_InsertTeam) {
     try {
-      const logoUrl = this.getTeamLogoUrl(team.id);
+      const logoUrl = this.getTeamLogoUrl(team.externalId);
       const s3Key = await this.scraper.uploadAsset({
         logoUrl,
-        filename: `team-${team.id}`,
+        filename: `team-${team.externalId}`,
       });
-
-      if (!team.id)
-        throw new Error(
-          `[TeamsService] - [ERROR] - [ENHANCE TEAM WITH LOGO] - [TEAM ID IS NULL] - [TEAM] ${team.name}`
-        );
 
       return {
         name: team.name,
-        externalId: safeString(team.id) as string,
-        shortName: team.nameCode,
+        externalId: safeString(team.externalId) as string,
+        shortName: team.shortName,
         badge: this.scraper.getCloudFrontUrl(s3Key),
         provider: 'sofa',
       } satisfies DB_InsertTeam;
@@ -52,47 +47,61 @@ export class TeamsService {
     }
   }
 
-  public async mapTournamentTeams(standingsResponse: ENDPOINT_STANDINGS) {
+  public mapTeamsFromStandings(standingsResponse: ENDPOINT_STANDINGS): DB_InsertTeam[] {
     const groups = standingsResponse.standings.map(group => {
       const groupTeams = group.rows.map(row => {
         const team = row.team;
         return {
-          id: team.id,
+          externalId: team.id.toString(),
           name: team.name,
           shortName: team.shortName,
           slug: team.slug,
           nameCode: team.nameCode,
+          provider: 'sofa',
+          badge: '',
         };
       });
-      return {
-        groupId: group.id,
-        groupName: group.name,
-        teams: groupTeams,
-      };
+      return groupTeams;
     });
 
-    return groups.flatMap(group => group.teams);
+    const teams = groups.flat();
+
+    Profiling.log({
+      msg: '[SUCCESS] - MAPPED TEAMS FROM STANDINGS',
+      source: 'DATA_PROVIDER_TEAMS_mapTeamsFromStandings',
+      data: { teams },
+    });
+
+    return teams;
   }
 
-  public async fetchTeamsFromStandings(baseUrl: string) {
+  public mapTeamsFromRound(teams: I_TEAM_FROM_ROUND[]): DB_InsertTeam[] {
+    return teams.map(team => {
+      return {
+        name: team.name,
+        shortName: team.shortName,
+        slug: team.slug,
+        nameCode: team.nameCode,
+        externalId: team.id.toString(),
+        provider: 'sofa',
+        badge: '',
+      };
+    });
+  }
+
+  public async fetchTeamsFromStandings(
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
+  ) {
     try {
-      const url = `${baseUrl}/standings/total`;
+      const url = `${tournament.baseUrl}/standings/total`;
       await this.scraper.goto(url);
       Profiling.log({
         msg: '[START] - FETCHING TEAMS FROM STANDINGS',
         source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
         data: { url },
       });
-      const rawContent = await this.scraper.getPageContent();
-      const teams = await this.mapTournamentTeams(rawContent);
-
-      Profiling.log({
-        msg: '[SUCCESS] - FETCHED TEAMS FROM STANDINGS',
-        source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
-        data: { teamsCount: teams.length },
-      });
-
-      return teams;
+      const fetchResult = (await this.scraper.getPageContent()) as ENDPOINT_STANDINGS;
+      return fetchResult;
     } catch (error: unknown) {
       Profiling.error({
         source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
@@ -102,39 +111,45 @@ export class TeamsService {
     }
   }
 
-  public async fetchTeamsFromKnockoutRounds(tournamentId: string) {
+  public async fetchTeamsFromKnockoutRounds(
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
+  ) {
     try {
       const rounds = await TournamentRoundsQueries.getKnockoutRounds({
-        tournamentId,
+        tournamentId: tournament.id,
       });
-
       Profiling.log({
-        msg: '[START] - FETCHING TEAMS FROM KNOCKOUT ROUNDS',
-        source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
-        data: { roundsCount: rounds.length },
+        msg: `[Rounds from database]`,
+        data: { rounds },
       });
 
-      const ALL_KNOCKOUT_TEAMS = [];
-
+      const ALL_KNOCKOUT_TEAMS = [] as I_TEAM_FROM_ROUND[];
       for (const round of rounds) {
-        Profiling.log({
-          msg: '[START] - FETCHING ROUND',
-          data: { roundUrl: round.providerUrl },
-          source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
-        });
-
         await this.scraper.goto(round.providerUrl);
-        const rawContent = await this.scraper.getPageContent();
-        const teams = await this.mapTournamentTeams(rawContent);
-        ALL_KNOCKOUT_TEAMS.push(...teams);
+
+        const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
+
+        if (!rawContent?.events || rawContent?.events?.length === 0) {
+          Profiling.log({
+            msg: `[No data returned from round? (${round.slug}) Skipping to next round]`,
+          });
+          await sleep(2000);
+          continue;
+        }
+
+        const roundMatches = rawContent.events;
+        const roundTeams = roundMatches.flatMap(match => [
+          match.homeTeam,
+          match.awayTeam,
+        ]);
 
         Profiling.log({
-          msg: '[SUCCESS] - FETCHED ROUND',
-          source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
-          data: { teamsCount: teams.length },
+          msg: `[Fetched teams from round ${round.slug}]`,
+          data: { roundTeams },
         });
 
-        await sleep(3000);
+        ALL_KNOCKOUT_TEAMS.push(...roundTeams);
+        await sleep(2000);
       }
 
       Profiling.log({
@@ -185,39 +200,44 @@ export class TeamsService {
   public async init(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
-    const teamsFromStandings = await this.fetchTeamsFromStandings(tournament.baseUrl);
-    const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(
-      tournament.baseUrl
-    );
-    const allTeams = [...teamsFromStandings, ...teamsFromKnockoutRounds];
+    Profiling.log({
+      msg: `[Setup of teams for tournament ${tournament.label}]`,
+      data: { tournament },
+    });
 
+    const teamsFromStandings = await this.fetchTeamsFromStandings(tournament);
+    const mappedTeamsFromStandings = this.mapTeamsFromStandings(teamsFromStandings);
     Profiling.log({
-      msg: `Number of teams from standings: ${teamsFromStandings.length}`,
-      source: 'DATA_PROVIDER_TEAMS_processTeams',
+      msg: `Number of teams from standings: ${mappedTeamsFromStandings.length}`,
     });
+
+    const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
+    const mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
     Profiling.log({
-      msg: `Number of teams from knockout rounds: ${teamsFromKnockoutRounds.length}`,
-      source: 'DATA_PROVIDER_TEAMS_processTeams',
+      msg: `Number of teams from knockout rounds: ${mappedTeamsFromKnockoutRounds.length}`,
     });
+
+    const allTeams = removeDuplicatesTeams(
+      mappedTeamsFromStandings,
+      mappedTeamsFromKnockoutRounds
+    );
     Profiling.log({
-      msg: `Number of teams to be processed: ${allTeams.length}`,
-      source: 'DATA_PROVIDER_TEAMS_processTeams',
+      msg: `Teams to be processed`,
+      data: allTeams,
     });
 
     const enhancedTeams: DB_InsertTeam[] = [];
-
-    // Process teams sequentially
     for (const team of allTeams) {
       try {
         Profiling.log({
           msg: `[START] - ENHANCING TEAM ${team.name}`,
-          source: 'DATA_PROVIDER_TEAMS_processTeams',
+          data: team,
         });
         const enhancedTeam = await this.enhanceTeamWithLogo(team);
         enhancedTeams.push(enhancedTeam);
         Profiling.log({
           msg: `[SUCCESS] - ENHANCED TEAM ${team.name}`,
-          source: 'DATA_PROVIDER_TEAMS_processTeams',
+          data: enhancedTeam,
         });
         await sleep(1000);
       } catch (error) {
@@ -234,3 +254,11 @@ export class TeamsService {
     return query;
   }
 }
+
+const removeDuplicatesTeams = (
+  teamFromStandings: DB_InsertTeam[],
+  teamFromKnockoutRounds: DB_InsertTeam[]
+) => {
+  const allTeams = new Set([...teamFromStandings, ...teamFromKnockoutRounds]);
+  return Array.from(allTeams);
+};

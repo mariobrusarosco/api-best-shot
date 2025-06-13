@@ -131,7 +131,7 @@ export interface ENDPOINT_ROUNDS {
   }>;
 }
 
-export interface ENDPOINT_MATCHES {
+export interface ENDPOINT_ROUND {
   events: Array<{
     tournament: {
       name: string;
@@ -316,3 +316,7 @@ export interface ENDPOINT_MATCHES {
     isEditor: boolean;
   }>;
 }
+
+export type I_TEAM_FROM_ROUND =
+  | ENDPOINT_ROUND['events'][number]['homeTeam']
+  | ENDPOINT_ROUND['events'][number]['awayTeam'];

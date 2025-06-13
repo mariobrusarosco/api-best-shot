@@ -86,7 +86,7 @@ export const T_TournamentRound = pgTable(
     tournamentId: text('tournament_id').notNull(),
     order: text('order').notNull(),
     label: text('label').notNull(),
-    slug: text('slug').default(''),
+    slug: text('slug').notNull(),
     knockoutId: text('knockout_id').default(''),
     prefix: text('prefix').default(''),
     providerUrl: text('provider_url').notNull(),

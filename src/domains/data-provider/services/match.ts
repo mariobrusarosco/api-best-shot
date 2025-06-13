@@ -32,9 +32,7 @@ export class MatchesService {
 
         await this.scraper.goto(round.providerUrl);
         const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_MATCHES;
-        const matches = this.mapMatches(rawContent, tournamentId);
-
-        console.log();
+        const matches = this.mapMatches(rawContent, tournamentId, round.slug);
 
         roundsWithMatches.push(matches);
       }
@@ -46,14 +44,18 @@ export class MatchesService {
     }
   }
 
-  public mapMatches(rawContent: ENDPOINT_MATCHES, tournamentId: string) {
+  public mapMatches(
+    rawContent: ENDPOINT_MATCHES,
+    tournamentId: string,
+    roundSlug: string
+  ) {
     try {
       const matches = rawContent.events.map(event => {
         return {
           externalId: safeString(event.id),
           provider: 'sofa',
           tournamentId,
-          roundSlug: safeString(event.roundInfo.round),
+          roundSlug,
           homeTeamId: safeString(event.homeTeam.id),
           homeScore: safeString(event.homeScore.display, null),
           homePenaltiesScore: safeString(event.homeScore.penalties, null),

@@ -474,3 +474,200 @@ Note: If you find that you need other browsers besides Chromium, you can modify 
 Let me know if you need any clarification or run into other issues!
 
 ---
+
+_**User**_
+
+Call log:
+
+    at BaseScraper.init (/app/dist/src/domains/data-provider/providers/playwright/base-scraper.js:23:56)
+
+    at BaseScraper.createInstance (/app/dist/src/domains/data-provider/providers/playwright/base-scraper.js:40:31)
+
+    at create (/app/dist/src/domains/data-provider/api/v2/tournament/index.js:12:58)
+
+    at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at Route.dispatch (/app/node_modules/express/lib/router/route.js:119:3)
+
+- <launching> /root/.cache/ms-playwright/chromium-1169/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AcceptCHFrame,AutoExpandDetailsElement,AvoidUnnecessaryBeforeUnloadCheckSync,CertificateTransparencyComponentUpdater,DeferRendererTasksAfterInput,DestroyProfileOnBrowserClose,DialMediaRouteProvider,ExtensionManifestV2Disabled,GlobalMediaControls,HttpsUpgrades,ImprovedCookieControls,LazyFrameLoading,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-Mienzk --remote-debugging-pipe --no-startup-window
+
+  at patched (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:210:37)
+
+  at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+  at /app/node_modules/express/lib/router/index.js:284:15
+
+  at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+  at next (/app/node_modules/express/lib/router/index.js:280:10)
+
+  at Function.handle (/app/node_modules/express/lib/router/index.js:175:3)
+
+  at router (/app/node_modules/express/lib/router/index.js:47:12)
+
+  at patched (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:210:37)
+
+  at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+  at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+
+  at /app/node_modules/express/lib/router/index.js:286:9
+
+  at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+  at next (/app/node_modules/express/lib/router/index.js:280:10)
+
+  at arguments.<computed> (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:206:41)
+
+  at accessControl (/app/dist/src/domains/shared/middlewares/access-control.js:8:5)
+
+  at patched (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:210:37)
+
+  at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+  at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+
+  at /app/node_modules/express/lib/router/index.js:286:9
+
+  at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+  at next (/app/node_modules/express/lib/router/index.js:280:10)
+
+  at arguments.<computed> (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:206:41)
+
+  at logger (/app/dist/src/middlewares/logger.js:8:5)
+
+  at patched (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:210:37)
+
+  at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+  at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+
+  at /app/node_modules/express/lib/router/index.js:286:9
+
+  at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+  at next (/app/node_modules/express/lib/router/index.js:280:10)
+
+  at arguments.<computed> (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:206:41)
+
+  at cors (/app/node_modules/cors/lib/index.js:188:7)
+
+  at /app/node_modules/cors/lib/index.js:224:17
+
+  at originCallback (/app/node_modules/cors/lib/index.js:214:15)
+
+  at /app/node_modules/cors/lib/index.js:219:13
+
+  at optionsCallback (/app/node_modules/cors/lib/index.js:199:9)
+
+  at corsMiddleware (/app/node_modules/cors/lib/index.js:204:7)
+
+  at patched (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:210:37)
+
+  at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+  at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+
+  at /app/node_modules/express/lib/router/index.js:286:9
+
+---
+
+_**Assistant**_
+
+I see the issue now. Looking at the error log, particularly this line:
+
+```
+--no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-Mienzk --remote-debugging-pipe --no-startup-window
+```
+
+The error is happening because Railway's container environment has restrictions that prevent Playwright from running normally. We need to modify how Playwright launches the browser to work in this environment.
+
+Let's modify your base scraper to launch the browser with the necessary flags for running in a container environment:
+
+---
+
+<details>
+            <summary>Searched codebase "class BaseScraper" • **24** results</summary>
+        
+| File | Lines |
+|------|-------|
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L70-78 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L44-54 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L8-20 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L63-70 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L20-39 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L54-63 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L39-44 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L82-95 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L78-82 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L95-115 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L131-136 |
+| `src/domains/data-provider/services/index.ts` | L14-56 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L115-131 |
+| `src/domains/data-provider/providers/playwright/base-scraper.ts` | L1-8 |
+| `src/domains/data-provider/services/match.ts` | L12-19 |
+| `src/domains/data-provider/services/tournaments.ts` | L1-18 |
+| `src/domains/data-provider/services/standings.ts` | L1-17 |
+| `src/domains/data-provider/services/teams.ts` | L1-19 |
+| `src/domains/data-provider/services/rounds.ts` | L1-15 |
+| `src/domains/data-provider/services/rounds.ts` | L15-29 |
+| `src/domains/data-provider/api/v2/tournament-rounds/index.ts` | L1-23 |
+| `src/domains/data-provider/services/standings.ts` | L67-92 |
+| `src/domains/data-provider/services/match.ts` | L19-55 |
+| `src/domains/data-provider/services/match.ts` | L1-12 |
+
+</details>
+
+---
+
+Let me check the base scraper implementation to modify the browser launch settings:
+
+---
+
+```diff
+        this.browser = await chromium.launch({
+          headless: process.env.NODE_ENV === 'production',
++         args: [
++           '--no-sandbox',
++           '--disable-setuid-sandbox',
++           '--disable-dev-shm-usage',
++           '--single-process'
++         ]
+        });
+        this.context = await this.browser.newContext({
+```
+
+---
+
+I've modified the browser launch configuration to include necessary flags for running in a containerized environment:
+
+1. `--no-sandbox`: Disables the Chrome sandbox (required in some container environments)
+2. `--disable-setuid-sandbox`: Additional sandbox configuration that's often needed
+3. `--disable-dev-shm-usage`: Prevents issues with shared memory in containers
+4. `--single-process`: Runs Chrome in a single process, which can help in restricted environments
+
+These flags are commonly used when running Playwright in containerized environments like Railway. They help bypass some of the security restrictions that would normally prevent Chrome from running in such environments.
+
+The changes we made:
+
+1. Earlier we installed the browser during build with `playwright install --with-deps chromium`
+2. Now we've configured the browser to run with the necessary flags in a containerized environment
+
+Try deploying these changes to Railway. The combination of having the browser installed and these launch flags should resolve the issue.
+
+Let me know if you still encounter any problems!
+
+---
+
+_**User**_
+
+would this break the ldevelopment environment?
+
+---
+
+_**Assistant**_
+
+---

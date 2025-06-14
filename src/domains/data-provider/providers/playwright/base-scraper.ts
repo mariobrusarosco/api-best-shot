@@ -22,8 +22,18 @@ export class BaseScraper {
   // https://www.sofascore.com/api/v1/unique-tournament/7/season/61644/statistics/info
   private async init() {
     try {
+      const isProduction = process.env.NODE_ENV === 'production';
+
       this.browser = await chromium.launch({
-        headless: process.env.NODE_ENV === 'production',
+        headless: isProduction,
+        args: isProduction
+          ? [
+              '--no-sandbox',
+              '--disable-setuid-sandbox',
+              '--disable-dev-shm-usage',
+              '--single-process',
+            ]
+          : undefined,
       });
       this.context = await this.browser.newContext({
         viewport: { width: 1920, height: 1080 },

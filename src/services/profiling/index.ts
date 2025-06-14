@@ -24,8 +24,9 @@ export const Profiling = {
 
     console.log('\n');
     console.log(pc.bgWhite(pc.bold('------START LOG------')));
-    console.log(pc.magenta(`MSG: ${msg}`));
-    console.log(pc.yellow(`DATA: ${JSON.stringify(data, null, 2)}`));
+    msg && console.log(pc.magenta(`MSG: ${msg}`));
+    data && console.log(pc.yellow(`DATA: ${JSON.stringify(data, null, 2)}`));
+    source && console.log(pc.green(`SOURCE: ${source}`));
     console.log(pc.bgWhite(pc.bold('------END LOG------')));
     console.log('\n');
   },

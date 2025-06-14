@@ -6,6 +6,7 @@ import {
 } from '@/domains/tournament/schema';
 import { safeString } from '@/utils';
 import db from '@/services/database';
+import Profiling from '@/services/profiling';
 
 export class StandingsDataProviderService {
   private scraper: BaseScraper;
@@ -49,7 +50,10 @@ export class StandingsDataProviderService {
         group => group.standings
       ) as DB_InsertTournamentStandings[];
     } catch (error) {
-      console.error('[SOFASCORE] - [ERROR] - [MAP TOURNAMENT STANDINGS]', error);
+      Profiling.error({
+        source: 'DATA_PROVIDER_V2_STANDINGS_mapTournamentStandings',
+        error,
+      });
       throw error;
     }
   }

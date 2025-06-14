@@ -1,15 +1,17 @@
-import type { ENDPOINT_MATCHES } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { DB_InsertMatch, T_Match } from '@/domains/match/schema';
 import { safeString } from '@/utils';
 import { DB_SelectTournamentRound } from '@/domains/tournament/schema';
 import db from '@/services/database';
+import { ENDPOINT_ROUND } from '../providers/sofascore_v2/schemas/endpoints';
+import Profiling from '@/services/profiling';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 
 const safeSofaDate = (date: any) => {
   return date === null || date === undefined ? null : new Date(date);
 };
 
-export class MatchesService {
+export class MatchesDataProviderService {
   private scraper: BaseScraper;
 
   constructor(scraper: BaseScraper) {
@@ -24,17 +26,25 @@ export class MatchesService {
       const roundsWithMatches: DB_InsertMatch[][] = [];
 
       for (const round of rounds) {
-        console.log(
-          `[SOFASCORE] - [INFO] - [GET TOURNAMENT MATCHES] - [ROUND] ${round.label}`
-        );
-
-        await this.scraper.sleep(2500);
+        Profiling.log({
+          msg: `Providing matches for round: ${round.label} of tournament: ${tournamentId}`,
+        });
 
         await this.scraper.goto(round.providerUrl);
-        const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_MATCHES;
-        const matches = this.mapMatches(rawContent, tournamentId, round.slug);
+        const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
 
+        if (!rawContent?.events || rawContent?.events?.length === 0) {
+          Profiling.log({
+            msg: `[No matches returned from round: (${round.slug}) Skipping to next round]`,
+          });
+          await this.scraper.sleep(2500);
+          continue;
+        }
+
+        const matches = this.mapMatches(rawContent, tournamentId, round.slug);
         roundsWithMatches.push(matches);
+
+        await this.scraper.sleep(2500);
       }
 
       return roundsWithMatches.flat();
@@ -44,11 +54,7 @@ export class MatchesService {
     }
   }
 
-  public mapMatches(
-    rawContent: ENDPOINT_MATCHES,
-    tournamentId: string,
-    roundSlug: string
-  ) {
+  public mapMatches(rawContent: ENDPOINT_ROUND, tournamentId: string, roundSlug: string) {
     try {
       const matches = rawContent.events.map(event => {
         return {
@@ -74,7 +80,7 @@ export class MatchesService {
     }
   }
 
-  public getMatchStatus(match: ENDPOINT_MATCHES['events'][number]) {
+  public getMatchStatus(match: ENDPOINT_ROUND['events'][number]) {
     try {
       const matchWasPostponed = match.status.type === 'postponed';
       const matcheEnded = match.status.type === 'finished';
@@ -93,10 +99,17 @@ export class MatchesService {
     return query;
   }
 
-  public async init(rounds: DB_SelectTournamentRound[], tournamentId: string) {
-    const rawMatches = await this.getTournamentMatches(rounds, tournamentId);
+  public async init(
+    rounds: DB_SelectTournamentRound[],
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
+  ) {
+    const rawMatches = await this.getTournamentMatches(rounds, tournament.id);
 
-    console.log('[LOG] - [DATA PROVIDER] - [START] - CREATING MATCHES ON DATABASE');
+    Profiling.log({
+      msg: `[Setup of matches for tournament ${tournament.label}]`,
+      data: { rawMatches },
+    });
+
     const query = await this.createOnDatabase(rawMatches);
 
     return query;

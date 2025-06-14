@@ -6,10 +6,10 @@ import { BaseScraper } from '../providers/playwright/base-scraper';
 // import { RoundService } from "./rounds";
 // import { MatchesService } from "./matches";
 import { CreateTournamentInput } from '../api/v2/tournament/typing';
-import { TeamsService } from './teams';
+import { TeamsDataProviderService } from './teams';
 import { RoundDataProviderService } from './rounds';
 import { TournamentDataProviderService } from './tournaments';
-import { MatchesService } from './match';
+import { MatchesDataProviderService } from './match';
 import { StandingsDataProviderService } from './standings';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 export class SofaScoreScraper extends BaseScraper {
@@ -21,8 +21,8 @@ export class SofaScoreScraper extends BaseScraper {
       const tournamentService = new TournamentDataProviderService(scraper);
       const standingsService = new StandingsDataProviderService(scraper);
       const roundService = new RoundDataProviderService(scraper);
-      const teamsService = new TeamsService(scraper);
-      const matchesService = new MatchesService(scraper);
+      const teamsService = new TeamsDataProviderService(scraper);
+      const matchesService = new MatchesDataProviderService(scraper);
 
       //Step 1: Tournament Service
       const tournament = await tournamentService.init(payload);
@@ -34,7 +34,7 @@ export class SofaScoreScraper extends BaseScraper {
       const tournamentTemp = await SERVICES_TOURNAMENT.getTournament(tournament.id);
       const teams = await teamsService.init(tournamentTemp);
       //Step 5: Matches Service
-      const matches = await matchesService.init(rounds, tournament.id);
+      const matches = await matchesService.init(rounds, tournament as any);
 
       return {
         tournament,

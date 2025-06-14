@@ -10,9 +10,8 @@ import { safeString, sleep } from '@/utils';
 import { QUERIES_TEAMS } from '@/domains/team/queries';
 import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import { round } from 'lodash';
 
-export class TeamsService {
+export class TeamsDataProviderService {
   private scraper: BaseScraper;
 
   constructor(scraper: BaseScraper) {
@@ -131,7 +130,7 @@ export class TeamsService {
 
         if (!rawContent?.events || rawContent?.events?.length === 0) {
           Profiling.log({
-            msg: `[No data returned from round? (${round.slug}) Skipping to next round]`,
+            msg: `[No data returned from round: (${round.slug}) Skipping to next round]`,
           });
           await sleep(2000);
           continue;

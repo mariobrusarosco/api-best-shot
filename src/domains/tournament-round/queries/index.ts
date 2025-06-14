@@ -1,6 +1,6 @@
 import { T_TournamentRound } from '@/domains/tournament/schema';
 import db from '@/services/database';
-import { and, asc, desc, eq, like } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 
 const getRound = async ({
   tournamentId,
@@ -55,7 +55,8 @@ const getAllRounds = async (tournamentId: string) => {
   const query = await db
     .select()
     .from(T_TournamentRound)
-    .where(eq(T_TournamentRound.tournamentId, tournamentId));
+    .where(eq(T_TournamentRound.tournamentId, tournamentId))
+    .orderBy(asc(T_TournamentRound.order));
 
   return query;
 };

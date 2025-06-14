@@ -1,5 +1,5 @@
 import { TeamsRequest } from './typing';
-import { TeamsService } from '@/domains/data-provider/services/teams';
+import { TeamsDataProviderService } from '@/domains/data-provider/services/teams';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import Profiling from '@/services/profiling';
 import { Response } from 'express';
@@ -10,7 +10,7 @@ import { ErrorMapper } from '@/domains/tournament/error-handling/mapper';
 const create = async (req: TeamsRequest, res: Response) => {
   try {
     const scraper = await BaseScraper.createInstance();
-    const teamService = new TeamsService(scraper);
+    const teamService = new TeamsDataProviderService(scraper);
 
     if (!req.body.tournamentId) {
       return res.status(400).send({ error: 'Tournament ID is required' });

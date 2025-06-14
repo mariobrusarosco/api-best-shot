@@ -4,21 +4,21 @@ import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { SERVICES_TOURNAMENT_ROUND } from '@/domains/tournament-round/services';
 import Profiling from '@/services/profiling';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { MatchesService } from '@/domains/data-provider/services/match';
+import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
 import { CreateMatchesRequest } from '@/domains/match/typing';
 
 const create = async (req: CreateMatchesRequest, res: Response) => {
   try {
     const scraper = await BaseScraper.createInstance();
-    const matchesDataProviderService = new MatchesService(scraper);
+    const matchesDataProviderService = new MatchesDataProviderService(scraper);
 
     if (!req.body.tournamentId) {
       return res.status(400).send({ error: 'Tournament ID is required' });
     }
 
     const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
-    const rounds = await SERVICES_TOURNAMENT_ROUND.getAllRounds(tournament.id);
-    const matches = await matchesDataProviderService.init(rounds, tournament.id);
+    const rounds = await SERVICES_TOURNAMENT_ROUND.getAllRounds(tournament);
+    const matches = await matchesDataProviderService.init(rounds, tournament);
 
     if (!matches) {
       return res.status(400).json({
@@ -28,9 +28,8 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
     }
 
     Profiling.log({
-      msg: 'CREATE SUCCESS',
+      msg: `Created matches for tournament: ${tournament.label}`,
       data: { matches },
-      source: 'DATA_PROVIDER_V2_MATCHES_create',
     });
 
     return res.status(200).json({ matches });

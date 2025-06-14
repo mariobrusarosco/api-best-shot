@@ -5,3 +5,4 @@ export * from '../../domains/member/schema';
 export * from '../../domains/performance/schema';
 export * from '../../domains/team/schema';
 export * from '../../domains/tournament/schema';
+export * from '../../domains/tournament-round/schema';

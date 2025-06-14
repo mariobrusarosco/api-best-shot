@@ -22,6 +22,13 @@
       "when": 1746407120181,
       "tag": "0002_tournament_updates",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1749907273686,
+      "tag": "0003_add_tournament_round_provider_id",
+      "breakpoints": true
     }
   ]
 }

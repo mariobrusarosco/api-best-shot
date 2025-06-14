@@ -3,7 +3,6 @@ import { and, eq, sql } from 'drizzle-orm';
 import {
   DB_InsertTournament,
   T_Tournament,
-  T_TournamentRound,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
 import { T_TournamentPerformance } from '@/domains/performance/schema';
@@ -11,6 +10,7 @@ import { T_Match } from '@/domains/match/schema';
 import { T_Guess } from '@/domains/guess/schema';
 import Profiling from '@/services/profiling';
 import { DatabaseError } from '@/domains/shared/error-handling/database';
+import { T_TournamentRound } from '@/domains/tournament-round/schema';
 
 const allTournaments = async () => {
   try {

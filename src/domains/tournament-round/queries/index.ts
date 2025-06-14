@@ -1,5 +1,5 @@
-import { T_TournamentRound } from '@/domains/tournament/schema';
 import db from '@/services/database';
+import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import { and, asc, eq } from 'drizzle-orm';
 
 const getRound = async ({

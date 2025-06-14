@@ -4,8 +4,8 @@ import db from '@/services/database';
 import {
   DB_InsertTournamentRound,
   DB_UpdateTournamentRound,
-  T_TournamentRound,
-} from '@/domains/tournament/schema';
+} from '@/domains/tournament-round/schema';
+import { T_TournamentRound } from '@/domains/tournament-round/schema';
 
 export class RoundDataProviderService {
   private scraper: BaseScraper;
@@ -59,6 +59,7 @@ export class RoundDataProviderService {
 
         return {
           providerUrl: endpoint,
+          providerId: String(round.round),
           tournamentId: tournamentId,
           order: order.toString(),
           label: label,

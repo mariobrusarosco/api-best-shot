@@ -78,34 +78,3 @@ export const T_TournamentStandings = pgTable(
 export type DB_InsertTournamentStandings = typeof T_TournamentStandings.$inferInsert;
 export type DB_UpdateTournamentStandings = typeof T_TournamentStandings.$inferInsert;
 export type DB_SelectTournamentStandings = typeof T_TournamentStandings.$inferSelect;
-
-export const T_TournamentRound = pgTable(
-  'tournament_round',
-  {
-    id: uuid('id').defaultRandom(),
-    tournamentId: text('tournament_id').notNull(),
-    order: text('order').notNull(),
-    label: text('label').notNull(),
-    slug: text('slug').notNull(),
-    knockoutId: text('knockout_id').default(''),
-    prefix: text('prefix').default(''),
-    providerUrl: text('provider_url').notNull(),
-    type: text('type').notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at')
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-  },
-  table => {
-    return {
-      pk: primaryKey({
-        columns: [table.tournamentId, table.slug],
-      }),
-    };
-  }
-);
-
-export type DB_InsertTournamentRound = typeof T_TournamentRound.$inferInsert;
-export type DB_UpdateTournamentRound = typeof T_TournamentRound.$inferInsert;
-export type DB_SelectTournamentRound = typeof T_TournamentRound.$inferSelect;

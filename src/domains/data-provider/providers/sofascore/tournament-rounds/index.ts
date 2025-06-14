@@ -1,10 +1,13 @@
 import { API_SOFASCORE_ROUNDS } from './typing';
 import { IApiProvider } from '@/domains/data-provider/typing';
-import { DB_InsertTournamentRound, T_TournamentRound } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import axios from 'axios';
 import { Profiling } from '@/services/profiling';
 import puppeteer from 'puppeteer';
+import {
+  T_TournamentRound,
+  DB_InsertTournamentRound,
+} from '@/domains/tournament-round/schema';
 
 export const SofascoreTournamentRound: IApiProvider['rounds'] = {
   fetchShallowListOfRoundsFromProvider: async baseUrl => {
@@ -146,6 +149,7 @@ const buildTournamentRound = (
       tournamentId,
       slug: round.slug!,
       order,
+      providerId: String(round.round),
       knockoutId,
       label: round.name!,
       type: 'special-knockout',
@@ -161,6 +165,7 @@ const buildTournamentRound = (
       tournamentId,
       slug: round.slug!,
       order,
+      providerId: String(round.round),
       knockoutId,
       label: round.name!,
       type: 'knockout',
@@ -176,6 +181,7 @@ const buildTournamentRound = (
     tournamentId,
     order,
     label,
+    providerId: String(round.round),
     providerUrl,
     slug,
     type: 'season',

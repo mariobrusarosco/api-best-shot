@@ -1,11 +1,11 @@
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { DB_InsertMatch, T_Match } from '@/domains/match/schema';
 import { safeString } from '@/utils';
-import { DB_SelectTournamentRound } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { ENDPOINT_ROUND } from '../providers/sofascore_v2/schemas/endpoints';
 import Profiling from '@/services/profiling';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
 
 const safeSofaDate = (date: any) => {
   return date === null || date === undefined ? null : new Date(date);

@@ -9,11 +9,13 @@ import { DB_InsertTeam } from '@/domains/team/schema';
 import { TournamentQuery } from '@/domains/tournament/queries';
 import {
   DB_InsertTournament,
-  DB_InsertTournamentRound,
   DB_InsertTournamentStandings,
   DB_SelectTournament,
-  DB_SelectTournamentRound,
 } from '@/domains/tournament/schema';
+import {
+  DB_InsertTournamentRound,
+  DB_SelectTournamentRound,
+} from '@/domains/tournament-round/schema';
 import { FetchAndStoreAssetPayload } from '@/utils';
 import { API_SOFASCORE_STANDINGS } from './providers/sofascore/standings/typing';
 

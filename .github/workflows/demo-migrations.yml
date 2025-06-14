@@ -33,4 +33,4 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
           NODE_ENV: demo
-        run: npx drizzle-kit push:pg
+        run: npx drizzle-kit push

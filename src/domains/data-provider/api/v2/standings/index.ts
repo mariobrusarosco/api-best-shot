@@ -16,12 +16,11 @@ const create = async (req: StandingsRequest, res: Response) => {
     }
 
     const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
-    const standings = await dataProviderService.init(tournament.id, tournament.baseUrl);
+    const standings = await dataProviderService.init(tournament);
 
     Profiling.log({
-      msg: 'CREATE SUCCESS',
-      data: { tournament },
-      source: 'DATA_PROVIDER_V2_STANDINGS_create',
+      msg: `Created standings for tournament: ${tournament.label}`,
+      data: { standings },
     });
 
     return res.status(200).json({ standings });

@@ -12,7 +12,10 @@ export const Profiling = {
       return Sentry.captureException(finalMessage, { extra: { error } });
     }
 
-    console.log(pc.red(pc.bold(finalMessage)), error);
+    console.log(pc.bgRed(pc.bold('------START ERROR------')));
+    console.error(error);
+    source && console.log(pc.red(pc.bold(`SOURCE: ${source}`)));
+    console.log(pc.bgRed(pc.bold('------END ERROR------')));
   },
   log: ({ msg, data, source }: { msg: string; data?: any; source?: string }) => {
     if (enableProfiling) {

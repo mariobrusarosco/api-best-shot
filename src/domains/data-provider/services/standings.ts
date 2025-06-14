@@ -7,6 +7,7 @@ import {
 import { safeString } from '@/utils';
 import db from '@/services/database';
 import Profiling from '@/services/profiling';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 
 export class StandingsDataProviderService {
   private scraper: BaseScraper;
@@ -17,13 +18,13 @@ export class StandingsDataProviderService {
 
   public async mapTournamentStandings(
     standingsResponse: ENDPOINT_STANDINGS,
-    tournamentId: string
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
     try {
       const standings = standingsResponse.standings.map(group => {
         const groupsStandings = group.rows.map(row => ({
           teamExternalId: safeString(row.team.id),
-          tournamentId: tournamentId,
+          tournamentId: tournament.id,
           order: safeString(row.position),
           groupName: group.name,
           shortName: safeString(row.team.shortName),
@@ -39,6 +40,11 @@ export class StandingsDataProviderService {
           provider: 'sofascore',
         }));
 
+        Profiling.log({
+          msg: `[Mapped standings for groups: ${group.name}]`,
+          data: { groupsStandings },
+        });
+
         return {
           groupId: group.id,
           groupName: group.name,
@@ -46,9 +52,11 @@ export class StandingsDataProviderService {
         };
       });
 
-      return standings.flatMap(
+      const results = standings.flatMap(
         group => group.standings
       ) as DB_InsertTournamentStandings[];
+
+      return results;
     } catch (error) {
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_mapTournamentStandings',
@@ -58,15 +66,27 @@ export class StandingsDataProviderService {
     }
   }
 
-  public async getStandings(baseUrl: string) {
+  public async getStandings(
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
+  ) {
     try {
-      const url = `${baseUrl}/standings/total`;
+      const url = `${tournament.baseUrl}/standings/total`;
       await this.scraper.goto(url);
       const rawContent = await this.scraper.getPageContent();
 
+      if (!rawContent?.standings || rawContent?.standings?.length === 0) {
+        Profiling.log({
+          msg: `[No data returned from standings for tournament: ${tournament.label}]`,
+        });
+        return null;
+      }
+
       return rawContent;
     } catch (error) {
-      console.error('[SOFASCORE] - [ERROR] - [GET TOURNAMENT STANDINGS]', error);
+      Profiling.error({
+        source: 'DATA_PROVIDER_V2_STANDINGS_getStandings',
+        error,
+      });
       throw error;
     }
   }
@@ -76,11 +96,26 @@ export class StandingsDataProviderService {
     return query;
   }
 
-  public async init(tournamentId: string, tournamentBaseUrl: string) {
-    const rawStandings = await this.getStandings(tournamentBaseUrl);
-    const standings = await this.mapTournamentStandings(rawStandings, tournamentId);
-    const query = await this.createOnDatabase(standings);
+  public async init(
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
+  ) {
+    try {
+      const rawStandings = await this.getStandings(tournament);
+      const standings = await this.mapTournamentStandings(rawStandings, tournament);
+      const query = await this.createOnDatabase(standings);
 
-    return query;
+      Profiling.log({
+        msg: `[Setup of standings for tournament ${tournament.label}]`,
+        data: { standings },
+      });
+
+      return query;
+    } catch (error) {
+      Profiling.error({
+        source: 'DATA_PROVIDER_V2_STANDINGS_init',
+        error,
+      });
+      throw error;
+    }
   }
 }

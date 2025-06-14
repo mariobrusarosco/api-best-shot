@@ -5,6 +5,7 @@ import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
 import { and, asc, eq, gte, sql, aliasedTable } from 'drizzle-orm';
 import { defineTimebox } from '@/utils/timebox';
+
 dayjs.extend(utc);
 dayjs.extend(isToday);
 
@@ -59,8 +60,8 @@ const nearestMatchOnDatabase = async (filter: { tournamentId: string }) => {
 };
 
 const currentDayMatches = async (filter?: { tournamentId?: string }) => {
-  const startOfDay = dayjs().utc().startOf('day').toDate().toISOString();
-  const endOfDay = dayjs().utc().endOf('day').toDate().toISOString();
+  const startOfDay = dayjs().startOf('day').toDate().toISOString();
+  const endOfDay = dayjs().endOf('day').toDate().toISOString();
 
   let whereClause = sql`date >= ${startOfDay} AND date <= ${endOfDay}`;
 

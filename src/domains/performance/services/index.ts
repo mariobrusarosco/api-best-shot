@@ -107,7 +107,7 @@ const parsePerformance = (
 ) => {
   return {
     ...performance,
-    points: parseInt(performance.points ?? '0'),
+    points: parseInt(performance?.points ?? '0'),
   };
 };
 
@@ -222,7 +222,6 @@ export const SERVICES_PERFORMANCE_V2 = {
       try {
         // 1. Get all guesses grouped by tournament
         const memberGuesses = await QUERIES_GUESS.getAllMemberGuesses(memberId);
-
         // Group guesses by tournament
         const guessesByTournament = _.groupBy(memberGuesses, 'match.tournamentId');
 

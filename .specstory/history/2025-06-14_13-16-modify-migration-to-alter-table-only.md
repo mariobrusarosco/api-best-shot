@@ -283,6 +283,194 @@ Removing the empty migration file that's causing confusion.
 
 ---
 
+```diff
++ CREATE TABLE IF NOT EXISTS "tournament_round" (
++     "id" uuid DEFAULT gen_random_uuid(),
++     "tournament_id" text NOT NULL,
++     "order" text NOT NULL,
++     "label" text NOT NULL,
++     "slug" text,
++     "knockout_id" text DEFAULT '',
++     "prefix" text DEFAULT '',
++     "provider_url" text NOT NULL,
++     "type" text NOT NULL,
++     "created_at" timestamp DEFAULT now() NOT NULL,
++     "updated_at" timestamp DEFAULT now() NOT NULL,
++     CONSTRAINT "tournament_round_tournament_id_slug_pk" PRIMARY KEY("tournament_id","slug")
++ );--> statement-breakpoint
++
+  ALTER TABLE "tournament_round" ALTER COLUMN "slug" DROP DEFAULT;--> statement-breakpoint
+  ALTER TABLE "tournament_round" ALTER COLUMN "slug" SET NOT NULL;--> statement-breakpoint
+```
+
 ---
+
+Now try running `yarn db:migrate` again. The migration should work because:
+
+1. We've removed the empty migration file that was causing confusion
+2. We've modified the migration to create the table first before trying to alter it
+3. The sequence of operations is now logical: create table → modify column constraints → add new column
+
+Let me know if you still encounter any issues!
+
+---
+
+_**User**_
+
+Even though we have playwright at @package.json , on our DEMO environment (on Railway) we don't have it.
+
+║ Looks like Playwright Test or Playwright was just installed or updated. ║
+
+║ Please run the following command to download new browsers: ║
+
+║ ║
+
+║ yarn playwright install ║
+
+║ ║
+
+║ <3 Playwright Team ║
+
+╚═════════════════════════════════════════════════════════════════════════╝
+
+    at BaseScraper.init (/app/dist/src/domains/data-provider/providers/playwright/base-scraper.js:23:56)
+
+    at BaseScraper.createInstance (/app/dist/src/domains/data-provider/providers/playwright/base-scraper.js:40:31)
+
+    at create (/app/dist/src/domains/data-provider/api/v2/tournament/index.js:12:58)
+
+    at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at Route.dispatch (/app/node_modules/express/lib/router/route.js:119:3)
+
+    at patched (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:210:37)
+
+    at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at /app/node_modules/express/lib/router/index.js:284:15
+
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+    at next (/app/node_modules/express/lib/router/index.js:280:10)
+
+    at Function.handle (/app/node_modules/express/lib/router/index.js:175:3)
+
+    at router (/app/node_modules/express/lib/router/index.js:47:12)
+
+    at patched (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:210:37)
+
+    at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+
+    at /app/node_modules/express/lib/router/index.js:286:9
+
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+    at next (/app/node_modules/express/lib/router/index.js:280:10)
+
+    at arguments.<computed> (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:206:41)
+
+    at accessControl (/app/dist/src/domains/shared/middlewares/access-control.js:8:5)
+
+    at patched (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:210:37)
+
+    at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+
+    at /app/node_modules/express/lib/router/index.js:286:9
+
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+    at next (/app/node_modules/express/lib/router/index.js:280:10)
+
+    at arguments.<computed> (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:206:41)
+
+    at logger (/app/dist/src/middlewares/logger.js:8:5)
+
+    at patched (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:210:37)
+
+    at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+
+    at /app/node_modules/express/lib/router/index.js:286:9
+
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+    at next (/app/node_modules/express/lib/router/index.js:280:10)
+
+    at arguments.<computed> (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:206:41)
+
+    at cors (/app/node_modules/cors/lib/index.js:188:7)
+
+    at /app/node_modules/cors/lib/index.js:224:17
+
+    at originCallback (/app/node_modules/cors/lib/index.js:214:15)
+
+    at /app/node_modules/cors/lib/index.js:219:13
+
+    at optionsCallback (/app/node_modules/cors/lib/index.js:199:9)
+
+    at corsMiddleware (/app/node_modules/cors/lib/index.js:204:7)
+
+    at patched (/app/node_modules/@opentelemetry/instrumentation-express/build/src/instrumentation.js:210:37)
+
+    at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+
+    at /app/node_modules/express/lib/router/index.js:286:9 {
+
+name: 'Error'
+
+}
+
+---
+
+_**Assistant**_
+
+I understand the issue. Even though Playwright is in your package.json, the browsers needed by Playwright aren't installed in your Railway deployment environment. We need to modify your build process to include the Playwright browser installation.
+
+Looking at your package.json, I see you have a `build-demo` script that Railway probably uses. Let's modify it to include the Playwright browser installation:
+
+---
+
+```diff
+      "db:reset": "docker compose down postgres -v && docker compose up -d postgres",
+      "dev-demo": "ENV_PATH=.env.demo ts-node-dev -r tsconfig-paths/register ./src/index.ts",
+-     "build-demo": "rimraf ./dist && tsc && tsc-alias",
++     "build-demo": "rimraf ./dist && tsc && tsc-alias && playwright install --with-deps chromium",
+      "serve-demo": "node -r dotenv/config ./dist/src/index.js",
+      "dev-prod": "ENV_PATH=.env.production ts-node-dev -r tsconfig-paths/register ./src/index.ts",
+```
+
+---
+
+I've modified the `build-demo` script to:
+
+1. Keep the existing build steps (`rimraf ./dist && tsc && tsc-alias`)
+2. Add `playwright install --with-deps chromium` which will:
+   - Install only Chromium browser (since that's likely all you need, and it saves space)
+   - Include `--with-deps` to ensure all system dependencies are installed
+
+This change will ensure that when Railway builds your application:
+
+1. Your TypeScript code will be compiled
+2. The necessary Playwright browser and dependencies will be installed
+
+The `--with-deps` flag is particularly important in a cloud environment like Railway because it ensures all necessary system-level dependencies are installed.
+
+You'll need to redeploy your application on Railway for these changes to take effect. After redeployment, Playwright should work correctly as it will have access to the Chromium browser.
+
+Note: If you find that you need other browsers besides Chromium, you can modify the command to:
+
+- For all browsers: `playwright install --with-deps`
+- For specific browsers: `playwright install --with-deps chromium firefox webkit`
+
+Let me know if you need any clarification or run into other issues!
 
 ---

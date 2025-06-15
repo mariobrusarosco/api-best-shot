@@ -11,6 +11,16 @@ We follow a hybrid development approach:
 
 👉 See our [Service Implementation Roadmap](docs/service-implementation-roadmap.md) for upcoming features and infrastructure additions.
 
+## Documentation
+
+### Architecture Decision Records
+
+- [Playwright Production Deployment](docs/decisions/playwright-production-deployment.md)
+
+### Developer Guides
+
+- [Playwright Production Guide](docs/guides/playwright-production.md)
+
 ## Tech Stack
 
 - **Runtime**: Node.js
@@ -21,6 +31,7 @@ We follow a hybrid development approach:
 - **Container**: Docker
 - **Cloud Services**: AWS (S3, Scheduler)
 - **Monitoring**: Sentry
+- **Web Scraping**: Playwright for automated data collection
 
 ## Key Features
 

@@ -1,6 +1,8 @@
-import { Browser, BrowserContext, chromium, Page } from 'playwright';
+import type { Browser, BrowserContext, Page, Response } from 'playwright';
+import { chromium } from 'playwright';
 import { S3FileStorage } from '../file-storage';
 import mime from 'mime-types';
+import Profiling from '@/services/profiling';
 
 export type FetchAndStoreAssetPayload = {
   logoUrl: string;
@@ -19,31 +21,69 @@ export class BaseScraper {
     this.cloudFrontDomain = process.env.AWS_CLOUDFRONT_URL || '';
   }
 
-  // https://www.sofascore.com/api/v1/unique-tournament/7/season/61644/statistics/info
+  /**
+   * Initialize the browser, context, and page
+   * @returns this instance after initialization
+   */
   private async init() {
     try {
       const isProduction = process.env.NODE_ENV === 'production';
+      const startTime = Date.now();
 
+      // Enhanced browser arguments for production environments
       this.browser = await chromium.launch({
-        headless: isProduction,
+        headless: isProduction, // Always use headless in production
         args: isProduction
           ? [
               '--no-sandbox',
               '--disable-setuid-sandbox',
               '--disable-dev-shm-usage',
+              '--disable-accelerated-2d-canvas',
+              '--no-first-run',
+              '--no-zygote',
               '--single-process',
+              '--disable-gpu',
+              '--disable-extensions',
+              '--disable-background-networking',
+              '--disable-default-apps',
+              '--disable-sync',
+              '--disable-translate',
+              '--hide-scrollbars',
+              '--metrics-recording-only',
+              '--mute-audio',
             ]
-          : undefined,
+          : [],
+        timeout: 30000, // 30 second timeout for browser launch
       });
+
+      // Configure browser context with appropriate settings
       this.context = await this.browser.newContext({
-        viewport: { width: 1920, height: 1080 },
+        viewport: { width: 1280, height: 720 }, // Reduced for less memory usage
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+        ignoreHTTPSErrors: true, // Ignore HTTPS errors in production
+        javaScriptEnabled: true,
       });
+
       this.page = await this.context.newPage();
+
+      // Set default timeouts
+      this.page.setDefaultTimeout(15000); // 15 seconds
+      this.page.setDefaultNavigationTimeout(30000); // 30 seconds
+
+      const duration = Date.now() - startTime;
+      Profiling.log({
+        msg: 'Playwright browser initialized',
+        data: { duration },
+        source: 'BaseScraper.init',
+      });
+
       return this;
     } catch (error) {
-      console.error('Failed to initialize scraper:', error);
+      Profiling.error({
+        source: 'BaseScraper.init',
+        error,
+      });
       throw error;
     }
   }
@@ -53,23 +93,80 @@ export class BaseScraper {
     return await instance.init();
   }
 
+  /**
+   * Properly close all Playwright resources
+   */
   async close() {
     try {
-      await this.page?.close();
-      await this.context?.close();
-      await this.browser?.close();
+      await this.page?.close().catch(() => {});
+      await this.context?.close().catch(() => {});
+      await this.browser?.close().catch(() => {});
+
+      // Reset references
+      this.page = null;
+      this.context = null;
+      this.browser = null;
     } catch (error) {
-      console.error('Failed to close scraper:', error);
+      Profiling.error({
+        source: 'BaseScraper.close',
+        error,
+      });
     }
   }
 
-  public async goto(url: string) {
+  /**
+   * Navigate to a URL with retry capability
+   * @param url The URL to navigate to
+   * @param retries Number of retries if navigation fails
+   * @returns The navigation response
+   */
+  public async goto(url: string, retries = 2): Promise<Response | null> {
     if (!this.page) {
       throw new Error('Page not initialized');
     }
-    return await this.page.goto(url, {
-      waitUntil: 'networkidle',
+
+    let attempt = 0;
+    let lastError: Error | null = null;
+
+    while (attempt <= retries) {
+      try {
+        const response = await this.page.goto(url, {
+          waitUntil: 'networkidle',
+          timeout: 30000, // 30 second timeout
+        });
+
+        if (!response) {
+          throw new Error(`Failed to get response for URL: ${url}`);
+        }
+
+        if (response.status() >= 400) {
+          throw new Error(`Received status ${response.status()} for URL: ${url}`);
+        }
+
+        return response;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        attempt++;
+        if (attempt <= retries) {
+          Profiling.log({
+            msg: `Navigation retry ${attempt}/${retries} for ${url}`,
+            data: { error: lastError.message },
+            source: 'BaseScraper.goto',
+          });
+
+          // Exponential backoff delay
+          await this.sleep(1000 * Math.pow(2, attempt));
+        }
+      }
+    }
+
+    // If we get here, all retries failed
+    Profiling.error({
+      source: 'BaseScraper.goto',
+      error: lastError,
     });
+    throw lastError;
   }
 
   protected async waitForSelector(selector: string, timeout = 5000) {

@@ -2,7 +2,22 @@
 
 ## Overview
 
-This guide explains how to effectively use and deploy Playwright-based web scraping in production environments. Our data provider v2 API uses Playwright with Chromium to scrape football data from various sources.
+This guide covers best practices for using Playwright in production environments. Our Best Shot API uses Playwright with Chromium for web scraping football data in our data provider v2 API.
+
+## Important Update: Using Official Playwright Docker Image
+
+After testing different approaches, we've determined that using Microsoft's official Playwright Docker image is the most reliable solution for production deployments. This eliminates the need to manually install and configure dependencies.
+
+## Development vs. Production
+
+In development, Playwright runs in non-headless mode for easier debugging, while in production, it runs in headless mode for better performance and reliability.
+
+Key differences:
+
+| Environment | Headless | Browser Args | Resource Limits |
+| ----------- | -------- | ------------ | --------------- |
+| Development | No       | Minimal      | Default         |
+| Production  | Yes      | Optimized    | Constrained     |
 
 ## Local Development
 
@@ -38,13 +53,49 @@ Playwright requires specific system dependencies to run Chromium. These are incl
 - libx11-xcb1
 - Various font packages
 
+### Docker Configuration
+
+For Docker deployments, especially on Railway.com, use the official Microsoft Playwright Docker image:
+
+```dockerfile
+# Use the official Microsoft Playwright image which includes all necessary dependencies
+FROM mcr.microsoft.com/playwright:v1.42.1-jammy
+
+# Set the working directory
+WORKDIR /app
+
+# Copy package.json and yarn.lock
+COPY package.json yarn.lock ./
+
+# Install app dependencies
+RUN yarn install
+
+# The official Playwright Docker image already has browsers installed
+# No need to install them again
+
+# Copy app source
+COPY . .
+
+# Build the application
+RUN yarn build
+
+# Set environment variables
+ENV NODE_ENV=production
+# No need to set PLAYWRIGHT_BROWSERS_PATH as it's already configured in the base image
+
+# Expose the port the app will run on
+EXPOSE 9090
+
+# Command to start the application
+CMD ["node", "-r", "dotenv/config", "./dist/src/index.js"]
+```
+
 ### Railway.com Deployment
 
 Our application is deployed on Railway.com, which provides container-based hosting. Make sure that:
 
 1. Resource allocation is sufficient (at least 1GB RAM recommended)
 2. The service has outbound internet access for scraping operations
-3. Docker build process includes Playwright browser installation
 
 ## Best Practices
 

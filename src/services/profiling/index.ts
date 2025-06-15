@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node';
 import pc from 'picocolors';
 
 const ENV = process.env.NODE_ENV;
-const enableProfiling = ENV === 'production' || ENV === 'demo';
+const enableProfiling = ENV === 'production';
 
 export const Profiling = {
   error: ({ source, error }: { source?: string; error: unknown }) => {

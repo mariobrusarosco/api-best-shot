@@ -27,13 +27,19 @@ export class BaseScraper {
    */
   private async init() {
     try {
+      // Check if we're in demo or production environment
       const isProduction = process.env.NODE_ENV === 'production';
+      const isDemo =
+        process.env.NODE_ENV === 'demo' || process.env.ENV_PATH?.includes('demo');
       const startTime = Date.now();
+
+      // Always use headless mode in production, demo and CI environments
+      const forceHeadless = isProduction || isDemo;
 
       // Enhanced browser arguments for production environments
       this.browser = await chromium.launch({
-        headless: isProduction, // Always use headless in production
-        args: isProduction
+        headless: true, // Always use headless mode to avoid X server issues
+        args: forceHeadless
           ? [
               '--no-sandbox',
               '--disable-setuid-sandbox',

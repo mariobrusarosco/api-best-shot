@@ -4,6 +4,7 @@ dist
 
 # Config files
 drizzle.config.ts
+jest.setup.js
 playwright.config.ts
 seed.ts
 

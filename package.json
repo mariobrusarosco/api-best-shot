@@ -27,8 +27,6 @@
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org mario-79 --project api-best-shot-production ./dist && sentry-cli sourcemaps upload --org mario-79 --project api-best-shot-production ./dist",
     "sentry:sourcemaps:demo": "sentry-cli sourcemaps inject --org mario-79 --project api-best-shot-demo ./dist && sentry-cli sourcemaps upload --org mario-79 --project api-best-shot-demo ./dist",
     "compile": "tsc --noEmit",
-    "scrapper": "yarn tsx watch ./src/scrapper.ts",
-    "api-lookup": "yarn tsx watch ./src/api-lookup.ts",
     "db:seed": "yarn tsx scripts/run-seeds.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

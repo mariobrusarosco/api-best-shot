@@ -12,7 +12,12 @@ import { CreateMemberInput } from '../api/typing';
 
 const getMemberById = async (memberId: string) => {
   const [member] = await db
-    .select({ nickName: T_Member.nickName })
+    .select({
+      nickName: T_Member.nickName,
+      firstName: T_Member.firstName,
+      lastName: T_Member.lastName,
+      email: T_Member.email,
+    })
     .from(T_Member)
     .where(eq(T_Member.id, memberId));
 

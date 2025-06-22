@@ -14,6 +14,24 @@ import { env } from './config/env';
 const app = express();
 const port = env.PORT;
 
+// Simple health check endpoint - add this BEFORE complex initialization
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: env.NODE_ENV,
+    port: port,
+  });
+});
+
+// Root endpoint for testing
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'API Best Shot Demo - Running on Cloud Run!',
+    version: env.API_VERSION || 'v1',
+  });
+});
+
 // JSON Parser Middleware
 app.use(express.json());
 

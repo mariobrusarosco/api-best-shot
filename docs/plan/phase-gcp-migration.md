@@ -19,35 +19,35 @@ Migrate from Railway to GCP hybrid architecture for improved reliability and cos
 
 ### Prerequisites
 
-- [ ] Google account created
-- [ ] Credit card available for GCP verification
+- [x] Google account created
+- [x] Credit card available for GCP verification
 - [ ] Development environment ready
 
 ### Tasks
 
 #### GCP Account Setup
 
-- [ ] Create GCP account and enable billing
-- [ ] Create new GCP project for the application
-- [ ] Enable required APIs:
-  - [ ] Cloud Run API
-  - [ ] Cloud Functions API
-  - [ ] Cloud Build API
-  - [ ] Container Registry API
-- [ ] Set up billing alerts and budgets
+- [x] Create GCP account and enable billing
+- [x] Create new GCP project for the application
+- [x] Enable required APIs:
+  - [x] Cloud Run API
+  - [x] Cloud Functions API
+  - [x] Cloud Build API
+  - [x] Container Registry API
+- [x] Set up billing alerts and budgets
 
 #### Local Development Setup
 
-- [ ] Install Google Cloud SDK locally
-- [ ] Configure gcloud CLI (`gcloud init`)
-- [ ] Authenticate with GCP (`gcloud auth login`)
-- [ ] Set default project (`gcloud config set project PROJECT_ID`)
+- [x] Install Google Cloud SDK locally
+- [x] Configure gcloud CLI (`gcloud init`)
+- [x] Authenticate with GCP (`gcloud auth login`)
+- [x] Set default project (`gcloud config set project PROJECT_ID`)
 - [ ] Test basic gcloud commands
 
 #### Learning & Exploration
 
-- [ ] Complete GCP Cloud Run quickstart tutorial
-- [ ] Complete GCP Cloud Functions quickstart tutorial
+- [x] Complete GCP Cloud Run quickstart tutorial
+- [x] Complete GCP Cloud Functions quickstart tutorial
 - [ ] Understand GCP IAM and service accounts
 - [ ] Learn gcloud deployment commands
 - [ ] Review GCP monitoring and logging
@@ -84,10 +84,11 @@ Migrate from Railway to GCP hybrid architecture for improved reliability and cos
 #### Code Preparation
 
 - [ ] Audit current API endpoints and identify browser dependencies
-- [ ] Temporarily disable/mock browser endpoints (`/data-provider/v2`)
-- [ ] Ensure API works without browser functionality
-- [ ] Update environment variable handling for GCP
+- [ ] Identify browser-heavy endpoints (`/api/v2/data-provider/*`)
+- [ ] Create feature flag to disable browser functionality temporarily
+- [ ] Update environment variable handling for GCP (Cloud Run)
 - [ ] Add health check endpoint optimized for Cloud Run
+- [ ] Test API without browser operations locally
 
 #### Containerization
 

@@ -1,8 +1,4 @@
-import express from 'express';
-import ApplicationRouter from '@/router';
-import { API_AI } from '@/domains/ai/api';
-
-const RouterV2 = express.Router();
-RouterV2.get('/predict/match/:matchId', API_AI.getMatchPrediction);
-
-ApplicationRouter.register('api/v2/ai', RouterV2);
+// This file re-exports the v2 router for backward compatibility.
+// The new structure uses versioned routers (see v2.ts).
+import v2Router from './v2';
+export default v2Router;

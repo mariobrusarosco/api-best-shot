@@ -1,17 +1,5 @@
-import express from 'express';
-import ApplicationRouter from '@/router';
-import { API_AUTH } from '../api';
-import { API_MEMBER } from '@/domains/member/api';
-
-const RouterV1 = express.Router();
-RouterV1.post('/', API_AUTH.authenticateUser);
-RouterV1.post('/create', API_MEMBER.createMember);
-RouterV1.delete('/', API_AUTH.unauthenticateUser);
-
-const RouterV2 = express.Router();
-RouterV2.post('/', API_AUTH.authenticateUser);
-RouterV2.post('/create', API_MEMBER.createMember);
-RouterV2.delete('/', API_AUTH.unauthenticateUser);
-
-ApplicationRouter.register('api/v1/auth', RouterV1);
-ApplicationRouter.register('api/v2/auth', RouterV2);
+// This file re-exports the v1 and v2 routers for backward compatibility.
+// The new structure uses versioned routers (see v1.ts and v2.ts).
+import v1Router from './v1';
+import v2Router from './v2';
+export { v1Router, v2Router };

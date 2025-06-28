@@ -40,7 +40,9 @@ const getAllTournaments = async () => {
 
 const getTournamentScore = async (memberId: string, tournamentId: string) => {
   const guesses = await QUERIES_TOURNAMENT.getTournamentGuesses(memberId, tournamentId);
-  const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
+  const parsedGuesses = guesses.map((row: (typeof guesses)[number]) =>
+    runGuessAnalysis(row.guess, row.match)
+  );
 
   return {
     details: parsedGuesses,
@@ -57,7 +59,7 @@ const setupTournament = async (memberId: string, tournamentId: string) => {
   const matches = await QUERIES_TOURNAMENT.getTournamentMatches(tournamentId);
 
   const guessesToInsert = matches.map(
-    match =>
+    (match: (typeof matches)[number]) =>
       ({
         matchId: match.id,
         memberId,

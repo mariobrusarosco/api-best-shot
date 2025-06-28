@@ -20,6 +20,7 @@ We follow a hybrid development approach:
 ### Developer Guides
 
 - [Playwright Production Guide](docs/guides/playwright-production.md)
+- [Google Container Registry Guide](docs/guides/google-container-registry.md)
 
 ## Tech Stack
 

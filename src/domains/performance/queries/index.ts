@@ -54,7 +54,8 @@ const league = {
   getPerformanceLastUpdated: async (leagueId: string) => {
     try {
       const query = await db.query.T_LeaguePerformance.findFirst({
-        where: (leaguePerformance, { eq }) => eq(leaguePerformance.leagueId, leagueId),
+        where: (leaguePerformance: any, { eq }: { eq: any }) =>
+          eq(leaguePerformance.leagueId, leagueId),
       });
 
       return query;
@@ -76,7 +77,7 @@ const tournament = {
     }
 
     const query = await db.query.T_TournamentPerformance.findFirst({
-      where: (tournamentPerformance, { eq }) =>
+      where: (tournamentPerformance: any, { eq }: { eq: any }) =>
         eq(tournamentPerformance.memberId, memberId) &&
         eq(tournamentPerformance.tournamentId, tournamentId),
     });

@@ -54,30 +54,34 @@ const getLeaguePerformance = async (req: Request, res: Response) => {
       )
       .orderBy(desc(sql`cast(${T_TournamentPerformance.points} as integer)`));
 
-    const performances = query.reduce<
-      Record<
-        string,
-        { id: string; logo: string; members: { member: string; points: string }[] }
-      >
-    >((acc, tournament) => {
-      const id = tournament.id || '';
-      const logo = tournament.logo || '';
-      const points = tournament.points || '';
-      const member = tournament.member || '';
+    const performances = query.reduce(
+      (
+        acc: Record<
+          string,
+          { id: string; logo: string; members: { member: string; points: string }[] }
+        >,
+        tournament: (typeof query)[number]
+      ) => {
+        const id = tournament.id || '';
+        const logo = tournament.logo || '';
+        const points = tournament.points || '';
+        const member = tournament.member || '';
 
-      if (id && !acc[id]) {
-        acc[id] = {
-          id,
-          logo: logo,
-          members: [],
-        };
-      }
+        if (id && !acc[id]) {
+          acc[id] = {
+            id,
+            logo: logo,
+            members: [],
+          };
+        }
 
-      if (tournament.member && tournament.points) {
-        acc[id].members.push({ member: member as string, points: points as string });
-      }
-      return acc;
-    }, {});
+        if (tournament.member && tournament.points) {
+          acc[id].members.push({ member: member as string, points: points as string });
+        }
+        return acc;
+      },
+      {}
+    );
 
     return res.status(200).send(Object.values(performances));
   } catch (error: unknown) {
@@ -106,29 +110,31 @@ const updateLeaguePerformance = async (req: Request, res: Response) => {
         )
       );
 
-    const promises = leagueMembers.map(async leagueMember => {
-      const updatedData = await updateTournamentsForMember(
-        leagueMember.memberId,
-        leagueTournaments
-      );
-      const totalPoints = updatedData.reduce(
-        (points, performance) => (points += Number(performance?.points || 0)),
-        0
-      );
-      return db
-        .update(T_LeaguePerformance)
-        .set({
-          leagueId: leagueId,
-          memberId: leagueMember.memberId,
-          points: String(totalPoints),
-        })
-        .where(
-          and(
-            eq(T_LeaguePerformance.memberId, leagueMember.memberId),
-            eq(T_LeaguePerformance.leagueId, leagueMember.leagueId)
-          )
+    const promises = leagueMembers.map(
+      async (leagueMember: (typeof leagueMembers)[number]) => {
+        const updatedData = await updateTournamentsForMember(
+          leagueMember.memberId,
+          leagueTournaments
         );
-    });
+        const totalPoints = updatedData.reduce(
+          (points, performance) => (points += Number(performance?.points || 0)),
+          0
+        );
+        return db
+          .update(T_LeaguePerformance)
+          .set({
+            leagueId: leagueId,
+            memberId: leagueMember.memberId,
+            points: String(totalPoints),
+          })
+          .where(
+            and(
+              eq(T_LeaguePerformance.memberId, leagueMember.memberId),
+              eq(T_LeaguePerformance.leagueId, leagueMember.leagueId)
+            )
+          );
+      }
+    );
 
     const result = await Promise.all(promises);
     console.log('promises -', promises, 'result', result);
@@ -144,7 +150,9 @@ const getTournamentPerformance = async (req: Request, res: Response) => {
     const { tournamentId } = req.params;
 
     const guesses = await getMatchGuessesForTournament(tournamentId, memberId);
-    const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
+    const parsedGuesses = guesses.map((row: (typeof guesses)[number]) =>
+      runGuessAnalysis(row.guess, row.match)
+    );
 
     const performance = await db
       .select()
@@ -201,7 +209,9 @@ export const queryMemberTournamentGuesses = async (
     .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
     .where(and(eq(T_Guess.memberId, memberId), eq(T_Match.tournamentId, tournamentId)));
 
-  return guesses.map(row => runGuessAnalysis(row.guess, row.match));
+  return guesses.map((row: (typeof guesses)[number]) =>
+    runGuessAnalysis(row.guess, row.match)
+  );
 };
 
 export const updateLeagueTournamentsForMember = async (
@@ -212,18 +222,20 @@ export const updateLeagueTournamentsForMember = async (
     .select()
     .from(T_TournamentPerformance)
     .where(eq(T_TournamentPerformance.memberId, memberId));
-  const promises = tournamentPerformances.map(async performance => {
-    const parsedGuesses = await queryMemberTournamentGuesses(
-      performance.memberId,
-      performance.tournamentId
-    );
-    const [updated] = await DB_Performance.updateTournamentPerformanceOnDatabase(
-      performance.memberId,
-      performance.tournamentId,
-      parsedGuesses
-    );
-    return updated;
-  });
+  const promises = tournamentPerformances.map(
+    async (performance: (typeof tournamentPerformances)[number]) => {
+      const parsedGuesses = await queryMemberTournamentGuesses(
+        performance.memberId,
+        performance.tournamentId
+      );
+      const [updated] = await DB_Performance.updateTournamentPerformanceOnDatabase(
+        performance.memberId,
+        performance.tournamentId,
+        parsedGuesses
+      );
+      return updated;
+    }
+  );
 
   const updateResult = await Promise.all(promises);
 
@@ -234,7 +246,7 @@ export const updateTournamentsForMember = async (
   memberId: string,
   tournaments: { id: string }[]
 ) => {
-  const promises = tournaments.map(async tournament => {
+  const promises = tournaments.map(async (tournament: { id: string }) => {
     const parsedGuesses = await queryMemberTournamentGuesses(memberId, tournament.id);
     const [updated] = await DB_Performance.updateTournamentPerformanceOnDatabase(
       memberId,
@@ -255,18 +267,20 @@ export const updateAllTournamentsForMember = async (memberId: string) => {
     .from(T_TournamentPerformance)
     .where(eq(T_TournamentPerformance.memberId, memberId));
 
-  const promises = tournamentPerformances.map(async performance => {
-    const parsedGuesses = await queryMemberTournamentGuesses(
-      performance.memberId,
-      performance.tournamentId
-    );
-    const [updated] = await DB_Performance.updateTournamentPerformanceOnDatabase(
-      performance.memberId,
-      performance.tournamentId,
-      parsedGuesses
-    );
-    return updated;
-  });
+  const promises = tournamentPerformances.map(
+    async (performance: (typeof tournamentPerformances)[number]) => {
+      const parsedGuesses = await queryMemberTournamentGuesses(
+        performance.memberId,
+        performance.tournamentId
+      );
+      const [updated] = await DB_Performance.updateTournamentPerformanceOnDatabase(
+        performance.memberId,
+        performance.tournamentId,
+        parsedGuesses
+      );
+      return updated;
+    }
+  );
 
   const updateResult = await Promise.all(promises);
 
@@ -279,7 +293,7 @@ export const updateAllLeaguesForMember = async (memberId: string) => {
     .from(T_LeagueRole)
     .where(eq(T_LeagueRole.memberId, memberId));
 
-  const promises = leagues.map(async leagueMember => {
+  const promises = leagues.map(async (leagueMember: (typeof leagues)[number]) => {
     const updatedData = await updateAllTournamentsForMember(leagueMember.memberId);
 
     const totalPoints = updatedData.reduce(

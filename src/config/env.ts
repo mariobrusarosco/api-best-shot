@@ -7,17 +7,21 @@ dotenv.config({ path: envPath });
 
 // Define environment schema with Zod
 const envSchema = z.object({
-  // Database
-  DB_STRING_CONNECTION: z.string().min(1, 'Database connection string is required'),
-  DB_USER: z.string().min(1, 'Database username is required'),
-  DB_PASSWORD: z.string().min(1, 'Database password is required'),
-  DB_NAME: z.string().min(1, 'Database name is required'),
-  DB_HOST: z.string().min(1, 'Database host is required'),
-  DB_PORT: z.string().transform(val => {
-    const port = parseInt(val, 10);
-    if (isNaN(port)) throw new Error('Port must be a number');
-    return port;
-  }),
+  // Database - optional for Cloud Run testing
+  DB_STRING_CONNECTION: z.string().optional(),
+  DB_USER: z.string().optional(),
+  DB_PASSWORD: z.string().optional(),
+  DB_NAME: z.string().optional(),
+  DB_HOST: z.string().optional(),
+  DB_PORT: z
+    .string()
+    .transform(val => {
+      if (!val) return 5432;
+      const port = parseInt(val, 10);
+      if (isNaN(port)) throw new Error('Port must be a number');
+      return port;
+    })
+    .optional(),
 
   // App
   NODE_ENV: z.enum(['development', 'demo', 'production']).default('development'),

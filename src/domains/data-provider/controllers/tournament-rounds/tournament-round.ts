@@ -83,7 +83,8 @@ const knockoutRoundsUpdate = async (tournamentId: string) => {
 
   const newDetectedRounds = listOfRoundsFromDataProvider.filter(round => {
     return !listOfRoundsFromDatabase.find(
-      currentRound => currentRound.slug === round.slug
+      (currentRound: (typeof listOfRoundsFromDatabase)[number]) =>
+        currentRound.slug === round.slug
     );
   });
 

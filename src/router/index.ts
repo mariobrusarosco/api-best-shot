@@ -28,9 +28,13 @@ class ApplicationRouter {
 
     for (const domain of domains) {
       try {
-        const resolvedPath = resolveAlias(`@/domains/${domain}/routes`);
-        await import(resolvedPath);
+        const routesPath = resolveAlias(`@/domains/${domain}/routes`);
+        await import(routesPath);
       } catch (error) {
+        console.log(
+          `[DEBUG] Failed to load routes for domain: ${domain}`,
+          error instanceof Error ? error.message : String(error)
+        );
         domainsWithRoutes.push(domain);
       }
     }

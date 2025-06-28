@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import ApplicationRouter from '@/router';
-import API_HEALTH_V1 from './api/v1';
+import API_HEALTH_V1 from '../api/v1';
 
 const router = Router();
 

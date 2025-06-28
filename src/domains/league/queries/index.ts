@@ -7,7 +7,8 @@ import { and, eq, sql } from 'drizzle-orm';
 
 const selectLeague = async (leagueId: string) => {
   const league = await db.query.T_League.findFirst({
-    where: (league, { eq }) => eq(league.id, leagueId),
+    where: (league: typeof T_League.$inferSelect, { eq }: { eq: any }) =>
+      eq(league.id, leagueId),
   });
   return league;
 };

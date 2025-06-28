@@ -63,15 +63,21 @@ const getMemberBestAndWorstPerformance = async (memberId: string) => {
     if (!tournamentPerformance.length) {
       return { worstPerformance: null, bestPerformance: null };
     }
-    const mapped = tournamentPerformance.map(row => ({
-      points: Number(row.tournament_performance.points),
-      label: row.tournament?.label,
-      id: row.tournament?.id,
-      logo: row.tournament?.logo,
-    }));
+    const mapped = tournamentPerformance.map(
+      (row: (typeof tournamentPerformance)[number]) => ({
+        points: Number(row.tournament_performance.points),
+        label: row.tournament?.label,
+        id: row.tournament?.id,
+        logo: row.tournament?.logo,
+      })
+    );
 
-    const worstPerformance = _.minBy(mapped, p => Number(p.points));
-    const bestPerformance = _.maxBy(mapped, p => Number(p.points));
+    const worstPerformance = _.minBy(mapped, (p: (typeof mapped)[number]) =>
+      Number(p.points)
+    );
+    const bestPerformance = _.maxBy(mapped, (p: (typeof mapped)[number]) =>
+      Number(p.points)
+    );
 
     return { worstPerformance, bestPerformance };
   } catch (error: unknown) {
@@ -157,40 +163,42 @@ const updateLeaguePerformance = async (leagueId: string) => {
         )
       );
 
-    const promises = leagueMembers.map(async leagueMember => {
-      console.log('UPDATE LEAGUE PERF FOR MEMBER', leagueMember.memberId);
-      console.log('UPDATE TOURN PERFORMANCE FOR TOURNAMENTS', leagueTournaments);
+    const promises = leagueMembers.map(
+      async (leagueMember: (typeof leagueMembers)[number]) => {
+        console.log('UPDATE LEAGUE PERF FOR MEMBER', leagueMember.memberId);
+        console.log('UPDATE TOURN PERFORMANCE FOR TOURNAMENTS', leagueTournaments);
 
-      const updatedData = await updateTournamentsForMember(
-        leagueMember.memberId,
-        leagueTournaments
-      );
+        const updatedData = await updateTournamentsForMember(
+          leagueMember.memberId,
+          leagueTournaments
+        );
 
-      const totalPoints = updatedData.reduce(
-        (points, performance) => (points += Number(performance?.points || 0)),
-        0
-      );
-      const [query] = await db
-        .update(T_LeaguePerformance)
-        .set({
-          leagueId: leagueId,
-          memberId: leagueMember.memberId,
-          points: String(totalPoints),
-        })
-        .where(
-          and(
-            eq(T_LeaguePerformance.memberId, leagueMember.memberId),
-            eq(T_LeaguePerformance.leagueId, leagueMember.leagueId)
+        const totalPoints = updatedData.reduce(
+          (points, performance) => (points += Number(performance?.points || 0)),
+          0
+        );
+        const [query] = await db
+          .update(T_LeaguePerformance)
+          .set({
+            leagueId: leagueId,
+            memberId: leagueMember.memberId,
+            points: String(totalPoints),
+          })
+          .where(
+            and(
+              eq(T_LeaguePerformance.memberId, leagueMember.memberId),
+              eq(T_LeaguePerformance.leagueId, leagueMember.leagueId)
+            )
           )
-        )
-        .returning();
+          .returning();
 
-      return {
-        memberName: leagueMember.memberName,
-        points: parseInt(query.points ?? '0'),
-        lastUpdated: query.updatedAt,
-      };
-    });
+        return {
+          memberName: leagueMember.memberName,
+          points: parseInt(query.points ?? '0'),
+          lastUpdated: query.updatedAt,
+        };
+      }
+    );
 
     const result = await Promise.all(promises);
     console.log('promises -', promises, 'result', _.orderBy(result, 'points', ['desc']));

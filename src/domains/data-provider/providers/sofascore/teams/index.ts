@@ -3,6 +3,7 @@ import { IApiProvider } from '@/domains/data-provider/typing';
 import { DB_InsertTeam, T_Team } from '@/domains/team/schema';
 import db from '@/services/database';
 import { fetchAndStoreAssetFromApi } from '@/utils';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 const SOFA_TEAM_LOGO_URL = 'https://img.sofascore.com/api/v1/team/:id/image';
 
 export const SofascoreTeams: IApiProvider['teams'] = {
@@ -92,7 +93,7 @@ export const SofascoreTeams: IApiProvider['teams'] = {
   upsertOnDatabase: async teams => {
     console.log('[LOG] - [START] - UPSERTING TEAMS ON DATABASE');
 
-    await db.transaction(async tx => {
+    await db.transaction(async (tx: PostgresJsDatabase<any>) => {
       for (const team of teams) {
         await tx
           .insert(T_Team)

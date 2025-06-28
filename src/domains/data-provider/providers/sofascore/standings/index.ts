@@ -6,6 +6,7 @@ import {
 import db from '@/services/database';
 import axios, { AxiosError } from 'axios';
 import { API_SOFASCORE_STANDINGS, API_SOFASCORE_STANDING_TEAM } from './typing';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 export const SofascoreStandings: IApiProvider['standings'] = {
   fetchStandingsFromProvider: async (baseUrl: string) => {
@@ -65,7 +66,7 @@ export const SofascoreStandings: IApiProvider['standings'] = {
   upsertOnDatabase: async standings => {
     console.log('[LOG] - [START] - UPSERTING STANDINGS');
 
-    const query = await db.transaction(async tx => {
+    const query = await db.transaction(async (tx: PostgresJsDatabase<any>) => {
       for (const standing of standings) {
         await tx
           .insert(T_TournamentStandings)

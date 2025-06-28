@@ -6,7 +6,7 @@ export default defineConfig({
   out: './supabase/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: env.DB_STRING_CONNECTION,
+    url: env.DB_STRING_CONNECTION || 'postgresql://localhost:5432/test',
   },
   verbose: true,
 });

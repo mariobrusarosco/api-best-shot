@@ -3,6 +3,7 @@ import { IApiProvider } from '@/domains/data-provider/typing';
 import { DB_InsertMatch, T_Match } from '@/domains/match/schema';
 import db from '@/services/database';
 import { safeString } from '@/utils';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 const safeSofaDate = (date: any) => {
   return date === null || date === undefined ? null : new Date(date);
@@ -17,7 +18,7 @@ export const SofascoreMatches: IApiProvider['matches'] = {
   upsertOnDatabase: async matches => {
     console.log('[LOG] - [START] - UPSERTING MATCHES ON DATABASE');
 
-    await db.transaction(async tx => {
+    await db.transaction(async (tx: PostgresJsDatabase<any>) => {
       for (const match of matches) {
         await tx
           .insert(T_Match)

@@ -12,7 +12,7 @@ RUN yarn install --frozen-lockfile --production=false
 COPY . .
 
 # Build the application (without Playwright)
-RUN yarn build:cloudrun
+RUN yarn build
 
 # Production stage
 FROM node:18-alpine AS production

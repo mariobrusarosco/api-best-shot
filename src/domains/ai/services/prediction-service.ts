@@ -11,7 +11,15 @@ import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { zodResponseFormat } from 'openai/helpers/zod';
 
-const client = new OpenAI();
+// Lazy initialization to avoid errors during import
+let client: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!client) {
+    client = new OpenAI();
+  }
+  return client;
+}
 
 const MatchAnalysisResponse = z.object({
   matchId: z.string(),
@@ -84,7 +92,7 @@ export const getAIPredictionForMatch = async (
   );
 
   // 6. Call OpenAI API
-  const response = await client.beta.chat.completions.parse({
+  const response = await getOpenAIClient().beta.chat.completions.parse({
     model: 'gpt-4o-mini', // or whatever model you prefer
     messages: [
       {

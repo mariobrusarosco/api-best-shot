@@ -26,7 +26,7 @@ async function getMemberGuesses({
   round: string;
 }) {
   try {
-    let guesses = null;
+    let guesses: Awaited<ReturnType<typeof db.select>> | null = null;
 
     guesses = await db
       .select()
@@ -46,7 +46,7 @@ async function getMemberGuesses({
         .from(T_Match)
         .where(and(eq(T_Match.roundSlug, round), eq(T_Match.tournamentId, tournamentId)));
 
-      const promises = roundMatches.map(async match =>
+      const promises = roundMatches.map(async (match: (typeof roundMatches)[number]) =>
         db
           .insert(T_Guess)
           .values({
@@ -73,7 +73,9 @@ async function getMemberGuesses({
         );
     }
 
-    const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
+    const parsedGuesses = guesses.map((row: (typeof guesses)[number]) =>
+      runGuessAnalysis(row.guess, row.match)
+    );
 
     return parsedGuesses;
   } catch (error: unknown) {

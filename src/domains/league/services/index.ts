@@ -5,30 +5,34 @@ import { ErrorMapper } from '../error-handling/mapper';
 const getLeagueStandings = async (leagueId: string) => {
   const query = await QUERIES_PERFORMANCE.league.getPerformance(leagueId);
 
-  const standings = query.reduce<
-    Record<
-      string,
-      { id: string; logo: string; members: { member: string; points: string }[] }
-    >
-  >((acc, tournament) => {
-    const id = tournament.id || '';
-    const logo = tournament.logo || '';
-    const points = tournament.points || '';
-    const member = tournament.member || '';
+  const standings = query.reduce(
+    (
+      acc: Record<
+        string,
+        { id: string; logo: string; members: { member: string; points: string }[] }
+      >,
+      tournament: (typeof query)[number]
+    ) => {
+      const id = tournament.id || '';
+      const logo = tournament.logo || '';
+      const points = tournament.points || '';
+      const member = tournament.member || '';
 
-    if (id && !acc[id]) {
-      acc[id] = {
-        id,
-        logo: logo,
-        members: [],
-      };
-    }
+      if (id && !acc[id]) {
+        acc[id] = {
+          id,
+          logo: logo,
+          members: [],
+        };
+      }
 
-    if (tournament.member && tournament.points) {
-      acc[id].members.push({ member: member as string, points: points as string });
-    }
-    return acc;
-  }, {});
+      if (tournament.member && tournament.points) {
+        acc[id].members.push({ member: member as string, points: points as string });
+      }
+      return acc;
+    },
+    {}
+  );
 
   return standings;
 };
@@ -97,12 +101,14 @@ const getLeagueDetails = async (leagueId: string, memberId: string) => {
     throw ErrorMapper.LEAGUE_NOT_FOUND;
   }
 
-  const participants = mainQuery.map(row => ({
+  const participants = mainQuery.map((row: (typeof mainQuery)[number]) => ({
     role: row.league_role.role,
     nickName: row.member.nickName,
   }));
 
-  const memberRole = mainQuery.find(row => row.league_role.memberId === memberId);
+  const memberRole = mainQuery.find(
+    (row: (typeof mainQuery)[number]) => row.league_role.memberId === memberId
+  );
   const permissions = {
     edit: memberRole?.league_role.role === 'ADMIN',
     invite: memberRole?.league_role.role === 'ADMIN',
@@ -110,7 +116,9 @@ const getLeagueDetails = async (leagueId: string, memberId: string) => {
   };
 
   const tournamentsQuery = await QUERIES_LEAGUE.getLeagueTournaments(leagueId);
-  const tournaments = tournamentsQuery.map(row => row.tournament);
+  const tournaments = tournamentsQuery.map(
+    (row: (typeof tournamentsQuery)[number]) => row.tournament
+  );
 
   return {
     id: mainQuery[0].league.id,

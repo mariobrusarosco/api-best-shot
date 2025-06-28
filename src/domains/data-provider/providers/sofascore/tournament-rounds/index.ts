@@ -8,6 +8,7 @@ import {
   T_TournamentRound,
   DB_InsertTournamentRound,
 } from '@/domains/tournament-round/schema';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 export const SofascoreTournamentRound: IApiProvider['rounds'] = {
   fetchShallowListOfRoundsFromProvider: async baseUrl => {
@@ -105,7 +106,7 @@ export const SofascoreTournamentRound: IApiProvider['rounds'] = {
       source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
     });
 
-    return await db.transaction(async tx => {
+    return await db.transaction(async (tx: PostgresJsDatabase<any>) => {
       for (const round of roundsToUpdate) {
         Profiling.log({
           msg: '[PROGRESS] - UPSERTING ROUND',

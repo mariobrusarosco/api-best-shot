@@ -52,7 +52,7 @@ async function startServer() {
   // Initialize router with auto-loading of routes
   await ApplicationRouter.init(app);
 
-  app.listen(port, () => {
+  app.listen(port, '0.0.0.0', () => {
     console.log(`Server running on port ${port} in ${env.NODE_ENV} mode`);
   });
 }

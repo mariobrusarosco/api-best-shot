@@ -18,7 +18,7 @@ export const createDailyScoresAndStandingsRoutine = async () => {
 
   const schedules = new Map<string, IDailySchedule>();
 
-  currentDayMatches.forEach(async match => {
+  currentDayMatches.forEach(async (match: (typeof currentDayMatches)[number]) => {
     const schedule = buildSchedule(match);
 
     if (!schedules.has(schedule.id)) {

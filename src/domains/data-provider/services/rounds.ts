@@ -6,6 +6,7 @@ import {
   DB_UpdateTournamentRound,
 } from '@/domains/tournament-round/schema';
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 export class RoundDataProviderService {
   private scraper: BaseScraper;
@@ -99,7 +100,7 @@ export class RoundDataProviderService {
     try {
       console.log('[LOG] - [SofascoreTournamentRounds] - UPSERTING ROUNDS ON DATABASE');
 
-      return await db.transaction(async tx => {
+      return await db.transaction(async (tx: PostgresJsDatabase<any>) => {
         for (const round of roundsToUpdate) {
           console.log(
             '[LOG] - [SofascoreTournamentRounds],' + ' - UPSERTING ROUND: ',

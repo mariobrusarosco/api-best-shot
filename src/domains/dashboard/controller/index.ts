@@ -4,7 +4,7 @@ const getDashboard = async () => {
   const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase();
   const uniqueMatches = new Map();
 
-  currentDayMatches.forEach(match => {
+  currentDayMatches.forEach((match: (typeof currentDayMatches)[number]) => {
     uniqueMatches.set(`${match.tournamentId}_${match.roundSlug}`, match);
   });
 

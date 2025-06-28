@@ -20,9 +20,11 @@ const queryPerformanceForTournament = async (memberId: string, tournamentId: str
     .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
     .where(and(eq(T_Guess.memberId, memberId), eq(T_Match.tournamentId, tournamentId)));
 
-  const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
-  const guessesByOutcome = parsedGuesses.reduce<GuessesByOutcome>(
-    (acc, guess) => {
+  const parsedGuesses = guesses.map((row: (typeof guesses)[number]) =>
+    runGuessAnalysis(row.guess, row.match)
+  );
+  const guessesByOutcome = parsedGuesses.reduce(
+    (acc: GuessesByOutcome, guess: (typeof parsedGuesses)[number]) => {
       const updateCount = (status: string) => {
         if (status === 'correct') acc.correct++;
         else if (status === 'incorrect') acc.incorrect++;

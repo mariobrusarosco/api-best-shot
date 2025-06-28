@@ -13,7 +13,7 @@ dayjs.extend(isSameOrAfter);
 export const runGuessAnalysis_V2 = (
   guesses: Awaited<ReturnType<typeof QUERIES_GUESS.selectMemberGuessesForTournament>>
 ) => {
-  return guesses.map(row => {
+  return guesses.map((row: (typeof guesses)[number]) => {
     const hasNullGuesses = row.guess.homeScore === null || row.guess.awayScore === null;
     const hasLostTimewindowToGuess = dayjs()
       .utc()

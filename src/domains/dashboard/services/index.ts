@@ -1,8 +1,8 @@
-import { QUERIES_MATCH } from '@/domains/match/queries';
+import { MatchQueries } from '@/domains/match/queries';
 import Profiling from '@/services/profiling';
 
 const getDashboard = async () => {
-  const currentDayMatches = await QUERIES_MATCH.currentDayMatches();
+  const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase();
 
   Profiling.log({
     msg: `[Current day matches: ${currentDayMatches.length}]`,
@@ -11,7 +11,7 @@ const getDashboard = async () => {
 
   const uniqueMatches = new Map();
 
-  currentDayMatches.forEach(match => {
+  currentDayMatches.forEach((match: (typeof currentDayMatches)[number]) => {
     uniqueMatches.set(`${match.tournamentId}_${match.roundSlug}`, match);
   });
 
@@ -22,6 +22,6 @@ const getDashboard = async () => {
   };
 };
 
-export const SERVICES_DASHBOARD = {
+export const DashboardService = {
   getDashboard,
 };

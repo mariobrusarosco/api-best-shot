@@ -144,7 +144,7 @@ const getMatchesWithNullGuess = async (
       )
       .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round)));
 
-    return rows.filter(row => row.guess === null);
+    return rows.filter((row: (typeof rows)[number]) => row.guess === null);
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
     console.error('[TournamentQueries] - [getMatchesWithNullGuess]', dbError);

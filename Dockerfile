@@ -1,5 +1,6 @@
-# Dockerfile for Cloud Run (without browser dependencies)
-FROM node:18-alpine AS base
+# Dockerfile for Cloud Run using Official Playwright Image
+# Uses Microsoft's official Playwright image with all browsers and dependencies pre-installed
+FROM mcr.microsoft.com/playwright:v1.52.0-jammy AS base
 
 # Set working directory
 WORKDIR /app
@@ -11,11 +12,11 @@ RUN yarn install --frozen-lockfile --production=false
 # Copy source code
 COPY . .
 
-# Build the application (without Playwright)
+# Build the application
 RUN yarn build
 
-# Production stage
-FROM node:18-alpine AS production
+# Production stage - using official Playwright image
+FROM mcr.microsoft.com/playwright:v1.52.0-jammy AS production
 
 WORKDIR /app
 
@@ -29,19 +30,23 @@ RUN yarn install --frozen-lockfile --production=true && \
 # Copy built application from build stage
 COPY --from=base /app/dist ./dist
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+# Use existing pwuser from Playwright image and set up directories
+RUN mkdir -p /home/pwuser/Downloads && \
+    chown -R pwuser:pwuser /home/pwuser && \
+    chown -R pwuser:pwuser /app
 
-# Change ownership of the app directory
-RUN chown -R nodejs:nodejs /app
-USER nodejs
+# Switch to non-root user
+USER pwuser
 
 # Expose port (Cloud Run expects 8080 by default)
 EXPOSE 8080
 
 # Set environment to production
 ENV NODE_ENV=production
+
+# Playwright optimizations for Cloud Run
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

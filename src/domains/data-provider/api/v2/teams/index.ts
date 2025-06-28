@@ -8,8 +8,9 @@ import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { ErrorMapper } from '@/domains/tournament/error-handling/mapper';
 
 const create = async (req: TeamsRequest, res: Response) => {
+  let scraper: BaseScraper | null = null;
   try {
-    const scraper = await BaseScraper.createInstance();
+    scraper = await BaseScraper.createInstance();
     const teamService = new TeamsDataProviderService(scraper);
 
     if (!req.body.tournamentId) {
@@ -45,6 +46,11 @@ const create = async (req: TeamsRequest, res: Response) => {
       error,
     });
     return handleInternalServerErrorResponse(res, error);
+  } finally {
+    // CRITICAL: Clean up Playwright resources to prevent memory leaks
+    if (scraper) {
+      await scraper.close();
+    }
   }
 };
 

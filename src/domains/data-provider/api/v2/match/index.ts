@@ -8,8 +8,9 @@ import { MatchesDataProviderService } from '@/domains/data-provider/services/mat
 import { CreateMatchesRequest } from '@/domains/match/typing';
 
 const create = async (req: CreateMatchesRequest, res: Response) => {
+  let scraper: BaseScraper | null = null;
   try {
-    const scraper = await BaseScraper.createInstance();
+    scraper = await BaseScraper.createInstance();
     const matchesDataProviderService = new MatchesDataProviderService(scraper);
 
     if (!req.body.tournamentId) {
@@ -39,6 +40,11 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
       error,
     });
     return handleInternalServerErrorResponse(res, error);
+  } finally {
+    // CRITICAL: Clean up Playwright resources to prevent memory leaks
+    if (scraper) {
+      await scraper.close();
+    }
   }
 };
 

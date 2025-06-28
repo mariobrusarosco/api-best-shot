@@ -6,8 +6,9 @@ import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 
 const create = async (req: TournamentRoundRequest, res: Response) => {
+  let scraper: BaseScraper | null = null;
   try {
-    const scraper = await BaseScraper.createInstance();
+    scraper = await BaseScraper.createInstance();
     const dataProviderService = new RoundDataProviderService(scraper);
 
     if (!req.body.tournamentId) {
@@ -19,6 +20,11 @@ const create = async (req: TournamentRoundRequest, res: Response) => {
     return res.status(200).send(rounds);
   } catch (error: any) {
     handleInternalServerErrorResponse(res, error);
+  } finally {
+    // CRITICAL: Clean up Playwright resources to prevent memory leaks
+    if (scraper) {
+      await scraper.close();
+    }
   }
 };
 

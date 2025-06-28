@@ -10,6 +10,7 @@ async function verifyConnection(client: any) {
   try {
     await client`SELECT 1`;
     console.log('✅ Database connected successfully');
+    return true;
   } catch (err) {
     console.error(
       `----------------------------------------------------
@@ -19,7 +20,15 @@ Error: ${err}
 ----------------------------------------------------`
     );
 
-    process.exit(1);
+    // Don't exit in production/demo environments - let the app run without DB
+    if (env.NODE_ENV === 'development') {
+      process.exit(1);
+    } else {
+      console.warn(
+        '⚠️ Continuing without database connection in non-development environment'
+      );
+      return false;
+    }
   }
 }
 
@@ -28,7 +37,13 @@ if (env.DB_STRING_CONNECTION) {
     prepare: false,
   });
   db = drizzle(client, { schema });
-  verifyConnection(client); // Run the connection check
+
+  // Verify connection but don't block startup in production/demo
+  verifyConnection(client).then(connected => {
+    if (!connected && env.NODE_ENV !== 'development') {
+      console.warn('⚠️ Database verification failed - some features may not work');
+    }
+  });
 } else {
   console.warn('⚠️ Database connection not configured - running in test mode');
   // Create a mock database object for testing

@@ -4,7 +4,7 @@ import './services/profiling/sentry-instrument';
 
 import express from 'express';
 import logger from './middlewares/logger';
-import ApplicationRouter from './router';
+import apiRouter from './router';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
@@ -48,15 +48,11 @@ app.options('*', cors(corsConfig));
 app.use(logger);
 app.use(accessControl);
 
-async function startServer() {
-  // Initialize router with auto-loading of routes
-  await ApplicationRouter.init(app);
+// Mount the central API router at /api
+app.use('/api', apiRouter);
 
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`Server running on port ${port} in ${env.NODE_ENV} mode`);
-  });
-}
-
-startServer();
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on port ${port} in ${env.NODE_ENV} mode`);
+});
 
 export default app;

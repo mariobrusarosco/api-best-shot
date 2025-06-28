@@ -1,8 +1,8 @@
 import type { Browser, BrowserContext, Page, Response } from 'playwright';
-import { chromium } from 'playwright';
 import { S3FileStorage } from '../file-storage';
 import mime from 'mime-types';
 import Profiling from '@/services/profiling';
+import { playwrightPool, type BrowserInstance } from '@/utils/playwright-pool';
 
 export type FetchAndStoreAssetPayload = {
   logoUrl: string;
@@ -15,6 +15,7 @@ export class BaseScraper {
   protected page: Page | null = null;
   private fileStorage: S3FileStorage;
   private readonly cloudFrontDomain: string;
+  private poolInstance: BrowserInstance | null = null; // Store pool instance reference
 
   constructor() {
     this.fileStorage = new S3FileStorage();
@@ -22,55 +23,22 @@ export class BaseScraper {
   }
 
   /**
-   * Initialize the browser, context, and page
+   * Initialize using browser pool instead of creating new browser
    * @returns this instance after initialization
    */
   private async init() {
     try {
-      // Check if we're in demo or production environment
-      const isProduction = process.env.NODE_ENV === 'production';
-      const isDemo =
-        process.env.NODE_ENV === 'demo' || process.env.ENV_PATH?.includes('demo');
       const startTime = Date.now();
 
-      // Always use headless mode in production, demo and CI environments
-      const forceHeadless = isProduction || isDemo;
+      // Get browser instance from pool
+      this.poolInstance = await playwrightPool.getInstance();
+      this.browser = this.poolInstance.browser;
+      this.context = this.poolInstance.context;
 
-      // Enhanced browser arguments for production environments
-      this.browser = await chromium.launch({
-        headless: true, // Always use headless mode to avoid X server issues
-        args: forceHeadless
-          ? [
-              '--no-sandbox',
-              '--disable-setuid-sandbox',
-              '--disable-dev-shm-usage',
-              '--disable-accelerated-2d-canvas',
-              '--no-first-run',
-              '--no-zygote',
-              '--single-process',
-              '--disable-gpu',
-              '--disable-extensions',
-              '--disable-background-networking',
-              '--disable-default-apps',
-              '--disable-sync',
-              '--disable-translate',
-              '--hide-scrollbars',
-              '--metrics-recording-only',
-              '--mute-audio',
-            ]
-          : [],
-        timeout: 30000, // 30 second timeout for browser launch
-      });
-
-      // Configure browser context with appropriate settings
-      this.context = await this.browser.newContext({
-        viewport: { width: 1280, height: 720 }, // Reduced for less memory usage
-        userAgent:
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-        ignoreHTTPSErrors: true, // Ignore HTTPS errors in production
-        javaScriptEnabled: true,
-      });
-
+      // Create a new page in the existing context
+      if (!this.context) {
+        throw new Error('Browser context not available from pool');
+      }
       this.page = await this.context.newPage();
 
       // Set default timeouts
@@ -79,8 +47,11 @@ export class BaseScraper {
 
       const duration = Date.now() - startTime;
       Profiling.log({
-        msg: 'Playwright browser initialized',
-        data: { duration },
+        msg: 'BaseScraper initialized using pool',
+        data: {
+          duration,
+          poolStats: playwrightPool.getStats(),
+        },
         source: 'BaseScraper.init',
       });
 
@@ -100,18 +71,28 @@ export class BaseScraper {
   }
 
   /**
-   * Properly close all Playwright resources
+   * Properly close page and release browser instance back to pool
    */
   async close() {
     try {
+      // Close only the page, not the entire browser/context
       await this.page?.close().catch(() => {});
-      await this.context?.close().catch(() => {});
-      await this.browser?.close().catch(() => {});
+
+      // Release browser instance back to pool
+      if (this.poolInstance) {
+        playwrightPool.releaseInstance(this.poolInstance);
+        Profiling.log({
+          msg: 'Browser instance released to pool',
+          data: { poolStats: playwrightPool.getStats() },
+          source: 'BaseScraper.close',
+        });
+      }
 
       // Reset references
       this.page = null;
       this.context = null;
       this.browser = null;
+      this.poolInstance = null;
     } catch (error) {
       Profiling.error({
         source: 'BaseScraper.close',

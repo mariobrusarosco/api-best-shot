@@ -16,16 +16,6 @@ console.log('Starting API Best Shot...');
 const app = express();
 const port = Number(process.env.PORT || env.PORT || 8080);
 
-// Simple health check endpoint - add this BEFORE complex initialization
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    environment: env.NODE_ENV,
-    port: port,
-  });
-});
-
 console.log('Registered /health endpoint');
 
 // Root endpoint for testing

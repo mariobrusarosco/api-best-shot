@@ -7,8 +7,9 @@ import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 
 const create = async (req: StandingsRequest, res: Response) => {
+  let scraper: BaseScraper | null = null;
   try {
-    const scraper = await BaseScraper.createInstance();
+    scraper = await BaseScraper.createInstance();
     const dataProviderService = new StandingsDataProviderService(scraper);
 
     if (!req.body.tournamentId) {
@@ -24,12 +25,17 @@ const create = async (req: StandingsRequest, res: Response) => {
     });
 
     return res.status(200).json({ standings });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_STANDINGS_create',
       error,
     });
     return handleInternalServerErrorResponse(res, error);
+  } finally {
+    // CRITICAL: Clean up Playwright resources to prevent memory leaks
+    if (scraper) {
+      await scraper.close();
+    }
   }
 };
 

@@ -65,6 +65,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.703.0",
     "@aws-sdk/client-scheduler": "^3.716.0",
+    "@logtail/node": "^0.5.5",
+    "@logtail/winston": "^0.5.5",
     "@sentry/cli": "^2.39.1",
     "@sentry/node": "^8.47.0",
     "@sentry/profiling-node": "^8.47.0",
@@ -90,6 +92,7 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.16.0",
     "uuid": "^11.0.3",
+    "winston": "^3.17.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {

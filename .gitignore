@@ -52,3 +52,6 @@ crash.log
 
 # Sentry Config File
 .sentryclirc
+
+# Package Manager
+.yarn/

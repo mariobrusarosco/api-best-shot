@@ -3,15 +3,20 @@ config({ path: process.env.ENV_PATH || '.env' });
 import './services/profiling/sentry-instrument';
 
 import express from 'express';
-import logger from './middlewares/logger';
+import requestLogger from './middlewares/logger';
 import apiRouter from './router';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
 import accessControl from './domains/shared/middlewares/access-control';
 import { env } from './config/env';
+import { logger, logInfo, logError } from './services/logger';
 
-console.log('Starting API Best Shot...');
+logInfo('Starting API Best Shot...', { 
+  environment: env.NODE_ENV,
+  port: env.PORT,
+  version: env.API_VERSION 
+});
 
 const app = express();
 const port = Number(process.env.PORT || env.PORT || 8080);
@@ -26,7 +31,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-console.log('Registered /health endpoint');
+logInfo('Registered /health endpoint');
 
 // Root endpoint for testing
 app.get('/', (req, res) => {
@@ -36,15 +41,15 @@ app.get('/', (req, res) => {
   });
 });
 
-console.log('Registered root endpoint');
+logInfo('Registered root endpoint');
 
 // JSON Parser Middleware
 app.use(express.json());
-console.log('Registered JSON parser middleware');
+logInfo('Registered JSON parser middleware');
 
 app.set('trust proxy', 1);
 app.use(cookieParser());
-console.log('Registered cookie parser');
+logInfo('Registered cookie parser');
 
 const corsConfig = {
   origin: process.env.ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -52,25 +57,25 @@ const corsConfig = {
 };
 app.use(cors(corsConfig));
 app.options('*', cors(corsConfig));
-console.log('Registered CORS');
+logInfo('Registered CORS');
 
-app.use(logger);
+app.use(requestLogger);
 app.use(accessControl);
-console.log('Registered logger and access control');
+logInfo('Registered logger and access control');
 
 // Mount the central API router at /api
 app.use('/api', apiRouter);
-console.log('Registered /api router');
+logInfo('Registered /api router');
 
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port} in ${env.NODE_ENV} mode`);
+  logInfo(`Server running on port ${port} in ${env.NODE_ENV} mode`, { port, environment: env.NODE_ENV });
 });
 
 process.on('uncaughtException', err => {
-  console.error('Uncaught Exception:', err);
+  logError('Uncaught Exception', err);
 });
 process.on('unhandledRejection', reason => {
-  console.error('Unhandled Rejection:', reason);
+  logError('Unhandled Rejection', reason instanceof Error ? reason : new Error(String(reason)));
 });
 
 export default app;

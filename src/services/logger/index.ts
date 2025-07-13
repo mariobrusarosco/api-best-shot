@@ -10,12 +10,6 @@ if (env.LOGTAIL_SOURCE_TOKEN) {
   console.log('🔧 Initializing BetterStack with token:', env.LOGTAIL_SOURCE_TOKEN.substring(0, 8) + '...');
   const logtail = new Logtail(env.LOGTAIL_SOURCE_TOKEN);
   logtailTransport = new LogtailTransport(logtail);
-  
-  // Add error handling
-  logtail.on('error', (error) => {
-    console.error('❌ BetterStack connection error:', error);
-  });
-  
   console.log('✅ BetterStack transport initialized');
 } else {
   console.log('⚠️ No LOGTAIL_SOURCE_TOKEN found - BetterStack disabled');

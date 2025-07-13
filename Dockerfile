@@ -5,8 +5,11 @@ FROM mcr.microsoft.com/playwright:v1.52.0-jammy AS base
 # Set working directory
 WORKDIR /app
 
+# Enable Yarn 3
+RUN corepack enable && corepack prepare yarn@3.8.7 --activate
+
 # Install dependencies
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock .yarnrc.yml ./
 RUN yarn install --frozen-lockfile --production=false
 
 # Copy source code
@@ -20,8 +23,11 @@ FROM mcr.microsoft.com/playwright:v1.52.0-jammy AS production
 
 WORKDIR /app
 
+# Enable Yarn 3 in production stage too
+RUN corepack enable && corepack prepare yarn@3.8.7 --activate
+
 # Copy package files
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock .yarnrc.yml ./
 
 # Install only production dependencies
 RUN yarn install --frozen-lockfile --production=true && \

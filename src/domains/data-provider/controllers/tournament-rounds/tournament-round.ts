@@ -1,5 +1,5 @@
 import { SofascoreTournamentRound } from '@/domains/data-provider/providers/sofascore/tournament-rounds';
-import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
+import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { MatchesController } from '../matches';
@@ -55,7 +55,7 @@ const update = async (tournamentId: string) => {
 };
 
 const getRoundProviderData = async (tournamentId: string, roundSlug: string) => {
-  const roundQuery = await TournamentRoundsQueries.getRound({ tournamentId, roundSlug });
+  const roundQuery = await QUERIES_TOURNAMENT_ROUND.getRound(tournamentId, roundSlug);
   if (roundQuery === undefined)
     throw new Error('Tournament does not have a record for this round');
   return await SofascoreTournamentRound.fetchRoundFromProvider(roundQuery.providerUrl);
@@ -79,7 +79,7 @@ const knockoutRoundsUpdate = async (tournamentId: string) => {
       tournament
     );
   const listOfRoundsFromDatabase =
-    await TournamentRoundsQueries.getAllRounds(tournamentId);
+    await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournamentId);
 
   const newDetectedRounds = listOfRoundsFromDataProvider.filter(round => {
     return !listOfRoundsFromDatabase.find(

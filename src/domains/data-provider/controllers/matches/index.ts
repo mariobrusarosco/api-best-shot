@@ -1,7 +1,7 @@
 import { SofascoreMatches } from '@/domains/data-provider/providers/sofascore/matches';
 import { SofascoreTournamentRound } from '@/domains/data-provider/providers/sofascore/tournament-rounds';
 import { DB_InsertMatch } from '@/domains/match/schema';
-import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
+import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { sleep } from '@/utils';
@@ -10,7 +10,7 @@ const create = async (tournamentId: string) => {
   const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (!tournament) throw new Error('Tournament not found');
 
-  const roundList = await TournamentRoundsQueries.getAllRounds(tournamentId);
+  const roundList = await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournamentId);
   let matches: DB_InsertMatch[] = [];
 
   for (const round of roundList) {
@@ -49,7 +49,7 @@ const update = async (tournamentId: string) => {
   const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (!tournament) throw new Error('Tournament not found');
 
-  const roundList = await TournamentRoundsQueries.getAllRounds(tournamentId);
+  const roundList = await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournamentId);
   let matches: DB_InsertMatch[] = [];
 
   for (const round of roundList) {
@@ -87,10 +87,7 @@ const updateRound = async (tournamentId: string, roundSlug: string) => {
   const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (!tournament) throw new Error('Tournament not found');
 
-  const round = await TournamentRoundsQueries.getRound({
-    tournamentId,
-    roundSlug,
-  });
+  const round = await QUERIES_TOURNAMENT_ROUND.getRound(tournamentId, roundSlug);
   if (!round) throw new Error('Round not found');
 
   const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(

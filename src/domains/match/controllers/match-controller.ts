@@ -2,7 +2,7 @@ import { ErrorMapper } from '@/domains/match/error-handling/mapper';
 import { T_Match } from '@/domains/match/schema';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import { T_Team } from '@/domains/team/schema';
-import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
+import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import db from '@/services/database';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -23,10 +23,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
       roundId: string;
     };
 
-    const round = await TournamentRoundsQueries.getRound({
-      tournamentId,
-      roundSlug: roundId,
-    });
+    const round = await QUERIES_TOURNAMENT_ROUND.getRound(tournamentId, roundId);
 
     if (!round || !round.slug) {
       return res

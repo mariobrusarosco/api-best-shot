@@ -1,5 +1,5 @@
 import { SofascoreTeams } from '@/domains/data-provider/providers/sofascore/teams';
-import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
+import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { TournamentQuery } from '@/domains/tournament/queries';
 import Profiling from '@/services/profiling';
 import { sleep } from '@/utils';
@@ -45,9 +45,7 @@ export const fetchAndMapTeamsForRegularSeason = async (
 export const fetchAndMapTeamsFromKnockoutRounds = async (
   tournament: NonNullable<TournamentQuery>
 ) => {
-  const knockoutRoundsList = await TournamentRoundsQueries.getKnockoutRounds({
-    tournamentId: tournament.id!,
-  });
+  const knockoutRoundsList = await QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(tournament.id!);
 
   const ALL_TEAMS = [];
 

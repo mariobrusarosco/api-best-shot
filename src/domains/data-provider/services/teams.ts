@@ -8,7 +8,7 @@ import { Profiling } from '@/services/profiling';
 import { DB_InsertTeam } from '@/domains/team/schema';
 import { safeString, sleep } from '@/utils';
 import { QUERIES_TEAMS } from '@/domains/team/queries';
-import { TournamentRoundsQueries } from '@/domains/tournament-round/queries';
+import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 
 export class TeamsDataProviderService {
@@ -114,9 +114,7 @@ export class TeamsDataProviderService {
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
     try {
-      const rounds = await TournamentRoundsQueries.getKnockoutRounds({
-        tournamentId: tournament.id,
-      });
+      const rounds = await QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(tournament.id);
       Profiling.log({
         msg: `[Rounds from database]`,
         data: { rounds },

@@ -24,6 +24,23 @@ jobs:
         with:
           project_id: api-best-shot-demo
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Enable Yarn 3
+        run: corepack enable && corepack prepare yarn@3.8.7 --activate
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Type check
+        run: yarn compile
+
+      - name: Test build
+        run: yarn build
+
       - name: Configure Docker for gcr.io
         run: gcloud auth configure-docker --quiet
 

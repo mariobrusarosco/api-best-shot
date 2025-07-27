@@ -37,7 +37,7 @@ steps:
       - '900s'
       - '--max-instances'
       - '10'
-      - '--set-env-vars'
+      - '--update-env-vars'
       - 'NODE_ENV=demo'
 
 # Build configuration

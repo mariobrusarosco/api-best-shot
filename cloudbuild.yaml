@@ -1,16 +1,6 @@
 # Cloud Build configuration for Cloud Run deployment
 steps:
-  # Install dependencies and build
-  - name: 'node:18'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        corepack enable && corepack prepare yarn@3.8.7 --activate
-        yarn install --immutable
-        yarn build
-
-  # Build Docker image
+  # Build Docker image (includes build steps inside Dockerfile)
   - name: 'gcr.io/cloud-builders/docker'
     args: 
       - 'build'
@@ -50,27 +40,30 @@ steps:
       - '--set-env-vars'
       - 'NODE_ENV=demo,PORT=8080'
       - '--update-secrets'
-      - 'JWT_SECRET=JWT_SECRET:1'
+      - 'JWT_SECRET=JWT_SECRET:latest'
       - '--update-secrets'
-      - 'MEMBER_PUBLIC_ID_COOKIE=MEMBER_PUBLIC_ID_COOKIE:1'
+      - 'MEMBER_PUBLIC_ID_COOKIE=MEMBER_PUBLIC_ID_COOKIE:latest'
       - '--update-secrets'
-      - 'ACCESS_CONTROL_ALLOW_ORIGIN=ACCESS_CONTROL_ALLOW_ORIGIN:1'
+      - 'ACCESS_CONTROL_ALLOW_ORIGIN=ACCESS_CONTROL_ALLOW_ORIGIN:latest'
       - '--update-secrets'
-      - 'AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:1'
+      - 'AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest'
       - '--update-secrets'
-      - 'AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:1'
+      - 'AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest'
       - '--update-secrets'
-      - 'AWS_BUCKET_NAME=AWS_BUCKET_NAME:1'
+      - 'AWS_BUCKET_NAME=AWS_BUCKET_NAME:latest'
       - '--update-secrets'
-      - 'AWS_CLOUDFRONT_URL=AWS_CLOUDFRONT_URL:1'
+      - 'AWS_CLOUDFRONT_URL=AWS_CLOUDFRONT_URL:latest'
       - '--update-secrets'
-      - 'SENTRY_DSN=SENTRY_DSN:1'
+      - 'SENTRY_DSN=SENTRY_DSN:latest'
       - '--update-secrets'
-      - 'ADMIN_TOKEN=ADMIN_TOKEN:1'
+      - 'ADMIN_TOKEN=ADMIN_TOKEN:latest'
+      - '--update-secrets'
+      - 'DB_STRING_CONNECTION=DB_STRING_CONNECTION:latest'
 
 # Build configuration
 options:
   machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
   
 # Timeout for entire build
 timeout: '1200s'

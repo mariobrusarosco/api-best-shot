@@ -10,7 +10,7 @@ import cors from 'cors';
 
 import accessControl from './domains/shared/middlewares/access-control';
 import { env } from './config/env';
-import { logger, logInfo, logError } from './services/logger';
+import { logInfo, logError } from './services/logger';
 
 logInfo('Starting API Best Shot...', { 
   environment: env.NODE_ENV,
@@ -22,7 +22,7 @@ const app = express();
 const port = Number(process.env.PORT || env.PORT || 8080);
 
 // Simple health check endpoint - add this BEFORE complex initialization
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
@@ -34,7 +34,7 @@ app.get('/health', (req, res) => {
 logInfo('Registered /health endpoint');
 
 // Root endpoint for testing
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.status(200).json({
     message: 'API Best Shot Demo - Running on Cloud Run!',
     version: env.API_VERSION || 'v1',
@@ -42,7 +42,7 @@ app.get('/', (req, res) => {
 });
 
 // Debug endpoint to check environment variables (REMOVE IN PRODUCTION)
-app.get('/debug/env', (req, res) => {
+app.get('/debug/env', (_req, res) => {
   const envCheck = {
     NODE_ENV: process.env.NODE_ENV,
     PORT: process.env.PORT,
@@ -55,8 +55,8 @@ app.get('/debug/env', (req, res) => {
     HAS_ADMIN_TOKEN: !!process.env.ADMIN_TOKEN,
     HAS_CORS_ORIGIN: !!process.env.ACCESS_CONTROL_ALLOW_ORIGIN,
     HAS_COOKIE_NAME: !!process.env.MEMBER_PUBLIC_ID_COOKIE,
-    SENTRY_DSN_PREFIX: process.env.SENTRY_DSN?.substring(0, 20) + '...' || 'NOT_SET',
-    AWS_CLOUDFRONT_PREFIX: process.env.AWS_CLOUDFRONT_URL?.substring(0, 20) + '...' || 'NOT_SET',
+    SENTRY_DSN_PREFIX: `${process.env.SENTRY_DSN?.substring(0, 20)}...` || 'NOT_SET',
+    AWS_CLOUDFRONT_PREFIX: `${process.env.AWS_CLOUDFRONT_URL?.substring(0, 20)}...` || 'NOT_SET',
   };
   
   res.status(200).json({

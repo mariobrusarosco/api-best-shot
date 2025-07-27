@@ -41,6 +41,31 @@ app.get('/', (req, res) => {
   });
 });
 
+// Debug endpoint to check environment variables (REMOVE IN PRODUCTION)
+app.get('/debug/env', (req, res) => {
+  const envCheck = {
+    NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
+    HAS_JWT_SECRET: !!process.env.JWT_SECRET,
+    HAS_SENTRY_DSN: !!process.env.SENTRY_DSN,
+    HAS_AWS_ACCESS_KEY: !!process.env.AWS_ACCESS_KEY_ID,
+    HAS_AWS_SECRET_KEY: !!process.env.AWS_SECRET_ACCESS_KEY,
+    HAS_AWS_BUCKET: !!process.env.AWS_BUCKET_NAME,
+    HAS_AWS_CLOUDFRONT: !!process.env.AWS_CLOUDFRONT_URL,
+    HAS_ADMIN_TOKEN: !!process.env.ADMIN_TOKEN,
+    HAS_CORS_ORIGIN: !!process.env.ACCESS_CONTROL_ALLOW_ORIGIN,
+    HAS_COOKIE_NAME: !!process.env.MEMBER_PUBLIC_ID_COOKIE,
+    SENTRY_DSN_PREFIX: process.env.SENTRY_DSN?.substring(0, 20) + '...' || 'NOT_SET',
+    AWS_CLOUDFRONT_PREFIX: process.env.AWS_CLOUDFRONT_URL?.substring(0, 20) + '...' || 'NOT_SET',
+  };
+  
+  res.status(200).json({
+    message: 'Environment Check - Remove this endpoint in production!',
+    secrets: envCheck,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 logInfo('Registered root endpoint');
 
 // JSON Parser Middleware

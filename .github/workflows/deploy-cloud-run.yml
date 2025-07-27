@@ -58,3 +58,16 @@ jobs:
           service: api-best-shot-demo
           image: gcr.io/api-best-shot-demo/api-best-shot-demo:${{ github.sha }}
           region: us-central1
+          env_vars: |
+            NODE_ENV=demo
+            PORT=8080
+          secrets: |
+            JWT_SECRET=JWT_SECRET:latest
+            MEMBER_PUBLIC_ID_COOKIE=MEMBER_PUBLIC_ID_COOKIE:latest
+            ACCESS_CONTROL_ALLOW_ORIGIN=ACCESS_CONTROL_ALLOW_ORIGIN:latest
+            AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest
+            AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest
+            AWS_BUCKET_NAME=AWS_BUCKET_NAME:latest
+            AWS_CLOUDFRONT_URL=AWS_CLOUDFRONT_URL:latest
+            SENTRY_DSN=SENTRY_DSN:latest
+            ADMIN_TOKEN=ADMIN_TOKEN:latest

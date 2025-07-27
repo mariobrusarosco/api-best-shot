@@ -48,7 +48,6 @@ const envSchema = z.object({
 
   // Monitoring
   SENTRY_DSN: z.string().min(1, 'Sentry DSN is required'),
-  LOGTAIL_SOURCE_TOKEN: z.string().optional(),
 
   // Admin Operations
   ADMIN_TOKEN: z.string().min(1, 'Admin token is required'),

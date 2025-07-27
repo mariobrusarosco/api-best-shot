@@ -2200,67 +2200,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@logtail/core@npm:^0.5.4":
-  version: 0.5.4
-  resolution: "@logtail/core@npm:0.5.4"
-  dependencies:
-    "@logtail/tools": ^0.5.4
-    "@logtail/types": ^0.5.3
-    serialize-error: 8.1.0
-  checksum: ce0e52cf632a587777cdc72f192646a53cfd07fcb3ce384599dada4e1bc3c143e06b64bb6512ed4be53ff7a797b0ddfb4e41e489478fd617cee1bcc528c95c97
-  languageName: node
-  linkType: hard
-
-"@logtail/node@npm:^0.5.5":
-  version: 0.5.5
-  resolution: "@logtail/node@npm:0.5.5"
-  dependencies:
-    "@logtail/core": ^0.5.4
-    "@logtail/types": ^0.5.3
-    "@msgpack/msgpack": ^2.5.1
-    "@types/stack-trace": ^0.0.33
-    minimatch: ^9.0.5
-    stack-trace: 0.0.10
-  checksum: 5c357673c6bd3599a5b8f666a5f878d0b24bb4cfcea48e0b19966c754a24a8f0e459a797ee2ce09461435e1ec8c37249f0a086dd49d670cb280a01f3f038d3e9
-  languageName: node
-  linkType: hard
-
-"@logtail/tools@npm:^0.5.4":
-  version: 0.5.4
-  resolution: "@logtail/tools@npm:0.5.4"
-  dependencies:
-    "@logtail/types": ^0.5.3
-  checksum: 46ca9cf163bf3aa8cec37027f76210c63fc732b7dfd6236ffb86c8120a3364bad1c8379431a1ea9cc642e3c7e2226c210c881ce4068340882aa017dba7346a4a
-  languageName: node
-  linkType: hard
-
-"@logtail/types@npm:^0.5.3":
-  version: 0.5.3
-  resolution: "@logtail/types@npm:0.5.3"
-  checksum: 22b118c801f3a226230d2d5f2a00b0b2db1b8d5f23b20ee51139987b1bd42517ee1fe5066b3e3bdb7eaee014114bcf5cc3b69361b76ab62c29b76d85c00f0ef7
-  languageName: node
-  linkType: hard
-
-"@logtail/winston@npm:^0.5.5":
-  version: 0.5.5
-  resolution: "@logtail/winston@npm:0.5.5"
-  dependencies:
-    "@logtail/node": ^0.5.5
-    "@logtail/types": ^0.5.3
-    winston-transport: ^4.3.0
-  peerDependencies:
-    winston: ">=3.2.1"
-  checksum: 70fb7a4aee38154041282ac3dade837d1692011c56ee21c6d423599bc9b3dc89b72694fd78e148a56304108a312d51b7cc124b318f97fe57c97672ac7c0966d3
-  languageName: node
-  linkType: hard
-
-"@msgpack/msgpack@npm:^2.5.1":
-  version: 2.8.0
-  resolution: "@msgpack/msgpack@npm:2.8.0"
-  checksum: bead9393f57239007a2fe455df5277cbc03b125f14f310162a652b81471dcf3ab6780eaa24b36e20aa742998910a6840147d08b7267063b8e2de5d40c624360e
-  languageName: node
-  linkType: hard
-
 "@noble/hashes@npm:^1.1.5":
   version: 1.8.0
   resolution: "@noble/hashes@npm:1.8.0"
@@ -2817,7 +2756,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:^1.52.0":
+"@playwright/test@npm:^1.54.1":
   version: 1.54.1
   resolution: "@playwright/test@npm:1.54.1"
   dependencies:
@@ -4184,13 +4123,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/stack-trace@npm:^0.0.33":
-  version: 0.0.33
-  resolution: "@types/stack-trace@npm:0.0.33"
-  checksum: cec5fbbe3bdcdef82763f917e99ca35a1b92ac96aa7982d09548072c5eff219d8216cf75f1ccfeec9686c91a035cc0d55dda6a76a222022616de275dc5d3a8c1
-  languageName: node
-  linkType: hard
-
 "@types/stack-utils@npm:^2.0.0, @types/stack-utils@npm:^2.0.3":
   version: 2.0.3
   resolution: "@types/stack-utils@npm:2.0.3"
@@ -4591,9 +4523,7 @@ __metadata:
     "@aws-sdk/client-scheduler": ^3.716.0
     "@google-cloud/scheduler": ^5.3.0
     "@jest/globals": ^30.0.0
-    "@logtail/node": ^0.5.5
-    "@logtail/winston": ^0.5.5
-    "@playwright/test": ^1.52.0
+    "@playwright/test": ^1.54.1
     "@sentry/cli": ^2.39.1
     "@sentry/node": ^8.47.0
     "@sentry/profiling-node": ^8.47.0
@@ -4635,7 +4565,7 @@ __metadata:
     nodemon: ^2.0.19
     openai: ^4.89.0
     picocolors: ^1.1.1
-    playwright: ^1.52.0
+    playwright: ^1.54.1
     postgres: ^3.4.4
     prettier: 3.2.5
     puppeteer: ^22.12.1
@@ -9096,7 +9026,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimatch@npm:^9.0.4, minimatch@npm:^9.0.5":
+"minimatch@npm:^9.0.4":
   version: 9.0.5
   resolution: "minimatch@npm:9.0.5"
   dependencies:
@@ -9838,7 +9768,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright@npm:1.54.1, playwright@npm:^1.52.0":
+"playwright@npm:1.54.1, playwright@npm:^1.54.1":
   version: 1.54.1
   resolution: "playwright@npm:1.54.1"
   dependencies:
@@ -10426,15 +10356,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"serialize-error@npm:8.1.0":
-  version: 8.1.0
-  resolution: "serialize-error@npm:8.1.0"
-  dependencies:
-    type-fest: ^0.20.2
-  checksum: 2eef236d50edd2d7926e602c14fb500dc3a125ee52e9f08f67033181b8e0be5d1122498bdf7c23c80683cddcad083a27974e9e7111ce23165f4d3bcdd6d65102
-  languageName: node
-  linkType: hard
-
 "serve-static@npm:1.16.2":
   version: 1.16.2
   resolution: "serve-static@npm:1.16.2"
@@ -10676,7 +10597,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stack-trace@npm:0.0.10, stack-trace@npm:0.0.x":
+"stack-trace@npm:0.0.x":
   version: 0.0.10
   resolution: "stack-trace@npm:0.0.10"
   checksum: 473036ad32f8c00e889613153d6454f9be0536d430eb2358ca51cad6b95cea08a3cc33cc0e34de66b0dad221582b08ed2e61ef8e13f4087ab690f388362d6610
@@ -11640,7 +11561,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"winston-transport@npm:^4.3.0, winston-transport@npm:^4.9.0":
+"winston-transport@npm:^4.9.0":
   version: 4.9.0
   resolution: "winston-transport@npm:4.9.0"
   dependencies:

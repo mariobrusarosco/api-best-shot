@@ -1,44 +1,46 @@
 import winston from 'winston';
 import { env } from '../../config/env';
 
-// Simple HTTP transport for BetterStack
-const betterStackTransport = winston.format.combine(
+// Google Cloud Logging optimized format
+const googleCloudFormat = winston.format.combine(
   winston.format.timestamp(),
+  winston.format.errors({ stack: true }),
   winston.format.json(),
   winston.format.printf((info) => {
-    if (env.LOGTAIL_SOURCE_TOKEN) {
-      // Send to BetterStack via HTTP
-      fetch('https://in.logs.betterstack.com/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${env.LOGTAIL_SOURCE_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          dt: info.timestamp,
-          ...info,
-        }),
-      }).catch(() => {}); // Silent fail
-    }
-    return JSON.stringify(info);
+    // Structure logs for optimal Google Cloud Logging experience
+    const { level, service, environment, version, timestamp, message, ...rest } = info;
+    const log = {
+      timestamp,
+      severity: level.toUpperCase(),
+      message,
+      service,
+      environment,
+      version,
+      ...rest
+    };
+
+    return JSON.stringify(log);
+  })
+);
+
+// Console format for local development
+const consoleFormat = winston.format.combine(
+  winston.format.colorize(),
+  winston.format.timestamp({ format: 'HH:mm:ss' }),
+  winston.format.printf(({ timestamp, level, message, ...meta }) => {
+    const metaStr = Object.keys(meta).filter(key => 
+      !['service', 'environment', 'version'].includes(key)
+    ).length ? JSON.stringify(meta, null, 2) : '';
+    return `${timestamp} [${level}]: ${message} ${metaStr}`;
   })
 );
 
 // Create the logger instance
 export const logger = winston.createLogger({
   level: env.NODE_ENV === 'production' ? 'info' : 'debug',
-  format: betterStackTransport,
+  format: env.NODE_ENV === 'development' ? consoleFormat : googleCloudFormat,
   transports: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.timestamp(),
-        winston.format.printf(({ timestamp, level, message, ...meta }) => {
-          const metaStr = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
-          return `${timestamp} [${level}]: ${message} ${metaStr}`;
-        })
-      ),
-    }),
+    new winston.transports.Console()
   ],
   defaultMeta: {
     service: 'api-best-shot',
@@ -53,7 +55,11 @@ export const logInfo = (message: string, meta?: any) => {
 };
 
 export const logError = (message: string, error?: Error, meta?: any) => {
-  logger.error(message, { error: error?.stack || error, ...meta });
+  logger.error(message, { 
+    error: error?.message || error, 
+    stack: error?.stack,
+    ...meta 
+  });
 };
 
 export const logWarn = (message: string, meta?: any) => {

@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Core Development
 - `yarn dev` - Start development server with hot reload (uses ts-node-dev)
+- `yarn dev:aws` - Start with AWS LocalStack services
 - `yarn dev:full` - Start API, database, and frontend concurrently
 - `yarn build` - Build for production (TypeScript compilation + tsc-alias)
 - `yarn compile` - Type check without emitting files
@@ -17,11 +18,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `yarn db:generate` - Generate migration files
 - `yarn db:seed` - Seed database with initial data
 - `yarn db:reset` - Reset database (via Docker: `docker compose down postgres -v && docker compose up -d postgres`)
+- `yarn db:connect` - Connect to PostgreSQL via Docker exec
+- `yarn db:logs` - View database container logs
 
 ### Testing
 - `yarn test` - Run Jest tests
 - `yarn test:watch` - Run tests in watch mode
 - `yarn test:cov` - Run tests with coverage report
+- `yarn test:scraper` - Test web scraping functionality
 
 ### Code Quality
 - `yarn lint` - Run ESLint
@@ -30,8 +34,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Docker & Environment
 - `docker compose up -d` - Start PostgreSQL database
+- `docker compose --profile aws up -d` - Start with AWS services
 - `docker compose down` - Stop all containers
 - `yarn dev:status` - Check Docker container and Volta status
+- `yarn dev:clean` - Complete reset: stop containers, remove volumes, reinstall dependencies
 
 ## Architecture
 

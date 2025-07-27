@@ -5,7 +5,7 @@
 # ================================
 # Build Stage
 # ================================
-FROM mcr.microsoft.com/playwright:v1.52.0-jammy AS builder
+FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS builder
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN yarn build
 # ================================
 # Production Stage
 # ================================
-FROM mcr.microsoft.com/playwright:v1.52.0-jammy AS production
+FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS production
 
 WORKDIR /app
 

@@ -8,6 +8,7 @@ node_modules/
 .env.local
 .env.*.local
 .env.new-file-with-default-values
+.env.demo
 
 # Build
 dist/

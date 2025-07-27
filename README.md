@@ -14,7 +14,6 @@ We follow a hybrid development approach:
 ## Documentation
 
 ### Architecture Decision Records
-
 - [Playwright Production Deployment](docs/decisions/playwright-production-deployment.md)
 
 ### Developer Guides

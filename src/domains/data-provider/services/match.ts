@@ -95,6 +95,15 @@ export class MatchesDataProviderService {
   }
 
   async createOnDatabase(matches: DB_InsertMatch[]) {
+    console.log('[MATCH SERVICE] - [CREATE ON DATABASE] - Matches count:', matches.length);
+    
+    if (matches.length === 0) {
+      Profiling.error({
+        error: new Error('No matches to create in the database'),
+        source: 'MatchesDataProviderService.createOnDatabase',  
+      });
+      return [];
+    }
     const query = await db.insert(T_Match).values(matches);
     return query;
   }

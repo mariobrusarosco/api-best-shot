@@ -23,6 +23,13 @@ export class MatchesDataProviderService {
     tournamentId: string
   ) {
     try {
+      console.log('[MATCH SERVICE] - [GET TOURNAMENT MATCHES] - Rounds count:', rounds.length);
+      
+      if (rounds.length === 0) {
+        console.log('[MATCH SERVICE] - [GET TOURNAMENT MATCHES] - No rounds provided, returning empty matches array');
+        return [];
+      }
+
       const roundsWithMatches: DB_InsertMatch[][] = [];
 
       for (const round of rounds) {

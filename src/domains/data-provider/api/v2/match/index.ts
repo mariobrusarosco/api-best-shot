@@ -18,9 +18,15 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
     }
 
     const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
+    console.log('[DEBUG] Tournament found:', tournament);
 
     console.log('getting rounds for tournament ', tournament.id);
     const rounds = await SERVICES_TOURNAMENT_ROUND.getAllRounds(tournament.id);
+    console.log('[DEBUG] Rounds retrieved:', {
+      tournamentId: tournament.id,
+      roundsCount: rounds.length,
+      rounds: rounds.map(r => ({ id: r.id, slug: r.slug, order: r.order }))
+    });
     const matches = await matchesDataProviderService.init(rounds, tournament);
 
     if (!matches) {

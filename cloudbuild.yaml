@@ -43,7 +43,7 @@ steps:
       - '--max-instances'
       - '10'
       - '--update-env-vars'
-      - 'NODE_ENV=demo'
+      - 'NODE_ENV=demo,PORT=8080'
 
 # Build configuration
 options:

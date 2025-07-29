@@ -25,7 +25,7 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
     console.log('[DEBUG] Rounds retrieved:', {
       tournamentId: tournament.id,
       roundsCount: rounds.length,
-      rounds: rounds.map(r => ({ id: r.id, slug: r.slug, order: r.order }))
+      rounds: rounds.map((r: any) => ({ id: r.id, slug: r.slug, order: r.order })),
     });
     const matches = await matchesDataProviderService.init(rounds, tournament);
 

@@ -9,6 +9,7 @@ node_modules/
 .env.*.local
 .env.new-file-with-default-values
 .env.demo
+.demo.env
 
 # Build
 dist/
@@ -43,6 +44,7 @@ coverage/
 .tmp/
 *.pem
 aws
+screenshots/
 
 # Files
 error.log

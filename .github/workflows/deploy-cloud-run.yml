@@ -28,6 +28,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'yarn'
 
       - name: Enable Yarn 3
         run: corepack enable && corepack prepare yarn@3.8.7 --activate
@@ -44,20 +45,22 @@ jobs:
       - name: Configure Docker for gcr.io
         run: gcloud auth configure-docker --quiet
 
+      - name: Pull cache image
+        run: docker pull gcr.io/api-best-shot-demo/api-best-shot-demo:latest || true
+
       - name: Build Docker image
         run: |
-          docker build -t gcr.io/api-best-shot-demo/api-best-shot-demo:${{ github.sha }} .
+          docker build \
+            --cache-from gcr.io/api-best-shot-demo/api-best-shot-demo:latest \
+            -t gcr.io/api-best-shot-demo/api-best-shot-demo:${{ github.sha }} \
+            -t gcr.io/api-best-shot-demo/api-best-shot-demo:latest \
+            .
 
       - name: Push Docker image to GCR
         run: |
           docker push gcr.io/api-best-shot-demo/api-best-shot-demo:${{ github.sha }}
+          docker push gcr.io/api-best-shot-demo/api-best-shot-demo:latest
 
-      - name: Deploy to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: api-best-shot-demo
-          image: gcr.io/api-best-shot-demo/api-best-shot-demo:${{ github.sha }}
-          region: us-central1
-          env_vars: |
-            NODE_ENV=demo
-            PORT=8080
+      - name: Trigger Cloud Build deployment
+        run: |
+          gcloud builds submit --no-source --config=cloudbuild.yaml --substitutions=COMMIT_SHA=${{ github.sha }}

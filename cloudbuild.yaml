@@ -1,24 +1,5 @@
 # Cloud Build configuration for Cloud Run deployment
 steps:
-  # Build Docker image with layer caching
-  - name: 'gcr.io/cloud-builders/docker'
-    args: 
-      - 'build'
-      - '--cache-from'
-      - 'gcr.io/$PROJECT_ID/api-best-shot-demo:latest'
-      - '-t'
-      - 'gcr.io/$PROJECT_ID/api-best-shot-demo:$COMMIT_SHA'
-      - '-t'
-      - 'gcr.io/$PROJECT_ID/api-best-shot-demo:latest'
-      - '.'
-
-  # Push both tagged images to Container Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'push'
-      - '--all-tags'
-      - 'gcr.io/$PROJECT_ID/api-best-shot-demo'
-
   # Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
@@ -26,7 +7,7 @@ steps:
       - 'deploy'
       - 'api-best-shot-demo'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/api-best-shot-demo:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/api-best-shot-demo:${COMMIT_SHA}'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -43,7 +24,7 @@ steps:
       - '--max-instances'
       - '10'
       - '--update-env-vars'
-      - 'NODE_ENV=demo,PORT=8080'
+      - 'NODE_ENV=demo'
 
 # Build configuration
 options:

@@ -23,10 +23,16 @@ export class MatchesDataProviderService {
     tournamentId: string
   ) {
     try {
-      console.log('[MATCH SERVICE] - [GET TOURNAMENT MATCHES] - Rounds count:', rounds.length);
-      
+      Profiling.log({
+        msg: `[Getting raw matches for tournament ${tournamentId}]`,
+        data: { roundsCount: rounds.length },
+      });
+
       if (rounds.length === 0) {
-        console.log('[MATCH SERVICE] - [GET TOURNAMENT MATCHES] - No rounds provided, returning empty matches array');
+        Profiling.error({
+          source: 'MatchesDataProviderService.getTournamentMatches',
+          error: new Error('No rounds provided, returning empty matches array'),
+        });
         return [];
       }
 
@@ -102,12 +108,15 @@ export class MatchesDataProviderService {
   }
 
   async createOnDatabase(matches: DB_InsertMatch[]) {
-    console.log('[MATCH SERVICE] - [CREATE ON DATABASE] - Matches count:', matches.length);
-    
+    console.log(
+      '[MATCH SERVICE] - [CREATE ON DATABASE] - Matches count:',
+      matches.length
+    );
+
     if (matches.length === 0) {
       Profiling.error({
         error: new Error('No matches to create in the database'),
-        source: 'MatchesDataProviderService.createOnDatabase',  
+        source: 'MatchesDataProviderService.createOnDatabase',
       });
       return [];
     }
@@ -120,9 +129,8 @@ export class MatchesDataProviderService {
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
     const rawMatches = await this.getTournamentMatches(rounds, tournament.id);
-
     Profiling.log({
-      msg: `[Setup of matches for tournament ${tournament.label}]`,
+      msg: `[Getting raw matches for tournament ${tournament.label}]`,
       data: { rawMatches },
     });
 

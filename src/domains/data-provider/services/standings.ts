@@ -8,6 +8,7 @@ import { safeString } from '@/utils';
 import db from '@/services/database';
 import Profiling from '@/services/profiling';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 
 export class StandingsDataProviderService {
   private scraper: BaseScraper;
@@ -96,6 +97,27 @@ export class StandingsDataProviderService {
     return query;
   }
 
+  public async updateOnDatabase(standings: DB_InsertTournamentStandings[]) {
+    if (standings.length === 0) {
+      Profiling.error({
+        error: new Error('No standings to update in the database'),
+        source: 'StandingsDataProviderService.updateOnDatabase',
+      });
+      return [];
+    }
+
+    try {
+      const query = await QUERIES_TOURNAMENT.upsertTournamentStandings(standings);
+      return query;
+    } catch (error) {
+      Profiling.error({
+        error,
+        source: 'StandingsDataProviderService.updateOnDatabase',
+      });
+      throw error;
+    }
+  }
+
   public async init(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
@@ -113,6 +135,37 @@ export class StandingsDataProviderService {
     } catch (error) {
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_init',
+        error,
+      });
+      throw error;
+    }
+  }
+
+  public async updateTournament(
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
+  ) {
+    try {
+      const rawStandings = await this.getStandings(tournament);
+      
+      if (!rawStandings) {
+        Profiling.log({
+          msg: `[No standings data found for tournament ${tournament.label}]`,
+        });
+        return [];
+      }
+
+      const standings = await this.mapTournamentStandings(rawStandings, tournament);
+      const query = await this.updateOnDatabase(standings);
+
+      Profiling.log({
+        msg: `[Updated standings for tournament ${tournament.label}]`,
+        data: { standings },
+      });
+
+      return query;
+    } catch (error) {
+      Profiling.error({
+        source: 'DATA_PROVIDER_V2_STANDINGS_updateTournament',
         error,
       });
       throw error;

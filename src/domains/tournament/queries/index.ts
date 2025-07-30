@@ -2,6 +2,7 @@ import db from '@/services/database';
 import { and, eq, sql } from 'drizzle-orm';
 import {
   DB_InsertTournament,
+  DB_InsertTournamentStandings,
   T_Tournament,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
@@ -213,6 +214,34 @@ const createTournament = async (input: DB_InsertTournament) => {
   }
 };
 
+const upsertTournamentStandings = async (standings: DB_InsertTournamentStandings[]) => {
+  if (standings.length === 0) {
+    return [];
+  }
+
+  try {
+    const query = await db.transaction(async (tx) => {
+      for (const standing of standings) {
+        await tx
+          .insert(T_TournamentStandings)
+          .values(standing)
+          .onConflictDoUpdate({
+            target: [T_TournamentStandings.shortName, T_TournamentStandings.tournamentId],
+            set: {
+              ...standing,
+            },
+          });
+      }
+    });
+
+    return query;
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    console.error('[TournamentQueries] - [upsertTournamentStandings]', dbError);
+    throw error;
+  }
+};
+
 export type TournamentQuery = Awaited<ReturnType<typeof tournament>>;
 
 export const QUERIES_TOURNAMENT = {
@@ -226,4 +255,5 @@ export const QUERIES_TOURNAMENT = {
   createTournamentPerformance,
   getTournamentStandings,
   createTournament,
+  upsertTournamentStandings,
 };

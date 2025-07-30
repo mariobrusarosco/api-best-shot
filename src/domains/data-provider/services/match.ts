@@ -6,6 +6,7 @@ import { ENDPOINT_ROUND } from '../providers/sofascore_v2/schemas/endpoints';
 import Profiling from '@/services/profiling';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
+import { QUERIES_MATCH } from '@/domains/match/queries';
 
 const safeSofaDate = (date: any) => {
   return date === null || date === undefined ? null : new Date(date);
@@ -16,6 +17,33 @@ export class MatchesDataProviderService {
 
   constructor(scraper: BaseScraper) {
     this.scraper = scraper;
+  }
+
+  public async getTournamentMatchesByRound(round: DB_SelectTournamentRound) {
+    try {
+      await this.scraper.goto(round.providerUrl);
+      const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
+
+      if (!rawContent?.events || rawContent?.events?.length === 0) {
+        Profiling.log({
+          msg: `[No matches returned from round: (${round.slug}) Skipping to next round]`,
+        });
+        return [];
+      }
+
+      const matches = this.mapMatches(rawContent, round.tournamentId, round.slug);
+
+      Profiling.log({
+        msg: `[Matches retrieved from round: (${round.slug})`,
+        data: {
+          matches,
+        },
+      });
+      return matches;
+    } catch (error) {
+      console.error('[SOFASCORE] - [ERROR] - [GET TOURNAMENT MATCHES BY ROUND]', error);
+      throw error;
+    }
   }
 
   public async getTournamentMatches(
@@ -108,11 +136,6 @@ export class MatchesDataProviderService {
   }
 
   async createOnDatabase(matches: DB_InsertMatch[]) {
-    console.log(
-      '[MATCH SERVICE] - [CREATE ON DATABASE] - Matches count:',
-      matches.length
-    );
-
     if (matches.length === 0) {
       Profiling.error({
         error: new Error('No matches to create in the database'),
@@ -120,22 +143,71 @@ export class MatchesDataProviderService {
       });
       return [];
     }
-    const query = await db.insert(T_Match).values(matches);
-    return query;
+
+    try {
+      const query = await db.insert(T_Match).values(matches);
+      return query;
+    } catch (error) {
+      Profiling.error({
+        error,
+        source: 'MatchesDataProviderService.createOnDatabase',
+      });
+      throw error;
+    }
+  }
+
+  async updateOnDatabase(matches: DB_InsertMatch[]) {
+    if (matches.length === 0) {
+      Profiling.error({
+        error: new Error('No matches to update in the database'),
+        source: 'MatchesDataProviderService.updateOnDatabase',
+      });
+      return [];
+    }
+
+    try {
+      const query = await QUERIES_MATCH.upsertMatches(matches);
+      return query.length;
+    } catch (error) {
+      Profiling.error({
+        error,
+        source: 'MatchesDataProviderService.updateOnDatabase',
+      });
+      throw error;
+    }
   }
 
   public async init(
     rounds: DB_SelectTournamentRound[],
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
-    const rawMatches = await this.getTournamentMatches(rounds, tournament.id);
-    Profiling.log({
-      msg: `[Getting raw matches for tournament ${tournament.label}]`,
-      data: { rawMatches },
-    });
+    try {
+      const rawMatches = await this.getTournamentMatches(rounds, tournament.id);
 
-    const query = await this.createOnDatabase(rawMatches);
+      const query = await this.createOnDatabase(rawMatches);
 
-    return query;
+      return query;
+    } catch (error) {
+      Profiling.error({
+        error,
+        source: 'MatchesDataProviderService.init',
+      });
+      throw error;
+    }
+  }
+
+  public async updateRound(round: DB_SelectTournamentRound) {
+    try {
+      const rawMatches = await this.getTournamentMatchesByRound(round);
+      const query = await this.updateOnDatabase(rawMatches);
+
+      return query;
+    } catch (error) {
+      Profiling.error({
+        error,
+        source: 'MatchesDataProviderService.updateRound',
+      });
+      throw error;
+    }
   }
 }

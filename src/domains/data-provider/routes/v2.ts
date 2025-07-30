@@ -18,6 +18,7 @@ router.post('/rounds/create', API_TOURNAMENT_ROUNDS_V2.create);
 router.post('/teams/create', API_TEAMS_V2.create);
 // MATCHES
 router.post('/matches/create', API_MATCH_V2.create);
+router.patch('/matches/update', API_MATCH_V2.updateMatchesForRound);
 // STANDINGS
 router.post('/standings/create', API_STANDINGS_V2.create);
 

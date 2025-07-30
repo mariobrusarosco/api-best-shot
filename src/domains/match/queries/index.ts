@@ -5,6 +5,7 @@ import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
 import { and, asc, eq, gte, sql, aliasedTable } from 'drizzle-orm';
 import { defineTimebox } from '@/utils/timebox';
+import type { DB_InsertMatch } from '../schema';
 
 dayjs.extend(utc);
 dayjs.extend(isToday);
@@ -149,6 +150,31 @@ const getMatchesByTournament = async (tournamentId: string, roundId: string) => 
   }
 };
 
+const upsertMatches = async (matches: DB_InsertMatch[]) => {
+  if (matches.length === 0) {
+    return [];
+  }
+
+  const query = await db
+    .insert(T_Match)
+    .values(matches)
+    .onConflictDoUpdate({
+      target: [T_Match.externalId, T_Match.provider],
+      set: {
+        homeScore: sql`excluded.home_score`,
+        homePenaltiesScore: sql`excluded.home_penalties_score`,
+        awayScore: sql`excluded.away_score`,
+        awayPenaltiesScore: sql`excluded.away_penalties_score`,
+        date: sql`excluded.date`,
+        status: sql`excluded.status`,
+        updatedAt: new Date(),
+      },
+    })
+    .returning();
+
+  return query;
+};
+
 export const MatchQueries = {
   currentDayMatchesOnDatabase,
   nearestMatchOnDatabase,
@@ -158,4 +184,5 @@ export const QUERIES_MATCH = {
   currentDayMatches,
   nearestMatch,
   getMatchesByTournament,
+  upsertMatches,
 };

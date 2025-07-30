@@ -155,24 +155,26 @@ const upsertMatches = async (matches: DB_InsertMatch[]) => {
     return [];
   }
 
-  const query = await db
-    .insert(T_Match)
-    .values(matches)
-    .onConflictDoUpdate({
-      target: [T_Match.externalId, T_Match.provider],
-      set: {
-        homeScore: sql`excluded.home_score`,
-        homePenaltiesScore: sql`excluded.home_penalties_score`,
-        awayScore: sql`excluded.away_score`,
-        awayPenaltiesScore: sql`excluded.away_penalties_score`,
-        date: sql`excluded.date`,
-        status: sql`excluded.status`,
-        updatedAt: new Date(),
-      },
-    })
-    .returning();
+  try {
+    const query = await db.transaction(async (tx) => {
+      for (const match of matches) {
+        await tx
+          .insert(T_Match)
+          .values(match)
+          .onConflictDoUpdate({
+            target: [T_Match.externalId, T_Match.provider],
+            set: {
+              ...match,
+            },
+          });
+      }
+    });
 
-  return query;
+    return query;
+  } catch (error: unknown) {
+    console.error('[MATCH QUERIES] - [upsertMatches]', error);
+    throw error;
+  }
 };
 
 export const MatchQueries = {

@@ -34,7 +34,3 @@ options:
 # Timeout for entire build
 timeout: '1200s'
 
-# Substitutions for variables
-substitutions:
-  _SERVICE_NAME: 'api-best-shot-demo'
-  _REGION: 'us-central1'

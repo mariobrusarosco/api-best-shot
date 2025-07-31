@@ -11,11 +11,12 @@ const router = express.Router();
 // router.use(AuthMiddleware);
 
 // TOURNAMENTS
-router.post('/tournaments/create', API_TOURNAMENT_V2.create);
+router.post('/tournaments', API_TOURNAMENT_V2.create);
 // TOURNAMENT ROUNDS
-router.post('/rounds/create', API_TOURNAMENT_ROUNDS_V2.create);
+router.post('/rounds', API_TOURNAMENT_ROUNDS_V2.create);
+router.patch('/rounds', API_TOURNAMENT_ROUNDS_V2.update);
 // TEAMS
-router.post('/teams/create', API_TEAMS_V2.create);
+router.post('/teams', API_TEAMS_V2.create);
 // MATCHES
 router.post('/matches', API_MATCH_V2.create);
 router.patch('/matches', API_MATCH_V2.updateMatchesForRound);

@@ -10,11 +10,17 @@ const create = async (req: TournamentRequest, res: Response) => {
   try {
     scraper = await BaseScraper.createInstance();
 
+    Profiling.log({
+      msg: `Attempting to create tournament... ${req.body.label}`,
+      data: { tournament: req.body },
+      source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
+    });
+
     const dataProviderService = new TournamentDataProviderService(scraper);
     const tournament = await dataProviderService.init(req.body);
 
     Profiling.log({
-      msg: 'CREATE SUCCESS',
+      msg: `Created tournament successfully on database: ${tournament.label}....`,
       data: { tournament },
       source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
     });

@@ -9,6 +9,7 @@ import db from '@/services/database';
 import { CreateTournamentInput } from '../api/v2/tournament/typing';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { BaseScraper } from '../providers/playwright/base-scraper';
+import Profiling from '@/services/profiling';
 
 export class TournamentDataProviderService {
   private scraper: BaseScraper;
@@ -60,6 +61,12 @@ export class TournamentDataProviderService {
     });
     const logo = this.scraper.getCloudFrontUrl(s3Key);
 
+    Profiling.log({
+      msg: `Created tournament logo: ${logo}....`,
+      data: { logo },
+      source: 'DATA_PROVIDER_V2_TOURNAMENT_init',
+    });
+
     if (!payload.tournamentPublicId)
       throw new Error(
         `[TournamentDataProviderService] - [ERROR] - [INIT] - [TOURNAMENT PUBLIC ID IS NULL]`
@@ -76,7 +83,6 @@ export class TournamentDataProviderService {
       standingsMode: payload.standingsMode,
       slug: payload.slug,
     });
-    console.log('TOURNAMENT CREATION - [TOURNAMENT CREATED]', tournament);
 
     return tournament;
   }

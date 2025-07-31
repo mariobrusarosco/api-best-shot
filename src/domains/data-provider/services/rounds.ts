@@ -7,6 +7,8 @@ import {
 } from '@/domains/tournament-round/schema';
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
+import Profiling from '@/services/profiling';
 
 export class RoundDataProviderService {
   private scraper: BaseScraper;
@@ -146,5 +148,52 @@ export class RoundDataProviderService {
     const query = await this.createOnDatabase(enhancedRounds);
 
     return query;
+  }
+
+  public async updateOnDatabase(roundsToUpdate: DB_UpdateTournamentRound[]) {
+    if (roundsToUpdate.length === 0) {
+      Profiling.error({
+        error: new Error('No rounds to update in the database'),
+        source: 'RoundDataProviderService.updateOnDatabase',
+      });
+      return [];
+    }
+
+    try {
+      const query = await QUERIES_TOURNAMENT_ROUND.upsertTournamentRounds(roundsToUpdate);
+      return query;
+    } catch (error) {
+      Profiling.error({
+        error,
+        source: 'RoundDataProviderService.updateOnDatabase',
+      });
+      throw error;
+    }
+  }
+
+  public async updateTournament(tournamentId: string, tournamentBaseUrl: string) {
+    try {
+      Profiling.log({
+        msg: `[RoundDataProviderService] - Updating rounds for tournament: ${tournamentId}`,
+      });
+
+      const rawRounds = await this.getTournamentRounds(tournamentBaseUrl);
+      const enhancedRounds = this.enhanceRounds(tournamentBaseUrl, tournamentId, rawRounds);
+
+      const query = await this.updateOnDatabase(enhancedRounds);
+
+      Profiling.log({
+        msg: `[RoundDataProviderService] - Updated rounds for tournament: ${tournamentId}`,
+        data: { rounds: enhancedRounds },
+      });
+
+      return query;
+    } catch (error) {
+      Profiling.error({
+        source: 'RoundDataProviderService.updateTournament',
+        error,
+      });
+      throw error;
+    }
   }
 }

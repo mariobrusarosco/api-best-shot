@@ -1,5 +1,5 @@
 import db from '@/services/database';
-import { T_TournamentRound, DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
+import { T_TournamentRound, DB_InsertTournamentRound, DB_UpdateTournamentRound } from '@/domains/tournament-round/schema';
 import { and, asc, eq } from 'drizzle-orm';
 import { DatabaseError } from '@/domains/shared/error-handling/database';
 import Profiling from '@/services/profiling';
@@ -115,6 +115,34 @@ const createMultipleTournamentRounds = async (inputs: DB_InsertTournamentRound[]
   }
 };
 
+const upsertTournamentRounds = async (rounds: DB_UpdateTournamentRound[]) => {
+  if (rounds.length === 0) {
+    return [];
+  }
+
+  try {
+    const query = await db.transaction(async (tx) => {
+      for (const round of rounds) {
+        await tx
+          .insert(T_TournamentRound)
+          .values(round)
+          .onConflictDoUpdate({
+            target: [T_TournamentRound.slug, T_TournamentRound.tournamentId],
+            set: {
+              ...round,
+            },
+          });
+      }
+    });
+
+    return query;
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    console.error('[QUERIES_TOURNAMENT_ROUND] - [upsertTournamentRounds]', dbError);
+    throw error;
+  }
+};
+
 export const QUERIES_TOURNAMENT_ROUND = {
   getRound,
   getRegularSeasonRounds,
@@ -122,4 +150,5 @@ export const QUERIES_TOURNAMENT_ROUND = {
   getAllRounds,
   createTournamentRound,
   createMultipleTournamentRounds,
+  upsertTournamentRounds,
 };

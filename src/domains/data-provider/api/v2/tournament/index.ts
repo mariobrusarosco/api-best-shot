@@ -4,24 +4,37 @@ import { TournamentDataProviderService } from '@/domains/data-provider/services/
 import { Response } from 'express';
 import Profiling from '@/services/profiling';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { randomUUID } from 'crypto';
 
 const create = async (req: TournamentRequest, res: Response) => {
+  const requestId = randomUUID();
   let scraper: BaseScraper | null = null;
   try {
-    scraper = await BaseScraper.createInstance();
-
     Profiling.log({
-      msg: `Attempting to create tournament... ${req.body.label}`,
-      data: { tournament: req.body },
+      msg: `[REQUEST START] Tournament creation request received`,
+      data: { 
+        requestId,
+        tournamentLabel: req.body.label,
+        provider: req.body.provider,
+        tournamentId: req.body.tournamentPublicId 
+      },
       source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
     });
 
-    const dataProviderService = new TournamentDataProviderService(scraper);
+    scraper = await BaseScraper.createInstance();
+
+    Profiling.log({
+      msg: `[SCRAPER START] Scraper initialized for tournament creation`,
+      data: { requestId, tournamentLabel: req.body.label },
+      source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
+    });
+
+    const dataProviderService = new TournamentDataProviderService(scraper, requestId);
     const tournament = await dataProviderService.init(req.body);
 
     Profiling.log({
-      msg: `Created tournament successfully on database: ${tournament.label}....`,
-      data: { tournament },
+      msg: `[SCRAPER STOP] Tournament creation completed successfully`,
+      data: { requestId, tournamentLabel: tournament.label, tournamentId: tournament.id },
       source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
     });
 
@@ -30,6 +43,7 @@ const create = async (req: TournamentRequest, res: Response) => {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
       error,
+      data: { requestId, operation: 'tournament_creation' }
     });
     return handleInternalServerErrorResponse(res, error);
   } finally {
@@ -37,7 +51,8 @@ const create = async (req: TournamentRequest, res: Response) => {
     if (scraper) {
       await scraper.close();
       Profiling.log({
-        msg: 'PLAYWRIGHT CLEANUP SUCCESS',
+        msg: '[CLEANUP] Playwright resources cleaned up successfully',
+        data: { requestId },
         source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
       });
     }

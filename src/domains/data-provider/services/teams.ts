@@ -116,8 +116,8 @@ export class TeamsDataProviderService {
     try {
       const rounds = await QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(tournament.id);
       Profiling.log({
-        msg: `[Rounds from database]`,
-        data: { rounds },
+        msg: `Knockout rounds we will fetch some teams from...`,
+        data: { rounds: rounds.map(round => round.slug || round.label) },
       });
 
       const ALL_KNOCKOUT_TEAMS = [] as I_TEAM_FROM_ROUND[];
@@ -198,7 +198,7 @@ export class TeamsDataProviderService {
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
     Profiling.log({
-      msg: `[Setup of teams for tournament ${tournament.label}]`,
+      msg: `Creating teams for tournament ${tournament.label}]...`,
       data: { tournament },
     });
 
@@ -218,6 +218,7 @@ export class TeamsDataProviderService {
       mappedTeamsFromStandings,
       mappedTeamsFromKnockoutRounds
     );
+
     Profiling.log({
       msg: `Teams to be processed`,
       data: allTeams,

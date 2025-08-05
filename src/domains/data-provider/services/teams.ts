@@ -10,12 +10,105 @@ import { safeString, sleep } from '@/utils';
 import { QUERIES_TEAMS } from '@/domains/team/queries';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { writeFileSync } from 'fs';
+import { join } from 'path';
+
+interface TeamsScrapingOperation {
+  step: string;
+  operation: string;
+  status: 'started' | 'completed' | 'failed';
+  data?: any;
+  timestamp: string;
+}
+
+interface TeamsScrapingInvoice {
+  requestId: string;
+  tournament: {
+    id: string;
+    label: string;
+  };
+  startTime: string;
+  endTime?: string;
+  operations: TeamsScrapingOperation[];
+  summary: {
+    totalOperations: number;
+    successfulOperations: number;
+    failedOperations: number;
+    teamCounts: {
+      fromStandings: number;
+      fromKnockout: number;
+      afterDeduplication: number;
+      afterEnhancement: number;
+      created: number;
+    };
+  };
+}
 
 export class TeamsDataProviderService {
   private scraper: BaseScraper;
+  private invoice: TeamsScrapingInvoice;
 
-  constructor(scraper: BaseScraper) {
+  constructor(scraper: BaseScraper, requestId: string) {
     this.scraper = scraper;
+    this.invoice = {
+      requestId,
+      tournament: {
+        id: '',
+        label: '',
+      },
+      startTime: new Date().toISOString(),
+      operations: [],
+      summary: {
+        totalOperations: 0,
+        successfulOperations: 0,
+        failedOperations: 0,
+        teamCounts: {
+          fromStandings: 0,
+          fromKnockout: 0,
+          afterDeduplication: 0,
+          afterEnhancement: 0,
+          created: 0,
+        },
+      },
+    };
+  }
+
+  private addOperation(step: string, operation: string, status: 'started' | 'completed' | 'failed', data?: any) {
+    this.invoice.operations.push({
+      step,
+      operation,
+      status,
+      data,
+      timestamp: new Date().toISOString(),
+    });
+    
+    this.invoice.summary.totalOperations++;
+    if (status === 'completed') {
+      this.invoice.summary.successfulOperations++;
+    } else if (status === 'failed') {
+      this.invoice.summary.failedOperations++;
+    }
+  }
+
+  private generateInvoiceFile() {
+    this.invoice.endTime = new Date().toISOString();
+    const filename = `teams-scraping-${this.invoice.requestId}.json`;
+    const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
+    
+    try {
+      writeFileSync(filepath, JSON.stringify(this.invoice, null, 2));
+      Profiling.log({
+        msg: `[INVOICE] Teams scraping report generated successfully`,
+        data: { filepath, requestId: this.invoice.requestId },
+        source: 'DATA_PROVIDER_V2_TEAMS_generateInvoiceFile',
+      });
+    } catch (error) {
+      Profiling.error({
+        source: 'DATA_PROVIDER_V2_TEAMS_generateInvoiceFile',
+        error: error as Error,
+      });
+      console.error('Failed to write teams invoice file:', error);
+    }
   }
 
   private getTeamLogoUrl(teamId: string | number): string {
@@ -23,6 +116,11 @@ export class TeamsDataProviderService {
   }
 
   private async enhanceTeamWithLogo(team: DB_InsertTeam) {
+    this.addOperation('enhancement', 'enhance_team_logo', 'started', { 
+      teamName: team.name, 
+      teamId: team.externalId 
+    });
+
     try {
       const logoUrl = this.getTeamLogoUrl(team.externalId);
       const s3Key = await this.scraper.uploadAsset({
@@ -30,14 +128,25 @@ export class TeamsDataProviderService {
         filename: `team-${team.externalId}`,
       });
 
-      return {
+      const enhancedTeam = {
         name: team.name,
         externalId: safeString(team.externalId) as string,
         shortName: team.shortName,
         badge: this.scraper.getCloudFrontUrl(s3Key),
         provider: 'sofa',
       } satisfies DB_InsertTeam;
+
+      this.addOperation('enhancement', 'enhance_team_logo', 'completed', { 
+        teamName: team.name, 
+        logoUrl: enhancedTeam.badge 
+      });
+
+      return enhancedTeam;
     } catch (error) {
+      this.addOperation('enhancement', 'enhance_team_logo', 'failed', { 
+        teamName: team.name, 
+        error: (error as Error).message 
+      });
       Profiling.error({
         source: 'TEAMS_SERVICE_enhanceTeamWithLogo',
         error: `Failed to enhance team ${team.name} with logo: ${error}`,
@@ -91,17 +200,23 @@ export class TeamsDataProviderService {
   public async fetchTeamsFromStandings(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
+    const url = `${tournament.baseUrl}/standings/total`;
+    this.addOperation('scraping', 'fetch_teams_standings', 'started', { url });
+
     try {
-      const url = `${tournament.baseUrl}/standings/total`;
       await this.scraper.goto(url);
-      Profiling.log({
-        msg: '[START] - FETCHING TEAMS FROM STANDINGS',
-        source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
-        data: { url },
-      });
       const fetchResult = (await this.scraper.getPageContent()) as ENDPOINT_STANDINGS;
+      
+      const teamsCount = fetchResult.standings.reduce((total, group) => total + group.rows.length, 0);
+      this.addOperation('scraping', 'fetch_teams_standings', 'completed', { 
+        url, 
+        teamsCount,
+        groupsCount: fetchResult.standings.length 
+      });
+
       return fetchResult;
     } catch (error: unknown) {
+      this.addOperation('scraping', 'fetch_teams_standings', 'failed', { error: (error as Error).message });
       Profiling.error({
         source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
         error: error as Error,
@@ -113,22 +228,34 @@ export class TeamsDataProviderService {
   public async fetchTeamsFromKnockoutRounds(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
+    this.addOperation('scraping', 'fetch_teams_knockout', 'started', { tournamentId: tournament.id });
+
     try {
       const rounds = await QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(tournament.id);
-      Profiling.log({
-        msg: `Knockout rounds we will fetch some teams from...`,
-        data: { rounds: rounds.map(round => round.slug || round.label) },
+      
+      this.addOperation('database', 'get_knockout_rounds', 'completed', { 
+        roundsCount: rounds.length,
+        rounds: rounds.map((round: any) => round.slug || round.label)
       });
 
       const ALL_KNOCKOUT_TEAMS = [] as I_TEAM_FROM_ROUND[];
+      const uniqueTeamIds = new Set<string>(); // Track unique team IDs for early deduplication
+      let totalSkippedDuplicates = 0;
+      
       for (const round of rounds) {
-        await this.scraper.goto(round.providerUrl);
+        this.addOperation('scraping', 'fetch_round_teams', 'started', { 
+          roundSlug: round.slug, 
+          providerUrl: round.providerUrl 
+        });
 
+        await this.scraper.goto(round.providerUrl);
         const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
 
         if (!rawContent?.events || rawContent?.events?.length === 0) {
-          Profiling.log({
-            msg: `[No data returned from round: (${round.slug}) Skipping to next round]`,
+          this.addOperation('scraping', 'fetch_round_teams', 'completed', { 
+            roundSlug: round.slug, 
+            teamsCount: 0,
+            note: 'No events found'
           });
           await sleep(2000);
           continue;
@@ -140,23 +267,39 @@ export class TeamsDataProviderService {
           match.awayTeam,
         ]);
 
-        Profiling.log({
-          msg: `[Fetched teams from round ${round.slug}]`,
-          data: { roundTeams },
+        // Early deduplication: only add teams that haven't been seen before
+        const newTeams = roundTeams.filter(team => {
+          const teamId = team.id.toString();
+          if (uniqueTeamIds.has(teamId)) {
+            totalSkippedDuplicates++;
+            return false;
+          }
+          uniqueTeamIds.add(teamId);
+          return true;
         });
 
-        ALL_KNOCKOUT_TEAMS.push(...roundTeams);
+        this.addOperation('scraping', 'fetch_round_teams', 'completed', { 
+          roundSlug: round.slug, 
+          totalTeamsInRound: roundTeams.length,
+          newUniqueTeams: newTeams.length,
+          skippedDuplicates: roundTeams.length - newTeams.length,
+          matchesCount: roundMatches.length
+        });
+
+        ALL_KNOCKOUT_TEAMS.push(...newTeams);
         await sleep(2000);
       }
 
-      Profiling.log({
-        msg: '[SUCCESS] - FETCHED ALL KNOCKOUT TEAMS',
-        source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
-        data: { totalTeams: ALL_KNOCKOUT_TEAMS.length },
+      this.addOperation('scraping', 'fetch_teams_knockout', 'completed', { 
+        totalUniqueTeams: ALL_KNOCKOUT_TEAMS.length,
+        totalSkippedDuplicates,
+        roundsProcessed: rounds.length,
+        note: 'Early deduplication applied during processing'
       });
 
       return ALL_KNOCKOUT_TEAMS;
     } catch (error: unknown) {
+      this.addOperation('scraping', 'fetch_teams_knockout', 'failed', { error: (error as Error).message });
       Profiling.error({
         source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
         error: error as Error,
@@ -166,90 +309,131 @@ export class TeamsDataProviderService {
   }
 
   public async createOnDatabase(teams: DB_InsertTeam[]) {
-    Profiling.log({
-      msg: `[START] - CREATING TEAMS ON DATABASE`,
-      source: 'DATA_PROVIDER_TEAMS_createTeamsOnDatabase',
-    });
+    this.addOperation('database', 'create_teams', 'started', { teamsCount: teams.length });
 
-    const createdTeams = await QUERIES_TEAMS.createTeams(teams);
+    try {
+      const createdTeams = await QUERIES_TEAMS.createTeams(teams);
+      
+      this.addOperation('database', 'create_teams', 'completed', { 
+        createdTeamsCount: createdTeams.length,
+        teamIds: createdTeams.map((t: any) => t.id)
+      });
 
-    Profiling.log({
-      msg: `[START] - CREATED TEAMS ${createdTeams.length} ON DATABASE`,
-      source: 'DATA_PROVIDER_TEAMS_createTeamsOnDatabase',
-    });
-
-    return createdTeams;
+      return createdTeams;
+    } catch (error) {
+      this.addOperation('database', 'create_teams', 'failed', { error: (error as Error).message });
+      throw error;
+    }
   }
 
   public async upsertOnDatabase(teams: DB_InsertTeam[]) {
-    Profiling.log({
-      msg: '[START] - UPSERTING TEAMS ON DATABASE',
-      source: 'DATA_PROVIDER_TEAMS_upsertTeamsOnDatabase',
-    });
+    this.addOperation('database', 'upsert_teams', 'started', { teamsCount: teams.length });
 
-    await QUERIES_TEAMS.updateTeams(teams);
-    Profiling.log({
-      msg: '[SUCCESS] - UPSERTING TEAMS ON DATABASE',
-      source: 'DATA_PROVIDER_TEAMS_upsertTeamsOnDatabase',
-    });
+    try {
+      await QUERIES_TEAMS.updateTeams(teams);
+      
+      this.addOperation('database', 'upsert_teams', 'completed', { 
+        upsertedTeamsCount: teams.length
+      });
+    } catch (error) {
+      this.addOperation('database', 'upsert_teams', 'failed', { error: (error as Error).message });
+      throw error;
+    }
   }
 
   public async init(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
-    Profiling.log({
-      msg: `Creating teams for tournament ${tournament.label}]...`,
-      data: { tournament },
+    // Initialize invoice tournament data
+    this.invoice.tournament = {
+      id: tournament.id,
+      label: tournament.label,
+    };
+
+    this.addOperation('initialization', 'validate_input', 'started', { 
+      tournamentId: tournament.id, 
+      tournamentLabel: tournament.label 
     });
 
-    const teamsFromStandings = await this.fetchTeamsFromStandings(tournament);
-    const mappedTeamsFromStandings = this.mapTeamsFromStandings(teamsFromStandings);
-    Profiling.log({
-      msg: `Number of teams from standings: ${mappedTeamsFromStandings.length}`,
-    });
+    try {
+      this.addOperation('initialization', 'validate_input', 'completed', { tournamentId: tournament.id });
 
-    const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
-    const mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
-    Profiling.log({
-      msg: `Number of teams from knockout rounds: ${mappedTeamsFromKnockoutRounds.length}`,
-    });
+      const teamsFromStandings = await this.fetchTeamsFromStandings(tournament);
+      const mappedTeamsFromStandings = this.mapTeamsFromStandings(teamsFromStandings);
+      this.invoice.summary.teamCounts.fromStandings = mappedTeamsFromStandings.length;
 
-    const allTeams = removeDuplicatesTeams(
-      mappedTeamsFromStandings,
-      mappedTeamsFromKnockoutRounds
-    );
+      const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
+      const mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
+      this.invoice.summary.teamCounts.fromKnockout = mappedTeamsFromKnockoutRounds.length;
 
-    Profiling.log({
-      msg: `Teams to be processed`,
-      data: allTeams,
-    });
+      this.addOperation('transformation', 'deduplicate_teams', 'started', { 
+        standingsTeams: mappedTeamsFromStandings.length,
+        knockoutTeams: mappedTeamsFromKnockoutRounds.length
+      });
 
-    const enhancedTeams: DB_InsertTeam[] = [];
-    for (const team of allTeams) {
-      try {
-        Profiling.log({
-          msg: `[START] - ENHANCING TEAM ${team.name}`,
-          data: team,
-        });
-        const enhancedTeam = await this.enhanceTeamWithLogo(team);
-        enhancedTeams.push(enhancedTeam);
-        Profiling.log({
-          msg: `[SUCCESS] - ENHANCED TEAM ${team.name}`,
-          data: enhancedTeam,
-        });
-        await sleep(1000);
-      } catch (error) {
-        Profiling.error({
-          source: 'DATA_PROVIDER_TEAMS_enhanceTeamWithLogo',
-          error: `Failed to enhance team ${team.name}: ${error}`,
-        });
-        // Continue with next team even if one fails
-        continue;
+      const allTeams = removeDuplicatesTeams(
+        mappedTeamsFromStandings,
+        mappedTeamsFromKnockoutRounds
+      );
+      this.invoice.summary.teamCounts.afterDeduplication = allTeams.length;
+
+      this.addOperation('transformation', 'deduplicate_teams', 'completed', { 
+        uniqueTeamsCount: allTeams.length,
+        duplicatesRemoved: (mappedTeamsFromStandings.length + mappedTeamsFromKnockoutRounds.length) - allTeams.length
+      });
+
+      this.addOperation('enhancement', 'enhance_teams_batch', 'started', { 
+        teamsToEnhance: allTeams.length 
+      });
+
+      const enhancedTeams: DB_InsertTeam[] = [];
+      const enhancedTeamIds = new Set<string>(); // Track enhanced team IDs to prevent duplicates
+      
+      for (const team of allTeams) {
+        // Skip if we've already enhanced this team ID
+        if (enhancedTeamIds.has(team.externalId)) {
+          this.addOperation('enhancement', 'skip_duplicate_team', 'completed', { 
+            teamId: team.externalId,
+            teamName: team.name,
+            reason: 'Already enhanced this team ID'
+          });
+          continue;
+        }
+
+        try {
+          const enhancedTeam = await this.enhanceTeamWithLogo(team);
+          enhancedTeams.push(enhancedTeam);
+          enhancedTeamIds.add(team.externalId);
+          await sleep(1000);
+        } catch (error) {
+          Profiling.error({
+            source: 'DATA_PROVIDER_TEAMS_enhanceTeamWithLogo',
+            error: `Failed to enhance team ${team.name}: ${error}`,
+          });
+          // Continue with next team even if one fails
+          continue;
+        }
       }
-    }
 
-    const query = await this.createOnDatabase(enhancedTeams);
-    return query;
+      this.invoice.summary.teamCounts.afterEnhancement = enhancedTeams.length;
+      this.addOperation('enhancement', 'enhance_teams_batch', 'completed', { 
+        enhancedTeamsCount: enhancedTeams.length,
+        failedEnhancements: allTeams.length - enhancedTeams.length,
+        skippedDuplicates: allTeams.length - enhancedTeams.length - (allTeams.length - enhancedTeams.length)
+      });
+
+      const query = await this.createOnDatabase(enhancedTeams);
+      this.invoice.summary.teamCounts.created = query.length;
+
+      // Generate invoice file at the very end
+      this.generateInvoiceFile();
+
+      return query;
+    } catch (error) {
+      this.addOperation('initialization', 'process_teams', 'failed', { error: (error as Error).message });
+      this.generateInvoiceFile();
+      throw error;
+    }
   }
 }
 
@@ -257,6 +441,14 @@ const removeDuplicatesTeams = (
   teamFromStandings: DB_InsertTeam[],
   teamFromKnockoutRounds: DB_InsertTeam[]
 ) => {
-  const allTeams = new Set([...teamFromStandings, ...teamFromKnockoutRounds]);
-  return Array.from(allTeams);
+  const uniqueTeamsMap = new Map<string, DB_InsertTeam>();
+  
+  // Add all teams, using externalId as the key for deduplication
+  [...teamFromStandings, ...teamFromKnockoutRounds].forEach(team => {
+    if (!uniqueTeamsMap.has(team.externalId)) {
+      uniqueTeamsMap.set(team.externalId, team);
+    }
+  });
+  
+  return Array.from(uniqueTeamsMap.values());
 };

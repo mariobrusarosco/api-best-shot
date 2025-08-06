@@ -220,7 +220,7 @@ const upsertTournamentStandings = async (standings: DB_InsertTournamentStandings
   }
 
   try {
-    const query = await db.transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       for (const standing of standings) {
         await tx
           .insert(T_TournamentStandings)
@@ -234,7 +234,7 @@ const upsertTournamentStandings = async (standings: DB_InsertTournamentStandings
       }
     });
 
-    return query;
+    return standings;
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
     console.error('[TournamentQueries] - [upsertTournamentStandings]', dbError);

@@ -352,20 +352,48 @@ export class TeamsDataProviderService {
 
     this.addOperation('initialization', 'validate_input', 'started', { 
       tournamentId: tournament.id, 
-      tournamentLabel: tournament.label 
+      tournamentLabel: tournament.label,
+      tournamentMode: tournament.mode
     });
 
     try {
-      this.addOperation('initialization', 'validate_input', 'completed', { tournamentId: tournament.id });
+      this.addOperation('initialization', 'validate_input', 'completed', { 
+        tournamentId: tournament.id,
+        mode: tournament.mode
+      });
 
-      const teamsFromStandings = await this.fetchTeamsFromStandings(tournament);
-      const mappedTeamsFromStandings = this.mapTeamsFromStandings(teamsFromStandings);
-      this.invoice.summary.teamCounts.fromStandings = mappedTeamsFromStandings.length;
+      let mappedTeamsFromStandings: any[] = [];
+      let mappedTeamsFromKnockoutRounds: any[] = [];
 
-      const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
-      const mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
-      this.invoice.summary.teamCounts.fromKnockout = mappedTeamsFromKnockoutRounds.length;
+      // Fetch teams based on tournament mode
+      if (tournament.mode === 'knockout-only') {
+        this.addOperation('initialization', 'tournament_mode_decision', 'completed', { 
+          mode: 'knockout-only',
+          note: 'Skipping standings fetch - knockout-only tournament'
+        });
 
+        // Only fetch from knockout rounds for knockout-only tournaments
+        const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
+        mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
+        this.invoice.summary.teamCounts.fromStandings = 0;
+        this.invoice.summary.teamCounts.fromKnockout = mappedTeamsFromKnockoutRounds.length;
+      } else {
+        this.addOperation('initialization', 'tournament_mode_decision', 'completed', { 
+          mode: tournament.mode || 'regular-season-and-knockout',
+          note: 'Fetching from both standings and knockout rounds'
+        });
+
+        // Fetch from both standings and knockout rounds for regular tournaments
+        const teamsFromStandings = await this.fetchTeamsFromStandings(tournament);
+        mappedTeamsFromStandings = this.mapTeamsFromStandings(teamsFromStandings);
+        this.invoice.summary.teamCounts.fromStandings = mappedTeamsFromStandings.length;
+
+        const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
+        mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
+        this.invoice.summary.teamCounts.fromKnockout = mappedTeamsFromKnockoutRounds.length;
+      }
+
+      // Deduplicate teams (handles both scenarios)
       this.addOperation('transformation', 'deduplicate_teams', 'started', { 
         standingsTeams: mappedTeamsFromStandings.length,
         knockoutTeams: mappedTeamsFromKnockoutRounds.length
@@ -422,8 +450,17 @@ export class TeamsDataProviderService {
         skippedDuplicates: allTeams.length - enhancedTeams.length - (allTeams.length - enhancedTeams.length)
       });
 
-      const query = await this.createOnDatabase(enhancedTeams);
-      this.invoice.summary.teamCounts.created = query.length;
+      // Use upsert for knockout-only tournaments (handles new rounds appearing later)
+      // Use create for regular tournaments (first-time creation)
+      let query;
+      if (tournament.mode === 'knockout-only') {
+        await this.upsertOnDatabase(enhancedTeams);
+        this.invoice.summary.teamCounts.created = enhancedTeams.length;
+        query = enhancedTeams; // Return teams for consistency
+      } else {
+        query = await this.createOnDatabase(enhancedTeams);
+        this.invoice.summary.teamCounts.created = query.length;
+      }
 
       // Generate invoice file at the very end
       this.generateInvoiceFile();
@@ -432,9 +469,14 @@ export class TeamsDataProviderService {
     } catch (error) {
       this.addOperation('initialization', 'process_teams', 'failed', { error: (error as Error).message });
       this.generateInvoiceFile();
+      Profiling.error({
+        source: 'DATA_PROVIDER_V2_TEAMS_init',
+        error,
+      });
       throw error;
     }
   }
+
 }
 
 const removeDuplicatesTeams = (

@@ -156,7 +156,7 @@ const upsertMatches = async (matches: DB_InsertMatch[]) => {
   }
 
   try {
-    const query = await db.transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       for (const match of matches) {
         await tx
           .insert(T_Match)
@@ -170,7 +170,7 @@ const upsertMatches = async (matches: DB_InsertMatch[]) => {
       }
     });
 
-    return query;
+    return matches;
   } catch (error: unknown) {
     console.error('[MATCH QUERIES] - [upsertMatches]', error);
     throw error;

@@ -40,6 +40,26 @@ const create = async (req: StandingsRequest, res: Response) => {
       });
     }
 
+    // Check if tournament supports standings
+    if (tournament.mode === 'knockout-only') {
+      Profiling.log({
+        msg: `[REQUEST REJECTED] Standings not supported for knockout-only tournament`,
+        data: { 
+          requestId, 
+          tournamentLabel: tournament.label, 
+          tournamentId: tournament.id,
+          tournamentMode: tournament.mode
+        },
+        source: 'DATA_PROVIDER_V2_STANDINGS_create',
+      });
+      return res.status(422).json({
+        error: 'Standings not supported',
+        message: 'No standings available for knockout-only tournaments',
+        tournamentMode: tournament.mode,
+        supportedOperations: ['teams', 'matches']
+      });
+    }
+
     Profiling.log({
       msg: `[SCRAPER START] Scraper initialized for standings creation`,
       data: { requestId, tournamentLabel: tournament.label, tournamentId: tournament.id },
@@ -122,6 +142,26 @@ const update = async (req: StandingsRequest, res: Response) => {
       return res.status(400).json({
         error: 'Tournament not found',
         message: 'Tournament not found',
+      });
+    }
+
+    // Check if tournament supports standings
+    if (tournament.mode === 'knockout-only') {
+      Profiling.log({
+        msg: `[REQUEST REJECTED] Standings not supported for knockout-only tournament`,
+        data: { 
+          requestId, 
+          tournamentLabel: tournament.label, 
+          tournamentId: tournament.id,
+          tournamentMode: tournament.mode
+        },
+        source: 'DATA_PROVIDER_V2_STANDINGS_update',
+      });
+      return res.status(422).json({
+        error: 'Standings not supported',
+        message: 'No standings available for knockout-only tournaments',
+        tournamentMode: tournament.mode,
+        supportedOperations: ['teams', 'matches']
       });
     }
 

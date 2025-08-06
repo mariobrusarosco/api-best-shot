@@ -218,22 +218,45 @@ export class TeamsDataProviderService {
     } catch (error: unknown) {
       const errorMessage = (error as Error).message;
       
+      // Debug logging for all errors
+      console.log('[DEBUG] fetchTeamsFromStandings error:', errorMessage);
+      
       // Handle 404 gracefully - standings might not exist yet for this tournament
-      if (errorMessage.includes('status 404')) {
+      if (errorMessage.includes('status 404') || 
+          errorMessage.includes('404') ||
+          errorMessage.toLowerCase().includes('not found')) {
         this.addOperation('scraping', 'fetch_teams_standings', 'completed', { 
           url,
           note: 'Standings not available yet (404) - will fetch teams from knockout rounds only',
           teamsCount: 0,
-          groupsCount: 0
+          groupsCount: 0,
+          errorMessage: errorMessage // Debug: log the actual error message
+        });
+        return null; // Return null to indicate no standings available
+      }
+
+      // Handle browser/context closure errors - these should not fail the entire process
+      if (errorMessage.includes('Target page, context or browser has been closed') ||
+          errorMessage.includes('browser has been closed') ||
+          errorMessage.includes('context has been closed')) {
+        this.addOperation('scraping', 'fetch_teams_standings', 'completed', { 
+          url,
+          note: 'Browser closed during standings fetch - will fetch teams from knockout rounds only',
+          teamsCount: 0,
+          groupsCount: 0,
+          errorMessage: errorMessage
         });
         return null; // Return null to indicate no standings available
       }
 
       // For other errors, still fail
-      this.addOperation('scraping', 'fetch_teams_standings', 'failed', { error: errorMessage });
+      this.addOperation('scraping', 'fetch_teams_standings', 'failed', { 
+        error: errorMessage,
+        debugMessage: `Error not recognized as recoverable. Full message: "${errorMessage}"`
+      });
       Profiling.error({
         source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
-        error: error as Error,
+        error: error,
       });
       throw error;
     }
@@ -256,67 +279,106 @@ export class TeamsDataProviderService {
       const uniqueTeamIds = new Set<string>(); // Track unique team IDs for early deduplication
       let totalSkippedDuplicates = 0;
       
+      let successfulRounds = 0;
+      let failedRounds = 0;
+
       for (const round of rounds) {
         this.addOperation('scraping', 'fetch_round_teams', 'started', { 
           roundSlug: round.slug, 
           providerUrl: round.providerUrl 
         });
 
-        await this.scraper.goto(round.providerUrl);
-        const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
+        try {
+          await this.scraper.goto(round.providerUrl);
+          const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
 
-        if (!rawContent?.events || rawContent?.events?.length === 0) {
+          if (!rawContent?.events || rawContent?.events?.length === 0) {
+            this.addOperation('scraping', 'fetch_round_teams', 'completed', { 
+              roundSlug: round.slug, 
+              teamsCount: 0,
+              note: 'No events found'
+            });
+            successfulRounds++;
+            await sleep(2000);
+            continue;
+          }
+
+          const roundMatches = rawContent.events;
+          const roundTeams = roundMatches.flatMap(match => [
+            match.homeTeam,
+            match.awayTeam,
+          ]);
+
+          // Early deduplication: only add teams that haven't been seen before
+          const newTeams = roundTeams.filter(team => {
+            const teamId = team.id.toString();
+            if (uniqueTeamIds.has(teamId)) {
+              totalSkippedDuplicates++;
+              return false;
+            }
+            uniqueTeamIds.add(teamId);
+            return true;
+          });
+
           this.addOperation('scraping', 'fetch_round_teams', 'completed', { 
             roundSlug: round.slug, 
-            teamsCount: 0,
-            note: 'No events found'
+            totalTeamsInRound: roundTeams.length,
+            newUniqueTeams: newTeams.length,
+            skippedDuplicates: roundTeams.length - newTeams.length,
+            matchesCount: roundMatches.length
           });
+
+          ALL_KNOCKOUT_TEAMS.push(...newTeams);
+          successfulRounds++;
+          await sleep(2000);
+
+        } catch (roundError) {
+          const errorMessage = (roundError as Error).message;
+          failedRounds++;
+
+          // Log individual round failure but continue with other rounds
+          this.addOperation('scraping', 'fetch_round_teams', 'failed', { 
+            roundSlug: round.slug,
+            providerUrl: round.providerUrl,
+            error: errorMessage,
+            note: 'Round failed but continuing with other rounds'
+          });
+
+          console.log(`[DEBUG] Round ${round.slug} failed: ${errorMessage}`);
           await sleep(2000);
           continue;
         }
-
-        const roundMatches = rawContent.events;
-        const roundTeams = roundMatches.flatMap(match => [
-          match.homeTeam,
-          match.awayTeam,
-        ]);
-
-        // Early deduplication: only add teams that haven't been seen before
-        const newTeams = roundTeams.filter(team => {
-          const teamId = team.id.toString();
-          if (uniqueTeamIds.has(teamId)) {
-            totalSkippedDuplicates++;
-            return false;
-          }
-          uniqueTeamIds.add(teamId);
-          return true;
-        });
-
-        this.addOperation('scraping', 'fetch_round_teams', 'completed', { 
-          roundSlug: round.slug, 
-          totalTeamsInRound: roundTeams.length,
-          newUniqueTeams: newTeams.length,
-          skippedDuplicates: roundTeams.length - newTeams.length,
-          matchesCount: roundMatches.length
-        });
-
-        ALL_KNOCKOUT_TEAMS.push(...newTeams);
-        await sleep(2000);
       }
+
+      // Determine if we should consider this successful
+      const hasAnyTeams = ALL_KNOCKOUT_TEAMS.length > 0;
+      const hasAnySuccessfulRounds = successfulRounds > 0;
 
       this.addOperation('scraping', 'fetch_teams_knockout', 'completed', { 
         totalUniqueTeams: ALL_KNOCKOUT_TEAMS.length,
         totalSkippedDuplicates,
         roundsProcessed: rounds.length,
-        note: 'Early deduplication applied during processing'
+        successfulRounds,
+        failedRounds,
+        note: `Processed ${successfulRounds}/${rounds.length} rounds successfully. ${failedRounds > 0 ? `${failedRounds} rounds failed but were skipped.` : ''}`
       });
 
       return ALL_KNOCKOUT_TEAMS;
     } catch (error: unknown) {
-      this.addOperation('scraping', 'fetch_teams_knockout', 'failed', { error: (error as Error).message });
+      // This catch should only handle unexpected errors that aren't individual round failures
+      // since those are now handled within the loop
+      const errorMessage = (error as Error).message;
+      
+      console.log('[DEBUG] fetchTeamsFromKnockoutRounds unexpected error:', errorMessage);
+      
+      this.addOperation('scraping', 'fetch_teams_knockout', 'failed', { 
+        error: errorMessage,
+        note: 'Unexpected error in knockout rounds processing'
+      });
+      
       Profiling.error({
         source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
-        error: error as Error,
+        error: error,
       });
       throw error;
     }
@@ -324,6 +386,16 @@ export class TeamsDataProviderService {
 
   public async createOnDatabase(teams: DB_InsertTeam[]) {
     this.addOperation('database', 'create_teams', 'started', { teamsCount: teams.length });
+
+    // Handle empty teams array gracefully
+    if (teams.length === 0) {
+      this.addOperation('database', 'create_teams', 'completed', { 
+        createdTeamsCount: 0,
+        note: 'No teams to create - tournament data not available yet',
+        teamIds: []
+      });
+      return [];
+    }
 
     try {
       const createdTeams = await QUERIES_TEAMS.createTeams(teams);

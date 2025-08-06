@@ -182,6 +182,9 @@ export class MatchesDataProviderService {
 
       const roundsWithMatches: DB_InsertMatch[][] = [];
 
+      let successfulRounds = 0;
+      let failedRounds = 0;
+
       for (const round of rounds) {
         this.addOperation('scraping', 'process_round', 'started', { 
           roundSlug: round.slug, 
@@ -189,33 +192,54 @@ export class MatchesDataProviderService {
           providerUrl: round.providerUrl
         });
 
-        await this.scraper.goto(round.providerUrl);
-        const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
+        try {
+          await this.scraper.goto(round.providerUrl);
+          const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
 
-        if (!rawContent?.events || rawContent?.events?.length === 0) {
+          if (!rawContent?.events || rawContent?.events?.length === 0) {
+            this.addOperation('scraping', 'process_round', 'completed', { 
+              roundSlug: round.slug, 
+              matchesCount: 0,
+              note: 'No matches found, skipping round'
+            });
+            this.invoice.summary.matchCounts.roundsWithoutMatches++;
+            successfulRounds++;
+            await this.scraper.sleep(2500);
+            continue;
+          }
+
+          const matches = this.mapMatches(rawContent, tournamentId, round.slug);
+          roundsWithMatches.push(matches);
+
           this.addOperation('scraping', 'process_round', 'completed', { 
             roundSlug: round.slug, 
-            matchesCount: 0,
-            note: 'No matches found, skipping round'
+            matchesCount: matches.length,
+            rawEventsCount: rawContent.events.length
           });
+
+          this.invoice.summary.matchCounts.roundsWithMatches++;
+          this.invoice.summary.matchCounts.totalMatchesScraped += matches.length;
+          successfulRounds++;
+          await this.scraper.sleep(2500);
+
+        } catch (roundError) {
+          const errorMessage = (roundError as Error).message;
+          failedRounds++;
+
+          // Log individual round failure but continue with other rounds
+          this.addOperation('scraping', 'process_round', 'failed', { 
+            roundSlug: round.slug,
+            roundLabel: round.label,
+            providerUrl: round.providerUrl,
+            error: errorMessage,
+            note: 'Round failed but continuing with other rounds'
+          });
+
+          console.log(`[DEBUG] Match round ${round.slug} failed: ${errorMessage}`);
           this.invoice.summary.matchCounts.roundsWithoutMatches++;
           await this.scraper.sleep(2500);
           continue;
         }
-
-        const matches = this.mapMatches(rawContent, tournamentId, round.slug);
-        roundsWithMatches.push(matches);
-
-        this.addOperation('scraping', 'process_round', 'completed', { 
-          roundSlug: round.slug, 
-          matchesCount: matches.length,
-          rawEventsCount: rawContent.events.length
-        });
-
-        this.invoice.summary.matchCounts.roundsWithMatches++;
-        this.invoice.summary.matchCounts.totalMatchesScraped += matches.length;
-
-        await this.scraper.sleep(2500);
       }
 
       this.invoice.summary.matchCounts.totalRoundsProcessed = rounds.length;
@@ -224,8 +248,11 @@ export class MatchesDataProviderService {
       this.addOperation('scraping', 'fetch_tournament_matches', 'completed', { 
         totalMatches: allMatches.length,
         roundsProcessed: rounds.length,
+        successfulRounds,
+        failedRounds,
         roundsWithMatches: this.invoice.summary.matchCounts.roundsWithMatches,
-        roundsWithoutMatches: this.invoice.summary.matchCounts.roundsWithoutMatches
+        roundsWithoutMatches: this.invoice.summary.matchCounts.roundsWithoutMatches,
+        note: `Processed ${successfulRounds}/${rounds.length} rounds successfully. ${failedRounds > 0 ? `${failedRounds} rounds failed but were skipped.` : ''}`
       });
 
       return allMatches;
@@ -284,11 +311,12 @@ export class MatchesDataProviderService {
   async createOnDatabase(matches: DB_InsertMatch[]) {
     this.addOperation('database', 'create_matches', 'started', { matchesCount: matches.length });
 
+    // Handle empty matches array gracefully
     if (matches.length === 0) {
-      this.addOperation('database', 'create_matches', 'failed', { error: 'No matches to create' });
-      Profiling.error({
-        error: new Error('No matches to create in the database'),
-        source: 'MatchesDataProviderService.createOnDatabase',
+      this.addOperation('database', 'create_matches', 'completed', { 
+        createdMatchesCount: 0,
+        note: 'No matches to create - tournament rounds not available yet',
+        matchIds: []
       });
       return [];
     }

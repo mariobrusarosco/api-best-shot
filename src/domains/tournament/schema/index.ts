@@ -29,9 +29,9 @@ export const T_Tournament = pgTable(
   },
   table => {
     return {
-      uniqueProviderExternalId: uniqueIndex('unique_provider_external_id').on(
-        table.provider,
-        table.externalId
+      uniqueExternalIdSlug: uniqueIndex('unique_external_id_slug').on(
+        table.externalId,
+        table.slug
       ),
     };
   }

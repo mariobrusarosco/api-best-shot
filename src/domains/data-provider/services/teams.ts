@@ -216,7 +216,21 @@ export class TeamsDataProviderService {
 
       return fetchResult;
     } catch (error: unknown) {
-      this.addOperation('scraping', 'fetch_teams_standings', 'failed', { error: (error as Error).message });
+      const errorMessage = (error as Error).message;
+      
+      // Handle 404 gracefully - standings might not exist yet for this tournament
+      if (errorMessage.includes('status 404')) {
+        this.addOperation('scraping', 'fetch_teams_standings', 'completed', { 
+          url,
+          note: 'Standings not available yet (404) - will fetch teams from knockout rounds only',
+          teamsCount: 0,
+          groupsCount: 0
+        });
+        return null; // Return null to indicate no standings available
+      }
+
+      // For other errors, still fail
+      this.addOperation('scraping', 'fetch_teams_standings', 'failed', { error: errorMessage });
       Profiling.error({
         source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
         error: error as Error,
@@ -385,7 +399,16 @@ export class TeamsDataProviderService {
 
         // Fetch from both standings and knockout rounds for regular tournaments
         const teamsFromStandings = await this.fetchTeamsFromStandings(tournament);
-        mappedTeamsFromStandings = this.mapTeamsFromStandings(teamsFromStandings);
+        
+        // Handle case where standings don't exist yet (404)
+        if (teamsFromStandings) {
+          mappedTeamsFromStandings = this.mapTeamsFromStandings(teamsFromStandings);
+        } else {
+          // No standings available yet, log this situation
+          this.addOperation('transformation', 'handle_missing_standings', 'completed', { 
+            note: 'No standings available yet - proceeding with knockout rounds only'
+          });
+        }
         this.invoice.summary.teamCounts.fromStandings = mappedTeamsFromStandings.length;
 
         const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);

@@ -58,3 +58,6 @@ crash.log
 
 # Package Manager
 .yarn/
+
+
+tournament-scraping-reports/

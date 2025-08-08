@@ -220,9 +220,10 @@ const upsertTournamentStandings = async (standings: DB_InsertTournamentStandings
   }
 
   try {
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: unknown) => {
+      const transaction = tx as typeof db;
       for (const standing of standings) {
-        await tx
+        await transaction
           .insert(T_TournamentStandings)
           .values(standing)
           .onConflictDoUpdate({

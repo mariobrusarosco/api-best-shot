@@ -49,7 +49,7 @@ const create = async (req: TournamentRoundRequest, res: Response) => {
     });
 
     return res.status(200).send(rounds);
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_TOURNAMENT_ROUNDS_create',
       error,
@@ -111,7 +111,7 @@ const update = async (req: TournamentRoundRequest, res: Response) => {
     });
 
     return res.status(200).json({ rounds });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_TOURNAMENT_ROUNDS_update',
       error,

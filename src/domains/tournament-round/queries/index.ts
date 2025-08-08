@@ -1,5 +1,9 @@
 import db from '@/services/database';
-import { T_TournamentRound, DB_InsertTournamentRound, DB_UpdateTournamentRound } from '@/domains/tournament-round/schema';
+import {
+  T_TournamentRound,
+  DB_InsertTournamentRound,
+  DB_UpdateTournamentRound,
+} from '@/domains/tournament-round/schema';
 import { and, asc, eq } from 'drizzle-orm';
 import { DatabaseError } from '@/domains/shared/error-handling/database';
 import Profiling from '@/services/profiling';
@@ -84,10 +88,7 @@ const getAllRounds = async (tournamentId: string) => {
 
 const createTournamentRound = async (input: DB_InsertTournamentRound) => {
   try {
-    const [round] = await db
-      .insert(T_TournamentRound)
-      .values(input)
-      .returning();
+    const [round] = await db.insert(T_TournamentRound).values(input).returning();
 
     return round;
   } catch (error: unknown) {
@@ -99,10 +100,7 @@ const createTournamentRound = async (input: DB_InsertTournamentRound) => {
 
 const createMultipleTournamentRounds = async (inputs: DB_InsertTournamentRound[]) => {
   try {
-    const rounds = await db
-      .insert(T_TournamentRound)
-      .values(inputs)
-      .returning();
+    const rounds = await db.insert(T_TournamentRound).values(inputs).returning();
 
     return rounds;
   } catch (error: unknown) {
@@ -121,9 +119,10 @@ const upsertTournamentRounds = async (rounds: DB_UpdateTournamentRound[]) => {
   }
 
   try {
-    const query = await db.transaction(async (tx) => {
+    const query = await db.transaction(async (tx: unknown) => {
+      const transaction = tx as typeof db;
       for (const round of rounds) {
-        await tx
+        await transaction
           .insert(T_TournamentRound)
           .values(round)
           .onConflictDoUpdate({

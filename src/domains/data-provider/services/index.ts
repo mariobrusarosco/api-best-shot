@@ -12,17 +12,19 @@ import { TournamentDataProviderService } from './tournaments';
 import { MatchesDataProviderService } from './match';
 import { StandingsDataProviderService } from './standings';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { randomUUID } from 'crypto';
 export class SofaScoreScraper extends BaseScraper {
   public async createTournament(payload: CreateTournamentInput) {
     try {
       const scraper = await BaseScraper.createInstance();
+      const requestId = randomUUID();
       console.log('TOURNAMENT CREATION - [START]', payload);
 
-      const tournamentService = new TournamentDataProviderService(scraper);
-      const standingsService = new StandingsDataProviderService(scraper);
-      const roundService = new RoundDataProviderService(scraper);
-      const teamsService = new TeamsDataProviderService(scraper);
-      const matchesService = new MatchesDataProviderService(scraper);
+      const tournamentService = new TournamentDataProviderService(scraper, requestId);
+      const standingsService = new StandingsDataProviderService(scraper, requestId);
+      const roundService = new RoundDataProviderService(scraper, requestId);
+      const teamsService = new TeamsDataProviderService(scraper, requestId);
+      const matchesService = new MatchesDataProviderService(scraper, requestId);
 
       //Step 1: Tournament Service
       const { id: tournamentId } = await tournamentService.init(payload);

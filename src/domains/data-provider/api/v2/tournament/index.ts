@@ -39,7 +39,7 @@ const create = async (req: TournamentRequest, res: Response) => {
     });
 
     return res.status(200).json({ tournament });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
       error,

@@ -61,7 +61,12 @@ export class TournamentDataProviderService {
     };
   }
 
-  private addOperation(step: string, operation: string, status: 'started' | 'completed' | 'failed', data?: any) {
+  private addOperation(
+    step: string,
+    operation: string,
+    status: 'started' | 'completed' | 'failed',
+    data?: any
+  ) {
     this.invoice.operations.push({
       step,
       operation,
@@ -69,7 +74,7 @@ export class TournamentDataProviderService {
       data,
       timestamp: new Date().toISOString(),
     });
-    
+
     this.invoice.summary.totalOperations++;
     if (status === 'completed') {
       this.invoice.summary.successfulOperations++;
@@ -82,7 +87,7 @@ export class TournamentDataProviderService {
     this.invoice.endTime = new Date().toISOString();
     const filename = `tournament-scraping-${this.invoice.requestId}.json`;
     const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
-    
+
     try {
       writeFileSync(filepath, JSON.stringify(this.invoice, null, 2));
       Profiling.log({
@@ -94,30 +99,42 @@ export class TournamentDataProviderService {
       Profiling.error({
         source: 'DATA_PROVIDER_V2_TOURNAMENT_generateInvoiceFile',
         error,
-        data: { filepath, requestId: this.invoice.requestId }
+        data: { filepath, requestId: this.invoice.requestId },
       });
       console.error('Failed to write invoice file:', error);
     }
   }
 
   public async createOnDatabase(input: DB_InsertTournament) {
-    this.addOperation('database', 'create_tournament', 'started', { externalId: input.externalId, label: input.label });
-    
+    this.addOperation('database', 'create_tournament', 'started', {
+      externalId: input.externalId,
+      label: input.label,
+    });
+
     try {
       const tournament = await SERVICES_TOURNAMENT.createTournament(input);
-      
-      this.addOperation('database', 'create_tournament', 'completed', { tournamentId: tournament.id, label: tournament.label });
+
+      this.addOperation('database', 'create_tournament', 'completed', {
+        tournamentId: tournament.id,
+        label: tournament.label,
+      });
       return tournament;
     } catch (error) {
-      this.addOperation('database', 'create_tournament', 'failed', { error: error.message });
+      const errorMessage = (error as Error).message;
+      this.addOperation('database', 'create_tournament', 'failed', {
+        error: errorMessage,
+      });
       console.error('[SOFASCORE] - [ERROR] - [CREATE TOURNAMENT]', error);
       throw error;
     }
   }
 
   public async updateOnDatabase(data: DB_UpdateTournament) {
-    this.addOperation('database', 'update_tournament', 'started', { externalId: data.externalId, provider: data.provider });
-    
+    this.addOperation('database', 'update_tournament', 'started', {
+      externalId: data.externalId,
+      provider: data.provider,
+    });
+
     try {
       const [tournament] = await db
         .update(T_Tournament)
@@ -130,10 +147,16 @@ export class TournamentDataProviderService {
         )
         .returning();
 
-      this.addOperation('database', 'update_tournament', 'completed', { tournamentId: tournament.id, label: tournament.label });
+      this.addOperation('database', 'update_tournament', 'completed', {
+        tournamentId: tournament.id,
+        label: tournament.label,
+      });
       return tournament;
     } catch (error) {
-      this.addOperation('database', 'update_tournament', 'failed', { error: error.message });
+      const errorMessage = (error as Error).message;
+      this.addOperation('database', 'update_tournament', 'failed', {
+        error: errorMessage,
+      });
       console.error('[SOFASCORE] - [ERROR] - [UPDATE TOURNAMENT]', error);
       throw error;
     }
@@ -151,19 +174,27 @@ export class TournamentDataProviderService {
       provider: payload.provider,
     };
 
-    this.addOperation('initialization', 'validate_input', 'started', { tournamentId: payload.tournamentPublicId });
+    this.addOperation('initialization', 'validate_input', 'started', {
+      tournamentId: payload.tournamentPublicId,
+    });
 
     if (!payload.tournamentPublicId) {
-      this.addOperation('initialization', 'validate_input', 'failed', { error: 'Tournament public ID is null' });
+      this.addOperation('initialization', 'validate_input', 'failed', {
+        error: 'Tournament public ID is null',
+      });
       throw new Error(
         `[TournamentDataProviderService] - [ERROR] - [INIT] - [TOURNAMENT PUBLIC ID IS NULL]`
       );
     }
 
-    this.addOperation('initialization', 'validate_input', 'completed', { tournamentId: payload.tournamentPublicId });
+    this.addOperation('initialization', 'validate_input', 'completed', {
+      tournamentId: payload.tournamentPublicId,
+    });
 
-    this.addOperation('scraping', 'fetch_logo', 'started', { tournamentId: payload.tournamentPublicId });
-    
+    this.addOperation('scraping', 'fetch_logo', 'started', {
+      tournamentId: payload.tournamentPublicId,
+    });
+
     try {
       const logoUrl = this.getTournamentLogoUrl(payload.tournamentPublicId);
       const s3Key = await this.scraper.uploadAsset({
@@ -197,7 +228,8 @@ export class TournamentDataProviderService {
 
       return tournament;
     } catch (error) {
-      this.addOperation('scraping', 'fetch_logo', 'failed', { error: error.message });
+      const errorMessage = (error as Error).message;
+      this.addOperation('scraping', 'fetch_logo', 'failed', { error: errorMessage });
       this.generateInvoiceFile();
       throw error;
     }

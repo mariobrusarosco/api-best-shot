@@ -156,9 +156,10 @@ const upsertMatches = async (matches: DB_InsertMatch[]) => {
   }
 
   try {
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: unknown) => {
+      const transaction = tx as typeof db;
       for (const match of matches) {
-        await tx
+        await transaction
           .insert(T_Match)
           .values(match)
           .onConflictDoUpdate({

@@ -60,7 +60,12 @@ export class RoundDataProviderService {
     };
   }
 
-  private addOperation(step: string, operation: string, status: 'started' | 'completed' | 'failed', data?: any) {
+  private addOperation(
+    step: string,
+    operation: string,
+    status: 'started' | 'completed' | 'failed',
+    data?: any
+  ) {
     this.invoice.operations.push({
       step,
       operation,
@@ -68,7 +73,7 @@ export class RoundDataProviderService {
       data,
       timestamp: new Date().toISOString(),
     });
-    
+
     this.invoice.summary.totalOperations++;
     if (status === 'completed') {
       this.invoice.summary.successfulOperations++;
@@ -81,7 +86,7 @@ export class RoundDataProviderService {
     this.invoice.endTime = new Date().toISOString();
     const filename = `rounds-scraping-${this.invoice.requestId}.json`;
     const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
-    
+
     try {
       writeFileSync(filepath, JSON.stringify(this.invoice, null, 2));
       Profiling.log({
@@ -93,7 +98,7 @@ export class RoundDataProviderService {
       Profiling.error({
         source: 'DATA_PROVIDER_V2_ROUNDS_generateInvoiceFile',
         error,
-        data: { filepath, requestId: this.invoice.requestId }
+        data: { filepath, requestId: this.invoice.requestId },
       });
       console.error('Failed to write rounds invoice file:', error);
     }
@@ -101,17 +106,21 @@ export class RoundDataProviderService {
 
   public async getTournamentRounds(baseUrl: string) {
     this.addOperation('scraping', 'fetch_rounds', 'started', { baseUrl });
-    
+
     try {
       const url = `${baseUrl}/rounds`;
 
       await this.scraper.goto(url);
       const content = await this.scraper.getPageContent();
 
-      this.addOperation('scraping', 'fetch_rounds', 'completed', { url, roundsCount: content.rounds?.length || 0 });
+      this.addOperation('scraping', 'fetch_rounds', 'completed', {
+        url,
+        roundsCount: content.rounds?.length || 0,
+      });
       return content as ENDPOINT_ROUNDS;
     } catch (error) {
-      this.addOperation('scraping', 'fetch_rounds', 'failed', { error: error.message });
+      const errorMessage = (error as Error).message;
+      this.addOperation('scraping', 'fetch_rounds', 'failed', { error: errorMessage });
       console.error('[SOFASCORE] - [ERROR] - [GET TOURNAMENT ROUNDS]', error);
       throw error;
     }
@@ -122,10 +131,10 @@ export class RoundDataProviderService {
     tournamentId: string,
     roundsResponse: ENDPOINT_ROUNDS
   ): DB_InsertTournamentRound[] {
-    this.addOperation('transformation', 'enhance_rounds', 'started', { 
-      baseUrl, 
-      tournamentId, 
-      rawRoundsCount: roundsResponse.rounds.length 
+    this.addOperation('transformation', 'enhance_rounds', 'started', {
+      baseUrl,
+      tournamentId,
+      rawRoundsCount: roundsResponse.rounds.length,
     });
 
     try {
@@ -165,26 +174,29 @@ export class RoundDataProviderService {
         } as DB_InsertTournamentRound;
       });
 
-      this.addOperation('transformation', 'enhance_rounds', 'completed', { 
+      this.addOperation('transformation', 'enhance_rounds', 'completed', {
         enhancedRoundsCount: enhancedRounds.length,
         roundTypes: {
           regular: enhancedRounds.filter(r => r.type === 'season').length,
-          knockout: enhancedRounds.filter(r => r.type === 'knockout').length
-        }
+          knockout: enhancedRounds.filter(r => r.type === 'knockout').length,
+        },
       });
 
       return enhancedRounds;
     } catch (error) {
-      this.addOperation('transformation', 'enhance_rounds', 'failed', { error: error.message });
+      const errorMessage = (error as Error).message;
+      this.addOperation('transformation', 'enhance_rounds', 'failed', {
+        error: errorMessage,
+      });
       console.error('[SOFASCORE] - [ERROR] - [ENHANCE TOURNAMENT ROUNDS]', error);
       throw error;
     }
   }
 
   public async createOnDatabase(roundsToInsert: DB_InsertTournamentRound[]) {
-    this.addOperation('database', 'create_rounds', 'started', { 
+    this.addOperation('database', 'create_rounds', 'started', {
       roundsCount: roundsToInsert.length,
-      tournamentId: roundsToInsert[0]?.tournamentId 
+      tournamentId: roundsToInsert[0]?.tournamentId,
     });
 
     try {
@@ -192,15 +204,16 @@ export class RoundDataProviderService {
         .insert(T_TournamentRound)
         .values(roundsToInsert)
         .returning();
-      
-      this.addOperation('database', 'create_rounds', 'completed', { 
+
+      this.addOperation('database', 'create_rounds', 'completed', {
         createdRoundsCount: rounds.length,
-        roundIds: rounds.map(r => r.id)
+        roundIds: rounds.map((r: any) => r.id),
       });
 
       return rounds;
     } catch (error) {
-      this.addOperation('database', 'create_rounds', 'failed', { error: error.message });
+      const errorMessage = (error as Error).message;
+      this.addOperation('database', 'create_rounds', 'failed', { error: errorMessage });
       console.error(
         '[SOFASCORE] - [ERROR] - [CREATE TOURNAMENT ROUNDS ON DATABASE]',
         error
@@ -208,7 +221,6 @@ export class RoundDataProviderService {
       throw error;
     }
   }
-
 
   public async init(tournamentId: string, tournamentBaseUrl: string) {
     // Initialize invoice tournament data
@@ -218,13 +230,22 @@ export class RoundDataProviderService {
     };
     this.invoice.operationType = 'create';
 
-    this.addOperation('initialization', 'validate_input', 'started', { tournamentId, tournamentBaseUrl });
+    this.addOperation('initialization', 'validate_input', 'started', {
+      tournamentId,
+      tournamentBaseUrl,
+    });
 
     try {
-      this.addOperation('initialization', 'validate_input', 'completed', { tournamentId });
+      this.addOperation('initialization', 'validate_input', 'completed', {
+        tournamentId,
+      });
 
       const rawRounds = await this.getTournamentRounds(tournamentBaseUrl);
-      const enhancedRounds = this.enhanceRounds(tournamentBaseUrl, tournamentId, rawRounds);
+      const enhancedRounds = this.enhanceRounds(
+        tournamentBaseUrl,
+        tournamentId,
+        rawRounds
+      );
       const query = await this.createOnDatabase(enhancedRounds);
 
       // Generate invoice file at the very end
@@ -232,20 +253,25 @@ export class RoundDataProviderService {
 
       return query;
     } catch (error) {
-      this.addOperation('initialization', 'process_rounds', 'failed', { error: error.message });
+      const errorMessage = (error as Error).message;
+      this.addOperation('initialization', 'process_rounds', 'failed', {
+        error: errorMessage,
+      });
       this.generateInvoiceFile();
       throw error;
     }
   }
 
   public async updateOnDatabase(roundsToUpdate: DB_UpdateTournamentRound[]) {
-    this.addOperation('database', 'update_rounds', 'started', { 
+    this.addOperation('database', 'update_rounds', 'started', {
       roundsCount: roundsToUpdate.length,
-      tournamentId: roundsToUpdate[0]?.tournamentId 
+      tournamentId: roundsToUpdate[0]?.tournamentId,
     });
 
     if (roundsToUpdate.length === 0) {
-      this.addOperation('database', 'update_rounds', 'failed', { error: 'No rounds to update' });
+      this.addOperation('database', 'update_rounds', 'failed', {
+        error: 'No rounds to update',
+      });
       Profiling.error({
         error: new Error('No rounds to update in the database'),
         source: 'RoundDataProviderService.updateOnDatabase',
@@ -255,14 +281,15 @@ export class RoundDataProviderService {
 
     try {
       const query = await QUERIES_TOURNAMENT_ROUND.upsertTournamentRounds(roundsToUpdate);
-      
-      this.addOperation('database', 'update_rounds', 'completed', { 
-        updatedRoundsCount: query.length
+
+      this.addOperation('database', 'update_rounds', 'completed', {
+        updatedRoundsCount: query.length,
       });
 
       return query;
     } catch (error) {
-      this.addOperation('database', 'update_rounds', 'failed', { error: error.message });
+      const errorMessage = (error as Error).message;
+      this.addOperation('database', 'update_rounds', 'failed', { error: errorMessage });
       Profiling.error({
         error,
         source: 'RoundDataProviderService.updateOnDatabase',
@@ -279,17 +306,26 @@ export class RoundDataProviderService {
     };
     this.invoice.operationType = 'update';
 
-    this.addOperation('initialization', 'validate_input', 'started', { tournamentId, tournamentBaseUrl });
+    this.addOperation('initialization', 'validate_input', 'started', {
+      tournamentId,
+      tournamentBaseUrl,
+    });
 
     try {
-      this.addOperation('initialization', 'validate_input', 'completed', { tournamentId });
+      this.addOperation('initialization', 'validate_input', 'completed', {
+        tournamentId,
+      });
 
       Profiling.log({
         msg: `[RoundDataProviderService] - Updating rounds for tournament: ${tournamentId}`,
       });
 
       const rawRounds = await this.getTournamentRounds(tournamentBaseUrl);
-      const enhancedRounds = this.enhanceRounds(tournamentBaseUrl, tournamentId, rawRounds);
+      const enhancedRounds = this.enhanceRounds(
+        tournamentBaseUrl,
+        tournamentId,
+        rawRounds
+      );
       const query = await this.updateOnDatabase(enhancedRounds);
 
       Profiling.log({
@@ -302,7 +338,8 @@ export class RoundDataProviderService {
 
       return query;
     } catch (error) {
-      this.addOperation('update', 'process_rounds', 'failed', { error: error.message });
+      const errorMessage = (error as Error).message;
+      this.addOperation('update', 'process_rounds', 'failed', { error: errorMessage });
       this.generateInvoiceFile();
       Profiling.error({
         source: 'RoundDataProviderService.updateTournament',

@@ -5,6 +5,7 @@ import {
   API_TEAMS_V2,
   API_MATCH_V2,
   API_STANDINGS_V2,
+  API_SCHEDULER_V2,
 } from '../api';
 
 const router = express.Router();
@@ -23,5 +24,7 @@ router.patch('/matches', API_MATCH_V2.updateMatchesForRound);
 // STANDINGS
 router.post('/standings', API_STANDINGS_V2.create);
 router.patch('/standings', API_STANDINGS_V2.update);
+// SCHEDULER
+router.post('/scheduler/daily-setup', API_SCHEDULER_V2.createDailySchedules);
 
 export default router;

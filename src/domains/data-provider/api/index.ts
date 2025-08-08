@@ -9,6 +9,7 @@ import API_TOURNAMENT_ROUNDS_V2 from './v2/tournament-rounds';
 import API_TEAMS_V2 from './v2/teams';
 import API_MATCH_V2 from './v2/match';
 import API_STANDINGS_V2 from './v2/standings';
+import API_SCHEDULER_V2 from './v2/scheduler';
 
 export {
   API_TEAMS,
@@ -22,4 +23,5 @@ export {
   API_TEAMS_V2,
   API_MATCH_V2,
   API_STANDINGS_V2,
+  API_SCHEDULER_V2,
 };

@@ -7,18 +7,15 @@ import { Utils } from './utils';
 
 dayjs.extend(utc);
 
-export const createDailyScoresAndStandingsRoutine = async () => {
+export const createDailyScoresAndStandingsRoutine = async (): Promise<Map<string, IDailySchedule>> => {
   const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase();
-  if (!currentDayMatches) {
-    return new Map([
-      ['standingsToUpdate', []],
-      ['roundsToUpdate', []],
-    ]);
+  if (!currentDayMatches || currentDayMatches.length === 0) {
+    return new Map<string, IDailySchedule>();
   }
 
   const schedules = new Map<string, IDailySchedule>();
 
-  currentDayMatches.forEach(async (match: (typeof currentDayMatches)[number]) => {
+  for (const match of currentDayMatches) {
     const schedule = buildSchedule(match);
 
     if (!schedules.has(schedule.id)) {
@@ -26,7 +23,7 @@ export const createDailyScoresAndStandingsRoutine = async () => {
 
       await scheduleScoresAndStandingsRoutine(schedule);
     }
-  });
+  }
 
   return schedules;
 };

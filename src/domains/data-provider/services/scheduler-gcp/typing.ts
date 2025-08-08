@@ -2,7 +2,11 @@ export type IDailySchedule = {
   id: string;
   cronExpression: string;
   startDate: Date;
-  targetInput: any;
+  targetInput: {
+    standingsUrl: string;
+    roundUrl: string;
+    targetEnv: string | undefined;
+  };
 };
 
 export const STANDINGS_URL = `${process.env.API_DOMAIN}${process.env.API_VERSION}/data-provider/tournaments/:tournamentId/standings`;

@@ -9,7 +9,6 @@
   "packageManager": "yarn@3.8.7",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register ./src/index.ts",
-    "dev:aws": "docker compose --profile aws up -d && ts-node-dev --respawn --transpile-only -r tsconfig-paths/register ./src/index.ts",
     "dev:full": "docker compose up -d postgres && concurrently --names \"API,DATABASE,FRONTEND\" --prefix-colors \"cyan,green,magenta\" --kill-others \"yarn dev\" \"yarn db:studio\" \"cd ../best-shot && yarn dev\"",
     "dev:stop": "docker compose down",
     "dev:clean": "docker compose down -v && rm -rf node_modules && yarn install",

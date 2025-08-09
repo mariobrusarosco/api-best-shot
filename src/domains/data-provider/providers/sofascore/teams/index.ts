@@ -3,11 +3,28 @@ import { IApiProvider } from '@/domains/data-provider/typing';
 import { DB_InsertTeam, T_Team } from '@/domains/team/schema';
 import db from '@/services/database';
 import { fetchAndStoreAssetFromApi } from '@/utils';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+type TeamFromMatch = {
+  id: string | number;
+  name: string;
+  nameCode: string;
+};
+
+type MatchEvent = {
+  homeTeam: TeamFromMatch;
+  awayTeam: TeamFromMatch;
+};
+
+type RoundData = {
+  events: MatchEvent[];
+};
 const SOFA_TEAM_LOGO_URL = 'https://img.sofascore.com/api/v1/team/:id/image';
 
 export const SofascoreTeams: IApiProvider['teams'] = {
-  mapTeamsFromStandings: async (data: API_SOFASCORE_STANDINGS, provider) => {
+  mapTeamsFromStandings: async (
+    data: API_SOFASCORE_STANDINGS,
+    provider: string
+  ): Promise<DB_InsertTeam[]> => {
     if (!data?.standings) return [];
 
     const standings = data?.standings;
@@ -38,10 +55,13 @@ export const SofascoreTeams: IApiProvider['teams'] = {
 
     return assetPath ? `https://${process.env['AWS_CLOUDFRONT_URL']}/${assetPath}` : '';
   },
-  mapTeamsFromRound: async (round, provider) => {
+  mapTeamsFromRound: async (
+    round: RoundData,
+    provider: string
+  ): Promise<DB_InsertTeam[]> => {
     const matches = round.events;
 
-    const promises = matches.map(async (match: any) => {
+    const promises = matches.map(async (match: MatchEvent) => {
       const homeTeam = match.homeTeam;
       const homeTeamBadge = await SofascoreTeams.fetchAndStoreLogo({
         filename: `team-${provider}-${homeTeam.id}`,
@@ -93,7 +113,7 @@ export const SofascoreTeams: IApiProvider['teams'] = {
   upsertOnDatabase: async teams => {
     console.log('[LOG] - [START] - UPSERTING TEAMS ON DATABASE');
 
-    await db.transaction(async (tx: PostgresJsDatabase<any>) => {
+    await db.transaction(async tx => {
       for (const team of teams) {
         await tx
           .insert(T_Team)

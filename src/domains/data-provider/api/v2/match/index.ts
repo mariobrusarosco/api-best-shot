@@ -17,9 +17,9 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
   try {
     Profiling.log({
       msg: `[REQUEST START] Matches creation request received`,
-      data: { 
+      data: {
         requestId,
-        tournamentId: req.body.tournamentId
+        tournamentId: req.body.tournamentId,
       },
       source: 'DATA_PROVIDER_V2_MATCHES_create',
     });
@@ -54,7 +54,7 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
     const matchesDataProviderService = new MatchesDataProviderService(scraper, requestId);
 
     const rounds = await SERVICES_TOURNAMENT_ROUND.getAllRounds(tournament.id);
-    
+
     const matches = await matchesDataProviderService.init(rounds, tournament);
 
     if (!matches) {
@@ -70,12 +70,16 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
 
     Profiling.log({
       msg: `[SCRAPER STOP] Matches creation completed successfully`,
-      data: { requestId, tournamentLabel: tournament.label, matchesCount: Array.isArray(matches) ? matches.length : 'unknown' },
+      data: {
+        requestId,
+        tournamentLabel: tournament.label,
+        matchesCount: Array.isArray(matches) ? matches.length : 'unknown',
+      },
       source: 'DATA_PROVIDER_V2_MATCHES_create',
     });
 
     return res.status(200).json({ matches });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_MATCHES_create',
       error,
@@ -103,10 +107,10 @@ const updateMatchesForRound = async (
   try {
     Profiling.log({
       msg: `[REQUEST START] Matches update request received for round`,
-      data: { 
+      data: {
         requestId,
         tournamentId: req.body.tournamentId,
-        roundSlug: req.body.roundSlug
+        roundSlug: req.body.roundSlug,
       },
       source: 'DATA_PROVIDER_V2_MATCHES_updateMatchesForRound',
     });
@@ -156,11 +160,11 @@ const updateMatchesForRound = async (
 
     Profiling.log({
       msg: `[SCRAPER START] Scraper initialized for matches update`,
-      data: { 
-        requestId, 
-        tournamentLabel: tournament.label, 
+      data: {
+        requestId,
+        tournamentLabel: tournament.label,
         tournamentId: tournament.id,
-        roundSlug: round.slug 
+        roundSlug: round.slug,
       },
       source: 'DATA_PROVIDER_V2_MATCHES_updateMatchesForRound',
     });
@@ -183,17 +187,17 @@ const updateMatchesForRound = async (
 
     Profiling.log({
       msg: `[SCRAPER STOP] Matches update completed successfully`,
-      data: { 
-        requestId, 
-        tournamentLabel: tournament.label, 
+      data: {
+        requestId,
+        tournamentLabel: tournament.label,
         roundSlug: round.slug,
-        matchesUpdated: matches
+        matchesUpdated: matches,
       },
       source: 'DATA_PROVIDER_V2_MATCHES_updateMatchesForRound',
     });
 
     return res.status(200).json({ matches, round: round.slug });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_MATCHES_updateMatchesForRound',
       error,

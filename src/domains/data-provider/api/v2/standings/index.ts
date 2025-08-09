@@ -13,9 +13,9 @@ const create = async (req: StandingsRequest, res: Response) => {
   try {
     Profiling.log({
       msg: `[REQUEST START] Standings creation request received`,
-      data: { 
+      data: {
         requestId,
-        tournamentId: req.body.tournamentId
+        tournamentId: req.body.tournamentId,
       },
       source: 'DATA_PROVIDER_V2_STANDINGS_create',
     });
@@ -44,11 +44,11 @@ const create = async (req: StandingsRequest, res: Response) => {
     if (tournament.mode === 'knockout-only') {
       Profiling.log({
         msg: `[REQUEST REJECTED] Standings not supported for knockout-only tournament`,
-        data: { 
-          requestId, 
-          tournamentLabel: tournament.label, 
+        data: {
+          requestId,
+          tournamentLabel: tournament.label,
           tournamentId: tournament.id,
-          tournamentMode: tournament.mode
+          tournamentMode: tournament.mode,
         },
         source: 'DATA_PROVIDER_V2_STANDINGS_create',
       });
@@ -56,7 +56,7 @@ const create = async (req: StandingsRequest, res: Response) => {
         error: 'Standings not supported',
         message: 'No standings available for knockout-only tournaments',
         tournamentMode: tournament.mode,
-        supportedOperations: ['teams', 'matches']
+        supportedOperations: ['teams', 'matches'],
       });
     }
 
@@ -84,16 +84,16 @@ const create = async (req: StandingsRequest, res: Response) => {
 
     Profiling.log({
       msg: `[SCRAPER STOP] Standings creation completed successfully`,
-      data: { 
-        requestId, 
-        tournamentLabel: tournament.label, 
-        standingsCount: Array.isArray(standings) ? standings.length : 'unknown' 
+      data: {
+        requestId,
+        tournamentLabel: tournament.label,
+        standingsCount: Array.isArray(standings) ? standings.length : 'unknown',
       },
       source: 'DATA_PROVIDER_V2_STANDINGS_create',
     });
 
     return res.status(200).json({ standings });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_STANDINGS_create',
       error,
@@ -118,9 +118,9 @@ const update = async (req: StandingsRequest, res: Response) => {
   try {
     Profiling.log({
       msg: `[REQUEST START] Standings update request received`,
-      data: { 
+      data: {
         requestId,
-        tournamentId: req.body.tournamentId
+        tournamentId: req.body.tournamentId,
       },
       source: 'DATA_PROVIDER_V2_STANDINGS_update',
     });
@@ -149,11 +149,11 @@ const update = async (req: StandingsRequest, res: Response) => {
     if (tournament.mode === 'knockout-only') {
       Profiling.log({
         msg: `[REQUEST REJECTED] Standings not supported for knockout-only tournament`,
-        data: { 
-          requestId, 
-          tournamentLabel: tournament.label, 
+        data: {
+          requestId,
+          tournamentLabel: tournament.label,
           tournamentId: tournament.id,
-          tournamentMode: tournament.mode
+          tournamentMode: tournament.mode,
         },
         source: 'DATA_PROVIDER_V2_STANDINGS_update',
       });
@@ -161,7 +161,7 @@ const update = async (req: StandingsRequest, res: Response) => {
         error: 'Standings not supported',
         message: 'No standings available for knockout-only tournaments',
         tournamentMode: tournament.mode,
-        supportedOperations: ['teams', 'matches']
+        supportedOperations: ['teams', 'matches'],
       });
     }
 
@@ -189,16 +189,16 @@ const update = async (req: StandingsRequest, res: Response) => {
 
     Profiling.log({
       msg: `[SCRAPER STOP] Standings update completed successfully`,
-      data: { 
-        requestId, 
-        tournamentLabel: tournament.label, 
-        standingsCount: Array.isArray(standings) ? standings.length : 'unknown' 
+      data: {
+        requestId,
+        tournamentLabel: tournament.label,
+        standingsCount: Array.isArray(standings) ? standings.length : 'unknown',
       },
       source: 'DATA_PROVIDER_V2_STANDINGS_update',
     });
 
     return res.status(200).json({ standings });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_STANDINGS_update',
       error,

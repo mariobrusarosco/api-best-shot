@@ -12,11 +12,11 @@ const create = async (req: TournamentRequest, res: Response) => {
   try {
     Profiling.log({
       msg: `[REQUEST START] Tournament creation request received`,
-      data: { 
+      data: {
         requestId,
         tournamentLabel: req.body.label,
         provider: req.body.provider,
-        tournamentId: req.body.tournamentPublicId 
+        tournamentId: req.body.tournamentPublicId,
       },
       source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
     });
@@ -43,7 +43,7 @@ const create = async (req: TournamentRequest, res: Response) => {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
       error,
-      data: { requestId, operation: 'tournament_creation' }
+      data: { requestId, operation: 'tournament_creation' },
     });
     return handleInternalServerErrorResponse(res, error);
   } finally {

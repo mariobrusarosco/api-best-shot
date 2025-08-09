@@ -44,7 +44,7 @@ const create = async (tournamentId: string) => {
     });
 
     return TEAMS;
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_TEAMS_CONTROLLER_create',
       error,
@@ -88,7 +88,7 @@ const update = async (tournamentId: string) => {
     });
 
     return TEAMS;
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_TEAMS_CONTROLLER_update',
       error,

@@ -45,7 +45,9 @@ export const fetchAndMapTeamsForRegularSeason = async (
 export const fetchAndMapTeamsFromKnockoutRounds = async (
   tournament: NonNullable<TournamentQuery>
 ) => {
-  const knockoutRoundsList = await QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(tournament.id!);
+  const knockoutRoundsList = await QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(
+    tournament.id!
+  );
 
   const ALL_TEAMS = [];
 

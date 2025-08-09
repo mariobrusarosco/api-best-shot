@@ -3,21 +3,52 @@ import type {
   ENDPOINT_STANDINGS,
   I_TEAM_FROM_ROUND,
 } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
-import { BaseScraper } from '../providers/playwright/base-scraper';
-import { Profiling } from '@/services/profiling';
-import { DB_InsertTeam } from '@/domains/team/schema';
-import { safeString, sleep } from '@/utils';
 import { QUERIES_TEAMS } from '@/domains/team/queries';
+import { DB_InsertTeam } from '@/domains/team/schema';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { Profiling } from '@/services/profiling';
+import { safeString, sleep } from '@/utils';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import { BaseScraper } from '../providers/playwright/base-scraper';
+
+type TeamsScrapingOperationData =
+  | {
+      url?: string;
+      tournamentId?: string;
+      teamsCount?: number;
+      note?: string;
+      groupsCount?: number;
+    }
+  | { error: string; debugMessage?: string; errorMessage?: string }
+  | { teamName?: string; teamId?: string | number; logoUrl?: string; reason?: string }
+  | {
+      roundSlug?: string;
+      providerUrl?: string;
+      totalTeamsInRound?: number;
+      newUniqueTeams?: number;
+      skippedDuplicates?: number;
+      matchesCount?: number;
+    }
+  | { createdTeamsCount?: number; upsertedTeamsCount?: number; teamIds?: string[] }
+  | {
+      standingsTeams?: number;
+      knockoutTeams?: number;
+      uniqueTeamsCount?: number;
+      duplicatesRemoved?: number;
+      teamsToEnhance?: number;
+      enhancedTeamsCount?: number;
+      failedEnhancements?: number;
+      skippedDuplicates?: number;
+    }
+  | Record<string, unknown>;
 
 interface TeamsScrapingOperation {
   step: string;
   operation: string;
   status: 'started' | 'completed' | 'failed';
-  data?: any;
+  data?: TeamsScrapingOperationData;
   timestamp: string;
 }
 
@@ -73,7 +104,12 @@ export class TeamsDataProviderService {
     };
   }
 
-  private addOperation(step: string, operation: string, status: 'started' | 'completed' | 'failed', data?: any) {
+  private addOperation(
+    step: string,
+    operation: string,
+    status: 'started' | 'completed' | 'failed',
+    data?: TeamsScrapingOperationData
+  ): void {
     this.invoice.operations.push({
       step,
       operation,
@@ -81,7 +117,7 @@ export class TeamsDataProviderService {
       data,
       timestamp: new Date().toISOString(),
     });
-    
+
     this.invoice.summary.totalOperations++;
     if (status === 'completed') {
       this.invoice.summary.successfulOperations++;
@@ -90,11 +126,11 @@ export class TeamsDataProviderService {
     }
   }
 
-  private generateInvoiceFile() {
+  private generateInvoiceFile(): void {
     this.invoice.endTime = new Date().toISOString();
     const filename = `teams-scraping-${this.invoice.requestId}.json`;
     const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
-    
+
     try {
       writeFileSync(filepath, JSON.stringify(this.invoice, null, 2));
       Profiling.log({
@@ -102,12 +138,13 @@ export class TeamsDataProviderService {
         data: { filepath, requestId: this.invoice.requestId },
         source: 'DATA_PROVIDER_V2_TEAMS_generateInvoiceFile',
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       Profiling.error({
         source: 'DATA_PROVIDER_V2_TEAMS_generateInvoiceFile',
-        error: error as Error,
+        error: error instanceof Error ? error : new Error(errorMessage),
       });
-      console.error('Failed to write teams invoice file:', error);
+      console.error('Failed to write teams invoice file:', errorMessage);
     }
   }
 
@@ -115,10 +152,10 @@ export class TeamsDataProviderService {
     return `https://api.sofascore.app/api/v1/team/${teamId}/image`;
   }
 
-  private async enhanceTeamWithLogo(team: DB_InsertTeam) {
-    this.addOperation('enhancement', 'enhance_team_logo', 'started', { 
-      teamName: team.name, 
-      teamId: team.externalId 
+  private async enhanceTeamWithLogo(team: DB_InsertTeam): Promise<DB_InsertTeam> {
+    this.addOperation('enhancement', 'enhance_team_logo', 'started', {
+      teamName: team.name,
+      teamId: team.externalId,
     });
 
     try {
@@ -136,20 +173,24 @@ export class TeamsDataProviderService {
         provider: 'sofa',
       } satisfies DB_InsertTeam;
 
-      this.addOperation('enhancement', 'enhance_team_logo', 'completed', { 
-        teamName: team.name, 
-        logoUrl: enhancedTeam.badge 
+      this.addOperation('enhancement', 'enhance_team_logo', 'completed', {
+        teamName: team.name,
+        logoUrl: enhancedTeam.badge,
       });
 
       return enhancedTeam;
-    } catch (error) {
-      this.addOperation('enhancement', 'enhance_team_logo', 'failed', { 
-        teamName: team.name, 
-        error: (error as Error).message 
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.addOperation('enhancement', 'enhance_team_logo', 'failed', {
+        teamName: team.name,
+        error: errorMessage,
       });
       Profiling.error({
         source: 'TEAMS_SERVICE_enhanceTeamWithLogo',
-        error: `Failed to enhance team ${team.name} with logo: ${error}`,
+        error:
+          error instanceof Error
+            ? error
+            : new Error(`Failed to enhance team ${team.name} with logo: ${errorMessage}`),
       });
       throw error;
     }
@@ -199,60 +240,67 @@ export class TeamsDataProviderService {
 
   public async fetchTeamsFromStandings(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ) {
+  ): Promise<ENDPOINT_STANDINGS | null> {
     const url = `${tournament.baseUrl}/standings/total`;
     this.addOperation('scraping', 'fetch_teams_standings', 'started', { url });
 
     try {
       await this.scraper.goto(url);
       const fetchResult = (await this.scraper.getPageContent()) as ENDPOINT_STANDINGS;
-      
-      const teamsCount = fetchResult.standings.reduce((total, group) => total + group.rows.length, 0);
-      this.addOperation('scraping', 'fetch_teams_standings', 'completed', { 
-        url, 
+
+      const teamsCount = fetchResult.standings.reduce(
+        (total, group) => total + group.rows.length,
+        0
+      );
+      this.addOperation('scraping', 'fetch_teams_standings', 'completed', {
+        url,
         teamsCount,
-        groupsCount: fetchResult.standings.length 
+        groupsCount: fetchResult.standings.length,
       });
 
       return fetchResult;
     } catch (error: unknown) {
       const errorMessage = (error as Error).message;
-      
+
       // Debug logging for all errors
       console.log('[DEBUG] fetchTeamsFromStandings error:', errorMessage);
-      
+
       // Handle 404 gracefully - standings might not exist yet for this tournament
-      if (errorMessage.includes('status 404') || 
-          errorMessage.includes('404') ||
-          errorMessage.toLowerCase().includes('not found')) {
-        this.addOperation('scraping', 'fetch_teams_standings', 'completed', { 
+      if (
+        errorMessage.includes('status 404') ||
+        errorMessage.includes('404') ||
+        errorMessage.toLowerCase().includes('not found')
+      ) {
+        this.addOperation('scraping', 'fetch_teams_standings', 'completed', {
           url,
           note: 'Standings not available yet (404) - will fetch teams from knockout rounds only',
           teamsCount: 0,
           groupsCount: 0,
-          errorMessage: errorMessage // Debug: log the actual error message
+          errorMessage: errorMessage, // Debug: log the actual error message
         });
         return null; // Return null to indicate no standings available
       }
 
       // Handle browser/context closure errors - these should not fail the entire process
-      if (errorMessage.includes('Target page, context or browser has been closed') ||
-          errorMessage.includes('browser has been closed') ||
-          errorMessage.includes('context has been closed')) {
-        this.addOperation('scraping', 'fetch_teams_standings', 'completed', { 
+      if (
+        errorMessage.includes('Target page, context or browser has been closed') ||
+        errorMessage.includes('browser has been closed') ||
+        errorMessage.includes('context has been closed')
+      ) {
+        this.addOperation('scraping', 'fetch_teams_standings', 'completed', {
           url,
           note: 'Browser closed during standings fetch - will fetch teams from knockout rounds only',
           teamsCount: 0,
           groupsCount: 0,
-          errorMessage: errorMessage
+          errorMessage: errorMessage,
         });
         return null; // Return null to indicate no standings available
       }
 
       // For other errors, still fail
-      this.addOperation('scraping', 'fetch_teams_standings', 'failed', { 
+      this.addOperation('scraping', 'fetch_teams_standings', 'failed', {
         error: errorMessage,
-        debugMessage: `Error not recognized as recoverable. Full message: "${errorMessage}"`
+        debugMessage: `Error not recognized as recoverable. Full message: "${errorMessage}"`,
       });
       Profiling.error({
         source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
@@ -264,28 +312,32 @@ export class TeamsDataProviderService {
 
   public async fetchTeamsFromKnockoutRounds(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ) {
-    this.addOperation('scraping', 'fetch_teams_knockout', 'started', { tournamentId: tournament.id });
+  ): Promise<I_TEAM_FROM_ROUND[]> {
+    this.addOperation('scraping', 'fetch_teams_knockout', 'started', {
+      tournamentId: tournament.id,
+    });
 
     try {
       const rounds = await QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(tournament.id);
-      
-      this.addOperation('database', 'get_knockout_rounds', 'completed', { 
+
+      this.addOperation('database', 'get_knockout_rounds', 'completed', {
         roundsCount: rounds.length,
-        rounds: rounds.map((round: any) => round.slug || round.label)
+        rounds: rounds.map(
+          (round: { slug?: string; label?: string }) => round.slug || round.label
+        ),
       });
 
       const ALL_KNOCKOUT_TEAMS = [] as I_TEAM_FROM_ROUND[];
       const uniqueTeamIds = new Set<string>(); // Track unique team IDs for early deduplication
       let totalSkippedDuplicates = 0;
-      
+
       let successfulRounds = 0;
       let failedRounds = 0;
 
       for (const round of rounds) {
-        this.addOperation('scraping', 'fetch_round_teams', 'started', { 
-          roundSlug: round.slug, 
-          providerUrl: round.providerUrl 
+        this.addOperation('scraping', 'fetch_round_teams', 'started', {
+          roundSlug: round.slug,
+          providerUrl: round.providerUrl,
         });
 
         try {
@@ -293,10 +345,10 @@ export class TeamsDataProviderService {
           const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
 
           if (!rawContent?.events || rawContent?.events?.length === 0) {
-            this.addOperation('scraping', 'fetch_round_teams', 'completed', { 
-              roundSlug: round.slug, 
+            this.addOperation('scraping', 'fetch_round_teams', 'completed', {
+              roundSlug: round.slug,
               teamsCount: 0,
-              note: 'No events found'
+              note: 'No events found',
             });
             successfulRounds++;
             await sleep(2000);
@@ -320,28 +372,27 @@ export class TeamsDataProviderService {
             return true;
           });
 
-          this.addOperation('scraping', 'fetch_round_teams', 'completed', { 
-            roundSlug: round.slug, 
+          this.addOperation('scraping', 'fetch_round_teams', 'completed', {
+            roundSlug: round.slug,
             totalTeamsInRound: roundTeams.length,
             newUniqueTeams: newTeams.length,
             skippedDuplicates: roundTeams.length - newTeams.length,
-            matchesCount: roundMatches.length
+            matchesCount: roundMatches.length,
           });
 
           ALL_KNOCKOUT_TEAMS.push(...newTeams);
           successfulRounds++;
           await sleep(2000);
-
         } catch (roundError) {
           const errorMessage = (roundError as Error).message;
           failedRounds++;
 
           // Log individual round failure but continue with other rounds
-          this.addOperation('scraping', 'fetch_round_teams', 'failed', { 
+          this.addOperation('scraping', 'fetch_round_teams', 'failed', {
             roundSlug: round.slug,
             providerUrl: round.providerUrl,
             error: errorMessage,
-            note: 'Round failed but continuing with other rounds'
+            note: 'Round failed but continuing with other rounds',
           });
 
           console.log(`[DEBUG] Round ${round.slug} failed: ${errorMessage}`);
@@ -351,16 +402,14 @@ export class TeamsDataProviderService {
       }
 
       // Determine if we should consider this successful
-      const hasAnyTeams = ALL_KNOCKOUT_TEAMS.length > 0;
-      const hasAnySuccessfulRounds = successfulRounds > 0;
 
-      this.addOperation('scraping', 'fetch_teams_knockout', 'completed', { 
+      this.addOperation('scraping', 'fetch_teams_knockout', 'completed', {
         totalUniqueTeams: ALL_KNOCKOUT_TEAMS.length,
         totalSkippedDuplicates,
         roundsProcessed: rounds.length,
         successfulRounds,
         failedRounds,
-        note: `Processed ${successfulRounds}/${rounds.length} rounds successfully. ${failedRounds > 0 ? `${failedRounds} rounds failed but were skipped.` : ''}`
+        note: `Processed ${successfulRounds}/${rounds.length} rounds successfully. ${failedRounds > 0 ? `${failedRounds} rounds failed but were skipped.` : ''}`,
       });
 
       return ALL_KNOCKOUT_TEAMS;
@@ -368,14 +417,14 @@ export class TeamsDataProviderService {
       // This catch should only handle unexpected errors that aren't individual round failures
       // since those are now handled within the loop
       const errorMessage = (error as Error).message;
-      
+
       console.log('[DEBUG] fetchTeamsFromKnockoutRounds unexpected error:', errorMessage);
-      
-      this.addOperation('scraping', 'fetch_teams_knockout', 'failed', { 
+
+      this.addOperation('scraping', 'fetch_teams_knockout', 'failed', {
         error: errorMessage,
-        note: 'Unexpected error in knockout rounds processing'
+        note: 'Unexpected error in knockout rounds processing',
       });
-      
+
       Profiling.error({
         source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromKnockoutRounds',
         error: error,
@@ -385,44 +434,54 @@ export class TeamsDataProviderService {
   }
 
   public async createOnDatabase(teams: DB_InsertTeam[]) {
-    this.addOperation('database', 'create_teams', 'started', { teamsCount: teams.length });
+    this.addOperation('database', 'create_teams', 'started', {
+      teamsCount: teams.length,
+    });
 
     // Handle empty teams array gracefully
     if (teams.length === 0) {
-      this.addOperation('database', 'create_teams', 'completed', { 
+      this.addOperation('database', 'create_teams', 'completed', {
         createdTeamsCount: 0,
         note: 'No teams to create - tournament data not available yet',
-        teamIds: []
+        teamIds: [],
       });
       return [];
     }
 
     try {
       const createdTeams = await QUERIES_TEAMS.createTeams(teams);
-      
-      this.addOperation('database', 'create_teams', 'completed', { 
+
+      this.addOperation('database', 'create_teams', 'completed', {
         createdTeamsCount: createdTeams.length,
-        teamIds: createdTeams.map((t: any) => t.id)
+        teamIds: createdTeams.map(t => t.id),
       });
 
       return createdTeams;
-    } catch (error) {
-      this.addOperation('database', 'create_teams', 'failed', { error: (error as Error).message });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.addOperation('database', 'create_teams', 'failed', {
+        error: errorMessage,
+      });
       throw error;
     }
   }
 
-  public async upsertOnDatabase(teams: DB_InsertTeam[]) {
-    this.addOperation('database', 'upsert_teams', 'started', { teamsCount: teams.length });
+  public async upsertOnDatabase(teams: DB_InsertTeam[]): Promise<void> {
+    this.addOperation('database', 'upsert_teams', 'started', {
+      teamsCount: teams.length,
+    });
 
     try {
       await QUERIES_TEAMS.updateTeams(teams);
-      
-      this.addOperation('database', 'upsert_teams', 'completed', { 
-        upsertedTeamsCount: teams.length
+
+      this.addOperation('database', 'upsert_teams', 'completed', {
+        upsertedTeamsCount: teams.length,
       });
-    } catch (error) {
-      this.addOperation('database', 'upsert_teams', 'failed', { error: (error as Error).message });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.addOperation('database', 'upsert_teams', 'failed', {
+        error: errorMessage,
+      });
       throw error;
     }
   }
@@ -436,62 +495,66 @@ export class TeamsDataProviderService {
       label: tournament.label,
     };
 
-    this.addOperation('initialization', 'validate_input', 'started', { 
-      tournamentId: tournament.id, 
+    this.addOperation('initialization', 'validate_input', 'started', {
+      tournamentId: tournament.id,
       tournamentLabel: tournament.label,
-      tournamentMode: tournament.mode
+      tournamentMode: tournament.mode,
     });
 
     try {
-      this.addOperation('initialization', 'validate_input', 'completed', { 
+      this.addOperation('initialization', 'validate_input', 'completed', {
         tournamentId: tournament.id,
-        mode: tournament.mode
+        mode: tournament.mode,
       });
 
-      let mappedTeamsFromStandings: any[] = [];
-      let mappedTeamsFromKnockoutRounds: any[] = [];
+      let mappedTeamsFromStandings: DB_InsertTeam[] = [];
+      let mappedTeamsFromKnockoutRounds: DB_InsertTeam[] = [];
 
       // Fetch teams based on tournament mode
       if (tournament.mode === 'knockout-only') {
-        this.addOperation('initialization', 'tournament_mode_decision', 'completed', { 
+        this.addOperation('initialization', 'tournament_mode_decision', 'completed', {
           mode: 'knockout-only',
-          note: 'Skipping standings fetch - knockout-only tournament'
+          note: 'Skipping standings fetch - knockout-only tournament',
         });
 
         // Only fetch from knockout rounds for knockout-only tournaments
-        const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
+        const teamsFromKnockoutRounds =
+          await this.fetchTeamsFromKnockoutRounds(tournament);
         mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
         this.invoice.summary.teamCounts.fromStandings = 0;
-        this.invoice.summary.teamCounts.fromKnockout = mappedTeamsFromKnockoutRounds.length;
+        this.invoice.summary.teamCounts.fromKnockout =
+          mappedTeamsFromKnockoutRounds.length;
       } else {
-        this.addOperation('initialization', 'tournament_mode_decision', 'completed', { 
+        this.addOperation('initialization', 'tournament_mode_decision', 'completed', {
           mode: tournament.mode || 'regular-season-and-knockout',
-          note: 'Fetching from both standings and knockout rounds'
+          note: 'Fetching from both standings and knockout rounds',
         });
 
         // Fetch from both standings and knockout rounds for regular tournaments
         const teamsFromStandings = await this.fetchTeamsFromStandings(tournament);
-        
+
         // Handle case where standings don't exist yet (404)
         if (teamsFromStandings) {
           mappedTeamsFromStandings = this.mapTeamsFromStandings(teamsFromStandings);
         } else {
           // No standings available yet, log this situation
-          this.addOperation('transformation', 'handle_missing_standings', 'completed', { 
-            note: 'No standings available yet - proceeding with knockout rounds only'
+          this.addOperation('transformation', 'handle_missing_standings', 'completed', {
+            note: 'No standings available yet - proceeding with knockout rounds only',
           });
         }
         this.invoice.summary.teamCounts.fromStandings = mappedTeamsFromStandings.length;
 
-        const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
+        const teamsFromKnockoutRounds =
+          await this.fetchTeamsFromKnockoutRounds(tournament);
         mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
-        this.invoice.summary.teamCounts.fromKnockout = mappedTeamsFromKnockoutRounds.length;
+        this.invoice.summary.teamCounts.fromKnockout =
+          mappedTeamsFromKnockoutRounds.length;
       }
 
       // Deduplicate teams (handles both scenarios)
-      this.addOperation('transformation', 'deduplicate_teams', 'started', { 
+      this.addOperation('transformation', 'deduplicate_teams', 'started', {
         standingsTeams: mappedTeamsFromStandings.length,
-        knockoutTeams: mappedTeamsFromKnockoutRounds.length
+        knockoutTeams: mappedTeamsFromKnockoutRounds.length,
       });
 
       const allTeams = removeDuplicatesTeams(
@@ -500,25 +563,28 @@ export class TeamsDataProviderService {
       );
       this.invoice.summary.teamCounts.afterDeduplication = allTeams.length;
 
-      this.addOperation('transformation', 'deduplicate_teams', 'completed', { 
+      this.addOperation('transformation', 'deduplicate_teams', 'completed', {
         uniqueTeamsCount: allTeams.length,
-        duplicatesRemoved: (mappedTeamsFromStandings.length + mappedTeamsFromKnockoutRounds.length) - allTeams.length
+        duplicatesRemoved:
+          mappedTeamsFromStandings.length +
+          mappedTeamsFromKnockoutRounds.length -
+          allTeams.length,
       });
 
-      this.addOperation('enhancement', 'enhance_teams_batch', 'started', { 
-        teamsToEnhance: allTeams.length 
+      this.addOperation('enhancement', 'enhance_teams_batch', 'started', {
+        teamsToEnhance: allTeams.length,
       });
 
       const enhancedTeams: DB_InsertTeam[] = [];
       const enhancedTeamIds = new Set<string>(); // Track enhanced team IDs to prevent duplicates
-      
+
       for (const team of allTeams) {
         // Skip if we've already enhanced this team ID
         if (enhancedTeamIds.has(team.externalId)) {
-          this.addOperation('enhancement', 'skip_duplicate_team', 'completed', { 
+          this.addOperation('enhancement', 'skip_duplicate_team', 'completed', {
             teamId: team.externalId,
             teamName: team.name,
-            reason: 'Already enhanced this team ID'
+            reason: 'Already enhanced this team ID',
           });
           continue;
         }
@@ -528,10 +594,14 @@ export class TeamsDataProviderService {
           enhancedTeams.push(enhancedTeam);
           enhancedTeamIds.add(team.externalId);
           await sleep(1000);
-        } catch (error) {
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
           Profiling.error({
             source: 'DATA_PROVIDER_TEAMS_enhanceTeamWithLogo',
-            error: `Failed to enhance team ${team.name}: ${error}`,
+            error:
+              error instanceof Error
+                ? error
+                : new Error(`Failed to enhance team ${team.name}: ${errorMessage}`),
           });
           // Continue with next team even if one fails
           continue;
@@ -539,10 +609,13 @@ export class TeamsDataProviderService {
       }
 
       this.invoice.summary.teamCounts.afterEnhancement = enhancedTeams.length;
-      this.addOperation('enhancement', 'enhance_teams_batch', 'completed', { 
+      this.addOperation('enhancement', 'enhance_teams_batch', 'completed', {
         enhancedTeamsCount: enhancedTeams.length,
         failedEnhancements: allTeams.length - enhancedTeams.length,
-        skippedDuplicates: allTeams.length - enhancedTeams.length - (allTeams.length - enhancedTeams.length)
+        skippedDuplicates:
+          allTeams.length -
+          enhancedTeams.length -
+          (allTeams.length - enhancedTeams.length),
       });
 
       // Use upsert for knockout-only tournaments (handles new rounds appearing later)
@@ -561,17 +634,19 @@ export class TeamsDataProviderService {
       this.generateInvoiceFile();
 
       return query;
-    } catch (error) {
-      this.addOperation('initialization', 'process_teams', 'failed', { error: (error as Error).message });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.addOperation('initialization', 'process_teams', 'failed', {
+        error: errorMessage,
+      });
       this.generateInvoiceFile();
       Profiling.error({
         source: 'DATA_PROVIDER_V2_TEAMS_init',
-        error,
+        error: error instanceof Error ? error : new Error(errorMessage),
       });
       throw error;
     }
   }
-
 }
 
 const removeDuplicatesTeams = (
@@ -579,13 +654,13 @@ const removeDuplicatesTeams = (
   teamFromKnockoutRounds: DB_InsertTeam[]
 ) => {
   const uniqueTeamsMap = new Map<string, DB_InsertTeam>();
-  
+
   // Add all teams, using externalId as the key for deduplication
   [...teamFromStandings, ...teamFromKnockoutRounds].forEach(team => {
     if (!uniqueTeamsMap.has(team.externalId)) {
       uniqueTeamsMap.set(team.externalId, team);
     }
   });
-  
+
   return Array.from(uniqueTeamsMap.values());
 };

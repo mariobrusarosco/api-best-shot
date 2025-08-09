@@ -13,9 +13,9 @@ const create = async (req: TournamentRoundRequest, res: Response) => {
   try {
     Profiling.log({
       msg: `[REQUEST START] Tournament rounds creation request received`,
-      data: { 
+      data: {
         requestId,
-        tournamentId: req.body.tournamentId
+        tournamentId: req.body.tournamentId,
       },
       source: 'DATA_PROVIDER_V2_TOURNAMENT_ROUNDS_create',
     });
@@ -24,13 +24,13 @@ const create = async (req: TournamentRoundRequest, res: Response) => {
       Profiling.error({
         source: 'DATA_PROVIDER_V2_TOURNAMENT_ROUNDS_create',
         error: new Error('Tournament ID is required'),
-        data: { requestId, operation: 'input_validation' }
+        data: { requestId, operation: 'input_validation' },
       });
       return res.status(400).send({ error: 'Tournament ID is required' });
     }
 
     const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
-    
+
     Profiling.log({
       msg: `[SCRAPER START] Scraper initialized for rounds creation`,
       data: { requestId, tournamentLabel: tournament.label, tournamentId: tournament.id },
@@ -41,7 +41,7 @@ const create = async (req: TournamentRoundRequest, res: Response) => {
     const dataProviderService = new RoundDataProviderService(scraper, requestId);
 
     const rounds = await dataProviderService.init(tournament.id, tournament.baseUrl);
-    
+
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament rounds creation completed successfully`,
       data: { requestId, tournamentLabel: tournament.label, roundsCount: rounds.length },
@@ -53,7 +53,7 @@ const create = async (req: TournamentRoundRequest, res: Response) => {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_TOURNAMENT_ROUNDS_create',
       error,
-      data: { requestId, operation: 'rounds_creation' }
+      data: { requestId, operation: 'rounds_creation' },
     });
     handleInternalServerErrorResponse(res, error);
   } finally {
@@ -75,9 +75,9 @@ const update = async (req: TournamentRoundRequest, res: Response) => {
   try {
     Profiling.log({
       msg: `[REQUEST START] Tournament rounds update request received`,
-      data: { 
+      data: {
         requestId,
-        tournamentId: req.body.tournamentId
+        tournamentId: req.body.tournamentId,
       },
       source: 'DATA_PROVIDER_V2_TOURNAMENT_ROUNDS_update',
     });
@@ -86,13 +86,13 @@ const update = async (req: TournamentRoundRequest, res: Response) => {
       Profiling.error({
         source: 'DATA_PROVIDER_V2_TOURNAMENT_ROUNDS_update',
         error: new Error('Tournament ID is required'),
-        data: { requestId, operation: 'input_validation' }
+        data: { requestId, operation: 'input_validation' },
       });
       return res.status(400).send({ error: 'Tournament ID is required' });
     }
 
     const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
-    
+
     Profiling.log({
       msg: `[SCRAPER START] Scraper initialized for rounds update`,
       data: { requestId, tournamentLabel: tournament.label, tournamentId: tournament.id },
@@ -102,11 +102,18 @@ const update = async (req: TournamentRoundRequest, res: Response) => {
     scraper = await BaseScraper.createInstance();
     const dataProviderService = new RoundDataProviderService(scraper, requestId);
 
-    const rounds = await dataProviderService.updateTournament(tournament.id, tournament.baseUrl);
+    const rounds = await dataProviderService.updateTournament(
+      tournament.id,
+      tournament.baseUrl
+    );
 
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament rounds update completed successfully`,
-      data: { requestId, tournamentLabel: tournament.label, roundsCount: rounds.length },
+      data: {
+        requestId,
+        tournamentLabel: tournament.label,
+        roundsCount: (rounds as unknown[]).length,
+      },
       source: 'DATA_PROVIDER_V2_TOURNAMENT_ROUNDS_update',
     });
 
@@ -115,7 +122,7 @@ const update = async (req: TournamentRoundRequest, res: Response) => {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_TOURNAMENT_ROUNDS_update',
       error,
-      data: { requestId, operation: 'rounds_update' }
+      data: { requestId, operation: 'rounds_update' },
     });
     return handleInternalServerErrorResponse(res, error);
   } finally {

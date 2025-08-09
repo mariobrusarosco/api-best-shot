@@ -99,10 +99,10 @@ export async function fetchAndStoreAssetFromApi(payload: FetchAndStoreAssetPaylo
         source: 'fetchAndStoreAssetFromApi',
       });
       return Key;
-    } catch (s3Error: any) {
+    } catch (s3error: unknown) {
       Profiling.error({
         source: 'fetchAndStoreAssetFromApi',
-        error: s3Error,
+        error: s3error,
       });
       // Even if S3 upload fails, return a dummy path so the application can continue
       // This is crucial because the logo field is NOT NULL in the database

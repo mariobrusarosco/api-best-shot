@@ -11,13 +11,20 @@ import db from '@/services/database';
 import { CreateTournamentInput } from '../api/v2/tournament/typing';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import Profiling from '@/services/profiling';
+import { Profiling } from '@/services/profiling';
+
+type TournamentScrapingOperationData =
+  | { tournamentId?: string; label?: string; provider?: string; note?: string }
+  | { error: string; debugMessage?: string; errorMessage?: string }
+  | { createdTournamentCount?: number; updatedTournamentCount?: number }
+  | { tournamentExists?: boolean; existingTournament?: { id: string; label: string } }
+  | Record<string, unknown>;
 
 interface ScrapingOperation {
   step: string;
   operation: string;
   status: 'started' | 'completed' | 'failed';
-  data?: any;
+  data?: TournamentScrapingOperationData;
   timestamp: string;
 }
 
@@ -65,8 +72,8 @@ export class TournamentDataProviderService {
     step: string,
     operation: string,
     status: 'started' | 'completed' | 'failed',
-    data?: any
-  ) {
+    data?: TournamentScrapingOperationData
+  ): void {
     this.invoice.operations.push({
       step,
       operation,
@@ -83,7 +90,7 @@ export class TournamentDataProviderService {
     }
   }
 
-  private generateInvoiceFile() {
+  private generateInvoiceFile(): void {
     this.invoice.endTime = new Date().toISOString();
     const filename = `tournament-scraping-${this.invoice.requestId}.json`;
     const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
@@ -95,13 +102,14 @@ export class TournamentDataProviderService {
         data: { filepath, requestId: this.invoice.requestId },
         source: 'DATA_PROVIDER_V2_TOURNAMENT_generateInvoiceFile',
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       Profiling.error({
         source: 'DATA_PROVIDER_V2_TOURNAMENT_generateInvoiceFile',
-        error,
+        error: error instanceof Error ? error : new Error(errorMessage),
         data: { filepath, requestId: this.invoice.requestId },
       });
-      console.error('Failed to write invoice file:', error);
+      console.error('Failed to write invoice file:', errorMessage);
     }
   }
 

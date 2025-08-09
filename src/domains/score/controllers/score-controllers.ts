@@ -39,7 +39,7 @@ async function getLeagueScore(req: Request, res: Response) {
     // const serializedScoreboard = createLeaderboard(query);
 
     return res.status(200).send(query);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return handleInternalServerErrorResponse(res, error);
   }
 }

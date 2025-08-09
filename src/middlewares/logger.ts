@@ -3,7 +3,7 @@ import { logger } from '../services/logger';
 
 const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
-  
+
   // Log incoming request
   logger.info('Incoming request', {
     method: req.method,
@@ -17,7 +17,7 @@ const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   res.on('finish', () => {
     const duration = Date.now() - start;
     const level = res.statusCode >= 400 ? 'warn' : 'info';
-    
+
     logger.log(level, 'Request completed', {
       method: req.method,
       url: req.url,

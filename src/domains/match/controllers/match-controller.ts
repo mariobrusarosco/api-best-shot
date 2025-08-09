@@ -75,7 +75,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
     }
 
     res.status(200).send(matches);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[TOURNAMENT] - [GET MACTHES BY TOURNAMENT]', error);
 
     return res

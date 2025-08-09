@@ -1,6 +1,6 @@
 /**
  * Tournament Round Error Mapper
- * 
+ *
  * Maps domain-specific errors to appropriate HTTP responses
  */
 
@@ -16,7 +16,7 @@ export class TournamentRoundError extends Error {
 }
 
 export const TournamentRoundErrorMapper = {
-  notFound: (roundSlug?: string) => 
+  notFound: (roundSlug?: string) =>
     new TournamentRoundError(
       `Tournament round${roundSlug ? ` '${roundSlug}'` : ''} not found`,
       'TOURNAMENT_ROUND_NOT_FOUND',

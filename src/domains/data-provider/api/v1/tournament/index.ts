@@ -51,7 +51,7 @@ const setup = async (req: TournamentRequest, res: Response) => {
     //   Profiling.log('[DATA PROVIDER] - [SETUP 3] - [CREATE TEAMS] - [SUCCESS]', {
     //     teams,
     //   });
-    // } catch (error: any) {
+    // } catch (error: unknown) {
     //   Profiling.error('[DATA PROVIDER] - [SETUP 3] - [CREATE TEAMS] - [ERROR]', { error });
     // }
 

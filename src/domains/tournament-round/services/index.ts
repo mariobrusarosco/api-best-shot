@@ -35,11 +35,11 @@ const getAllRounds = async (tournamentId: string) => {
 
 const getRound = async (tournamentId: string, roundSlug: string) => {
   const round = await QUERIES_TOURNAMENT_ROUND.getRound(tournamentId, roundSlug);
-  
+
   if (!round) {
     throw new Error('Tournament round not found');
   }
-  
+
   return round;
 };
 

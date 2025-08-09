@@ -37,7 +37,7 @@ const createTournament = async ({ input }: { input: any }) => {
     });
 
     return tournament;
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_TOURNAMENT_CONTROLLER_create',
       error,
@@ -77,7 +77,7 @@ const updateTournament = async ({ input }: { input: any }) => {
     });
 
     return updatedTournament;
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_TOURNAMENT_CONTROLLER_update',
       error,

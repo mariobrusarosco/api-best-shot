@@ -32,12 +32,12 @@ export class SofaScoreScraper extends BaseScraper {
       //Step 2: Round Service
       const rounds = await roundService.init(tournament.id, tournament.baseUrl);
       //Step 3: Standings Service
-      const standings = await standingsService.init(tournament as any);
+      const standings = await standingsService.init(tournament);
       //Step 4: Teams Service
       const tournamentTemp = await SERVICES_TOURNAMENT.getTournament(tournament.id);
       const teams = await teamsService.init(tournamentTemp);
       //Step 5: Matches Service
-      const matches = await matchesService.init(rounds, tournament as any);
+      const matches = await matchesService.init(rounds, tournament);
 
       return {
         tournament,

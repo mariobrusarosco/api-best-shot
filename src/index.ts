@@ -12,10 +12,10 @@ import accessControl from './domains/shared/middlewares/access-control';
 import { env } from './config/env';
 import { logInfo, logError } from './services/logger';
 
-logInfo('Starting API Best Shot...', { 
+logInfo('Starting API Best Shot...', {
   environment: env.NODE_ENV,
   port: env.PORT,
-  version: env.API_VERSION 
+  version: env.API_VERSION,
 });
 
 const app = express();
@@ -56,9 +56,10 @@ app.get('/debug/env', (_req, res) => {
     HAS_CORS_ORIGIN: !!process.env.ACCESS_CONTROL_ALLOW_ORIGIN,
     HAS_COOKIE_NAME: !!process.env.MEMBER_PUBLIC_ID_COOKIE,
     SENTRY_DSN_PREFIX: `${process.env.SENTRY_DSN?.substring(0, 20)}...` || 'NOT_SET',
-    AWS_CLOUDFRONT_PREFIX: `${process.env.AWS_CLOUDFRONT_URL?.substring(0, 20)}...` || 'NOT_SET',
+    AWS_CLOUDFRONT_PREFIX:
+      `${process.env.AWS_CLOUDFRONT_URL?.substring(0, 20)}...` || 'NOT_SET',
   };
-  
+
   res.status(200).json({
     message: 'Environment Check - Remove this endpoint in production!',
     secrets: envCheck,
@@ -93,14 +94,20 @@ app.use('/api', apiRouter);
 logInfo('Registered /api router');
 
 app.listen(port, '0.0.0.0', () => {
-  logInfo(`Server running on port ${port} in ${env.NODE_ENV} mode`, { port, environment: env.NODE_ENV });
+  logInfo(`Server running on port ${port} in ${env.NODE_ENV} mode`, {
+    port,
+    environment: env.NODE_ENV,
+  });
 });
 
 process.on('uncaughtException', err => {
   logError('Uncaught Exception', err);
 });
 process.on('unhandledRejection', reason => {
-  logError('Unhandled Rejection', reason instanceof Error ? reason : new Error(String(reason)));
+  logError(
+    'Unhandled Rejection',
+    reason instanceof Error ? reason : new Error(String(reason))
+  );
 });
 
 export default app;

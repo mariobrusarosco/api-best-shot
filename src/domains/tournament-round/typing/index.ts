@@ -3,13 +3,13 @@ import type { DB_InsertTournamentRound, DB_SelectTournamentRound } from '../sche
 
 export type TournamentRoundRequest = Request<
   { tournamentId: string; roundSlug?: string },
-  any,
+  unknown,
   DB_InsertTournamentRound
 >;
 
 export type TournamentRoundBulkRequest = Request<
   { tournamentId: string },
-  any,
+  unknown,
   DB_InsertTournamentRound[]
 >;
 

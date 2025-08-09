@@ -76,7 +76,12 @@ export class MatchesDataProviderService {
     };
   }
 
-  private addOperation(step: string, operation: string, status: 'started' | 'completed' | 'failed', data?: any) {
+  private addOperation(
+    step: string,
+    operation: string,
+    status: 'started' | 'completed' | 'failed',
+    data?: any
+  ) {
     this.invoice.operations.push({
       step,
       operation,
@@ -84,7 +89,7 @@ export class MatchesDataProviderService {
       data,
       timestamp: new Date().toISOString(),
     });
-    
+
     this.invoice.summary.totalOperations++;
     if (status === 'completed') {
       this.invoice.summary.successfulOperations++;
@@ -97,7 +102,7 @@ export class MatchesDataProviderService {
     this.invoice.endTime = new Date().toISOString();
     const filename = `matches-scraping-${this.invoice.requestId}.json`;
     const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
-    
+
     try {
       writeFileSync(filepath, JSON.stringify(this.invoice, null, 2));
       Profiling.log({
@@ -115,9 +120,9 @@ export class MatchesDataProviderService {
   }
 
   public async getTournamentMatchesByRound(round: DB_SelectTournamentRound) {
-    this.addOperation('scraping', 'fetch_round_matches', 'started', { 
-      roundSlug: round.slug, 
-      providerUrl: round.providerUrl 
+    this.addOperation('scraping', 'fetch_round_matches', 'started', {
+      roundSlug: round.slug,
+      providerUrl: round.providerUrl,
     });
 
     try {
@@ -125,10 +130,10 @@ export class MatchesDataProviderService {
       const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
 
       if (!rawContent?.events || rawContent?.events?.length === 0) {
-        this.addOperation('scraping', 'fetch_round_matches', 'completed', { 
-          roundSlug: round.slug, 
+        this.addOperation('scraping', 'fetch_round_matches', 'completed', {
+          roundSlug: round.slug,
           matchesCount: 0,
-          note: 'No matches found'
+          note: 'No matches found',
         });
         this.invoice.summary.matchCounts.roundsWithoutMatches++;
         return [];
@@ -136,10 +141,10 @@ export class MatchesDataProviderService {
 
       const matches = this.mapMatches(rawContent, round.tournamentId, round.slug);
 
-      this.addOperation('scraping', 'fetch_round_matches', 'completed', { 
-        roundSlug: round.slug, 
+      this.addOperation('scraping', 'fetch_round_matches', 'completed', {
+        roundSlug: round.slug,
         matchesCount: matches.length,
-        rawEventsCount: rawContent.events.length
+        rawEventsCount: rawContent.events.length,
       });
 
       this.invoice.summary.matchCounts.roundsWithMatches++;
@@ -147,9 +152,9 @@ export class MatchesDataProviderService {
 
       return matches;
     } catch (error) {
-      this.addOperation('scraping', 'fetch_round_matches', 'failed', { 
-        roundSlug: round.slug, 
-        error: (error as Error).message 
+      this.addOperation('scraping', 'fetch_round_matches', 'failed', {
+        roundSlug: round.slug,
+        error: (error as Error).message,
       });
       Profiling.error({
         source: 'DATA_PROVIDER_MATCHES_getTournamentMatchesByRound',
@@ -163,15 +168,15 @@ export class MatchesDataProviderService {
     rounds: DB_SelectTournamentRound[],
     tournamentId: string
   ) {
-    this.addOperation('scraping', 'fetch_tournament_matches', 'started', { 
-      tournamentId, 
-      roundsCount: rounds.length 
+    this.addOperation('scraping', 'fetch_tournament_matches', 'started', {
+      tournamentId,
+      roundsCount: rounds.length,
     });
 
     try {
       if (rounds.length === 0) {
-        this.addOperation('scraping', 'fetch_tournament_matches', 'failed', { 
-          error: 'No rounds provided' 
+        this.addOperation('scraping', 'fetch_tournament_matches', 'failed', {
+          error: 'No rounds provided',
         });
         Profiling.error({
           source: 'MatchesDataProviderService.getTournamentMatches',
@@ -186,10 +191,10 @@ export class MatchesDataProviderService {
       let failedRounds = 0;
 
       for (const round of rounds) {
-        this.addOperation('scraping', 'process_round', 'started', { 
-          roundSlug: round.slug, 
+        this.addOperation('scraping', 'process_round', 'started', {
+          roundSlug: round.slug,
           roundLabel: round.label,
-          providerUrl: round.providerUrl
+          providerUrl: round.providerUrl,
         });
 
         try {
@@ -197,10 +202,10 @@ export class MatchesDataProviderService {
           const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
 
           if (!rawContent?.events || rawContent?.events?.length === 0) {
-            this.addOperation('scraping', 'process_round', 'completed', { 
-              roundSlug: round.slug, 
+            this.addOperation('scraping', 'process_round', 'completed', {
+              roundSlug: round.slug,
               matchesCount: 0,
-              note: 'No matches found, skipping round'
+              note: 'No matches found, skipping round',
             });
             this.invoice.summary.matchCounts.roundsWithoutMatches++;
             successfulRounds++;
@@ -211,28 +216,27 @@ export class MatchesDataProviderService {
           const matches = this.mapMatches(rawContent, tournamentId, round.slug);
           roundsWithMatches.push(matches);
 
-          this.addOperation('scraping', 'process_round', 'completed', { 
-            roundSlug: round.slug, 
+          this.addOperation('scraping', 'process_round', 'completed', {
+            roundSlug: round.slug,
             matchesCount: matches.length,
-            rawEventsCount: rawContent.events.length
+            rawEventsCount: rawContent.events.length,
           });
 
           this.invoice.summary.matchCounts.roundsWithMatches++;
           this.invoice.summary.matchCounts.totalMatchesScraped += matches.length;
           successfulRounds++;
           await this.scraper.sleep(2500);
-
         } catch (roundError) {
           const errorMessage = (roundError as Error).message;
           failedRounds++;
 
           // Log individual round failure but continue with other rounds
-          this.addOperation('scraping', 'process_round', 'failed', { 
+          this.addOperation('scraping', 'process_round', 'failed', {
             roundSlug: round.slug,
             roundLabel: round.label,
             providerUrl: round.providerUrl,
             error: errorMessage,
-            note: 'Round failed but continuing with other rounds'
+            note: 'Round failed but continuing with other rounds',
           });
 
           console.log(`[DEBUG] Match round ${round.slug} failed: ${errorMessage}`);
@@ -245,20 +249,20 @@ export class MatchesDataProviderService {
       this.invoice.summary.matchCounts.totalRoundsProcessed = rounds.length;
 
       const allMatches = roundsWithMatches.flat();
-      this.addOperation('scraping', 'fetch_tournament_matches', 'completed', { 
+      this.addOperation('scraping', 'fetch_tournament_matches', 'completed', {
         totalMatches: allMatches.length,
         roundsProcessed: rounds.length,
         successfulRounds,
         failedRounds,
         roundsWithMatches: this.invoice.summary.matchCounts.roundsWithMatches,
         roundsWithoutMatches: this.invoice.summary.matchCounts.roundsWithoutMatches,
-        note: `Processed ${successfulRounds}/${rounds.length} rounds successfully. ${failedRounds > 0 ? `${failedRounds} rounds failed but were skipped.` : ''}`
+        note: `Processed ${successfulRounds}/${rounds.length} rounds successfully. ${failedRounds > 0 ? `${failedRounds} rounds failed but were skipped.` : ''}`,
       });
 
       return allMatches;
     } catch (error) {
-      this.addOperation('scraping', 'fetch_tournament_matches', 'failed', { 
-        error: (error as Error).message 
+      this.addOperation('scraping', 'fetch_tournament_matches', 'failed', {
+        error: (error as Error).message,
       });
       Profiling.error({
         source: 'DATA_PROVIDER_MATCHES_getTournamentMatches',
@@ -309,30 +313,34 @@ export class MatchesDataProviderService {
   }
 
   async createOnDatabase(matches: DB_InsertMatch[]) {
-    this.addOperation('database', 'create_matches', 'started', { matchesCount: matches.length });
+    this.addOperation('database', 'create_matches', 'started', {
+      matchesCount: matches.length,
+    });
 
     // Handle empty matches array gracefully
     if (matches.length === 0) {
-      this.addOperation('database', 'create_matches', 'completed', { 
+      this.addOperation('database', 'create_matches', 'completed', {
         createdMatchesCount: 0,
         note: 'No matches to create - tournament rounds not available yet',
-        matchIds: []
+        matchIds: [],
       });
       return [];
     }
 
     try {
       const query = await db.insert(T_Match).values(matches);
-      
-      this.addOperation('database', 'create_matches', 'completed', { 
-        createdMatchesCount: matches.length
+
+      this.addOperation('database', 'create_matches', 'completed', {
+        createdMatchesCount: matches.length,
       });
 
       this.invoice.summary.matchCounts.totalMatchesCreated = matches.length;
 
       return query;
     } catch (error) {
-      this.addOperation('database', 'create_matches', 'failed', { error: (error as Error).message });
+      this.addOperation('database', 'create_matches', 'failed', {
+        error: (error as Error).message,
+      });
       Profiling.error({
         error,
         source: 'MatchesDataProviderService.createOnDatabase',
@@ -342,10 +350,14 @@ export class MatchesDataProviderService {
   }
 
   async updateOnDatabase(matches: DB_InsertMatch[]) {
-    this.addOperation('database', 'update_matches', 'started', { matchesCount: matches.length });
+    this.addOperation('database', 'update_matches', 'started', {
+      matchesCount: matches.length,
+    });
 
     if (matches.length === 0) {
-      this.addOperation('database', 'update_matches', 'failed', { error: 'No matches to update' });
+      this.addOperation('database', 'update_matches', 'failed', {
+        error: 'No matches to update',
+      });
       Profiling.error({
         error: new Error('No matches to update in the database'),
         source: 'MatchesDataProviderService.updateOnDatabase',
@@ -355,14 +367,16 @@ export class MatchesDataProviderService {
 
     try {
       const query = await QUERIES_MATCH.upsertMatches(matches);
-      
-      this.addOperation('database', 'update_matches', 'completed', { 
-        updatedMatchesCount: query.length
+
+      this.addOperation('database', 'update_matches', 'completed', {
+        updatedMatchesCount: query.length,
       });
 
       return query.length;
     } catch (error) {
-      this.addOperation('database', 'update_matches', 'failed', { error: (error as Error).message });
+      this.addOperation('database', 'update_matches', 'failed', {
+        error: (error as Error).message,
+      });
       Profiling.error({
         error,
         source: 'MatchesDataProviderService.updateOnDatabase',
@@ -382,14 +396,16 @@ export class MatchesDataProviderService {
     };
     this.invoice.operationType = 'create';
 
-    this.addOperation('initialization', 'validate_input', 'started', { 
-      tournamentId: tournament.id, 
+    this.addOperation('initialization', 'validate_input', 'started', {
+      tournamentId: tournament.id,
       tournamentLabel: tournament.label,
-      roundsCount: rounds.length
+      roundsCount: rounds.length,
     });
 
     try {
-      this.addOperation('initialization', 'validate_input', 'completed', { tournamentId: tournament.id });
+      this.addOperation('initialization', 'validate_input', 'completed', {
+        tournamentId: tournament.id,
+      });
 
       const rawMatches = await this.getTournamentMatches(rounds, tournament.id);
       const query = await this.createOnDatabase(rawMatches);
@@ -399,7 +415,9 @@ export class MatchesDataProviderService {
 
       return query;
     } catch (error) {
-      this.addOperation('initialization', 'process_matches', 'failed', { error: (error as Error).message });
+      this.addOperation('initialization', 'process_matches', 'failed', {
+        error: (error as Error).message,
+      });
       this.generateInvoiceFile();
       Profiling.error({
         error,
@@ -417,15 +435,15 @@ export class MatchesDataProviderService {
     };
     this.invoice.operationType = 'update';
 
-    this.addOperation('initialization', 'validate_input', 'started', { 
+    this.addOperation('initialization', 'validate_input', 'started', {
       roundId: round.id,
       roundSlug: round.slug,
-      tournamentId: round.tournamentId
+      tournamentId: round.tournamentId,
     });
 
     try {
-      this.addOperation('initialization', 'validate_input', 'completed', { 
-        roundSlug: round.slug 
+      this.addOperation('initialization', 'validate_input', 'completed', {
+        roundSlug: round.slug,
       });
 
       const rawMatches = await this.getTournamentMatchesByRound(round);
@@ -436,7 +454,9 @@ export class MatchesDataProviderService {
 
       return query;
     } catch (error) {
-      this.addOperation('update', 'process_round_matches', 'failed', { error: (error as Error).message });
+      this.addOperation('update', 'process_round_matches', 'failed', {
+        error: (error as Error).message,
+      });
       this.generateInvoiceFile();
       Profiling.error({
         error,

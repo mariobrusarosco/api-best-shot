@@ -5,7 +5,15 @@ const ENV = process.env.NODE_ENV;
 const enableProfiling = ENV === 'production' || ENV === 'demo';
 
 export const Profiling = {
-  error: ({ source, error, data }: { source?: string; error: unknown; data?: unknown }) => {
+  error: ({
+    source,
+    error,
+    data,
+  }: {
+    source?: string;
+    error: unknown;
+    data?: unknown;
+  }) => {
     const finalMessage = `[${ENV}] - [ERROR] - [${source}]`;
 
     if (enableProfiling) {

@@ -17,7 +17,7 @@ export const scheduleKnockoutsUpdateRoutine = async (schedule: {
     const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
     const location = process.env.GOOGLE_CLOUD_REGION || 'us-central1';
     const cloudFunctionUrl = process.env.GCP_KNOCKOUTS_UPDATE_FUNCTION_URL;
-    
+
     if (!projectId || !cloudFunctionUrl) {
       throw new Error('Missing required GCP environment variables');
     }

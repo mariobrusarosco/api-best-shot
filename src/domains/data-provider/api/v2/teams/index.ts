@@ -14,9 +14,9 @@ const create = async (req: TeamsRequest, res: Response) => {
   try {
     Profiling.log({
       msg: `[REQUEST START] Teams creation request received`,
-      data: { 
+      data: {
         requestId,
-        tournamentId: req.body.tournamentId
+        tournamentId: req.body.tournamentId,
       },
       source: 'DATA_PROVIDER_V2_TEAMS_create',
     });

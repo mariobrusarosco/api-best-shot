@@ -47,7 +47,7 @@ const getRound = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('[API_TOURNAMENT_ROUND] - [getRound]', error);
-    
+
     if (error instanceof Error && error.message === 'Tournament round not found') {
       return res.status(404).json({
         success: false,
@@ -100,7 +100,7 @@ const createTournamentRound = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('[API_TOURNAMENT_ROUND] - [createTournamentRound]', error);
-    
+
     if (error instanceof Error && error.message.includes('Missing required')) {
       return res.status(400).json({
         success: false,
@@ -119,7 +119,8 @@ const createMultipleTournamentRounds = async (req: Request, res: Response) => {
   try {
     const roundsData: DB_InsertTournamentRound[] = req.body;
 
-    const rounds = await SERVICES_TOURNAMENT_ROUND.createMultipleTournamentRounds(roundsData);
+    const rounds =
+      await SERVICES_TOURNAMENT_ROUND.createMultipleTournamentRounds(roundsData);
 
     return res.status(201).json({
       success: true,
@@ -127,11 +128,12 @@ const createMultipleTournamentRounds = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('[API_TOURNAMENT_ROUND] - [createMultipleTournamentRounds]', error);
-    
-    if (error instanceof Error && (
-      error.message.includes('Missing required') || 
-      error.message.includes('No tournament rounds data')
-    )) {
+
+    if (
+      error instanceof Error &&
+      (error.message.includes('Missing required') ||
+        error.message.includes('No tournament rounds data'))
+    ) {
       return res.status(400).json({
         success: false,
         error: error.message,

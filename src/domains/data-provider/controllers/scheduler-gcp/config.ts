@@ -14,7 +14,7 @@ export const validateGCPConfig = () => {
   ];
 
   const missing = requiredVars.filter(varName => !process.env[varName]);
-  
+
   if (missing.length > 0) {
     throw new Error(`Missing required GCP environment variables: ${missing.join(', ')}`);
   }

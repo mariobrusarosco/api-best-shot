@@ -6,7 +6,7 @@ const googleCloudFormat = winston.format.combine(
   winston.format.timestamp(),
   winston.format.errors({ stack: true }),
   winston.format.json(),
-  winston.format.printf((info) => {
+  winston.format.printf(info => {
     // Structure logs for optimal Google Cloud Logging experience
     const { level, service, environment, version, timestamp, message, ...rest } = info;
     const log = {
@@ -16,7 +16,7 @@ const googleCloudFormat = winston.format.combine(
       service,
       environment,
       version,
-      ...rest
+      ...rest,
     };
 
     return JSON.stringify(log);
@@ -28,9 +28,11 @@ const consoleFormat = winston.format.combine(
   winston.format.colorize(),
   winston.format.timestamp({ format: 'HH:mm:ss' }),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
-    const metaStr = Object.keys(meta).filter(key => 
-      !['service', 'environment', 'version'].includes(key)
-    ).length ? JSON.stringify(meta, null, 2) : '';
+    const metaStr = Object.keys(meta).filter(
+      key => !['service', 'environment', 'version'].includes(key)
+    ).length
+      ? JSON.stringify(meta, null, 2)
+      : '';
     return `${timestamp} [${level}]: ${message} ${metaStr}`;
   })
 );
@@ -39,9 +41,7 @@ const consoleFormat = winston.format.combine(
 export const logger = winston.createLogger({
   level: env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: env.NODE_ENV === 'development' ? consoleFormat : googleCloudFormat,
-  transports: [
-    new winston.transports.Console()
-  ],
+  transports: [new winston.transports.Console()],
   defaultMeta: {
     service: 'api-best-shot',
     environment: env.NODE_ENV,
@@ -55,10 +55,10 @@ export const logInfo = (message: string, meta?: any) => {
 };
 
 export const logError = (message: string, error?: Error, meta?: any) => {
-  logger.error(message, { 
-    error: error?.message || error, 
+  logger.error(message, {
+    error: error?.message || error,
     stack: error?.stack,
-    ...meta 
+    ...meta,
   });
 };
 

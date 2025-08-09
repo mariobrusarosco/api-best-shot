@@ -72,7 +72,12 @@ export class StandingsDataProviderService {
     };
   }
 
-  private addOperation(step: string, operation: string, status: 'started' | 'completed' | 'failed', data?: any) {
+  private addOperation(
+    step: string,
+    operation: string,
+    status: 'started' | 'completed' | 'failed',
+    data?: any
+  ) {
     this.invoice.operations.push({
       step,
       operation,
@@ -80,7 +85,7 @@ export class StandingsDataProviderService {
       data,
       timestamp: new Date().toISOString(),
     });
-    
+
     this.invoice.summary.totalOperations++;
     if (status === 'completed') {
       this.invoice.summary.successfulOperations++;
@@ -93,7 +98,7 @@ export class StandingsDataProviderService {
     this.invoice.endTime = new Date().toISOString();
     const filename = `standings-scraping-${this.invoice.requestId}.json`;
     const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
-    
+
     try {
       writeFileSync(filepath, JSON.stringify(this.invoice, null, 2));
       Profiling.log({
@@ -114,17 +119,17 @@ export class StandingsDataProviderService {
     standingsResponse: ENDPOINT_STANDINGS,
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
-    this.addOperation('transformation', 'map_standings', 'started', { 
+    this.addOperation('transformation', 'map_standings', 'started', {
       tournamentId: tournament.id,
-      groupsCount: standingsResponse.standings.length
+      groupsCount: standingsResponse.standings.length,
     });
 
     try {
       const standings = standingsResponse.standings.map((group, index) => {
-        this.addOperation('transformation', 'process_group', 'started', { 
+        this.addOperation('transformation', 'process_group', 'started', {
           groupId: group.id,
           groupName: group.name,
-          teamsInGroup: group.rows.length
+          teamsInGroup: group.rows.length,
         });
 
         const groupsStandings = group.rows.map(row => ({
@@ -145,10 +150,10 @@ export class StandingsDataProviderService {
           provider: 'sofascore',
         }));
 
-        this.addOperation('transformation', 'process_group', 'completed', { 
+        this.addOperation('transformation', 'process_group', 'completed', {
           groupId: group.id,
           groupName: group.name,
-          standingsCreated: groupsStandings.length
+          standingsCreated: groupsStandings.length,
         });
 
         this.invoice.summary.standingsCounts.groupsProcessed++;
@@ -165,17 +170,18 @@ export class StandingsDataProviderService {
         group => group.standings
       ) as DB_InsertTournamentStandings[];
 
-      this.invoice.summary.standingsCounts.totalGroups = standingsResponse.standings.length;
+      this.invoice.summary.standingsCounts.totalGroups =
+        standingsResponse.standings.length;
 
-      this.addOperation('transformation', 'map_standings', 'completed', { 
+      this.addOperation('transformation', 'map_standings', 'completed', {
         totalStandingsCreated: results.length,
-        groupsProcessed: standings.length
+        groupsProcessed: standings.length,
       });
 
       return results;
     } catch (error) {
-      this.addOperation('transformation', 'map_standings', 'failed', { 
-        error: (error as Error).message 
+      this.addOperation('transformation', 'map_standings', 'failed', {
+        error: (error as Error).message,
       });
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_mapTournamentStandings',
@@ -189,9 +195,9 @@ export class StandingsDataProviderService {
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
     const url = `${tournament.baseUrl}/standings/total`;
-    this.addOperation('scraping', 'fetch_standings', 'started', { 
+    this.addOperation('scraping', 'fetch_standings', 'started', {
       tournamentId: tournament.id,
-      url 
+      url,
     });
 
     try {
@@ -199,25 +205,28 @@ export class StandingsDataProviderService {
       const rawContent = await this.scraper.getPageContent();
 
       if (!rawContent?.standings || rawContent?.standings?.length === 0) {
-        this.addOperation('scraping', 'fetch_standings', 'completed', { 
+        this.addOperation('scraping', 'fetch_standings', 'completed', {
           url,
           standingsCount: 0,
-          note: 'No standings data found'
+          note: 'No standings data found',
         });
         return null;
       }
 
-      this.addOperation('scraping', 'fetch_standings', 'completed', { 
+      this.addOperation('scraping', 'fetch_standings', 'completed', {
         url,
         groupsCount: rawContent.standings.length,
-        totalTeamsInStandings: rawContent.standings.reduce((total: number, group: any) => total + group.rows.length, 0)
+        totalTeamsInStandings: rawContent.standings.reduce(
+          (total: number, group: any) => total + group.rows.length,
+          0
+        ),
       });
 
       return rawContent;
     } catch (error) {
-      this.addOperation('scraping', 'fetch_standings', 'failed', { 
+      this.addOperation('scraping', 'fetch_standings', 'failed', {
         url,
-        error: (error as Error).message 
+        error: (error as Error).message,
       });
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_getStandings',
@@ -228,36 +237,36 @@ export class StandingsDataProviderService {
   }
 
   public async createOnDatabase(standings: DB_InsertTournamentStandings[]) {
-    this.addOperation('database', 'create_standings', 'started', { 
-      standingsCount: standings.length 
+    this.addOperation('database', 'create_standings', 'started', {
+      standingsCount: standings.length,
     });
 
     try {
       const query = await db.insert(T_TournamentStandings).values(standings);
-      
-      this.addOperation('database', 'create_standings', 'completed', { 
-        createdStandingsCount: standings.length
+
+      this.addOperation('database', 'create_standings', 'completed', {
+        createdStandingsCount: standings.length,
       });
 
       this.invoice.summary.standingsCounts.totalStandingsCreated = standings.length;
 
       return query;
     } catch (error) {
-      this.addOperation('database', 'create_standings', 'failed', { 
-        error: (error as Error).message 
+      this.addOperation('database', 'create_standings', 'failed', {
+        error: (error as Error).message,
       });
       throw error;
     }
   }
 
   public async updateOnDatabase(standings: DB_InsertTournamentStandings[]) {
-    this.addOperation('database', 'update_standings', 'started', { 
-      standingsCount: standings.length 
+    this.addOperation('database', 'update_standings', 'started', {
+      standingsCount: standings.length,
     });
 
     if (standings.length === 0) {
-      this.addOperation('database', 'update_standings', 'failed', { 
-        error: 'No standings to update' 
+      this.addOperation('database', 'update_standings', 'failed', {
+        error: 'No standings to update',
       });
       Profiling.error({
         error: new Error('No standings to update in the database'),
@@ -268,15 +277,15 @@ export class StandingsDataProviderService {
 
     try {
       const query = await QUERIES_TOURNAMENT.upsertTournamentStandings(standings);
-      
-      this.addOperation('database', 'update_standings', 'completed', { 
-        updatedStandingsCount: query.length
+
+      this.addOperation('database', 'update_standings', 'completed', {
+        updatedStandingsCount: query.length,
       });
 
       return query;
     } catch (error) {
-      this.addOperation('database', 'update_standings', 'failed', { 
-        error: (error as Error).message 
+      this.addOperation('database', 'update_standings', 'failed', {
+        error: (error as Error).message,
       });
       Profiling.error({
         error,
@@ -296,21 +305,21 @@ export class StandingsDataProviderService {
     };
     this.invoice.operationType = 'create';
 
-    this.addOperation('initialization', 'validate_input', 'started', { 
-      tournamentId: tournament.id, 
-      tournamentLabel: tournament.label
+    this.addOperation('initialization', 'validate_input', 'started', {
+      tournamentId: tournament.id,
+      tournamentLabel: tournament.label,
     });
 
     try {
-      this.addOperation('initialization', 'validate_input', 'completed', { 
-        tournamentId: tournament.id 
+      this.addOperation('initialization', 'validate_input', 'completed', {
+        tournamentId: tournament.id,
       });
 
       const rawStandings = await this.getStandings(tournament);
-      
+
       if (!rawStandings) {
-        this.addOperation('initialization', 'process_standings', 'completed', { 
-          note: 'No standings data available for tournament'
+        this.addOperation('initialization', 'process_standings', 'completed', {
+          note: 'No standings data available for tournament',
         });
         this.generateInvoiceFile();
         return [];
@@ -324,8 +333,8 @@ export class StandingsDataProviderService {
 
       return query;
     } catch (error) {
-      this.addOperation('initialization', 'process_standings', 'failed', { 
-        error: (error as Error).message 
+      this.addOperation('initialization', 'process_standings', 'failed', {
+        error: (error as Error).message,
       });
       this.generateInvoiceFile();
       Profiling.error({
@@ -346,21 +355,21 @@ export class StandingsDataProviderService {
     };
     this.invoice.operationType = 'update';
 
-    this.addOperation('initialization', 'validate_input', 'started', { 
-      tournamentId: tournament.id, 
-      tournamentLabel: tournament.label
+    this.addOperation('initialization', 'validate_input', 'started', {
+      tournamentId: tournament.id,
+      tournamentLabel: tournament.label,
     });
 
     try {
-      this.addOperation('initialization', 'validate_input', 'completed', { 
-        tournamentId: tournament.id 
+      this.addOperation('initialization', 'validate_input', 'completed', {
+        tournamentId: tournament.id,
       });
 
       const rawStandings = await this.getStandings(tournament);
-      
+
       if (!rawStandings) {
-        this.addOperation('update', 'process_standings', 'completed', { 
-          note: 'No standings data found for tournament'
+        this.addOperation('update', 'process_standings', 'completed', {
+          note: 'No standings data found for tournament',
         });
         this.generateInvoiceFile();
         return [];
@@ -374,8 +383,8 @@ export class StandingsDataProviderService {
 
       return query;
     } catch (error) {
-      this.addOperation('update', 'process_standings', 'failed', { 
-        error: (error as Error).message 
+      this.addOperation('update', 'process_standings', 'failed', {
+        error: (error as Error).message,
       });
       this.generateInvoiceFile();
       Profiling.error({

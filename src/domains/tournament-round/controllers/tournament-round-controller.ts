@@ -1,6 +1,6 @@
 /**
  * Tournament Round Controller
- * 
+ *
  * Handles request orchestration for tournament round operations
  */
 
@@ -12,5 +12,6 @@ export class TournamentRoundController {
   static getRound = API_TOURNAMENT_ROUND.getRound;
   static getKnockoutRounds = API_TOURNAMENT_ROUND.getKnockoutRounds;
   static createTournamentRound = API_TOURNAMENT_ROUND.createTournamentRound;
-  static createMultipleTournamentRounds = API_TOURNAMENT_ROUND.createMultipleTournamentRounds;
+  static createMultipleTournamentRounds =
+    API_TOURNAMENT_ROUND.createMultipleTournamentRounds;
 }

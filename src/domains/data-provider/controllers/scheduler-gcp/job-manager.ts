@@ -9,21 +9,21 @@ export const JobManager = {
     try {
       const projectId = GCP_CONFIG.projectId;
       const location = GCP_CONFIG.region;
-      
+
       if (!projectId) {
         throw new Error('Missing GOOGLE_CLOUD_PROJECT_ID');
       }
 
       const jobName = `projects/${projectId}/locations/${location}/jobs/${jobId}`;
-      
+
       await client.deleteJob({ name: jobName });
-      
+
       Profiling.log({
         msg: 'GCP SCHEDULED JOB DELETED',
         data: { jobName },
         source: 'DATA_PROVIDER_SCHEDULER_GCP_jobManager',
       });
-      
+
       return { success: true, jobName };
     } catch (error) {
       Profiling.error({
@@ -38,15 +38,15 @@ export const JobManager = {
     try {
       const projectId = GCP_CONFIG.projectId;
       const location = GCP_CONFIG.region;
-      
+
       if (!projectId) {
         throw new Error('Missing GOOGLE_CLOUD_PROJECT_ID');
       }
 
       const parent = `projects/${projectId}/locations/${location}`;
-      
+
       const [jobs] = await client.listJobs({ parent });
-      
+
       return jobs.map(job => ({
         name: job.name,
         schedule: job.schedule,
@@ -66,21 +66,21 @@ export const JobManager = {
     try {
       const projectId = GCP_CONFIG.projectId;
       const location = GCP_CONFIG.region;
-      
+
       if (!projectId) {
         throw new Error('Missing GOOGLE_CLOUD_PROJECT_ID');
       }
 
       const jobName = `projects/${projectId}/locations/${location}/jobs/${jobId}`;
-      
+
       await client.pauseJob({ name: jobName });
-      
+
       Profiling.log({
         msg: 'GCP SCHEDULED JOB PAUSED',
         data: { jobName },
         source: 'DATA_PROVIDER_SCHEDULER_GCP_jobManager',
       });
-      
+
       return { success: true, jobName };
     } catch (error) {
       Profiling.error({
@@ -95,21 +95,21 @@ export const JobManager = {
     try {
       const projectId = GCP_CONFIG.projectId;
       const location = GCP_CONFIG.region;
-      
+
       if (!projectId) {
         throw new Error('Missing GOOGLE_CLOUD_PROJECT_ID');
       }
 
       const jobName = `projects/${projectId}/locations/${location}/jobs/${jobId}`;
-      
+
       await client.resumeJob({ name: jobName });
-      
+
       Profiling.log({
         msg: 'GCP SCHEDULED JOB RESUMED',
         data: { jobName },
         source: 'DATA_PROVIDER_SCHEDULER_GCP_jobManager',
       });
-      
+
       return { success: true, jobName };
     } catch (error) {
       Profiling.error({

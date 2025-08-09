@@ -22,7 +22,7 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
   try {
     const StartDate = dayjs().utc().add(1, 'minute').toDate();
     const GroupName = 'scores-and-standings-routine';
-    const targetArn = `arn:aws:lambda:${env.AWS_REGION}:905418297381:function:caller-scores-and-standings`;
+    const targetArn = `arn:aws:lambda:${env.AWS_REGION}:${env.AWS_ACCOUNT_ID}:function:caller-scores-and-standings`;
 
     const params = {
       Name: schedule.id,
@@ -35,7 +35,7 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
       GroupName,
       Target: {
         Arn: targetArn,
-        RoleArn: `arn:aws:iam::905418297381:role/root-scheduler`,
+        RoleArn: `arn:aws:iam::${env.AWS_ACCOUNT_ID}:role/root-scheduler`,
         Input: JSON.stringify(schedule.targetInput),
       },
     } satisfies CreateScheduleCommandInput;
@@ -58,5 +58,6 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
       source: 'DATA_PROVIDER_SCHEDULER_scoresAndStandings',
       error,
     });
+    throw error;
   }
 };

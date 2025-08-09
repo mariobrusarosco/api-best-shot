@@ -108,3 +108,24 @@ The API supports multiple versions (v1, v2) with routes organized by domain and 
 - Business logic belongs in the services layer
 - HTTP concerns stay in the API layer
 - Follow existing domain patterns when adding new features
+
+## 🚨 CRITICAL: Environment Variable Management
+**Claude: NEVER give bulk gcloud commands. User: NEVER trust bulk commands from anyone.**
+
+### MANDATORY Process:
+1. **BACKUP FIRST**: Always run the backup command from `ENVIRONMENT_MANAGEMENT.md`
+2. **ONE AT A TIME**: Only add/update ONE environment variable per command
+3. **VERIFY AFTER**: Check that the change worked before doing anything else
+4. **NO BULK COMMANDS**: Never use commands that change multiple variables
+
+### Claude Instructions:
+- **ALWAYS** tell user to backup first using the exact commands in `ENVIRONMENT_MANAGEMENT.md`
+- **NEVER** suggest commands with multiple environment variables
+- **ALWAYS** explain why each step is safe
+- **NO EXCEPTIONS**: Even if user is in a hurry
+
+### User Instructions:
+- **DON'T TRUST** any bulk commands from Claude or anyone else
+- **ALWAYS** follow the 3-step process in `ENVIRONMENT_MANAGEMENT.md`
+- **ONE VARIABLE** at a time, no exceptions
+- **BACKUP FIRST**, every single time

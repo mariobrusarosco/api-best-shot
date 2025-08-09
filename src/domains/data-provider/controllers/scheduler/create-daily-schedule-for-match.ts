@@ -39,13 +39,14 @@ const generateScheduleId = (
 
   return `${env}${tournamentLabel}_${estimatedEndOfMatch.format('YYYY_MM_DD_HH_mm')}`
     .toLowerCase()
-    .replace(/[\s/-]+/g, '_');
+    .replace(/[\s/-]+/g, '_')
+    .replace(/[^0-9a-z-_.]/g, '');
 };
 
 const buildSchedule = (
   match: Awaited<ReturnType<typeof MatchQueries.currentDayMatchesOnDatabase>>[number]
 ) => {
-  const estimatedEndOfMatch = getEstimatedEndOfMatch(match.date);
+  const estimatedEndOfMatch = getEstimatedEndOfMatch();
   const scheduleId = generateScheduleId(match.tournamentLabel, estimatedEndOfMatch);
   const targetEnv = process.env.NODE_ENV;
 
@@ -64,6 +65,6 @@ const buildSchedule = (
   };
 };
 
-const getEstimatedEndOfMatch = (date: Date | null) => {
-  return dayjs(date).utc().add(2, 'hours').add(30, 'minutes');
+const getEstimatedEndOfMatch = () => {
+  return dayjs().utc().add(2, 'minutes');
 };

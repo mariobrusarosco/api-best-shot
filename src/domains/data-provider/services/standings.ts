@@ -1,22 +1,46 @@
 import type { ENDPOINT_STANDINGS } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
-import { BaseScraper } from '../providers/playwright/base-scraper';
+import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import {
   DB_InsertTournamentStandings,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
-import { safeString } from '@/utils';
-import db from '@/services/database';
-import Profiling from '@/services/profiling';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
+import db from '@/services/database';
+import { Profiling } from '@/services/profiling';
+import { safeString } from '@/utils';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import { BaseScraper } from '../providers/playwright/base-scraper';
+
+type ScrapingOperationData =
+  | {
+      url?: string;
+      tournamentId?: string;
+      groupsCount?: number;
+      standingsCount?: number;
+      note?: string;
+    }
+  | { error: string; debugMessage?: string }
+  | {
+      groupId?: string | number;
+      groupName?: string;
+      teamsInGroup?: number;
+      standingsCreated?: number;
+    }
+  | {
+      totalStandingsCreated?: number;
+      groupsProcessed?: number;
+      createdStandingsCount?: number;
+      updatedStandingsCount?: number;
+      standingsCount?: number;
+    }
+  | Record<string, unknown>;
 
 interface StandingsScrapingOperation {
   step: string;
   operation: string;
   status: 'started' | 'completed' | 'failed';
-  data?: any;
+  data?: ScrapingOperationData;
   timestamp: string;
 }
 
@@ -76,8 +100,8 @@ export class StandingsDataProviderService {
     step: string,
     operation: string,
     status: 'started' | 'completed' | 'failed',
-    data?: any
-  ) {
+    data?: ScrapingOperationData
+  ): void {
     this.invoice.operations.push({
       step,
       operation,
@@ -94,7 +118,7 @@ export class StandingsDataProviderService {
     }
   }
 
-  private generateInvoiceFile() {
+  private generateInvoiceFile(): void {
     this.invoice.endTime = new Date().toISOString();
     const filename = `standings-scraping-${this.invoice.requestId}.json`;
     const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
@@ -106,26 +130,27 @@ export class StandingsDataProviderService {
         data: { filepath, requestId: this.invoice.requestId },
         source: 'DATA_PROVIDER_V2_STANDINGS_generateInvoiceFile',
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_generateInvoiceFile',
-        error: error as Error,
+        error: error instanceof Error ? error : new Error(errorMessage),
       });
-      console.error('Failed to write standings invoice file:', error);
+      console.error('Failed to write standings invoice file:', errorMessage);
     }
   }
 
   public async mapTournamentStandings(
     standingsResponse: ENDPOINT_STANDINGS,
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ) {
+  ): Promise<DB_InsertTournamentStandings[]> {
     this.addOperation('transformation', 'map_standings', 'started', {
       tournamentId: tournament.id,
       groupsCount: standingsResponse.standings.length,
     });
 
     try {
-      const standings = standingsResponse.standings.map((group, index) => {
+      const standings = standingsResponse.standings.map(group => {
         this.addOperation('transformation', 'process_group', 'started', {
           groupId: group.id,
           groupName: group.name,
@@ -179,13 +204,14 @@ export class StandingsDataProviderService {
       });
 
       return results;
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.addOperation('transformation', 'map_standings', 'failed', {
-        error: (error as Error).message,
+        error: errorMessage,
       });
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_mapTournamentStandings',
-        error,
+        error: error instanceof Error ? error : new Error(errorMessage),
       });
       throw error;
     }
@@ -193,7 +219,7 @@ export class StandingsDataProviderService {
 
   public async getStandings(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ) {
+  ): Promise<ENDPOINT_STANDINGS | null> {
     const url = `${tournament.baseUrl}/standings/total`;
     this.addOperation('scraping', 'fetch_standings', 'started', {
       tournamentId: tournament.id,
@@ -217,20 +243,21 @@ export class StandingsDataProviderService {
         url,
         groupsCount: rawContent.standings.length,
         totalTeamsInStandings: rawContent.standings.reduce(
-          (total: number, group: any) => total + group.rows.length,
+          (total: number, group: { rows: unknown[] }) => total + group.rows.length,
           0
         ),
       });
 
       return rawContent;
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.addOperation('scraping', 'fetch_standings', 'failed', {
         url,
-        error: (error as Error).message,
+        error: errorMessage,
       });
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_getStandings',
-        error,
+        error: error instanceof Error ? error : new Error(errorMessage),
       });
       throw error;
     }
@@ -251,9 +278,10 @@ export class StandingsDataProviderService {
       this.invoice.summary.standingsCounts.totalStandingsCreated = standings.length;
 
       return query;
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.addOperation('database', 'create_standings', 'failed', {
-        error: (error as Error).message,
+        error: errorMessage,
       });
       throw error;
     }
@@ -283,12 +311,13 @@ export class StandingsDataProviderService {
       });
 
       return query;
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.addOperation('database', 'update_standings', 'failed', {
-        error: (error as Error).message,
+        error: errorMessage,
       });
       Profiling.error({
-        error,
+        error: error instanceof Error ? error : new Error(errorMessage),
         source: 'StandingsDataProviderService.updateOnDatabase',
       });
       throw error;
@@ -332,14 +361,15 @@ export class StandingsDataProviderService {
       this.generateInvoiceFile();
 
       return query;
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.addOperation('initialization', 'process_standings', 'failed', {
-        error: (error as Error).message,
+        error: errorMessage,
       });
       this.generateInvoiceFile();
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_init',
-        error,
+        error: error instanceof Error ? error : new Error(errorMessage),
       });
       throw error;
     }
@@ -382,14 +412,15 @@ export class StandingsDataProviderService {
       this.generateInvoiceFile();
 
       return query;
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.addOperation('update', 'process_standings', 'failed', {
-        error: (error as Error).message,
+        error: errorMessage,
       });
       this.generateInvoiceFile();
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_updateTournament',
-        error,
+        error: error instanceof Error ? error : new Error(errorMessage),
       });
       throw error;
     }

@@ -5,16 +5,16 @@
 _**User**_
 
 For the code present, we get this error:
+
 ```
 Property 'Reset' does not exist on type 'ChalkInstance'. Did you mean 'reset'?
 ```
+
 How can I resolve this? If you propose a fix, please make it concise.
 
 ---
 
 _**Assistant**_
-
-
 
 ---
 
@@ -57,7 +57,7 @@ I need you to update all the calls of Profiling.log to use the new signature
 
 _**Assistant**_
 
-To update all calls to `Profiling.log` to use the new signature, you'll need to ensure that each call includes the `color` parameter. Here’s a concise example of how to modify the calls. 
+To update all calls to `Profiling.log` to use the new signature, you'll need to ensure that each call includes the `color` parameter. Here’s a concise example of how to modify the calls.
 
 Assuming you have calls like this:
 
@@ -112,6 +112,7 @@ I understand you want me to help update the `Profiling.log` calls, but I don't c
 Could you please show me some of the files where `Profiling.log` is being called? Once you share those, I can help you update all the calls to use the new signature with the `color` parameter.
 
 You can share the files by:
+
 1. Opening a file containing `Profiling.log` calls
 2. Or using your search functionality to find files containing `Profiling.log`
 
@@ -233,7 +234,7 @@ I see the pattern now. Let me help update these files to use the new signature. 
 ---
 
 ```diff
-    
+
         if (payload.logoPngBase64) {
 -         Profiling.log('[fetchAndStoreAssetFromApi] - Creating a new asset from base64', payload.logoPngBase64);
 +         Profiling.log({
@@ -277,7 +278,7 @@ I see the pattern now. Let me help update these files to use the new signature. 
 +           color: 'FgGreen'
 +         });
           return Key;
-        } catch (s3Error: any) {
+        } catch (s3error: unknown) {
 ```
 
 ---
@@ -287,7 +288,7 @@ I see the pattern now. Let me help update these files to use the new signature. 
 ---
 
 ```diff
-  
+
     if (mode === 'knockout-only') {
 -     Profiling.log('Knockout-only tournaments do not have standings');
 +     Profiling.log({
@@ -299,12 +300,12 @@ I see the pattern now. Let me help update these files to use the new signature. 
 ```
 
 ```diff
-  
+
     if (!data) {
 -     Profiling.log(
 -       `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`
 -     );
-- 
+-
 +     Profiling.log({
 +       msg: `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`,
 +       color: 'FgYellow'
@@ -315,7 +316,7 @@ I see the pattern now. Let me help update these files to use the new signature. 
 
 ```diff
     const query = await SofascoreStandings.createOnDatabase(mappedStandings);
-  
+
 -   Profiling.log(
 -     `[DATA PROVIDER] - [STANDINGS] - CREATING STANDINGS FOR TOURNAMENT ${label}`,
 -     {
@@ -327,12 +328,12 @@ I see the pattern now. Let me help update these files to use the new signature. 
 +     data: { standings: mappedStandings },
 +     color: 'FgGreen'
 +   });
-  
+
     return query;
 ```
 
 ```diff
-  
+
     if (mode === 'knockout-only') {
 -     Profiling.log(
 -       '[DATA PROVIDER] - [STANDINGS] - KNOCKOUT-ONLY TOURNAMENT DO NOT HAVE STANDINGS'
@@ -346,12 +347,12 @@ I see the pattern now. Let me help update these files to use the new signature. 
 ```
 
 ```diff
-  
+
     if (!data) {
 -     Profiling.log(
 -       `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`
 -     );
-- 
+-
 +     Profiling.log({
 +       msg: `[DATA PROVIDER] - [STANDINGS] - ${tournament.label} DOESN'T HAVE STANDINGS IN PLACE YET!`,
 +       color: 'FgYellow'
@@ -362,7 +363,7 @@ I see the pattern now. Let me help update these files to use the new signature. 
 
 ```diff
     const query = await SofascoreStandings.upsertOnDatabase(mappedStandings);
-  
+
 -   Profiling.log(
 -     `[DATA PROVIDER] - [STANDINGS] - UPDATING STANDINGS FOR TOURNAMENT ${label}`,
 -     {
@@ -374,7 +375,7 @@ I see the pattern now. Let me help update these files to use the new signature. 
 +     data: { standings: mappedStandings },
 +     color: 'FgGreen'
 +   });
-  
+
     return query;
 ```
 
@@ -394,7 +395,7 @@ Let me update the tournament controller:
 
 ```diff
       }
-  
+
 -     Profiling.log('[DATA PROVIDER] - [TOURNAMENT] - CREATE', {
 +     Profiling.log({
 +       msg: '[DATA PROVIDER] - [TOURNAMENT] - CREATE',
@@ -404,12 +405,12 @@ Let me update the tournament controller:
 +       },
 +       color: 'FgGreen'
       });
-  
+
 ```
 
 ```diff
       }
-  
+
 -     Profiling.log('[DATA PROVIDER] - [TOURNAMENT] - UPDATE', {
 +     Profiling.log({
 +       msg: '[DATA PROVIDER] - [TOURNAMENT] - UPDATE',
@@ -419,7 +420,7 @@ Let me update the tournament controller:
 +       },
 +       color: 'FgGreen'
       });
-  
+
 ```
 
 ---
@@ -438,7 +439,7 @@ Let me update the teams controller:
 
 ```diff
       }
-  
+
 -     Profiling.log('[DATA PROVIDER] - [TEAMS] - CREATE SUCCESS', {
 +     Profiling.log({
 +       msg: '[DATA PROVIDER] - [TEAMS] - CREATE SUCCESS',
@@ -448,12 +449,12 @@ Let me update the teams controller:
 +       },
 +       color: 'FgGreen'
       });
-  
+
 ```
 
 ```diff
       }
-  
+
 -     Profiling.log('[DATA PROVIDER] - [TEAMS] - UPDATE SUCCESS', {
 +     Profiling.log({
 +       msg: '[DATA PROVIDER] - [TEAMS] - UPDATE SUCCESS',
@@ -463,7 +464,7 @@ Let me update the teams controller:
 +       },
 +       color: 'FgGreen'
       });
-  
+
 ```
 
 ---
@@ -481,7 +482,7 @@ Let me update the matches controller:
 ---
 
 ```diff
-  
+
     for (const round of roundList) {
 -     Profiling.log('[LOG] - [DATA PROVIDER] - FETCHING ROUND:', round.providerUrl);
 +     Profiling.log({
@@ -490,37 +491,37 @@ Let me update the matches controller:
 +       color: 'FgBlue'
 +     });
       await sleep(3000);
-  
+
 ```
 
 ```diff
     const query = await SofascoreMatches.createOnDatabase(matches);
-  
+
 -   Profiling.log('[DATA PROVIDER] - [MATCHES] - [CREATE ALL MACTHES]', { matches });
 +   Profiling.log({
 +     msg: '[DATA PROVIDER] - [MATCHES] - [CREATE ALL MACTHES]',
 +     data: { matches },
 +     color: 'FgGreen'
 +   });
-  
+
     return query;
 ```
 
 ```diff
     const query = await SofascoreMatches.upsertOnDatabase(matches);
-  
+
 -   Profiling.log('[DATA PROVIDER] - [MATCHES] - [UPDATE ALL MACTHES]', { matches });
 +   Profiling.log({
 +     msg: '[DATA PROVIDER] - [MATCHES] - [UPDATE ALL MACTHES]',
 +     data: { matches },
 +     color: 'FgGreen'
 +   });
-  
+
     return query;
 ```
 
 ```diff
-  
+
     const query = await SofascoreMatches.upsertOnDatabase(matches);
 -   Profiling.log('[DATA PROVIDER] - [MATCHES] - [UPDATE MACTHES OF A ROUND]', {
 -     matches,
@@ -549,7 +550,7 @@ Let me update the scheduler controller:
 
 ```diff
       const response = await client.send(command);
-  
+
 -     Profiling.log(`[DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE]`, {
 +     Profiling.log({
 +       msg: `[DATA PROVIDER] - [SCORES AND STANDINGS ROUTINE]`,
@@ -559,7 +560,7 @@ Let me update the scheduler controller:
 +       },
 +       color: 'FgGreen'
       });
-  
+
 ```
 
 ---
@@ -578,7 +579,7 @@ Let me update the knockouts update routine:
 
 ```diff
       const response = await client.send(command);
-  
+
 -     Profiling.log('[DATA PROVIDER] - [KNOCKOUTS UPDATE]', {
 +     Profiling.log({
 +       msg: '[DATA PROVIDER] - [KNOCKOUTS UPDATE]',
@@ -588,7 +589,7 @@ Let me update the knockouts update routine:
 +       },
 +       color: 'FgGreen'
       });
-  
+
 ```
 
 ---
@@ -739,83 +740,42 @@ Let me update the file storage provider:
 
 ---
 
-
+---
 
 ---
 
-
+---
 
 ---
 
-
+---
 
 ---
 
-
+---
 
 ---
 
-
+---
 
 ---
 
-
+---
 
 ---
 
-
+---
 
 ---
 
-
+---
 
 ---
 
-
+---
 
 ---
 
-
-
 ---
 
-
-
 ---
-
-
-
----
-
-
-
----
-
-
-
----
-
-
-
----
-
-
-
----
-
-
-
----
-
-
-
----
-
-
-
----
-
-
-
----
-

@@ -3,12 +3,12 @@ import { handleInternalServerErrorResponse } from '@/domains/shared/error-handli
 import { type Request, Response } from 'express';
 import { DashboardService } from '../services';
 
-const getDashboardDeprecated = async (req: Request, res: Response) => {
+const getDashboardDeprecated = async (_: Request, res: Response) => {
   try {
     const dashboard = await DashboardController.getDashboard();
 
     res.status(200).send(dashboard);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching matches:', error);
     return handleInternalServerErrorResponse(res, error);
   }

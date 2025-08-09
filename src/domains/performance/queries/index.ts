@@ -1,10 +1,12 @@
-import { T_TournamentPerformance } from '@/domains/performance/schema';
+import { T_LeagueRole, T_LeagueTournament } from '@/domains/league/schema';
+import { T_Member } from '@/domains/member/schema';
+import {
+  T_LeaguePerformance, // eslint-disable-line @typescript-eslint/no-unused-vars
+  T_TournamentPerformance,
+} from '@/domains/performance/schema';
+import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
-import { T_Tournament } from '@/domains/tournament/schema';
-import { T_LeagueTournament } from '@/domains/league/schema';
-import { T_LeagueRole } from '@/domains/league/schema';
-import { T_Member } from '@/domains/member/schema';
 
 import type { DatabaseError } from '@/domains/shared/error-handling/database';
 import Profiling from '@/services/profiling';
@@ -54,8 +56,7 @@ const league = {
   getPerformanceLastUpdated: async (leagueId: string) => {
     try {
       const query = await db.query.T_LeaguePerformance.findFirst({
-        where: (leaguePerformance: any, { eq }: { eq: any }) =>
-          eq(leaguePerformance.leagueId, leagueId),
+        where: (leaguePerformance, { eq }) => eq(leaguePerformance.leagueId, leagueId),
       });
 
       return query;
@@ -77,7 +78,7 @@ const tournament = {
     }
 
     const query = await db.query.T_TournamentPerformance.findFirst({
-      where: (tournamentPerformance: any, { eq }: { eq: any }) =>
+      where: (tournamentPerformance, { eq }) =>
         eq(tournamentPerformance.memberId, memberId) &&
         eq(tournamentPerformance.tournamentId, tournamentId),
     });

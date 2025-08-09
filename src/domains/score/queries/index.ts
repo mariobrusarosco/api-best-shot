@@ -26,7 +26,7 @@ async function getLeagueScore(leagueId: string) {
           lte(T_Match.date, new Date('2025-07-31'))
         )
       );
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'SCORE_QUERIES_getLeagueScore',
       error,

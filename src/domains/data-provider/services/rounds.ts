@@ -6,17 +6,27 @@ import {
   DB_UpdateTournamentRound,
 } from '@/domains/tournament-round/schema';
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
-import Profiling from '@/services/profiling';
+import { Profiling } from '@/services/profiling';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+
+type RoundScrapingOperationData =
+  | { baseUrl?: string; tournamentId?: string; roundsCount?: number; note?: string }
+  | { error: string; debugMessage?: string; errorMessage?: string }
+  | { createdRoundsCount?: number; roundIds?: string[]; updatedRoundsCount?: number }
+  | {
+      totalRoundsProcessed?: number;
+      roundsWithEvents?: number;
+      roundsWithoutEvents?: number;
+    }
+  | Record<string, unknown>;
 
 interface RoundScrapingOperation {
   step: string;
   operation: string;
   status: 'started' | 'completed' | 'failed';
-  data?: any;
+  data?: RoundScrapingOperationData;
   timestamp: string;
 }
 
@@ -64,8 +74,8 @@ export class RoundDataProviderService {
     step: string,
     operation: string,
     status: 'started' | 'completed' | 'failed',
-    data?: any
-  ) {
+    data?: RoundScrapingOperationData
+  ): void {
     this.invoice.operations.push({
       step,
       operation,
@@ -82,7 +92,7 @@ export class RoundDataProviderService {
     }
   }
 
-  private generateInvoiceFile() {
+  private generateInvoiceFile(): void {
     this.invoice.endTime = new Date().toISOString();
     const filename = `rounds-scraping-${this.invoice.requestId}.json`;
     const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
@@ -94,17 +104,18 @@ export class RoundDataProviderService {
         data: { filepath, requestId: this.invoice.requestId },
         source: 'DATA_PROVIDER_V2_ROUNDS_generateInvoiceFile',
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       Profiling.error({
         source: 'DATA_PROVIDER_V2_ROUNDS_generateInvoiceFile',
-        error,
+        error: error instanceof Error ? error : new Error(errorMessage),
         data: { filepath, requestId: this.invoice.requestId },
       });
-      console.error('Failed to write rounds invoice file:', error);
+      console.error('Failed to write rounds invoice file:', errorMessage);
     }
   }
 
-  public async getTournamentRounds(baseUrl: string) {
+  public async getTournamentRounds(baseUrl: string): Promise<ENDPOINT_ROUNDS> {
     this.addOperation('scraping', 'fetch_rounds', 'started', { baseUrl });
 
     try {
@@ -207,7 +218,7 @@ export class RoundDataProviderService {
 
       this.addOperation('database', 'create_rounds', 'completed', {
         createdRoundsCount: rounds.length,
-        roundIds: rounds.map((r: any) => r.id),
+        roundIds: rounds.map(r => r.id),
       });
 
       return rounds;
@@ -262,7 +273,9 @@ export class RoundDataProviderService {
     }
   }
 
-  public async updateOnDatabase(roundsToUpdate: DB_UpdateTournamentRound[]) {
+  public async updateOnDatabase(
+    roundsToUpdate: DB_UpdateTournamentRound[]
+  ): Promise<unknown> {
     this.addOperation('database', 'update_rounds', 'started', {
       roundsCount: roundsToUpdate.length,
       tournamentId: roundsToUpdate[0]?.tournamentId,
@@ -283,7 +296,7 @@ export class RoundDataProviderService {
       const query = await QUERIES_TOURNAMENT_ROUND.upsertTournamentRounds(roundsToUpdate);
 
       this.addOperation('database', 'update_rounds', 'completed', {
-        updatedRoundsCount: query.length,
+        updatedRoundsCount: roundsToUpdate.length,
       });
 
       return query;
@@ -298,7 +311,10 @@ export class RoundDataProviderService {
     }
   }
 
-  public async updateTournament(tournamentId: string, tournamentBaseUrl: string) {
+  public async updateTournament(
+    tournamentId: string,
+    tournamentBaseUrl: string
+  ): Promise<unknown> {
     // Initialize invoice tournament data
     this.invoice.tournament = {
       id: tournamentId,

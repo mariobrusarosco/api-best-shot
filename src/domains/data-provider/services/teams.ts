@@ -3,21 +3,52 @@ import type {
   ENDPOINT_STANDINGS,
   I_TEAM_FROM_ROUND,
 } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
-import { BaseScraper } from '../providers/playwright/base-scraper';
-import { Profiling } from '@/services/profiling';
-import { DB_InsertTeam } from '@/domains/team/schema';
-import { safeString, sleep } from '@/utils';
 import { QUERIES_TEAMS } from '@/domains/team/queries';
+import { DB_InsertTeam } from '@/domains/team/schema';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { Profiling } from '@/services/profiling';
+import { safeString, sleep } from '@/utils';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import { BaseScraper } from '../providers/playwright/base-scraper';
+
+type TeamsScrapingOperationData =
+  | {
+      url?: string;
+      tournamentId?: string;
+      teamsCount?: number;
+      note?: string;
+      groupsCount?: number;
+    }
+  | { error: string; debugMessage?: string; errorMessage?: string }
+  | { teamName?: string; teamId?: string | number; logoUrl?: string; reason?: string }
+  | {
+      roundSlug?: string;
+      providerUrl?: string;
+      totalTeamsInRound?: number;
+      newUniqueTeams?: number;
+      skippedDuplicates?: number;
+      matchesCount?: number;
+    }
+  | { createdTeamsCount?: number; upsertedTeamsCount?: number; teamIds?: string[] }
+  | {
+      standingsTeams?: number;
+      knockoutTeams?: number;
+      uniqueTeamsCount?: number;
+      duplicatesRemoved?: number;
+      teamsToEnhance?: number;
+      enhancedTeamsCount?: number;
+      failedEnhancements?: number;
+      skippedDuplicates?: number;
+    }
+  | Record<string, unknown>;
 
 interface TeamsScrapingOperation {
   step: string;
   operation: string;
   status: 'started' | 'completed' | 'failed';
-  data?: any;
+  data?: TeamsScrapingOperationData;
   timestamp: string;
 }
 
@@ -77,8 +108,8 @@ export class TeamsDataProviderService {
     step: string,
     operation: string,
     status: 'started' | 'completed' | 'failed',
-    data?: any
-  ) {
+    data?: TeamsScrapingOperationData
+  ): void {
     this.invoice.operations.push({
       step,
       operation,
@@ -95,7 +126,7 @@ export class TeamsDataProviderService {
     }
   }
 
-  private generateInvoiceFile() {
+  private generateInvoiceFile(): void {
     this.invoice.endTime = new Date().toISOString();
     const filename = `teams-scraping-${this.invoice.requestId}.json`;
     const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
@@ -107,12 +138,13 @@ export class TeamsDataProviderService {
         data: { filepath, requestId: this.invoice.requestId },
         source: 'DATA_PROVIDER_V2_TEAMS_generateInvoiceFile',
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       Profiling.error({
         source: 'DATA_PROVIDER_V2_TEAMS_generateInvoiceFile',
-        error: error as Error,
+        error: error instanceof Error ? error : new Error(errorMessage),
       });
-      console.error('Failed to write teams invoice file:', error);
+      console.error('Failed to write teams invoice file:', errorMessage);
     }
   }
 
@@ -120,7 +152,7 @@ export class TeamsDataProviderService {
     return `https://api.sofascore.app/api/v1/team/${teamId}/image`;
   }
 
-  private async enhanceTeamWithLogo(team: DB_InsertTeam) {
+  private async enhanceTeamWithLogo(team: DB_InsertTeam): Promise<DB_InsertTeam> {
     this.addOperation('enhancement', 'enhance_team_logo', 'started', {
       teamName: team.name,
       teamId: team.externalId,
@@ -147,14 +179,18 @@ export class TeamsDataProviderService {
       });
 
       return enhancedTeam;
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.addOperation('enhancement', 'enhance_team_logo', 'failed', {
         teamName: team.name,
-        error: (error as Error).message,
+        error: errorMessage,
       });
       Profiling.error({
         source: 'TEAMS_SERVICE_enhanceTeamWithLogo',
-        error: `Failed to enhance team ${team.name} with logo: ${error}`,
+        error:
+          error instanceof Error
+            ? error
+            : new Error(`Failed to enhance team ${team.name} with logo: ${errorMessage}`),
       });
       throw error;
     }
@@ -204,7 +240,7 @@ export class TeamsDataProviderService {
 
   public async fetchTeamsFromStandings(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ) {
+  ): Promise<ENDPOINT_STANDINGS | null> {
     const url = `${tournament.baseUrl}/standings/total`;
     this.addOperation('scraping', 'fetch_teams_standings', 'started', { url });
 
@@ -276,7 +312,7 @@ export class TeamsDataProviderService {
 
   public async fetchTeamsFromKnockoutRounds(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ) {
+  ): Promise<I_TEAM_FROM_ROUND[]> {
     this.addOperation('scraping', 'fetch_teams_knockout', 'started', {
       tournamentId: tournament.id,
     });
@@ -286,7 +322,9 @@ export class TeamsDataProviderService {
 
       this.addOperation('database', 'get_knockout_rounds', 'completed', {
         roundsCount: rounds.length,
-        rounds: rounds.map((round: any) => round.slug || round.label),
+        rounds: rounds.map(
+          (round: { slug?: string; label?: string }) => round.slug || round.label
+        ),
       });
 
       const ALL_KNOCKOUT_TEAMS = [] as I_TEAM_FROM_ROUND[];
@@ -364,8 +402,6 @@ export class TeamsDataProviderService {
       }
 
       // Determine if we should consider this successful
-      const hasAnyTeams = ALL_KNOCKOUT_TEAMS.length > 0;
-      const hasAnySuccessfulRounds = successfulRounds > 0;
 
       this.addOperation('scraping', 'fetch_teams_knockout', 'completed', {
         totalUniqueTeams: ALL_KNOCKOUT_TEAMS.length,
@@ -417,19 +453,20 @@ export class TeamsDataProviderService {
 
       this.addOperation('database', 'create_teams', 'completed', {
         createdTeamsCount: createdTeams.length,
-        teamIds: createdTeams.map((t: any) => t.id),
+        teamIds: createdTeams.map(t => t.id),
       });
 
       return createdTeams;
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.addOperation('database', 'create_teams', 'failed', {
-        error: (error as Error).message,
+        error: errorMessage,
       });
       throw error;
     }
   }
 
-  public async upsertOnDatabase(teams: DB_InsertTeam[]) {
+  public async upsertOnDatabase(teams: DB_InsertTeam[]): Promise<void> {
     this.addOperation('database', 'upsert_teams', 'started', {
       teamsCount: teams.length,
     });
@@ -440,9 +477,10 @@ export class TeamsDataProviderService {
       this.addOperation('database', 'upsert_teams', 'completed', {
         upsertedTeamsCount: teams.length,
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.addOperation('database', 'upsert_teams', 'failed', {
-        error: (error as Error).message,
+        error: errorMessage,
       });
       throw error;
     }
@@ -469,8 +507,8 @@ export class TeamsDataProviderService {
         mode: tournament.mode,
       });
 
-      let mappedTeamsFromStandings: any[] = [];
-      let mappedTeamsFromKnockoutRounds: any[] = [];
+      let mappedTeamsFromStandings: DB_InsertTeam[] = [];
+      let mappedTeamsFromKnockoutRounds: DB_InsertTeam[] = [];
 
       // Fetch teams based on tournament mode
       if (tournament.mode === 'knockout-only') {
@@ -556,10 +594,14 @@ export class TeamsDataProviderService {
           enhancedTeams.push(enhancedTeam);
           enhancedTeamIds.add(team.externalId);
           await sleep(1000);
-        } catch (error) {
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
           Profiling.error({
             source: 'DATA_PROVIDER_TEAMS_enhanceTeamWithLogo',
-            error: `Failed to enhance team ${team.name}: ${error}`,
+            error:
+              error instanceof Error
+                ? error
+                : new Error(`Failed to enhance team ${team.name}: ${errorMessage}`),
           });
           // Continue with next team even if one fails
           continue;
@@ -592,14 +634,15 @@ export class TeamsDataProviderService {
       this.generateInvoiceFile();
 
       return query;
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.addOperation('initialization', 'process_teams', 'failed', {
-        error: (error as Error).message,
+        error: errorMessage,
       });
       this.generateInvoiceFile();
       Profiling.error({
         source: 'DATA_PROVIDER_V2_TEAMS_init',
-        error,
+        error: error instanceof Error ? error : new Error(errorMessage),
       });
       throw error;
     }

@@ -50,11 +50,11 @@ export const logger = winston.createLogger({
 });
 
 // Export convenience methods
-export const logInfo = (message: string, meta?: any) => {
+export const logInfo = (message: string, meta?: object) => {
   logger.info(message, meta);
 };
 
-export const logError = (message: string, error?: Error, meta?: any) => {
+export const logError = (message: string, error?: Error, meta?: object) => {
   logger.error(message, {
     error: error?.message || error,
     stack: error?.stack,
@@ -62,11 +62,11 @@ export const logError = (message: string, error?: Error, meta?: any) => {
   });
 };
 
-export const logWarn = (message: string, meta?: any) => {
+export const logWarn = (message: string, meta?: object) => {
   logger.warn(message, meta);
 };
 
-export const logDebug = (message: string, meta?: any) => {
+export const logDebug = (message: string, meta?: object) => {
   logger.debug(message, meta);
 };
 

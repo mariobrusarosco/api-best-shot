@@ -109,7 +109,11 @@ const update = async (req: TournamentRoundRequest, res: Response) => {
 
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament rounds update completed successfully`,
-      data: { requestId, tournamentLabel: tournament.label, roundsCount: rounds.length },
+      data: {
+        requestId,
+        tournamentLabel: tournament.label,
+        roundsCount: (rounds as unknown[]).length,
+      },
       source: 'DATA_PROVIDER_V2_TOURNAMENT_ROUNDS_update',
     });
 

@@ -1,22 +1,25 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from './schema';
 import { env } from '../../config/env';
 
-// Handle optional database connection for Cloud Run testing
-let db: any;
+type DatabaseType = PostgresJsDatabase<typeof schema>;
 
-async function verifyConnection(client: any) {
+// Handle optional database connection for Cloud Run testing
+let db: DatabaseType;
+
+async function verifyConnection(client: postgres.Sql): Promise<boolean> {
   try {
     await client`SELECT 1`;
     console.log('✅ Database connected successfully');
     return true;
-  } catch (err) {
+  } catch (err: unknown) {
     console.error(
       `----------------------------------------------------
 ❌ Database connection failed: \nif you are running this on your local machine, please check if the 'bestshot_db' container is running. If you are running this on cloud run, please check if the database is running.
 
-Error: ${err}
+Error: ${err instanceof Error ? err.message : String(err)}
 ----------------------------------------------------`
     );
 
@@ -50,11 +53,11 @@ if (env.DB_STRING_CONNECTION) {
   db = new Proxy(
     {},
     {
-      get() {
+      get(): never {
         throw new Error('Database not configured - please set DB_STRING_CONNECTION');
       },
     }
-  );
+  ) as DatabaseType;
 }
 
 export default db;

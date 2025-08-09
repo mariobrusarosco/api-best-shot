@@ -93,7 +93,7 @@ const create = async (req: StandingsRequest, res: Response) => {
     });
 
     return res.status(200).json({ standings });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_STANDINGS_create',
       error,
@@ -198,7 +198,7 @@ const update = async (req: StandingsRequest, res: Response) => {
     });
 
     return res.status(200).json({ standings });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_STANDINGS_update',
       error,

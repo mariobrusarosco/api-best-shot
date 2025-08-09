@@ -70,7 +70,7 @@ const create = async (req: TeamsRequest, res: Response) => {
     });
 
     return res.status(200).json({ teams });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_TEAMS_create',
       error,

@@ -26,9 +26,9 @@ async function getMemberGuesses({
   round: string;
 }) {
   try {
-    let guesses: Awaited<ReturnType<typeof db.select>> | null = null;
+    let guesses: any[] | null = null;
 
-    guesses = await db
+    const guessesResult = await db
       .select()
       .from(T_Guess)
       .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
@@ -39,6 +39,8 @@ async function getMemberGuesses({
           eq(T_Guess.memberId, memberId)
         )
       );
+
+    guesses = guessesResult;
 
     if (guesses.length === 0) {
       const roundMatches = await db
@@ -60,7 +62,7 @@ async function getMemberGuesses({
       );
 
       await Promise.all(promises);
-      guesses = await db
+      const finalGuessesResult = await db
         .select()
         .from(T_Guess)
         .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
@@ -71,11 +73,11 @@ async function getMemberGuesses({
             eq(T_Guess.memberId, memberId)
           )
         );
+      guesses = finalGuessesResult;
     }
 
-    const parsedGuesses = guesses.map((row: (typeof guesses)[number]) =>
-      runGuessAnalysis(row.guess, row.match)
-    );
+    const parsedGuesses =
+      guesses?.map((row: any) => runGuessAnalysis(row.guess, row.match)) || [];
 
     return parsedGuesses;
   } catch (error: unknown) {

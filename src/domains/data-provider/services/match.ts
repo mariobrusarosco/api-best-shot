@@ -3,22 +3,47 @@ import { DB_InsertMatch, T_Match } from '@/domains/match/schema';
 import { safeString } from '@/utils';
 import db from '@/services/database';
 import { ENDPOINT_ROUND } from '../providers/sofascore_v2/schemas/endpoints';
-import Profiling from '@/services/profiling';
+import { Profiling } from '@/services/profiling';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
 import { QUERIES_MATCH } from '@/domains/match/queries';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
-const safeSofaDate = (date: any) => {
-  return date === null || date === undefined ? null : new Date(date);
+const safeSofaDate = (date: unknown): Date | null => {
+  return date === null || date === undefined
+    ? null
+    : new Date(date as string | number | Date);
 };
+
+type MatchesScrapingOperationData =
+  | {
+      url?: string;
+      roundId?: string;
+      roundSlug?: string;
+      matchesCount?: number;
+      note?: string;
+    }
+  | { error: string; debugMessage?: string; errorMessage?: string }
+  | {
+      tournamentId?: string;
+      totalRoundsProcessed?: number;
+      createdMatchesCount?: number;
+      roundsWithMatches?: number;
+      roundsWithoutMatches?: number;
+    }
+  | {
+      totalMatchesScraped?: number;
+      totalMatchesCreated?: number;
+      roundsProcessed?: number;
+    }
+  | Record<string, unknown>;
 
 interface MatchesScrapingOperation {
   step: string;
   operation: string;
   status: 'started' | 'completed' | 'failed';
-  data?: any;
+  data?: MatchesScrapingOperationData;
   timestamp: string;
 }
 
@@ -80,8 +105,8 @@ export class MatchesDataProviderService {
     step: string,
     operation: string,
     status: 'started' | 'completed' | 'failed',
-    data?: any
-  ) {
+    data?: MatchesScrapingOperationData
+  ): void {
     this.invoice.operations.push({
       step,
       operation,
@@ -98,7 +123,7 @@ export class MatchesDataProviderService {
     }
   }
 
-  private generateInvoiceFile() {
+  private generateInvoiceFile(): void {
     this.invoice.endTime = new Date().toISOString();
     const filename = `matches-scraping-${this.invoice.requestId}.json`;
     const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
@@ -110,16 +135,19 @@ export class MatchesDataProviderService {
         data: { filepath, requestId: this.invoice.requestId },
         source: 'DATA_PROVIDER_V2_MATCHES_generateInvoiceFile',
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       Profiling.error({
         source: 'DATA_PROVIDER_V2_MATCHES_generateInvoiceFile',
-        error: error as Error,
+        error: error instanceof Error ? error : new Error(errorMessage),
       });
-      console.error('Failed to write matches invoice file:', error);
+      console.error('Failed to write matches invoice file:', errorMessage);
     }
   }
 
-  public async getTournamentMatchesByRound(round: DB_SelectTournamentRound) {
+  public async getTournamentMatchesByRound(
+    round: DB_SelectTournamentRound
+  ): Promise<ENDPOINT_ROUND | null> {
     this.addOperation('scraping', 'fetch_round_matches', 'started', {
       roundSlug: round.slug,
       providerUrl: round.providerUrl,
@@ -136,7 +164,7 @@ export class MatchesDataProviderService {
           note: 'No matches found',
         });
         this.invoice.summary.matchCounts.roundsWithoutMatches++;
-        return [];
+        return null;
       }
 
       const matches = this.mapMatches(rawContent, round.tournamentId, round.slug);
@@ -150,7 +178,7 @@ export class MatchesDataProviderService {
       this.invoice.summary.matchCounts.roundsWithMatches++;
       this.invoice.summary.matchCounts.totalMatchesScraped += matches.length;
 
-      return matches;
+      return rawContent;
     } catch (error) {
       this.addOperation('scraping', 'fetch_round_matches', 'failed', {
         roundSlug: round.slug,
@@ -167,7 +195,7 @@ export class MatchesDataProviderService {
   public async getTournamentMatches(
     rounds: DB_SelectTournamentRound[],
     tournamentId: string
-  ) {
+  ): Promise<DB_InsertMatch[]> {
     this.addOperation('scraping', 'fetch_tournament_matches', 'started', {
       tournamentId,
       roundsCount: rounds.length,
@@ -292,7 +320,7 @@ export class MatchesDataProviderService {
       });
 
       return matches as DB_InsertMatch[];
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('[SOFASCORE] - [ERROR] - [MAP MATCHES]', error);
       throw error;
     }
@@ -306,7 +334,7 @@ export class MatchesDataProviderService {
       if (matchWasPostponed) return 'not-defined';
       if (matcheEnded) return 'ended';
       return 'open';
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('[SOFASCORE] - [ERROR] - [GET MATCH STATUS]', error);
       throw error;
     }
@@ -447,7 +475,12 @@ export class MatchesDataProviderService {
       });
 
       const rawMatches = await this.getTournamentMatchesByRound(round);
-      const query = await this.updateOnDatabase(rawMatches);
+      if (!rawMatches) {
+        this.generateInvoiceFile();
+        return [];
+      }
+      const matches = this.mapMatches(rawMatches, round.tournamentId, round.slug);
+      const query = await this.updateOnDatabase(matches);
 
       // Generate invoice file at the very end
       this.generateInvoiceFile();

@@ -4,7 +4,6 @@
  * Handles request orchestration for tournament round operations
  */
 
-import type { Request, Response } from 'express';
 import { API_TOURNAMENT_ROUND } from '../api';
 
 export class TournamentRoundController {

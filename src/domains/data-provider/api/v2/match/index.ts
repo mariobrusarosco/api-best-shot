@@ -79,7 +79,7 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
     });
 
     return res.status(200).json({ matches });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_MATCHES_create',
       error,
@@ -197,7 +197,7 @@ const updateMatchesForRound = async (
     });
 
     return res.status(200).json({ matches, round: round.slug });
-  } catch (error: any) {
+  } catch (error: unknown) {
     Profiling.error({
       source: 'DATA_PROVIDER_V2_MATCHES_updateMatchesForRound',
       error,

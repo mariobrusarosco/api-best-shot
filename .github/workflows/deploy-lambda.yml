@@ -45,8 +45,12 @@ jobs:
               - 'src/lambdas/caller-scores-and-standings.mjs'
             caller-knockouts-update:
               - 'src/lambdas/caller-knockouts-update.mjs'
+            caller-daily-routine:
+              - 'src/lambdas/caller-daily-routine.mjs'
             layers:
               - 'src/lambdas/layers/**'
+            lambda-related:
+              - 'src/domains/data-provider/controllers/scheduler/**'
 
   deploy-layers:
     name: Deploy Lambda Layers

@@ -29,6 +29,7 @@ jobs:
     outputs:
       caller-scores-and-standings: ${{ steps.changes.outputs.caller-scores-and-standings }}
       caller-knockouts-update: ${{ steps.changes.outputs.caller-knockouts-update }}
+      caller-daily-routine: ${{ steps.changes.outputs.caller-daily-routine }}
       layers-changed: ${{ steps.changes.outputs.layers }}
     steps:
       - name: Checkout code
@@ -106,7 +107,7 @@ jobs:
     name: Deploy Lambda Functions
     runs-on: ubuntu-latest
     needs: [detect-changes, deploy-layers]
-    if: always() && (needs.detect-changes.outputs.caller-scores-and-standings == 'true' || needs.detect-changes.outputs.caller-knockouts-update == 'true' || needs.deploy-layers.result == 'success' || github.event_name == 'workflow_dispatch')
+    if: always() && (needs.detect-changes.outputs.caller-scores-and-standings == 'true' || needs.detect-changes.outputs.caller-knockouts-update == 'true' || needs.detect-changes.outputs.caller-daily-routine == 'true' || needs.deploy-layers.result == 'success' || github.event_name == 'workflow_dispatch')
     environment: ${{ github.event.inputs.environment || 'demo' }}
     
     strategy:
@@ -116,6 +117,8 @@ jobs:
             description: "Updates match scores and tournament standings"
           - name: caller-knockouts-update  
             description: "Updates knockout tournament brackets"
+          - name: caller-daily-routine
+            description: "Creates daily schedules for match automation"
 
     steps:
       - name: Checkout code
@@ -138,6 +141,8 @@ jobs:
             CHANGED="${{ needs.detect-changes.outputs.caller-scores-and-standings }}"
           elif [[ "$FUNCTION_NAME" == "caller-knockouts-update" ]]; then
             CHANGED="${{ needs.detect-changes.outputs.caller-knockouts-update }}"
+          elif [[ "$FUNCTION_NAME" == "caller-daily-routine" ]]; then
+            CHANGED="${{ needs.detect-changes.outputs.caller-daily-routine }}"
           else
             CHANGED="false"
           fi

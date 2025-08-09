@@ -8,10 +8,12 @@ set -e
 # Configuration
 PROJECT_ID=${GOOGLE_CLOUD_PROJECT_ID:-"your-project-id"}
 REGION=${GOOGLE_CLOUD_REGION:-"us-central1"}
+DEMO_API_URL="https://api-best-shot-demo.mariobrusarosco.com"
 
 echo "🚀 Deploying GCP Scheduler Resources"
 echo "Project: $PROJECT_ID"
 echo "Region: $REGION"
+echo "Demo API: $DEMO_API_URL"
 
 # Enable required APIs
 echo "📡 Enabling required APIs..."
@@ -60,11 +62,13 @@ KNOCKOUTS_URL=$(gcloud functions describe knockouts-update --region=$REGION --pr
 echo ""
 echo "✅ Deployment completed!"
 echo ""
-echo "📝 Add these environment variables to your .env file:"
+echo "📝 Add these environment variables to your production .env file:"
 echo "GOOGLE_CLOUD_PROJECT_ID=$PROJECT_ID"
 echo "GOOGLE_CLOUD_REGION=$REGION"
 echo "GCP_SCORES_STANDINGS_FUNCTION_URL=$SCORES_URL"
 echo "GCP_KNOCKOUTS_UPDATE_FUNCTION_URL=$KNOCKOUTS_URL"
+echo "API_DOMAIN=$DEMO_API_URL"
+echo "API_VERSION=/api/v2"
 echo ""
 echo "🔧 Next steps:"
 echo "1. Update your .env file with the variables above"

@@ -5,7 +5,9 @@ export type IDailySchedule = {
   targetInput: Record<string, unknown>;
 };
 
-export const STANDINGS_URL = `${process.env.API_DOMAIN}${process.env.API_VERSION}/data-provider/tournaments/:tournamentId/standings`;
-export const ROUND_URL = `${process.env.API_DOMAIN}${process.env.API_VERSION}/data-provider/tournaments/:tournamentId/matches/:roundSlug`;
-export const ROUNDS_URL = `${process.env.API_DOMAIN}${process.env.API_VERSION}/data-provider/tournaments/:tournamentId/rounds`;
-export const KNOCKOUT_ROUNDS_UPDATE_URL = `${process.env.API_DOMAIN}${process.env.API_VERSION}/data-provider/tournaments/:tournamentId/rounds/knockout-update`;
+import { env } from '@/config/env';
+
+export const STANDINGS_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/tournaments/:tournamentId/standings`;
+export const ROUND_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/tournaments/:tournamentId/matches/:roundSlug`;
+export const ROUNDS_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/tournaments/:tournamentId/rounds`;
+export const KNOCKOUT_ROUNDS_UPDATE_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/tournaments/:tournamentId/rounds/knockout-update`;

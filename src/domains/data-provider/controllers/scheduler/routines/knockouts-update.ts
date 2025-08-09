@@ -4,6 +4,7 @@ import {
   CreateScheduleCommandInput,
   SchedulerClient,
 } from '@aws-sdk/client-scheduler';
+import { env } from '@/config/env';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
@@ -11,7 +12,7 @@ import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 dayjs.extend(isToday);
 
-const client = new SchedulerClient({ region: 'us-east-1' });
+const client = new SchedulerClient({ region: env.AWS_REGION });
 
 export const scheduleKnockoutsUpdateRoutine = async (schedule: {
   targetInput: Record<string, unknown>;
@@ -20,8 +21,7 @@ export const scheduleKnockoutsUpdateRoutine = async (schedule: {
   try {
     const StartDate = dayjs().utc().add(1, 'minute').toDate();
     const GroupName = 'knockouts-update';
-    const targetArn =
-      'arn:aws:lambda:us-east-1:905418297381:function:caller-knockouts-update';
+    const targetArn = `arn:aws:lambda:${env.AWS_REGION}:905418297381:function:caller-knockouts-update`;
     const ScheduleExpression = 'rate(1 day)';
 
     const params = {
@@ -34,7 +34,7 @@ export const scheduleKnockoutsUpdateRoutine = async (schedule: {
       GroupName,
       Target: {
         Arn: targetArn,
-        RoleArn: 'arn:aws:iam::905418297381:role/root-scheduler',
+        RoleArn: `arn:aws:iam::905418297381:role/root-scheduler`,
         Input: JSON.stringify(schedule.targetInput),
       },
     } satisfies CreateScheduleCommandInput;

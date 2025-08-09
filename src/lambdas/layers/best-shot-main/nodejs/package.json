@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@sentry/aws-serverless": "^8.47.0",
+    "@sentry/profiling-node": "^8.47.0",
+    "axios": "^1.7.9"
+  }
+}

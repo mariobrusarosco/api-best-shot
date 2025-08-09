@@ -33,7 +33,8 @@ const envSchema = z.object({
       return port;
     })
     .default('9090'),
-  API_VERSION: z.string().optional(),
+  API_VERSION: z.string().default('/v2'),
+  API_DOMAIN: z.string().optional(),
 
   // Security
   JWT_SECRET: z.string().min(1, 'JWT secret is required'),
@@ -45,12 +46,17 @@ const envSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS secret access key is required'),
   AWS_BUCKET_NAME: z.string().min(1, 'AWS bucket name is required'),
   AWS_CLOUDFRONT_URL: z.string().min(1, 'AWS CloudFront URL is required'),
+  AWS_REGION: z.string().default('us-east-1'),
+
+  // AWS Lambda Environment Variables (for Lambda execution)
+  DATA_PROVIDER_COOKIE_PRODUCTION: z.string().optional(),
+  DATA_PROVIDER_COOKIE_DEMO: z.string().optional(),
 
   // Monitoring
   SENTRY_DSN: z.string().min(1, 'Sentry DSN is required'),
 
-  // Admin Operations
-  ADMIN_TOKEN: z.string().min(1, 'Admin token is required'),
+  // Internal Service Operations
+  INTERNAL_SERVICE_TOKEN: z.string().min(1, 'Internal service token is required'),
 });
 
 // Parse and validate environment variables

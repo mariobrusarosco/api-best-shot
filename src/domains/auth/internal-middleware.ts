@@ -1,13 +1,8 @@
 import { env } from '@/config/env';
 import { Profiling } from '@/services/profiling';
-import { NextFunction, Request, Response } from 'express';
-import { GlobalErrorMapper } from '../shared/error-handling/mapper';
+import type { NextFunction, Request, Response } from 'express';
 
-export const InternalMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const InternalMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
     const internalToken =
       req.headers['x-internal-token'] ||
@@ -36,9 +31,10 @@ export const InternalMiddleware = (
         data: {
           path: req.path,
           method: req.method,
-          providedToken: typeof internalToken === 'string' 
-            ? internalToken.substring(0, 8) + '...' 
-            : 'array_value', // Log only first 8 chars for security
+          providedToken:
+            typeof internalToken === 'string'
+              ? `${internalToken.substring(0, 8)}...`
+              : 'array_value', // Log only first 8 chars for security
         },
       });
 

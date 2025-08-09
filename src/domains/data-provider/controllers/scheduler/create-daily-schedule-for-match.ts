@@ -46,7 +46,7 @@ const generateScheduleId = (
 const buildSchedule = (
   match: Awaited<ReturnType<typeof MatchQueries.currentDayMatchesOnDatabase>>[number]
 ) => {
-  const estimatedEndOfMatch = getEstimatedEndOfMatch();
+  const estimatedEndOfMatch = getEstimatedEndOfMatch(match.date);
   const scheduleId = generateScheduleId(match.tournamentLabel, estimatedEndOfMatch);
   const targetEnv = process.env.NODE_ENV;
 
@@ -65,6 +65,14 @@ const buildSchedule = (
   };
 };
 
-const getEstimatedEndOfMatch = () => {
-  return dayjs().utc().add(2, 'minutes');
+const getEstimatedEndOfMatch = (matchDate: Date | null) => {
+  if (!matchDate) {
+    // Fallback: schedule for 3 hours from now if no match date
+    return dayjs().utc().add(3, 'hours');
+  }
+  
+  // Schedule 3 hours after the match is expected to end
+  // Match duration: 90 min game + 30 min buffer = 2 hours total
+  // Then wait 3 more hours for final results = 5 hours after match start
+  return dayjs(matchDate).utc().add(5, 'hours');
 };

@@ -26,7 +26,7 @@ async function getMemberGuesses({
   round: string;
 }) {
   try {
-    let guesses: any[] | null = null;
+    let guesses: typeof guessesResult | null = null;
 
     const guessesResult = await db
       .select()

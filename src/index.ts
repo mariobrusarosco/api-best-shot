@@ -52,7 +52,7 @@ app.get('/debug/env', (_req, res) => {
     HAS_AWS_SECRET_KEY: !!process.env.AWS_SECRET_ACCESS_KEY,
     HAS_AWS_BUCKET: !!process.env.AWS_BUCKET_NAME,
     HAS_AWS_CLOUDFRONT: !!process.env.AWS_CLOUDFRONT_URL,
-    HAS_ADMIN_TOKEN: !!process.env.ADMIN_TOKEN,
+    HAS_INTERNAL_SERVICE_TOKEN: !!env.INTERNAL_SERVICE_TOKEN,
     HAS_CORS_ORIGIN: !!process.env.ACCESS_CONTROL_ALLOW_ORIGIN,
     HAS_COOKIE_NAME: !!process.env.MEMBER_PUBLIC_ID_COOKIE,
     SENTRY_DSN_PREFIX: `${process.env.SENTRY_DSN?.substring(0, 20)}...` || 'NOT_SET',

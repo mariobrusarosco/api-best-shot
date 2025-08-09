@@ -4,6 +4,7 @@ import {
   CreateScheduleCommandInput,
   SchedulerClient,
 } from '@aws-sdk/client-scheduler';
+import { env } from '@/config/env';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
@@ -11,7 +12,7 @@ import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 dayjs.extend(isToday);
 
-const client = new SchedulerClient({ region: 'us-east-1' });
+const client = new SchedulerClient({ region: env.AWS_REGION });
 
 export const scheduleScoresAndStandingsRoutine = async (schedule: {
   cronExpression: string;
@@ -21,8 +22,7 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
   try {
     const StartDate = dayjs().utc().add(1, 'minute').toDate();
     const GroupName = 'scores-and-standings-routine';
-    const targetArn =
-      'arn:aws:lambda:us-east-1:905418297381:function:caller-scores-and-standings';
+    const targetArn = `arn:aws:lambda:${env.AWS_REGION}:905418297381:function:caller-scores-and-standings`;
 
     const params = {
       Name: schedule.id,
@@ -35,7 +35,7 @@ export const scheduleScoresAndStandingsRoutine = async (schedule: {
       GroupName,
       Target: {
         Arn: targetArn,
-        RoleArn: 'arn:aws:iam::905418297381:role/root-scheduler',
+        RoleArn: `arn:aws:iam::905418297381:role/root-scheduler`,
         Input: JSON.stringify(schedule.targetInput),
       },
     } satisfies CreateScheduleCommandInput;

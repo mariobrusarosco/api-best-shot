@@ -56,7 +56,7 @@ jobs:
     name: Deploy Lambda Layers
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.layers-changed == 'true'
+    if: needs.detect-changes.outputs.layers-changed == 'true' || github.event_name == 'workflow_dispatch'
     environment: ${{ github.event.inputs.environment || 'demo' }}
     
     steps:
@@ -106,7 +106,7 @@ jobs:
     name: Deploy Lambda Functions
     runs-on: ubuntu-latest
     needs: [detect-changes, deploy-layers]
-    if: always() && (needs.detect-changes.outputs.caller-scores-and-standings == 'true' || needs.detect-changes.outputs.caller-knockouts-update == 'true' || needs.deploy-layers.result == 'success')
+    if: always() && (needs.detect-changes.outputs.caller-scores-and-standings == 'true' || needs.detect-changes.outputs.caller-knockouts-update == 'true' || needs.deploy-layers.result == 'success' || github.event_name == 'workflow_dispatch')
     environment: ${{ github.event.inputs.environment || 'demo' }}
     
     strategy:
@@ -142,12 +142,13 @@ jobs:
             CHANGED="false"
           fi
           
-          # Also update if layers changed
+          # Also update if layers changed or manual dispatch
           LAYERS_CHANGED="${{ needs.detect-changes.outputs.layers-changed }}"
+          MANUAL_DISPATCH="${{ github.event_name == 'workflow_dispatch' }}"
           
-          if [[ "$CHANGED" == "true" || "$LAYERS_CHANGED" == "true" ]]; then
+          if [[ "$CHANGED" == "true" || "$LAYERS_CHANGED" == "true" || "$MANUAL_DISPATCH" == "true" ]]; then
             echo "should-deploy=true" >> $GITHUB_OUTPUT
-            echo "🚀 Will deploy $FUNCTION_NAME (function changed: $CHANGED, layers changed: $LAYERS_CHANGED)"
+            echo "🚀 Will deploy $FUNCTION_NAME (function changed: $CHANGED, layers changed: $LAYERS_CHANGED, manual: $MANUAL_DISPATCH)"
           else
             echo "should-deploy=false" >> $GITHUB_OUTPUT
             echo "⏭️ Skipping $FUNCTION_NAME (no changes detected)"

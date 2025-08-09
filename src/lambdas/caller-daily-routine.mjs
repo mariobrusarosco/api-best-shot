@@ -2,26 +2,24 @@ import * as Sentry from '@sentry/aws-serverless';
 import '/opt/nodejs/instrument.mjs';
 
 import axios from 'axios';
-import { metadata } from './metadata.mjs';
 
 export const handler = Sentry.wrapHandler(async event => {
-  const envTarget = event.envTarget || 'demo';
+  const targetEnv = event.targetEnv || 'demo';
+  const INTERNAL_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
 
   try {
-    const ENDPOINT = metadata[envTarget].ENDPOINT;
-    const COOKIE_TOKEN_NAME = metadata[envTarget].TOKEN_NAME;
-    const COOKIE = process.env[COOKIE_TOKEN_NAME];
-
-    const schedulerResponse = await axios.post(ENDPOINT, null, {
-      headers: { Cookie: COOKIE },
+    const schedulerResponse = await axios.post(event.endpoint, null, {
+      headers: { 
+        'X-Internal-Token': INTERNAL_TOKEN,
+      },
     });
 
-    Sentry.captureMessage(`[LOG] - [LAMBDA] - [CALLER DAILY ROUTINE] [${envTarget}]`, {
+    Sentry.captureMessage(`[LOG] - [LAMBDA] - [CALLER DAILY ROUTINE] [${targetEnv}]`, {
       level: 'log',
       extra: { schedulerResponse: null },
     });
 
-    console.log('[END] -', COOKIE, ENDPOINT);
+    console.log('[END] - Daily routine completed for:', targetEnv);
 
     return {
       statusCode: 200,
@@ -29,7 +27,7 @@ export const handler = Sentry.wrapHandler(async event => {
     };
   } catch (error) {
     Sentry.captureException(
-      `[ERROR] - [LAMBDA] - [CALLER DAILY ROUTINE] [${envTarget}]`,
+      `[ERROR] - [LAMBDA] - [CALLER DAILY ROUTINE] [${targetEnv}]`,
       {
         extra: { error },
       }

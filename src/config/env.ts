@@ -44,6 +44,7 @@ const envSchema = z.object({
   // AWS
   AWS_ACCESS_KEY_ID: z.string().min(1, 'AWS access key ID is required'),
   AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS secret access key is required'),
+  AWS_ACCOUNT_ID: z.string().min(1, 'AWS account ID is required'),
   AWS_BUCKET_NAME: z.string().min(1, 'AWS bucket name is required'),
   AWS_CLOUDFRONT_URL: z.string().min(1, 'AWS CloudFront URL is required'),
   AWS_REGION: z.string().default('us-east-1'),

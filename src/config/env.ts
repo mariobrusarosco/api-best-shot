@@ -34,7 +34,7 @@ const envSchema = z.object({
     })
     .default('9090'),
   API_VERSION: z.string().default('/v2'),
-  API_DOMAIN: z.string().optional(),
+  API_DOMAIN: z.string().min(1, 'API domain is required'),
 
   // Security
   JWT_SECRET: z.string().min(1, 'JWT secret is required'),

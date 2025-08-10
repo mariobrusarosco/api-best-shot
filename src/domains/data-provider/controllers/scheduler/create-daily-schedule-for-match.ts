@@ -33,11 +33,17 @@ export const createDailyScoresAndStandingsRoutine = async () => {
 
 const generateScheduleId = (
   tournamentLabel: string | null,
+  matchDate: Date | null,
   estimatedEndOfMatch: dayjs.Dayjs
 ) => {
   const env = process.env.NODE_ENV === 'demo' ? 'demo_' : '';
+  
+  // Use match date for schedule ID, not execution date
+  // This ensures schedules for matches on the same day have consistent naming
+  const scheduleDate = matchDate ? dayjs(matchDate).utc() : dayjs().utc();
+  const executionTime = estimatedEndOfMatch.format('HH_mm');
 
-  return `${env}${tournamentLabel}_${estimatedEndOfMatch.format('YYYY_MM_DD_HH_mm')}`
+  return `${env}${tournamentLabel}_${scheduleDate.format('YYYY_MM_DD')}_${executionTime}`
     .toLowerCase()
     .replace(/[\s/-]+/g, '_')
     .replace(/[^0-9a-z-_.]/g, '');
@@ -47,7 +53,7 @@ const buildSchedule = (
   match: Awaited<ReturnType<typeof MatchQueries.currentDayMatchesOnDatabase>>[number]
 ) => {
   const estimatedEndOfMatch = getEstimatedEndOfMatch(match.date);
-  const scheduleId = generateScheduleId(match.tournamentLabel, estimatedEndOfMatch);
+  const scheduleId = generateScheduleId(match.tournamentLabel, match.date, estimatedEndOfMatch);
   const targetEnv = process.env.NODE_ENV;
 
   return {

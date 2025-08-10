@@ -37,7 +37,7 @@ const generateScheduleId = (
   estimatedEndOfMatch: dayjs.Dayjs
 ) => {
   const env = process.env.NODE_ENV === 'demo' ? 'demo_' : '';
-  
+
   // Use match date for schedule ID, not execution date
   // This ensures schedules for matches on the same day have consistent naming
   const scheduleDate = matchDate ? dayjs(matchDate).utc() : dayjs().utc();
@@ -53,7 +53,11 @@ const buildSchedule = (
   match: Awaited<ReturnType<typeof MatchQueries.currentDayMatchesOnDatabase>>[number]
 ) => {
   const estimatedEndOfMatch = getEstimatedEndOfMatch(match.date);
-  const scheduleId = generateScheduleId(match.tournamentLabel, match.date, estimatedEndOfMatch);
+  const scheduleId = generateScheduleId(
+    match.tournamentLabel,
+    match.date,
+    estimatedEndOfMatch
+  );
   const targetEnv = process.env.NODE_ENV;
 
   return {

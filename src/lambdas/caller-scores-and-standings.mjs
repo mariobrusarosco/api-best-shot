@@ -10,45 +10,76 @@ export const handler = Sentry.wrapHandler(async event => {
   console.log(`---------------------------------START [${targetEnv}]----`);
 
   try {
+    // Update match scores with tournament and round info
     try {
-      const roundResponse = await axios.patch(event.roundUrl, null, {
+      const roundResponse = await axios.patch(event.roundUrl, {
+        tournamentId: event.tournamentId,
+        roundSlug: event.roundSlug,
+      }, {
         headers: { 
           'X-Internal-Token': INTERNAL_TOKEN,
         },
       });
+      
+      console.log(`✅ [${targetEnv}] Updated match scores for tournament ${event.tournamentId}, round ${event.roundSlug}`);
+      
       Sentry.captureMessage(
-        `[LOG] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [SCORES]`,
+        `[LOG] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [SCORES] - [${targetEnv}]`,
         {
           level: 'log',
-          extra: roundResponse.data,
+          extra: { 
+            tournamentId: event.tournamentId,
+            roundSlug: event.roundSlug,
+            response: roundResponse.data 
+          },
         }
       );
     } catch (error) {
+      console.error(`❌ [${targetEnv}] Failed to update match scores:`, error.message);
       Sentry.captureException(
-        `[ERROR] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [SCORES]`,
-        { extra: error }
+        `[ERROR] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [SCORES] - [${targetEnv}]`,
+        { 
+          extra: { 
+            tournamentId: event.tournamentId,
+            roundSlug: event.roundSlug,
+            error: error.message 
+          } 
+        }
       );
     }
 
-    // Second PATCH request
+    // Update tournament standings
     try {
-      const standingsResponse = await axios.patch(event.standingsUrl, null, {
+      const standingsResponse = await axios.patch(event.standingsUrl, {
+        tournamentId: event.tournamentId,
+      }, {
         headers: { 
           'X-Internal-Token': INTERNAL_TOKEN,
         },
       });
 
+      console.log(`✅ [${targetEnv}] Updated standings for tournament ${event.tournamentId}`);
+
       Sentry.captureMessage(
-        `[LOG] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [STANDINGS] - [${envTarget}]`,
+        `[LOG] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [STANDINGS] - [${targetEnv}]`,
         {
           level: 'log',
-          extra: standingsResponse.data,
+          extra: { 
+            tournamentId: event.tournamentId,
+            response: standingsResponse.data 
+          },
         }
       );
     } catch (error) {
+      console.error(`❌ [${targetEnv}] Failed to update standings:`, error.message);
       Sentry.captureException(
-        `[ERROR] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [STANDINGS] - [${envTarget}]`,
-        { extra: error }
+        `[ERROR] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [STANDINGS] - [${targetEnv}]`,
+        { 
+          extra: { 
+            tournamentId: event.tournamentId,
+            error: error.message 
+          } 
+        }
       );
     }
 
@@ -58,7 +89,7 @@ export const handler = Sentry.wrapHandler(async event => {
     };
   } catch (error) {
     Sentry.captureException(
-      `[ERROR] - [LAMBDA] - [SCORES AND STANDINGS] - [${envTarget}]`,
+      `[ERROR] - [LAMBDA] - [SCORES AND STANDINGS] - [${targetEnv}]`,
       {
         extra: {
           message: error.message,

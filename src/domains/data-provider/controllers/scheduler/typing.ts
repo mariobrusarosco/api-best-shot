@@ -7,7 +7,7 @@ export type IDailySchedule = {
 
 import { env } from '@/config/env';
 
-export const STANDINGS_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/tournaments/:tournamentId/standings`;
-export const ROUND_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/tournaments/:tournamentId/matches/:roundSlug`;
-export const ROUNDS_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/tournaments/:tournamentId/rounds`;
-export const KNOCKOUT_ROUNDS_UPDATE_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/tournaments/:tournamentId/rounds/knockout-update`;
+export const STANDINGS_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/standings`;
+export const ROUND_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/matches`;
+export const ROUNDS_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/rounds`;
+export const KNOCKOUT_ROUNDS_UPDATE_URL = `${env.API_DOMAIN}${env.API_VERSION}/data-provider/rounds/knockout-update`;

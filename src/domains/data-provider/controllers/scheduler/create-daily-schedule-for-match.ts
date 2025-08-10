@@ -62,11 +62,10 @@ const buildSchedule = (
 
   return {
     targetInput: {
-      standingsUrl: STANDINGS_URL.replace(':tournamentId', match.tournamentId),
-      roundUrl: ROUND_URL.replace(':tournamentId', match.tournamentId).replace(
-        ':roundSlug',
-        match.roundSlug
-      ),
+      standingsUrl: STANDINGS_URL,
+      roundUrl: ROUND_URL,
+      tournamentId: match.tournamentId,
+      roundSlug: match.roundSlug,
       targetEnv,
     },
     cronExpression: Utils.toCronFormat(estimatedEndOfMatch),
@@ -81,8 +80,8 @@ const getEstimatedEndOfMatch = (matchDate: Date | null) => {
     return dayjs().utc().add(3, 'hours');
   }
 
-  // Schedule 3 hours after the match is expected to end
-  // Match duration: 90 min game + 30 min buffer = 2 hours total
-  // Then wait 3 more hours for final results = 5 hours after match start
-  return dayjs(matchDate).utc().add(5, 'hours');
+  // Schedule 2.5 hours after the match starts for realistic timing
+  // Match duration: 45min + 10min added + 15min halftime + 45min + 10min added + 10min buffer = 135min
+  // Total: 2.5 hours covers the longest possible match plus buffer
+  return dayjs(matchDate).utc().add(2.5, 'hours');
 };

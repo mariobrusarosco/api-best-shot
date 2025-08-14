@@ -6,6 +6,9 @@ import axios from 'axios';
 export const handler = Sentry.wrapHandler(async event => {
   const targetEnv = event.targetEnv || 'demo';
   const INTERNAL_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
+  const startTime = Date.now();
+
+  console.log(`---------------------------------START [${targetEnv}]----`);
 
   try {
     const newKnockoutRounds = await axios.post(event.knockoutsUpdateUrl, null, {
@@ -14,29 +17,61 @@ export const handler = Sentry.wrapHandler(async event => {
       },
     });
 
+    console.log(`✅ [${targetEnv}] Created new knockout rounds and matches`);
+
     Sentry.captureMessage(
-      `[${targetEnv}], [LOG] - [LAMBDA] - [CALLER NEW ROUNDS AND MATCHES]`,
+      `🟢 Knockout Updates | New Rounds Created | ${targetEnv}`,
       {
-        level: 'log',
-        extra: { newKnockoutRounds },
+        level: 'info',
+        tags: {
+          function: 'caller-knockouts-update',
+          environment: targetEnv,
+          operation: 'create_knockout_rounds',
+          status: 'success'
+        },
+        extra: {
+          timestamp: new Date().toISOString(),
+          apiResponse: newKnockoutRounds.data,
+          duration: `${Date.now() - startTime}ms`,
+          endpoint: event.knockoutsUpdateUrl
+        },
       }
     );
+
+    console.log(`[END] - Knockout rounds update completed for: ${targetEnv}`);
 
     return {
       statusCode: 200,
-      body: JSON.stringify('CALLER: SUCCEEDED'),
+      body: JSON.stringify({
+        message: 'Knockout rounds update completed successfully',
+        environment: targetEnv,
+        newRounds: newKnockoutRounds.data
+      }),
     };
   } catch (error) {
-    Sentry.captureException(
-      `[${targetEnv}], [ERROR] - [LAMBDA] - [CALLER NEW ROUNDS AND MATCHES]`,
-      {
-        extra: { error },
+    console.error(`❌ [${targetEnv}] Failed to create knockout rounds:`, error.message);
+
+    Sentry.captureException(error, {
+      tags: {
+        function: 'caller-knockouts-update',
+        environment: targetEnv,
+        operation: 'create_knockout_rounds',
+        status: 'error'
+      },
+      extra: {
+        timestamp: new Date().toISOString(),
+        endpoint: event.knockoutsUpdateUrl,
+        duration: `${Date.now() - startTime}ms`
       }
-    );
+    });
 
     return {
       statusCode: 500,
-      body: JSON.stringify('LAMBDA: FAILED:'),
+      body: JSON.stringify({
+        error: 'Knockout rounds update failed',
+        message: error.message,
+        environment: targetEnv
+      }),
     };
   }
 });

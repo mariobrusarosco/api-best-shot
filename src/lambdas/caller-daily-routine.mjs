@@ -6,6 +6,7 @@ import axios from 'axios';
 export const handler = Sentry.wrapHandler(async event => {
   const targetEnv = event.targetEnv || 'demo';
   const INTERNAL_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
+  const startTime = Date.now();
 
   console.log(`---------------------------------START [${targetEnv}]----`);
 
@@ -16,9 +17,20 @@ export const handler = Sentry.wrapHandler(async event => {
       },
     });
 
-    Sentry.captureMessage(`[LOG] - [LAMBDA] - [CALLER DAILY ROUTINE] [${targetEnv}]`, {
-      level: 'log',
-      extra: { schedulerResponse: schedulerResponse.data },
+    Sentry.captureMessage(`🟢 Daily Scheduler | Schedules Created | ${targetEnv}`, {
+      level: 'info',
+      tags: {
+        function: 'caller-daily-routine',
+        environment: targetEnv,
+        operation: 'create_schedules',
+        status: 'success'
+      },
+      extra: {
+        timestamp: new Date().toISOString(),
+        schedulesData: schedulerResponse.data,
+        duration: `${Date.now() - startTime}ms`,
+        endpoint: event.endpoint
+      },
     });
 
     console.log(`[END] - Daily routine completed for: ${targetEnv}`);
@@ -36,13 +48,16 @@ export const handler = Sentry.wrapHandler(async event => {
     console.error(`[ERROR] Daily routine failed for ${targetEnv}:`, error.message);
 
     Sentry.captureException(error, {
-      tags: { 
+      tags: {
+        function: 'caller-daily-routine',
         environment: targetEnv,
-        function: 'caller-daily-routine'
+        operation: 'create_schedules',
+        status: 'error'
       },
-      extra: { 
+      extra: {
+        timestamp: new Date().toISOString(),
         endpoint: event.endpoint,
-        targetEnv: targetEnv
+        duration: `${Date.now() - startTime}ms`
       }
     });
 

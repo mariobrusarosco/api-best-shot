@@ -6,6 +6,7 @@ import axios from 'axios';
 export const handler = Sentry.wrapHandler(async event => {
   const targetEnv = event.targetEnv || 'demo';
   const INTERNAL_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
+  const startTime = Date.now();
   
   console.log(`---------------------------------START [${targetEnv}]----`);
 
@@ -24,28 +25,40 @@ export const handler = Sentry.wrapHandler(async event => {
       console.log(`✅ [${targetEnv}] Updated match scores for tournament ${event.tournamentId}, round ${event.roundSlug}`);
       
       Sentry.captureMessage(
-        `[LOG] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [SCORES] - [${targetEnv}]`,
+        `🟢 Match Updates | Scores Updated | ${targetEnv}`,
         {
-          level: 'log',
-          extra: { 
+          level: 'info',
+          tags: {
+            function: 'caller-scores-and-standings',
+            environment: targetEnv,
+            operation: 'update_scores',
+            status: 'success'
+          },
+          extra: {
+            timestamp: new Date().toISOString(),
             tournamentId: event.tournamentId,
             roundSlug: event.roundSlug,
-            response: roundResponse.data 
+            apiResponse: roundResponse.data,
+            duration: `${Date.now() - startTime}ms`
           },
         }
       );
     } catch (error) {
       console.error(`❌ [${targetEnv}] Failed to update match scores:`, error.message);
-      Sentry.captureException(
-        `[ERROR] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [SCORES] - [${targetEnv}]`,
-        { 
-          extra: { 
-            tournamentId: event.tournamentId,
-            roundSlug: event.roundSlug,
-            error: error.message 
-          } 
+      Sentry.captureException(error, {
+        tags: {
+          function: 'caller-scores-and-standings',
+          environment: targetEnv,
+          operation: 'update_scores',
+          status: 'error'
+        },
+        extra: {
+          timestamp: new Date().toISOString(),
+          tournamentId: event.tournamentId,
+          roundSlug: event.roundSlug,
+          url: event.roundUrl
         }
-      );
+      });
     }
 
     // Update tournament standings
@@ -61,26 +74,38 @@ export const handler = Sentry.wrapHandler(async event => {
       console.log(`✅ [${targetEnv}] Updated standings for tournament ${event.tournamentId}`);
 
       Sentry.captureMessage(
-        `[LOG] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [STANDINGS] - [${targetEnv}]`,
+        `🟢 Match Updates | Standings Updated | ${targetEnv}`,
         {
-          level: 'log',
-          extra: { 
+          level: 'info',
+          tags: {
+            function: 'caller-scores-and-standings',
+            environment: targetEnv,
+            operation: 'update_standings',
+            status: 'success'
+          },
+          extra: {
+            timestamp: new Date().toISOString(),
             tournamentId: event.tournamentId,
-            response: standingsResponse.data 
+            apiResponse: standingsResponse.data,
+            duration: `${Date.now() - startTime}ms`
           },
         }
       );
     } catch (error) {
       console.error(`❌ [${targetEnv}] Failed to update standings:`, error.message);
-      Sentry.captureException(
-        `[ERROR] - [LAMBDA] - [CALLER SCORES AND STANDINGS] - [STANDINGS] - [${targetEnv}]`,
-        { 
-          extra: { 
-            tournamentId: event.tournamentId,
-            error: error.message 
-          } 
+      Sentry.captureException(error, {
+        tags: {
+          function: 'caller-scores-and-standings',
+          environment: targetEnv,
+          operation: 'update_standings',
+          status: 'error'
+        },
+        extra: {
+          timestamp: new Date().toISOString(),
+          tournamentId: event.tournamentId,
+          url: event.standingsUrl
         }
-      );
+      });
     }
 
     return {
@@ -88,15 +113,20 @@ export const handler = Sentry.wrapHandler(async event => {
       body: JSON.stringify('LAMBDA: SUCCEEDED'),
     };
   } catch (error) {
-    Sentry.captureException(
-      `[ERROR] - [LAMBDA] - [SCORES AND STANDINGS] - [${targetEnv}]`,
-      {
-        extra: {
-          message: error.message,
-          stack: error.stack,
-        },
-      }
-    );
+    Sentry.captureException(error, {
+      tags: {
+        function: 'caller-scores-and-standings',
+        environment: targetEnv,
+        operation: 'general_execution',
+        status: 'error'
+      },
+      extra: {
+        timestamp: new Date().toISOString(),
+        duration: `${Date.now() - startTime}ms`,
+        tournamentId: event.tournamentId,
+        roundSlug: event.roundSlug
+      },
+    });
 
     return {
       statusCode: 500,

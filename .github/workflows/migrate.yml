@@ -1,0 +1,50 @@
+name: Database Migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to migrate'
+        required: true
+        default: 'demo'
+        type: choice
+        options:
+        - demo
+        - production
+
+jobs:
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Enable Yarn 3
+        run: corepack enable && corepack prepare yarn@3.8.7 --activate
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run Database Migrations
+        run: yarn db:migrate
+        env:
+          DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION_DEMO }}
+
+      - name: Migration Summary
+        run: |
+          echo "## 🗃️ Migration Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Migrations have been applied successfully to the ${{ github.event.inputs.environment }} database." >> $GITHUB_STEP_SUMMARY

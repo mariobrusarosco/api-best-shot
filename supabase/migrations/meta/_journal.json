@@ -1,47 +1,12 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
+  "version": "5",
+  "dialect": "pg",
   "entries": [
     {
       "idx": 0,
       "version": "7",
-      "when": 1744550786774,
-      "tag": "0000_furry_groot",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1745757353657,
-      "tag": "0001_tournament_primary_key",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1746407120181,
-      "tag": "0002_tournament_updates",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1749907273686,
-      "tag": "0003_add_tournament_round_provider_id",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1754486196757,
-      "tag": "0004_purple_calypso",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1755296118000,
-      "tag": "0005_conscious_morlun",
+      "when": 1755301110449,
+      "tag": "0000_initial_complete_schema",
       "breakpoints": true
     }
   ]

@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS "member" (
 	"nick_name" text NOT NULL,
 	"email" text NOT NULL,
 	"password" text,
+	"role" text DEFAULT 'member' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "member_public_id_unique" UNIQUE("public_id"),
@@ -109,33 +110,18 @@ CREATE TABLE IF NOT EXISTS "team" (
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "tournament" (
-	"id" uuid DEFAULT gen_random_uuid(),
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"external_id" text NOT NULL,
 	"base_url" text NOT NULL,
-	"slug" text DEFAULT '',
+	"slug" text DEFAULT '' NOT NULL,
 	"provider" text NOT NULL,
 	"season" text NOT NULL,
 	"mode" text NOT NULL,
-	"standings_mode" text DEFAULT '',
+	"standings_mode" text DEFAULT '' NOT NULL,
 	"label" text NOT NULL,
-	"logo" text DEFAULT '',
+	"logo" text DEFAULT '' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "tournament_round" (
-	"id" uuid DEFAULT gen_random_uuid(),
-	"tournament_id" text NOT NULL,
-	"order" text NOT NULL,
-	"label" text NOT NULL,
-	"slug" text DEFAULT '',
-	"knockout_id" text DEFAULT '',
-	"prefix" text DEFAULT '',
-	"provider_url" text NOT NULL,
-	"type" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "tournament_round_tournament_id_slug_pk" PRIMARY KEY("tournament_id","slug")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "tournament_standings" (
@@ -160,8 +146,24 @@ CREATE TABLE IF NOT EXISTS "tournament_standings" (
 	CONSTRAINT "tournament_standings_shortame_tournament_id_pk" PRIMARY KEY("shortame","tournament_id")
 );
 --> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "tournament_round" (
+	"id" uuid DEFAULT gen_random_uuid(),
+	"tournament_id" text NOT NULL,
+	"order" text NOT NULL,
+	"label" text NOT NULL,
+	"slug" text NOT NULL,
+	"knockout_id" text DEFAULT '',
+	"prefix" text DEFAULT '',
+	"provider_url" text NOT NULL,
+	"provider_id" text NOT NULL,
+	"type" text NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "tournament_round_tournament_id_slug_pk" PRIMARY KEY("tournament_id","slug")
+);
+--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "unique_guess" ON "guess" USING btree ("match_id","member_id");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "unique_tournament" ON "league_tournament" USING btree ("league_id","tournament_id");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "unique_league_perfomance" ON "league_performance" USING btree ("member_id","league_id");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "unique_tournament_perfomance" ON "tournament_performance" USING btree ("member_id","tournament_id");--> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS "unique_provider_external_id" ON "tournament" USING btree ("provider","external_id");
+CREATE UNIQUE INDEX IF NOT EXISTS "unique_external_id_slug" ON "tournament" USING btree ("external_id","slug");

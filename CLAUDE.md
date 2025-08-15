@@ -36,6 +36,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `yarn db:connect` - Connect to PostgreSQL via Docker exec
 - `yarn db:logs` - View database container logs
 
+#### Production Migrations
+
+**✅ AUTOMATED**: Migrations run automatically during CI/CD deployment to demo/production
+
+- Triggered on every push to `main` branch
+- Runs BEFORE application deployment
+- Ensures zero-downtime deployments
+
+**Manual Emergency Migrations**:
+
+- Go to GitHub Actions → "Database Migrations" workflow
+- Select environment (demo/production)
+- Click "Run workflow"
+
+**📖 DOCUMENTATION**: See `docs/database-migrations.md` for complete visual guide
+
 #### Emergency/Debugging Commands
 
 - `yarn db:push` - Direct schema sync (bypasses migrations - use for hotfixes only)

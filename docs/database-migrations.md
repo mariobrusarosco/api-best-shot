@@ -2,133 +2,272 @@
 
 ## Overview
 
-This guide explains how to handle database migrations in our project using Drizzle ORM.
+This project uses Drizzle ORM for database migrations with full automation for production deployments. Migrations are automatically applied during CI/CD to ensure database and application code stay in sync.
 
-## Quick Start
+## Development Workflow
+
+### Making Schema Changes
+
+```
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│   Modify    │→ │  Generate   │→ │    Apply    │→ │    Test     │
+│   Schema    │  │ Migration   │  │  Locally    │  │  Changes    │
+└─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
+      │                  │                  │              │
+      │                  │                  │              │
+   Edit .ts          yarn db:         yarn db:         yarn dev
+   files in         generate          migrate          & test
+   domains/         --name            │                │
+   */schema/        "desc"           │                │
+      │                  │                  │              │
+      ▼                  ▼                  ▼              ▼
+   Schema            Migration         Database        Verify
+   Updated           File Created      Updated         Working
+```
+
+### Step-by-Step Process
+
+1. **Modify Schema Files**
+
+   ```bash
+   # Edit schema in TypeScript
+   # Example: src/domains/member/schema/index.ts
+   ```
+
+2. **Generate Migration**
+
+   ```bash
+   yarn db:generate --name "add_user_role_field"
+   ```
+
+3. **Apply Locally**
+
+   ```bash
+   yarn db:migrate
+   ```
+
+4. **Test Changes**
+
+   ```bash
+   yarn dev
+   # Test your API endpoints
+   ```
+
+5. **Commit & Push**
+   ```bash
+   git add .
+   git commit -m "Add user role field"
+   git push origin main
+   ```
+
+## Production Deployment Flow
+
+### Automated Deployment Process
+
+```
+┌────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│    Push     │→ │  CI Checks   │→ │  Migrations  │→ │   Deploy     │
+│  to Main    │  │   (Tests,    │  │   Applied    │  │ Application  │
+└────────────┘  └──────────────┘  └──────────────┘  └──────────────┘
+      │                  │                  │              │
+      │                  │                  │              │
+   Developer         Quality            Auto             Auto
+   commits           checks:            migration        deployment
+   changes           • Lint             to demo DB       to Cloud Run
+      │              • Type check       │                │
+      │              • Tests            │                │
+      │              • Build            │                │
+      ▼                  ▼                  ▼              ▼
+   Triggers          All Pass          Schema           App Uses
+   GitHub            or Fail           Updated          New Schema
+   Actions           Pipeline          │                │
+                                      │                │
+                                  Database             Zero
+                                  Ready for            Downtime
+                                  New Code             Deployment
+```
+
+### Deployment Sequence
+
+```
+┌──────────┐  ┌──────────┐  ┌───────────┐  ┌─────────┐  ┌─────────┐
+│ Developer│  │    CI    │  │ Migration │  │  Build  │  │ Deploy  │
+└────┬─────┘  └────┬─────┘  └─────┬─────┘  └────┬────┘  └────┬────┘
+     │             │              │              │              │
+     │ git push    │              │              │              │
+     ├─────────────►              │              │              │
+     │             │              │              │              │
+     │             │ run tests    │              │              │
+     │             ├─────────────►│              │              │
+     │             │              │              │              │
+     │             │              │ yarn db:     │              │
+     │             │              │ migrate      │              │
+     │             │              ├──────────────►              │
+     │             │              │              │              │
+     │             │              │              │ docker build │
+     │             │              │              ├──────────────►
+     │             │              │              │              │
+     │             │              │              │              │ cloud run
+     │             │              │              │              │ deploy
+     │             │              │              │              ├────────►
+     │             │              │              │              │
+     │ success     │              │              │              │
+     │◄──────────────────────────────────────────────────────────
+     │             │              │              │              │
+```
+
+## Migration Commands
+
+### Development Commands
 
 ```bash
-# Generate a new migration after modifying your schema
-# e.g. yarn db:generate --name add_users_table
-yarn db:generate --name <descriptive_migration_name>
+# Generate migration from schema changes
+yarn db:generate --name "descriptive_name"
 
-# Apply all pending migrations
+# Apply pending migrations
 yarn db:migrate
 
-# Seed the database (optional)
-yarn db:seed
+# Reset database (development only)
+yarn db:reset
 
-# Inspect applied migrations and database state
-yarn db:check
-
-# Open Drizzle Studio in your browser
+# Open database UI
 yarn db:studio
+
+# Seed database with test data
+yarn db:seed
 ```
+
+### Production Commands (Manual)
+
+```bash
+# Emergency migration (via GitHub Actions)
+# Go to: Actions → Database Migrations → Run workflow
+# Select environment: demo/production
+```
+
+## Architecture
+
+### Migration File Structure
+
+```
+supabase/migrations/
+├── 0000_initial_complete_schema.sql     # Base schema
+├── 0001_add_user_roles.sql              # Feature addition
+├── 0002_fix_tournament_dates.sql        # Bug fix
+└── meta/
+    ├── _journal.json                    # Migration history
+    ├── 0000_snapshot.json               # Schema snapshots
+    ├── 0001_snapshot.json
+    └── 0002_snapshot.json
+```
+
+### Schema Organization
+
+```
+src/domains/
+├── member/schema/index.ts               # Member table definitions
+├── tournament/schema/index.ts           # Tournament tables
+├── match/schema/index.ts                # Match data
+└── services/database/schema.ts          # Aggregates all schemas
+```
+
+## Emergency Procedures
+
+### Manual Migration (GitHub Actions)
+
+1. **Access GitHub Actions**
+
+   - Go to repository → Actions tab
+   - Select "Database Migrations" workflow
+
+2. **Run Migration**
+   ```
+   ┌─────────────────────────────────┐
+   │     Manual Migration Flow       │
+   ├─────────────────────────────────┤
+   │                                 │
+   │  1. Select "Run workflow"       │
+   │  2. Choose environment:         │
+   │     ○ demo                      │
+   │     ○ production                │
+   │  3. Click "Run workflow"        │
+   │                                 │
+   │  🔄 Workflow runs migrations    │
+   │  ✅ Success/failure reported    │
+   │                                 │
+   └─────────────────────────────────┘
+   ```
+
+### Rollback Procedure
+
+If a migration causes issues:
+
+1. **Immediate Action**
+
+   ```bash
+   # Revert to previous working commit
+   git revert HEAD
+   git push origin main
+   ```
+
+2. **Database Recovery**
+   - Access database directly via Supabase dashboard
+   - Use SQL editor to manually fix schema if needed
+   - Run corrective migration
 
 ## Best Practices
 
-1. **One Change, One Migration**
+### ✅ Do This
 
-   - Make one schema change at a time
-   - Generate a separate migration for each change
-   - Use clear, descriptive names for your changes
+- **Small, focused migrations**: One logical change per migration
+- **Descriptive names**: `add_user_email_verification`, not `fix_stuff`
+- **Test locally first**: Always run `yarn db:migrate` locally
+- **Review generated SQL**: Check migration files before committing
+- **Backup before major changes**: Use database backup features
 
-2. **Review Before Applying**
+### ❌ Don't Do This
 
-   - Always review generated migrations before applying
-   - Check for unintended changes
-   - Verify column names and types
+- **Never edit existing migration files**: Create new ones instead
+- **Don't skip local testing**: Always test migrations locally
+- **Avoid large schema changes**: Break them into smaller migrations
+- **Don't bypass CI**: Let automated migrations run in CI/CD
 
-3. **Testing Migrations**
+## Troubleshooting
 
-   - Test migrations locally first
-   - Use `db:check` to verify state
-   - Keep track of applied migrations
+### Common Issues
 
-4. **Troubleshooting**
-   - If a migration fails, check the error message
-   - Use `db:drop` to remove failed migrations
-   - Use Supabase's SQL Editor for manual fixes if needed
+1. **Migration Fails in CI**
 
-## Common Commands
-
-- `yarn db:generate` - Generate new migration files
-- `yarn db:migrate` - Apply pending migrations
-- `yarn db:check` - Check database state
-- `yarn db:drop` - Remove failed migrations
-- `yarn db:push` - Push schema changes
-- `yarn db:studio` - Open Drizzle Studio
-
-## Migration Workflow
-
-1. Make changes to schema files
-2. Run `yarn db:generate`
-3. Review generated migration
-4. Run `yarn db:migrate`
-5. Verify with `yarn db:check`
-
-## Emergency Fixes
-
-If you encounter issues:
-
-1. Check migration status with `yarn db:check`
-2. Drop problematic migrations with `yarn db:drop`
-3. Use Supabase SQL Editor for direct fixes
-4. Re-generate and apply migrations
-
-## Tips
-
-- Keep migrations small and focused
-- Use meaningful names for migrations
-- Always backup data before major changes
-- Test migrations in development first
-- Use the automated script for consistency
-
-## Running Migrations Locally
-
-To run migrations locally, you need to have Docker Compose installed and set up.
-
-### Prerequisites
-
-1. Install Docker Compose
-2. Clone the project repository
-3. Set up environment variables
-
-### Docker Compose Commands
-
-1. Start the Docker containers:
-   ```bash
-   docker-compose up -d
    ```
-2. Stop the Docker containers:
-   ```bash
-   docker-compose down
+   🔍 Check: GitHub Actions logs
+   🔍 Verify: Database connection secrets
+   🔍 Test: Run migration locally first
    ```
 
-### Environment Setup
+2. **Schema Out of Sync**
 
-1. Set up environment variables:
-   - `DATABASE_URL`: The connection string for your database
-   - `MIGRATION_DIR`: The directory containing your migration files
-
-### Seed Scripts
-
-1. Run seed scripts to populate the database:
-   ```bash
-   yarn db:seed
+   ```
+   🛠️ Fix: Generate new migration with current differences
+   🛠️ Command: yarn db:generate --name "sync_schema"
    ```
 
-## Tips for Running Migrations Locally
+3. **Database Connection Issues**
+   ```
+   🔍 Check: DEMO_DB_CONNECTION secret in GitHub
+   🔍 Verify: Database is accessible from GitHub Actions
+   ```
 
-1. **Use Docker for Isolation**: Docker containers provide a clean environment for running migrations.
-2. **Set Up Environment Variables**: Ensure that the `DATABASE_URL` and `MIGRATION_DIR` environment variables are set correctly.
-3. **Test Seed Scripts**: Before running migrations, test seed scripts to ensure data integrity.
-4. **Monitor Logs**: Keep an eye on Docker logs and migration logs for any issues.
-5. **Backup Data**: Always backup data before running migrations.
+### Support
 
-## Tips for Running Migrations in Production
+- **Local Issues**: Check CLAUDE.md for development setup
+- **CI/CD Issues**: Review GitHub Actions logs
+- **Schema Questions**: Examine existing domain schemas for patterns
 
-1. **Use Automated Scripts**: Automated scripts are designed to handle production environments efficiently.
-2. **Monitor Logs**: Keep an eye on production logs for any issues.
-3. **Backup Data**: Always backup data before running migrations.
-4. **Test in Staging**: Before running migrations in production, test in a staging environment.
-5. **Communicate**: Communicate with stakeholders about upcoming migrations.
+## Migration History
+
+This project maintains a clean migration history starting from:
+
+- **0000_initial_complete_schema.sql**: Complete base schema with all tables
+- Future migrations build incrementally from this foundation
+
+This approach ensures perfect sync between development and production environments.

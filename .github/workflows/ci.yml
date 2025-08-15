@@ -118,6 +118,11 @@ jobs:
           docker push gcr.io/api-best-shot-demo/api-best-shot-demo:${{ github.sha }}
           docker push gcr.io/api-best-shot-demo/api-best-shot-demo:latest
 
+      - name: Run Database Migrations
+        run: yarn db:migrate
+        env:
+          DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION_DEMO }}
+
       - name: Trigger Cloud Build deployment
         run: |
           gcloud builds submit --no-source --config=cloudbuild.yaml --substitutions=COMMIT_SHA=${{ github.sha }}

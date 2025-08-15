@@ -3,6 +3,7 @@ declare namespace Express {
     authenticatedUser: {
       id: string;
       nickName: string;
+      role: string;
     };
   }
 }

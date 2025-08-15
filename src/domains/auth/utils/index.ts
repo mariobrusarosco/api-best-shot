@@ -81,12 +81,36 @@ const clearUserCookie = (res: Response) => {
   res.clearCookie(process.env['MEMBER_PUBLIC_ID_COOKIE'] || '');
 };
 
+const getAuthenticatedUserRole = (req: Request) => {
+  if (!req.authenticatedUser) throw new Error('User not authenticated');
+  return req.authenticatedUser.role;
+};
+
+const isUserAdmin = (req: Request): boolean => {
+  try {
+    const role = getAuthenticatedUserRole(req);
+    return role === 'admin';
+  } catch {
+    return false;
+  }
+};
+
+const requireAdmin = (req: Request, res: Response) => {
+  if (!isUserAdmin(req)) {
+    res.status(403).send({ message: 'Admin access required' });
+    throw new Error('Admin access required');
+  }
+};
+
 export const Utils = {
   clearUserCookie,
   getUserCookie,
   signUserCookieBased,
   decodeMemberToken,
   getAuthenticatedUserId,
+  getAuthenticatedUserRole,
+  isUserAdmin,
+  requireAdmin,
   createTokenResponse: (userId: string, nickName: string, email: string) => {
     try {
       const token = jwt.sign({ id: userId, nickName, email }, process.env.JWT_SECRET!, {

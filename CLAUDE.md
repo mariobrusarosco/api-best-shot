@@ -14,14 +14,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Database Operations
 
+#### Schema Change Workflow (CRITICAL - Follow This Order!)
+
+**When adding/modifying database schema:**
+1. **Update TypeScript schema** in `src/domains/{domain}/schema/index.ts`
+2. **Generate migration**: `yarn db:generate` (creates both .sql and snapshot files)
+3. **Apply migration**: `yarn db:migrate` 
+4. **Verify changes**: Check database with `yarn db:studio`
+
+**❌ NEVER manually create migration files in `supabase/migrations/`**
+**✅ ALWAYS use `yarn db:generate` first**
+
+#### Development Workflow Commands
+
+- `yarn db:generate` - Generate migration files from schema changes (ALWAYS FIRST)
+- `yarn db:migrate` - Apply pending migrations to database
 - `yarn db:studio` - Open Drizzle Studio (database UI)
-- `yarn db:migrate` - Run database migrations
-- `yarn db:push` - Push schema changes to database
-- `yarn db:generate` - Generate migration files
 - `yarn db:seed` - Seed database with initial data
 - `yarn db:reset` - Reset database (via Docker: `docker compose down postgres -v && docker compose up -d postgres`)
 - `yarn db:connect` - Connect to PostgreSQL via Docker exec
 - `yarn db:logs` - View database container logs
+
+#### Emergency/Debugging Commands
+
+- `yarn db:push` - Direct schema sync (bypasses migrations - use for hotfixes only)
+- `yarn db:check` - Validate migration files
+- `yarn db:drop` - Remove migration files (dangerous)
 
 ### Testing
 
@@ -102,12 +120,19 @@ The API supports multiple versions (v1, v2) with routes organized by domain and 
 
 ## Development Workflow
 
+### Initial Setup
 1. Start database: `docker compose up -d`
 2. Run migrations: `yarn db:migrate`
 3. Seed data: `yarn db:seed`
 4. Start development: `yarn dev`
 5. Access API at `http://localhost:9090`
 6. Access database UI: `yarn db:studio`
+
+### Schema Change Workflow
+1. **Modify schema** in TypeScript files (`src/domains/{domain}/schema/index.ts`)
+2. **Generate migration**: `yarn db:generate`
+3. **Apply migration**: `yarn db:migrate`
+4. **Test changes**: Verify with API/Studio
 
 ## Testing
 

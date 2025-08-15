@@ -77,7 +77,10 @@
       "Bash(--target '{\n    \"\"Arn\"\": \"\"arn:aws:lambda:us-east-1:905418297381:function:caller-daily-routine\"\",\n    \"\"Input\"\": \"\"{\\\"\"targetEnv\\\"\": \\\"\"demo\\\"\", \\\"\"endpoint\\\"\": \\\"\"https://api-best-shot-demo.mariobrusarosco.com/api/v2/data-provider/scheduler\\\"\"}\"\",\n    \"\"RoleArn\"\": \"\"arn:aws:iam::905418297381:role/service-role/daily_scheduler\"\",\n    \"\"RetryPolicy\"\": {\n      \"\"MaximumRetryAttempts\"\": 3,\n      \"\"MaximumEventAgeInSeconds\"\": 3600\n    },\n    \"\"DeadLetterConfig\"\": {\n      \"\"Arn\"\": \"\"arn:aws:sqs:us-east-1:905418297381:best-shot-schedules\"\"\n    }\n  }' )",
       "Bash(--region us-east-1)",
       "Bash(mv:*)",
-      "Bash(yarn format)"
+      "Bash(yarn format)",
+      "Bash(yarn db:studio:*)",
+      "Bash(yarn db:connect:*)",
+      "Bash(docker compose exec:*)"
     ],
     "deny": []
   }

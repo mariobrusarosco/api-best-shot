@@ -1,11 +1,6 @@
 import { BaseAIClient } from '../base-ai-client';
 import type { AIClientConfig, AIMessage, AIResponse } from '../types';
 
-interface OllamaMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-}
-
 interface OllamaResponse {
   message: {
     content: string;
@@ -36,7 +31,7 @@ export class OllamaClient extends BaseAIClient {
       const messages = this.normalizeMessages(input);
       this.logRequest(messages);
 
-      const requestBody: any = {
+      const requestBody: Record<string, unknown> = {
         model: this.config.model,
         messages: messages.map(msg => ({
           role: msg.role,
@@ -102,7 +97,7 @@ export class OllamaClient extends BaseAIClient {
       const messages = this.normalizeMessages(input);
       this.logRequest(messages);
 
-      const requestBody: any = {
+      const requestBody: Record<string, unknown> = {
         model: this.config.model,
         messages: messages.map(msg => ({
           role: msg.role,

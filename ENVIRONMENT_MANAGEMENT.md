@@ -7,6 +7,7 @@
 ## 📋 **The ONLY Safe Process**
 
 ### **STEP 1: ALWAYS Check Current State First**
+
 ```bash
 # See exactly what variables exist now
 gcloud run services describe api-best-shot-demo \
@@ -20,6 +21,7 @@ gcloud run services describe api-best-shot-demo \
 ```
 
 ### **STEP 2: ONE Variable at a Time**
+
 ```bash
 # Add/Update ONE variable only
 gcloud run services update api-best-shot-demo \
@@ -33,6 +35,7 @@ gcloud run services describe api-best-shot-demo \
 ```
 
 ### **STEP 3: Remove Variables Safely**
+
 ```bash
 # Remove ONE variable only
 gcloud run services update api-best-shot-demo \
@@ -44,7 +47,7 @@ gcloud run services update api-best-shot-demo \
 
 ```bash
 # NEVER use --set-env-vars (replaces ALL variables)
-gcloud run services update --set-env-vars="..." 
+gcloud run services update --set-env-vars="..."
 
 # NEVER use multiple variables in one command without checking first
 gcloud run services update --update-env-vars="VAR1=a,VAR2=b,VAR3=c"
@@ -57,6 +60,7 @@ gcloud run services update --update-env-vars="VAR1=a,VAR2=b,VAR3=c"
 **Use this list to verify what SHOULD exist, not to set them all at once.**
 
 ### Demo Environment Should Have:
+
 - NODE_ENV=demo
 - PORT=8080
 - API_VERSION=/v2
@@ -78,6 +82,7 @@ gcloud run services update --update-env-vars="VAR1=a,VAR2=b,VAR3=c"
 ## 🚨 **Emergency Recovery**
 
 ### If You Accidentally Deleted Variables:
+
 ```bash
 # Restore from backup file
 kubectl apply -f backup-env-YYYYMMDD-HHMMSS.yaml
@@ -88,6 +93,7 @@ kubectl apply -f backup-env-YYYYMMDD-HHMMSS.yaml
 ## 🔧 **Safe Workflow for Changes**
 
 ### When Adding New Variables:
+
 1. **Backup current state** (Step 1 above)
 2. **Add ONE variable** (Step 2 above)
 3. **Verify it worked**
@@ -95,12 +101,14 @@ kubectl apply -f backup-env-YYYYMMDD-HHMMSS.yaml
 5. **Repeat for next variable**
 
 ### When Updating Existing Variables:
+
 1. **Backup current state**
 2. **Update ONE variable**
 3. **Verify it worked**
 4. **Test the application**
 
 ### When Removing Old Variables:
+
 1. **Backup current state**
 2. **Remove ONE variable** (Step 3 above)
 3. **Verify it worked**
@@ -109,17 +117,20 @@ kubectl apply -f backup-env-YYYYMMDD-HHMMSS.yaml
 ## 🎓 **Engineering Best Practices**
 
 ### Trust but Verify:
+
 - Always check current state before changes
 - Always backup before changes
 - Always verify after changes
 - Always test the application
 
 ### Incremental Changes:
+
 - One variable at a time
 - Small, reversible changes
 - Clear understanding of what each change does
 
 ### Never Trust Bulk Commands:
+
 - No matter who gives them to you
 - Even if they look "safe"
 - Even if you're in a hurry

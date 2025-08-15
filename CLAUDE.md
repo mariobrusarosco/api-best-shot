@@ -17,9 +17,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 #### Schema Change Workflow (CRITICAL - Follow This Order!)
 
 **When adding/modifying database schema:**
+
 1. **Update TypeScript schema** in `src/domains/{domain}/schema/index.ts`
 2. **Generate migration**: `yarn db:generate` (creates both .sql and snapshot files)
-3. **Apply migration**: `yarn db:migrate` 
+3. **Apply migration**: `yarn db:migrate`
 4. **Verify changes**: Check database with `yarn db:studio`
 
 **❌ NEVER manually create migration files in `supabase/migrations/`**
@@ -121,6 +122,7 @@ The API supports multiple versions (v1, v2) with routes organized by domain and 
 ## Development Workflow
 
 ### Initial Setup
+
 1. Start database: `docker compose up -d`
 2. Run migrations: `yarn db:migrate`
 3. Seed data: `yarn db:seed`
@@ -129,6 +131,7 @@ The API supports multiple versions (v1, v2) with routes organized by domain and 
 6. Access database UI: `yarn db:studio`
 
 ### Schema Change Workflow
+
 1. **Modify schema** in TypeScript files (`src/domains/{domain}/schema/index.ts`)
 2. **Generate migration**: `yarn db:generate`
 3. **Apply migration**: `yarn db:migrate`

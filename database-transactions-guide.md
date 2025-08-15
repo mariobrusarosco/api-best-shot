@@ -7,6 +7,7 @@ A **transaction** is a sequence of database operations that are treated as a sin
 ## All-or-Nothing (Atomicity)
 
 This is one of the **ACID properties** of databases:
+
 - **A**tomicity: All operations succeed or all fail
 - **C**onsistency: Database remains in valid state
 - **I**solation: Concurrent transactions don't interfere
@@ -25,8 +26,9 @@ async function updateStandings(standings) {
 ```
 
 **What could go wrong:**
+
 - Standing #1: ✅ Success
-- Standing #2: ✅ Success  
+- Standing #2: ✅ Success
 - Standing #3: ❌ **Fails** (network error, constraint violation, etc.)
 - Standing #4: ❌ **Never attempted**
 
@@ -47,6 +49,7 @@ async function updateStandings(standings) {
 ```
 
 **What happens:**
+
 - Standing #1: ✅ Success (but not committed yet)
 - Standing #2: ✅ Success (but not committed yet)
 - Standing #3: ❌ **Fails**
@@ -79,13 +82,13 @@ const standings = [
 ```
 BEGIN TRANSACTION
 ├── Operation 1 ✅
-├── Operation 2 ✅  
+├── Operation 2 ✅
 ├── Operation 3 ❌ (fails)
 └── ROLLBACK (undo all changes)
 
 // OR
 
-BEGIN TRANSACTION  
+BEGIN TRANSACTION
 ├── Operation 1 ✅
 ├── Operation 2 ✅
 ├── Operation 3 ✅
@@ -95,18 +98,21 @@ BEGIN TRANSACTION
 ## Benefits in Our Standings Code:
 
 ```typescript
-await db.transaction(async (tx) => {
+await db.transaction(async tx => {
   for (const standing of standings) {
-    await tx.insert(T_TournamentStandings).values(standing)
+    await tx
+      .insert(T_TournamentStandings)
+      .values(standing)
       .onConflictDoUpdate({
         target: [T_TournamentStandings.shortName, T_TournamentStandings.tournamentId],
-        set: { ...standing }
+        set: { ...standing },
       });
   }
 });
 ```
 
 **Guarantees:**
+
 1. **All teams updated** OR **no teams updated**
 2. **No partial updates** that could confuse users
 3. **Database stays consistent** even if server crashes mid-operation
@@ -115,11 +121,13 @@ await db.transaction(async (tx) => {
 ## When to Use Transactions:
 
 ✅ **Use transactions when:**
+
 - Multiple related operations must succeed together
 - Data consistency is critical
 - Failure of one operation should undo others
 
 ❌ **Don't need transactions for:**
+
 - Single, independent operations
 - Read-only operations
 - Operations where partial success is acceptable

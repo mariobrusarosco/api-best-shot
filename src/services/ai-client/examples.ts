@@ -2,7 +2,7 @@
 // These examples are meant for documentation and testing purposes
 
 import { AIClient } from './index';
-import type { AIMessage } from './types';
+import { AIClientFactory } from './factory';
 
 /**
  * Example 1: Basic OpenAI usage
@@ -18,12 +18,10 @@ export async function exampleOpenAI() {
   const response1 = await client.generateResponse('Hello, how are you?');
   console.log('OpenAI Response:', response1.content);
 
-  // Complex conversation
-  const messages: AIMessage[] = [
-    { role: 'system', content: 'You are a helpful coding assistant.' },
-    { role: 'user', content: 'Explain dependency injection in TypeScript.' },
-  ];
-  const response2 = await client.generateResponse(messages);
+  // Complex conversation (using simple prompt)
+  const response2 = await client.generateResponse(
+    'You are a helpful coding assistant. Explain dependency injection in TypeScript.'
+  );
   console.log('OpenAI Conversation:', response2.content);
 
   return { response1, response2 };
@@ -43,11 +41,9 @@ export async function exampleOllama() {
   const response1 = await client.generateResponse('Hello, how are you?');
   console.log('Ollama Response:', response1.content);
 
-  const messages: AIMessage[] = [
-    { role: 'system', content: 'You are a helpful coding assistant.' },
-    { role: 'user', content: 'Explain dependency injection in TypeScript.' },
-  ];
-  const response2 = await client.generateResponse(messages);
+  const response2 = await client.generateResponse(
+    'You are a helpful coding assistant. Explain dependency injection in TypeScript.'
+  );
   console.log('Ollama Conversation:', response2.content);
 
   return { response1, response2 };
@@ -103,8 +99,6 @@ export async function exampleProviderSwitching() {
  * Example 5: Using the factory directly (advanced usage)
  */
 export async function exampleFactoryUsage() {
-  import { AIClientFactory } from './factory';
-
   // Get default configurations
   const openaiDefaults = AIClientFactory.getDefaultConfig('openai');
   const ollamaDefaults = AIClientFactory.getDefaultConfig('ollama');

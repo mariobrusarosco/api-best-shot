@@ -1,11 +1,6 @@
 import { BaseAIClient } from '../base-ai-client';
 import type { AIClientConfig, AIMessage, AIResponse } from '../types';
 
-interface OpenAIMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-}
-
 interface OpenAIResponse {
   choices: Array<{
     message: {

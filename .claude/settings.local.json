@@ -80,7 +80,9 @@
       "Bash(yarn format)",
       "Bash(yarn db:studio:*)",
       "Bash(yarn db:connect:*)",
-      "Bash(docker compose exec:*)"
+      "Bash(docker compose exec:*)",
+      "Bash(yarn lint:*)",
+      "Bash(yarn prepare)"
     ],
     "deny": []
   }

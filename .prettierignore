@@ -1,3 +1,10 @@
 node_modules
 dist
 build
+
+# Auto-generated Drizzle migration files
+supabase/migrations/meta/
+*.json
+
+# Kiro files
+.kiro/

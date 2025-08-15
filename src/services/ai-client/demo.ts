@@ -34,17 +34,8 @@ Provide specific, actionable suggestions.
   }
 
   async explainCode(code: string): Promise<string> {
-    const response = await this.aiClient.generateResponse([
-      {
-        role: 'system',
-        content: 'You are a helpful coding mentor. Explain code clearly and concisely.',
-      },
-      {
-        role: 'user',
-        content: `Explain this TypeScript code:\n\n${code}`,
-      },
-    ]);
-
+    const prompt = `You are a helpful coding mentor. Explain this TypeScript code clearly and concisely:\n\n${code}`;
+    const response = await this.aiClient.generateResponse(prompt);
     return response.content;
   }
 }

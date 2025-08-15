@@ -1,9 +1,9 @@
 import { Utils } from '@/domains/auth/utils';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { ErrorMapper } from '@/domains/guess/error-handling/mapper';
-import { T_Guess } from '@/domains/guess/schema';
+import { T_Guess, DB_SelectGuess } from '@/domains/guess/schema';
 import { CreateGuessRequest, GuessInput } from '@/domains/guess/typing';
-import { T_Match } from '@/domains/match/schema';
+import { T_Match, DB_SelectMatch } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import db from '@/services/database';
 import Profiling from '@/services/profiling';
@@ -77,7 +77,9 @@ async function getMemberGuesses({
     }
 
     const parsedGuesses =
-      guesses?.map((row: any) => runGuessAnalysis(row.guess, row.match)) || [];
+      guesses?.map((row: { guess: DB_SelectGuess; match: DB_SelectMatch }) =>
+        runGuessAnalysis(row.guess, row.match)
+      ) || [];
 
     return parsedGuesses;
   } catch (error: unknown) {

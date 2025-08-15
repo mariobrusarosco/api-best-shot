@@ -27,7 +27,7 @@ Open VSCode/Cursor Settings (Ctrl/Cmd + ,) and add:
 {
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "explicit", 
+    "source.organizeImports": "explicit",
     "source.removeUnused": "explicit"
   },
   "typescript.preferences.removeUnusedImports": true

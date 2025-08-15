@@ -60,4 +60,3 @@ export abstract class BaseAIClient implements IAIClient {
   // Optional streaming support
   streamResponse?(input: AIMessage[] | string): AsyncGenerator<string, void, unknown>;
 }
-

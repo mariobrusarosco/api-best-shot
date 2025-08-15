@@ -67,7 +67,7 @@ const isMemberAdmin = async (memberId: string): Promise<boolean> => {
     .select({ role: T_Member.role })
     .from(T_Member)
     .where(eq(T_Member.id, memberId));
-  
+
   return member?.role === 'admin';
 };
 
@@ -84,7 +84,7 @@ const updateMemberRole = async (memberId: string, role: MemberRole) => {
     .set({ role, updatedAt: new Date() })
     .where(eq(T_Member.id, memberId))
     .returning();
-  
+
   return updatedMember;
 };
 

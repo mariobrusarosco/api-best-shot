@@ -154,4 +154,3 @@ export class OpenAIClient extends BaseAIClient {
     }
   }
 }
-

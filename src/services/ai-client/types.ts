@@ -29,4 +29,3 @@ export interface IAIClient {
 }
 
 export type AIProvider = 'openai' | 'ollama';
-

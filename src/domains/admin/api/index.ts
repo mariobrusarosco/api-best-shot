@@ -6,7 +6,6 @@ import bcrypt from 'bcryptjs';
 import { env } from '@/config/env';
 import jwt from 'jsonwebtoken';
 import { MemberService } from '@/domains/member/services';
-import { Utils } from '@/domains/auth/utils';
 
 export const API_ADMIN = {
   healthCheck: async (req: Request, res: Response) => {
@@ -137,7 +136,7 @@ export const API_ADMIN = {
   promoteToAdmin: async (req: Request, res: Response) => {
     try {
       const { memberId } = req.body;
-      
+
       if (!memberId) {
         return res.status(400).json({
           error: 'Member ID is required',
@@ -145,7 +144,7 @@ export const API_ADMIN = {
       }
 
       const updatedMember = await MemberService.updateMemberRole(memberId, 'admin');
-      
+
       res.status(200).json({
         success: true,
         message: `Member ${updatedMember.nickName} promoted to admin`,
@@ -169,7 +168,7 @@ export const API_ADMIN = {
   demoteFromAdmin: async (req: Request, res: Response) => {
     try {
       const { memberId } = req.body;
-      
+
       if (!memberId) {
         return res.status(400).json({
           error: 'Member ID is required',
@@ -177,7 +176,7 @@ export const API_ADMIN = {
       }
 
       const updatedMember = await MemberService.updateMemberRole(memberId, 'member');
-      
+
       res.status(200).json({
         success: true,
         message: `Member ${updatedMember.nickName} demoted to member`,

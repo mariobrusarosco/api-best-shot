@@ -93,13 +93,13 @@ export const LambdaLogger = {
  * API logging utilities
  */
 export const ApiLogger = {
-  success: (operation: Operation, resource?: Resource, version?: string, extra?: LogExtra) => {
-    const message = createApiLogMessage(
-      operation,
-      resource,
-      version,
-      STATUSES.SUCCESS
-    );
+  success: (
+    operation: Operation,
+    resource?: Resource,
+    version?: string,
+    extra?: LogExtra
+  ) => {
+    const message = createApiLogMessage(operation, resource, version, STATUSES.SUCCESS);
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
       component: COMPONENTS.API,
@@ -135,11 +135,7 @@ export const ApiLogger = {
  */
 export const ServiceLogger = {
   success: (operation: Operation, resource?: Resource, extra?: LogExtra) => {
-    const message = createServiceLogMessage(
-      operation,
-      resource,
-      STATUSES.SUCCESS
-    );
+    const message = createServiceLogMessage(operation, resource, STATUSES.SUCCESS);
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
       component: COMPONENTS.SERVICE,
@@ -151,7 +147,12 @@ export const ServiceLogger = {
     return Profiling.logEnhanced({ message, tags, extra });
   },
 
-  error: (operation: Operation, error: unknown, resource?: Resource, extra?: LogExtra) => {
+  error: (
+    operation: Operation,
+    error: unknown,
+    resource?: Resource,
+    extra?: LogExtra
+  ) => {
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
       component: COMPONENTS.SERVICE,
@@ -174,11 +175,7 @@ export const SchedulerLogger = {
     customSuffix?: string,
     extra?: LogExtra
   ) => {
-    const message = createSchedulerLogMessage(
-      operation,
-      environment,
-      customSuffix
-    );
+    const message = createSchedulerLogMessage(operation, environment, customSuffix);
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
       component: COMPONENTS.SCHEDULER,
@@ -189,7 +186,12 @@ export const SchedulerLogger = {
     return Profiling.logEnhanced({ message, tags, extra });
   },
 
-  error: (operation: Operation, error: unknown, environment?: Environment, extra?: LogExtra) => {
+  error: (
+    operation: Operation,
+    error: unknown,
+    environment?: Environment,
+    extra?: LogExtra
+  ) => {
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
       component: COMPONENTS.SCHEDULER,
@@ -216,4 +218,11 @@ export const EnhancedLogger = {
 };
 
 // Export constants for easy access
-export { DOMAINS, COMPONENTS, OPERATIONS, RESOURCES, STATUSES, ENVIRONMENTS } from './constants';
+export {
+  DOMAINS,
+  COMPONENTS,
+  OPERATIONS,
+  RESOURCES,
+  STATUSES,
+  ENVIRONMENTS,
+} from './constants';

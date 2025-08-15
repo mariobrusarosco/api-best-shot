@@ -29,7 +29,11 @@ export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-export const AdminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+export const AdminMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     // First run the normal auth middleware logic
     const authCookie = Utils.getUserCookie(req);
@@ -43,9 +47,7 @@ export const AdminMiddleware = async (req: Request, res: Response, next: NextFun
 
     // Check if user is admin
     if (member.role !== 'admin') {
-      return res
-        .status(403)
-        .send({ message: 'Admin access required' });
+      return res.status(403).send({ message: 'Admin access required' });
     }
 
     next();

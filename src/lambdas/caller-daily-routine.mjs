@@ -17,13 +17,16 @@ export const handler = Sentry.wrapHandler(async event => {
       },
     });
 
-    Sentry.captureMessage(`🟢 Daily Scheduler | Schedules Created | ${targetEnv}`, {
+    Sentry.captureMessage(`🔄 LAMBDA | CREATE SCHEDULES | success | ${targetEnv}`, {
       level: 'info',
       tags: {
-        function: 'caller-daily-routine',
+        domain: 'DATA_PROVIDER',
+        component: 'LAMBDA',
+        operation: 'CREATE',
+        resource: 'SCHEDULES',
         environment: targetEnv,
-        operation: 'create_schedules',
-        status: 'success'
+        status: 'success',
+        function: 'caller-daily-routine'
       },
       extra: {
         timestamp: new Date().toISOString(),
@@ -49,10 +52,13 @@ export const handler = Sentry.wrapHandler(async event => {
 
     Sentry.captureException(error, {
       tags: {
-        function: 'caller-daily-routine',
+        domain: 'DATA_PROVIDER',
+        component: 'LAMBDA',
+        operation: 'CREATE',
+        resource: 'SCHEDULES',
         environment: targetEnv,
-        operation: 'create_schedules',
-        status: 'error'
+        status: 'error',
+        function: 'caller-daily-routine'
       },
       extra: {
         timestamp: new Date().toISOString(),

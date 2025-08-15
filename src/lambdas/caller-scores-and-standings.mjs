@@ -25,14 +25,17 @@ export const handler = Sentry.wrapHandler(async event => {
       console.log(`✅ [${targetEnv}] Updated match scores for tournament ${event.tournamentId}, round ${event.roundSlug}`);
       
       Sentry.captureMessage(
-        `🟢 Match Updates | Scores Updated | ${targetEnv}`,
+        `🔄 LAMBDA | UPDATE MATCHES | success | ${targetEnv}`,
         {
           level: 'info',
           tags: {
-            function: 'caller-scores-and-standings',
+            domain: 'DATA_PROVIDER',
+            component: 'LAMBDA',
+            operation: 'UPDATE',
+            resource: 'MATCHES',
             environment: targetEnv,
-            operation: 'update_scores',
-            status: 'success'
+            status: 'success',
+            function: 'caller-scores-and-standings'
           },
           extra: {
             timestamp: new Date().toISOString(),
@@ -47,10 +50,13 @@ export const handler = Sentry.wrapHandler(async event => {
       console.error(`❌ [${targetEnv}] Failed to update match scores:`, error.message);
       Sentry.captureException(error, {
         tags: {
-          function: 'caller-scores-and-standings',
+          domain: 'DATA_PROVIDER',
+          component: 'LAMBDA',
+          operation: 'UPDATE',
+          resource: 'MATCHES',
           environment: targetEnv,
-          operation: 'update_scores',
-          status: 'error'
+          status: 'error',
+          function: 'caller-scores-and-standings'
         },
         extra: {
           timestamp: new Date().toISOString(),
@@ -74,14 +80,17 @@ export const handler = Sentry.wrapHandler(async event => {
       console.log(`✅ [${targetEnv}] Updated standings for tournament ${event.tournamentId}`);
 
       Sentry.captureMessage(
-        `🟢 Match Updates | Standings Updated | ${targetEnv}`,
+        `🔄 LAMBDA | UPDATE STANDINGS | success | ${targetEnv}`,
         {
           level: 'info',
           tags: {
-            function: 'caller-scores-and-standings',
+            domain: 'DATA_PROVIDER',
+            component: 'LAMBDA',
+            operation: 'UPDATE',
+            resource: 'STANDINGS',
             environment: targetEnv,
-            operation: 'update_standings',
-            status: 'success'
+            status: 'success',
+            function: 'caller-scores-and-standings'
           },
           extra: {
             timestamp: new Date().toISOString(),
@@ -95,10 +104,13 @@ export const handler = Sentry.wrapHandler(async event => {
       console.error(`❌ [${targetEnv}] Failed to update standings:`, error.message);
       Sentry.captureException(error, {
         tags: {
-          function: 'caller-scores-and-standings',
+          domain: 'DATA_PROVIDER',
+          component: 'LAMBDA',
+          operation: 'UPDATE',
+          resource: 'STANDINGS',
           environment: targetEnv,
-          operation: 'update_standings',
-          status: 'error'
+          status: 'error',
+          function: 'caller-scores-and-standings'
         },
         extra: {
           timestamp: new Date().toISOString(),
@@ -115,10 +127,13 @@ export const handler = Sentry.wrapHandler(async event => {
   } catch (error) {
     Sentry.captureException(error, {
       tags: {
-        function: 'caller-scores-and-standings',
+        domain: 'DATA_PROVIDER',
+        component: 'LAMBDA',
+        operation: 'UPDATE',
+        resource: 'MATCHES',
         environment: targetEnv,
-        operation: 'general_execution',
-        status: 'error'
+        status: 'error',
+        function: 'caller-scores-and-standings'
       },
       extra: {
         timestamp: new Date().toISOString(),

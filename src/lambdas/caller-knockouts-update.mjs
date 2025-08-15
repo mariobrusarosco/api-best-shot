@@ -20,14 +20,17 @@ export const handler = Sentry.wrapHandler(async event => {
     console.log(`✅ [${targetEnv}] Created new knockout rounds and matches`);
 
     Sentry.captureMessage(
-      `🟢 Knockout Updates | New Rounds Created | ${targetEnv}`,
+      `🔄 LAMBDA | CREATE ROUNDS | success | ${targetEnv}`,
       {
         level: 'info',
         tags: {
-          function: 'caller-knockouts-update',
+          domain: 'DATA_PROVIDER',
+          component: 'LAMBDA',
+          operation: 'CREATE',
+          resource: 'ROUNDS',
           environment: targetEnv,
-          operation: 'create_knockout_rounds',
-          status: 'success'
+          status: 'success',
+          function: 'caller-knockouts-update'
         },
         extra: {
           timestamp: new Date().toISOString(),
@@ -53,10 +56,13 @@ export const handler = Sentry.wrapHandler(async event => {
 
     Sentry.captureException(error, {
       tags: {
-        function: 'caller-knockouts-update',
+        domain: 'DATA_PROVIDER',
+        component: 'LAMBDA',
+        operation: 'CREATE',
+        resource: 'ROUNDS',
         environment: targetEnv,
-        operation: 'create_knockout_rounds',
-        status: 'error'
+        status: 'error',
+        function: 'caller-knockouts-update'
       },
       extra: {
         timestamp: new Date().toISOString(),

@@ -8,9 +8,11 @@ import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
 import { Profiling } from '@/services/profiling';
 import { safeString } from '@/utils';
-import { writeFileSync } from 'fs';
+import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { BaseScraper } from '../providers/playwright/base-scraper';
+import { S3FileStorage } from '../providers/file-storage';
+import { ServiceLogger } from '@/services/profiling/logger';
 
 type ScrapingOperationData =
   | {
@@ -118,24 +120,55 @@ export class StandingsDataProviderService {
     }
   }
 
-  private generateInvoiceFile(): void {
+  private async generateInvoiceFile(): Promise<void> {
     this.invoice.endTime = new Date().toISOString();
-    const filename = `standings-scraping-${this.invoice.requestId}.json`;
-    const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
+    const filename = `standings-scraping-${this.invoice.requestId}`;
+    const jsonContent = JSON.stringify(this.invoice, null, 2);
 
     try {
-      writeFileSync(filepath, JSON.stringify(this.invoice, null, 2));
-      Profiling.log({
-        msg: `[INVOICE] Standings scraping report generated successfully`,
-        data: { filepath, requestId: this.invoice.requestId },
-        source: 'DATA_PROVIDER_V2_STANDINGS_generateInvoiceFile',
-      });
+      const isLocal = process.env.NODE_ENV === 'development';
+
+      if (isLocal) {
+        // Store locally for development
+        const reportsDir = join(process.cwd(), 'tournament-scraping-reports');
+        const filepath = join(reportsDir, `${filename}.json`);
+
+        mkdirSync(reportsDir, { recursive: true });
+        writeFileSync(filepath, jsonContent);
+
+        ServiceLogger.success('GENERATE', 'REPORTS', {
+          filepath,
+          requestId: this.invoice.requestId,
+          storageType: 'local',
+        });
+      } else {
+        // Store in S3 for demo/production environments
+        const s3Storage = new S3FileStorage();
+        const s3Key = await s3Storage.uploadFile({
+          buffer: Buffer.from(jsonContent, 'utf8'),
+          filename,
+          contentType: 'application/json',
+          directory: 'tournament-scraping-reports',
+          cacheControl: 'max-age=604800, public', // 7 days cache
+        });
+
+        ServiceLogger.success('GENERATE', 'REPORTS', {
+          s3Key,
+          requestId: this.invoice.requestId,
+          storageType: 'S3',
+        });
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      Profiling.error({
-        source: 'DATA_PROVIDER_V2_STANDINGS_generateInvoiceFile',
-        error: error instanceof Error ? error : new Error(errorMessage),
-      });
+      ServiceLogger.error(
+        'GENERATE',
+        error instanceof Error ? error : new Error(errorMessage),
+        'REPORTS',
+        {
+          requestId: this.invoice.requestId,
+          filename,
+        }
+      );
       console.error('Failed to write standings invoice file:', errorMessage);
     }
   }
@@ -350,7 +383,7 @@ export class StandingsDataProviderService {
         this.addOperation('initialization', 'process_standings', 'completed', {
           note: 'No standings data available for tournament',
         });
-        this.generateInvoiceFile();
+        await this.generateInvoiceFile();
         return [];
       }
 
@@ -358,7 +391,7 @@ export class StandingsDataProviderService {
       const query = await this.createOnDatabase(standings);
 
       // Generate invoice file at the very end
-      this.generateInvoiceFile();
+      await this.generateInvoiceFile();
 
       return query;
     } catch (error: unknown) {
@@ -366,7 +399,7 @@ export class StandingsDataProviderService {
       this.addOperation('initialization', 'process_standings', 'failed', {
         error: errorMessage,
       });
-      this.generateInvoiceFile();
+      await this.generateInvoiceFile();
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_init',
         error: error instanceof Error ? error : new Error(errorMessage),
@@ -401,7 +434,7 @@ export class StandingsDataProviderService {
         this.addOperation('update', 'process_standings', 'completed', {
           note: 'No standings data found for tournament',
         });
-        this.generateInvoiceFile();
+        await this.generateInvoiceFile();
         return [];
       }
 
@@ -409,7 +442,7 @@ export class StandingsDataProviderService {
       const query = await this.updateOnDatabase(standings);
 
       // Generate invoice file at the very end
-      this.generateInvoiceFile();
+      await this.generateInvoiceFile();
 
       return query;
     } catch (error: unknown) {
@@ -417,7 +450,7 @@ export class StandingsDataProviderService {
       this.addOperation('update', 'process_standings', 'failed', {
         error: errorMessage,
       });
-      this.generateInvoiceFile();
+      await this.generateInvoiceFile();
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_updateTournament',
         error: error instanceof Error ? error : new Error(errorMessage),

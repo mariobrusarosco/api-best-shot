@@ -20,12 +20,15 @@ This comprehensive guide covers both automated and manual AWS Lambda deployment 
 ## 🚀 Quick Start
 
 ### Automated Deployment (Recommended)
+
 The project includes automated Lambda deployments via GitHub Actions that trigger on:
+
 - Push to `main` or `feat/aws-scheduler` branches
 - Changes to files in `src/lambdas/`
 - Manual workflow dispatch
 
 ### Manual Deployment (Local)
+
 ```bash
 # Deploy all functions and layers
 ./scripts/deploy-lambdas.sh
@@ -45,12 +48,14 @@ The project includes automated Lambda deployments via GitHub Actions that trigge
 The Best Shot scheduler uses AWS Lambda functions triggered by EventBridge Scheduler to update match scores and tournament standings.
 
 ### Components
+
 - **3 Lambda Functions**: `caller-daily-routine`, `caller-scores-and-standings`, `caller-knockouts-update`
 - **2 Lambda Layers**: `best-shot-main` (metadata), `sentry` (monitoring)
 - **EventBridge Scheduler**: Creates and manages scheduled jobs
 - **IAM Roles**: Permissions for Lambda execution and EventBridge scheduling
 
 ### File Structure
+
 ```
 src/lambdas/
 ├── caller-daily-routine.mjs           # Daily scheduler function
@@ -66,6 +71,7 @@ src/lambdas/
 ## 🔧 Prerequisites
 
 ### Required Tools
+
 ```bash
 # AWS CLI (configured with your credentials)
 aws --version
@@ -79,6 +85,7 @@ zip --version
 ```
 
 ### 1. AWS Credentials Setup
+
 ```bash
 # Configure AWS CLI with your credentials
 aws configure
@@ -94,11 +101,14 @@ export AWS_REGION="us-east-1"
 ```
 
 ### 2. GitHub Secrets (for CI/CD)
+
 Add these secrets to your GitHub repository:
+
 - `AWS_ACCESS_KEY_ID`: Your AWS access key ID
 - `AWS_SECRET_ACCESS_KEY`: Your AWS secret access key
 
 **To add secrets:**
+
 1. Go to your GitHub repo → Settings → Secrets and variables → Actions
 2. Click "New repository secret"
 3. Add the AWS credentials
@@ -106,14 +116,16 @@ Add these secrets to your GitHub repository:
 ## 🔄 Automated Deployment (GitHub Actions)
 
 ### Workflow Features
+
 - **Smart change detection**: Only deploys functions/layers that changed
-- **Matrix deployment**: Parallel deployment of multiple functions  
+- **Matrix deployment**: Parallel deployment of multiple functions
 - **Environment support**: Deploy to demo or production
 - **Layer management**: Automatic layer versioning and updates
 - **Testing**: Verifies deployment success
 - **Summary reports**: Clear deployment status
 
 ### Workflow Triggers
+
 ```yaml
 # Automatic triggers
 on:
@@ -130,6 +142,7 @@ workflow_dispatch:
 ```
 
 ### Manual Workflow Execution
+
 1. Go to your GitHub repo → Actions tab
 2. Select "Deploy AWS Lambda Functions" workflow
 3. Click "Run workflow"
@@ -137,6 +150,7 @@ workflow_dispatch:
 5. Click "Run workflow"
 
 ### Deployment Process
+
 1. **Layer Deployment**: Detects changes in `src/lambdas/layers/` and publishes new versions
 2. **Function Deployment**: Updates function code and attaches latest layer versions
 3. **Change Detection**: Only deploys what changed
@@ -154,6 +168,7 @@ workflow_dispatch:
 > ⚠️ **CRITICAL**: Always ensure the `--handler` parameter matches the filename exactly (without .mjs extension). Using `index.handler` will cause "Cannot find module" errors.
 
 #### Function 1: caller-daily-routine
+
 ```bash
 cd src/lambdas
 zip caller-daily-routine.zip caller-daily-routine.mjs
@@ -171,6 +186,7 @@ aws lambda create-function \
 ```
 
 #### Function 2: caller-scores-and-standings
+
 ```bash
 cd src/lambdas
 zip caller-scores-and-standings.zip caller-scores-and-standings.mjs
@@ -188,6 +204,7 @@ aws lambda create-function \
 ```
 
 #### Function 3: caller-knockouts-update
+
 ```bash
 cd src/lambdas
 zip caller-knockouts-update.zip caller-knockouts-update.mjs
@@ -205,6 +222,7 @@ aws lambda create-function \
 ```
 
 ### Quick Function Update (Testing)
+
 ```bash
 # Quick update for testing
 cd src/lambdas
@@ -219,9 +237,11 @@ aws lambda update-function-code \
 ## 📦 Lambda Layers
 
 ### Layer 1: best-shot-main
+
 **Purpose**: Contains metadata configuration for different environments.
 
 **Creating/Updating the Layer**:
+
 ```bash
 # Navigate to the layer directory
 cd src/lambdas/layers/best-shot-main/nodejs
@@ -243,9 +263,11 @@ aws lambda publish-layer-version \
 ```
 
 ### Layer 2: sentry
+
 **Purpose**: Contains Sentry monitoring and error tracking dependencies.
 
 **Creating/Updating the Layer**:
+
 ```bash
 # Navigate to the layer directory
 cd src/lambdas/layers/sentry/nodejs
@@ -267,6 +289,7 @@ aws lambda publish-layer-version \
 ```
 
 ### Adding Layers to Functions
+
 ```bash
 # Get the latest layer versions
 MAIN_LAYER_ARN=$(aws lambda list-layer-versions --layer-name best-shot-main --query 'LayerVersions[0].LayerVersionArn' --output text --region us-east-1)
@@ -282,59 +305,54 @@ aws lambda update-function-configuration \
 ## 🔐 IAM Roles & Permissions
 
 ### Required Role: root-scheduler
+
 **ARN**: `arn:aws:iam::905418297381:role/root-scheduler`
 
 **Required Permissions**:
+
 ```json
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
-            ],
-            "Resource": "arn:aws:logs:us-east-1:905418297381:*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "lambda:InvokeFunction"
-            ],
-            "Resource": [
-                "arn:aws:lambda:us-east-1:905418297381:function:caller-daily-routine",
-                "arn:aws:lambda:us-east-1:905418297381:function:caller-scores-and-standings",
-                "arn:aws:lambda:us-east-1:905418297381:function:caller-knockouts-update"
-            ]
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "arn:aws:logs:us-east-1:905418297381:*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["lambda:InvokeFunction"],
+      "Resource": [
+        "arn:aws:lambda:us-east-1:905418297381:function:caller-daily-routine",
+        "arn:aws:lambda:us-east-1:905418297381:function:caller-scores-and-standings",
+        "arn:aws:lambda:us-east-1:905418297381:function:caller-knockouts-update"
+      ]
+    }
+  ]
 }
 ```
 
 **Trust Policy**:
+
 ```json
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "Service": [
-                    "lambda.amazonaws.com",
-                    "scheduler.amazonaws.com"
-                ]
-            },
-            "Action": "sts:AssumeRole"
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": ["lambda.amazonaws.com", "scheduler.amazonaws.com"]
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
 }
 ```
 
 ## 🌍 Environment Variables
 
 ### Required Environment Variables for All Functions
+
 ```bash
 # Set environment variables for all functions
 aws lambda update-function-configuration \
@@ -351,6 +369,7 @@ aws lambda update-function-configuration \
 ## 🧪 Testing & Monitoring
 
 ### Manual Testing
+
 ```bash
 # Test caller-scores-and-standings
 aws lambda invoke \
@@ -370,10 +389,12 @@ cat response.json
 ```
 
 ### View Deployment Logs
+
 - **GitHub Actions**: Go to repo → Actions → Select workflow run
 - **AWS Console**: Lambda → Functions → Select function → Monitoring
 
 ### Check Function Status
+
 ```bash
 aws lambda get-function-configuration \
   --function-name caller-scores-and-standings \
@@ -381,6 +402,7 @@ aws lambda get-function-configuration \
 ```
 
 ### View Function Logs
+
 ```bash
 # List log streams
 aws logs describe-log-streams \
@@ -395,6 +417,7 @@ aws logs get-log-events \
 ```
 
 ### EventBridge Scheduler Management
+
 ```bash
 # List all schedules
 aws scheduler list-schedules --region us-east-1
@@ -418,15 +441,17 @@ aws scheduler delete-schedule \
 **THE MOST COMMON AND CRITICAL ERROR** is incorrect handler configuration. This will completely break all Lambda functions.
 
 #### The Problem
+
 Lambda functions were failing with `Cannot find module 'index'` errors because handlers were configured as `index.handler` instead of the actual filename.
 
 #### Correct Handler Configuration
+
 **ALWAYS** ensure the handler matches the actual filename:
 
 ```bash
 # ✅ CORRECT - Handler matches filename
 --handler caller-daily-routine.handler           # For caller-daily-routine.mjs
---handler caller-scores-and-standings.handler    # For caller-scores-and-standings.mjs  
+--handler caller-scores-and-standings.handler    # For caller-scores-and-standings.mjs
 --handler caller-knockouts-update.handler        # For caller-knockouts-update.mjs
 
 # ❌ WRONG - This will cause "Cannot find module" errors
@@ -434,6 +459,7 @@ Lambda functions were failing with `Cannot find module 'index'` errors because h
 ```
 
 #### How to Fix Handler Issues
+
 ```bash
 # Check current handler configuration
 aws lambda get-function-configuration \
@@ -462,35 +488,42 @@ done
 ```
 
 #### Prevention
+
 - **ALWAYS** double-check handler configuration when creating functions
-- **NEVER** use generic handlers like `index.handler` 
+- **NEVER** use generic handlers like `index.handler`
 - **VERIFY** handler matches filename exactly (without .mjs extension)
 
 ### Common Issues
 
 1. **"Function not found" Error**
+
    ```bash
    # Verify function exists
    aws lambda list-functions --region us-east-1 | grep caller-scores
    ```
 
 2. **"Role does not exist" Error**
+
    - Check IAM role ARN: `arn:aws:iam::905418297381:role/root-scheduler`
    - Verify role has correct trust policy
 
 3. **"Module not found" Error**
+
    - Check layer versions are attached to function
    - Verify layer zip structure (`nodejs/` directory required)
 
 4. **"Access Denied" Error**
+
    - Check AWS credentials are valid
    - Verify IAM permissions for Lambda operations
 
 5. **"Timeout" Error**
+
    - Increase function timeout (max 15 minutes)
    - Check API endpoint availability
 
 6. **"Layer not found" Error**
+
    ```bash
    # List available layers
    aws lambda list-layers --region us-east-1
@@ -502,6 +535,7 @@ done
    - Check AWS account limits
 
 ### Debug Commands
+
 ```bash
 # Check current AWS account
 aws sts get-caller-identity
@@ -535,36 +569,42 @@ aws scheduler list-schedules \
 ## 📝 Best Practices
 
 ### 1. Development Workflow
+
 ```
 Local Changes → Test Locally → Commit → Push → Auto Deploy
 ```
 
 ### 2. Branch Strategy
+
 - `main`: Production deployments
 - `feat/*`: Feature branches (deploy to demo)
 - Always test in demo before merging to main
 
 ### 3. Layer Updates
+
 - Update layers when dependencies change
 - Test layer compatibility before deploying
 - Keep layer sizes minimal
 
 ### 4. Environment Variables
+
 - Use GitHub environments for different stages
 - Store secrets securely in GitHub Secrets
 - Never commit credentials to code
 
 ### 5. Local Development
+
 ```bash
 # Install dependencies for layers
 cd src/lambdas/layers/best-shot-main/nodejs
 npm install
 
-cd ../sentry/nodejs  
+cd ../sentry/nodejs
 npm install
 ```
 
 ### 6. Monitoring
+
 - Use Sentry for structured logging and error tracking
 - Monitor CloudWatch metrics for performance
 - Set up alerts for function failures

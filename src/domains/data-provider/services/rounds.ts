@@ -8,8 +8,9 @@ import {
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { Profiling } from '@/services/profiling';
-import { writeFileSync } from 'fs';
+import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { S3FileStorage } from '../providers/file-storage';
 
 type RoundScrapingOperationData =
   | { baseUrl?: string; tournamentId?: string; roundsCount?: number; note?: string }
@@ -92,24 +93,50 @@ export class RoundDataProviderService {
     }
   }
 
-  private generateInvoiceFile(): void {
+  private async generateInvoiceFile(): Promise<void> {
     this.invoice.endTime = new Date().toISOString();
-    const filename = `rounds-scraping-${this.invoice.requestId}.json`;
-    const filepath = join(process.cwd(), 'tournament-scraping-reports', filename);
+    const filename = `rounds-scraping-${this.invoice.requestId}`;
+    const jsonContent = JSON.stringify(this.invoice, null, 2);
 
     try {
-      writeFileSync(filepath, JSON.stringify(this.invoice, null, 2));
-      Profiling.log({
-        msg: `[INVOICE] Tournament rounds scraping report generated successfully`,
-        data: { filepath, requestId: this.invoice.requestId },
-        source: 'DATA_PROVIDER_V2_ROUNDS_generateInvoiceFile',
-      });
+      const isLocal = process.env.NODE_ENV === 'development';
+
+      if (isLocal) {
+        // Store locally for development
+        const reportsDir = join(process.cwd(), 'tournament-scraping-reports');
+        const filepath = join(reportsDir, `${filename}.json`);
+
+        mkdirSync(reportsDir, { recursive: true });
+        writeFileSync(filepath, jsonContent);
+
+        Profiling.log({
+          msg: `[INVOICE] Tournament rounds scraping report generated successfully (local)`,
+          data: { filepath, requestId: this.invoice.requestId },
+          source: 'DATA_PROVIDER_V2_ROUNDS_generateInvoiceFile',
+        });
+      } else {
+        // Store in S3 for demo/production environments
+        const s3Storage = new S3FileStorage();
+        const s3Key = await s3Storage.uploadFile({
+          buffer: Buffer.from(jsonContent, 'utf8'),
+          filename,
+          contentType: 'application/json',
+          directory: 'tournament-scraping-reports',
+          cacheControl: 'max-age=604800, public', // 7 days cache
+        });
+
+        Profiling.log({
+          msg: `[INVOICE] Tournament rounds scraping report generated successfully (S3)`,
+          data: { s3Key, requestId: this.invoice.requestId },
+          source: 'DATA_PROVIDER_V2_ROUNDS_generateInvoiceFile',
+        });
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       Profiling.error({
         source: 'DATA_PROVIDER_V2_ROUNDS_generateInvoiceFile',
         error: error instanceof Error ? error : new Error(errorMessage),
-        data: { filepath, requestId: this.invoice.requestId },
+        data: { requestId: this.invoice.requestId, filename },
       });
       console.error('Failed to write rounds invoice file:', errorMessage);
     }
@@ -260,7 +287,7 @@ export class RoundDataProviderService {
       const query = await this.createOnDatabase(enhancedRounds);
 
       // Generate invoice file at the very end
-      this.generateInvoiceFile();
+      await this.generateInvoiceFile();
 
       return query;
     } catch (error) {
@@ -268,7 +295,7 @@ export class RoundDataProviderService {
       this.addOperation('initialization', 'process_rounds', 'failed', {
         error: errorMessage,
       });
-      this.generateInvoiceFile();
+      await this.generateInvoiceFile();
       throw error;
     }
   }
@@ -350,13 +377,13 @@ export class RoundDataProviderService {
       });
 
       // Generate invoice file at the very end
-      this.generateInvoiceFile();
+      await this.generateInvoiceFile();
 
       return query;
     } catch (error) {
       const errorMessage = (error as Error).message;
       this.addOperation('update', 'process_rounds', 'failed', { error: errorMessage });
-      this.generateInvoiceFile();
+      await this.generateInvoiceFile();
       Profiling.error({
         source: 'RoundDataProviderService.updateTournament',
         error,

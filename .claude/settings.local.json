@@ -88,7 +88,9 @@
       "Bash(./scripts/validate-secrets.sh:*)",
       "Bash(./scripts/validate-gcp-setup.sh:*)",
       "Bash(git rev-parse:*)",
-      "WebFetch(domain:productionresultssa16.blob.core.windows.net)"
+      "WebFetch(domain:productionresultssa16.blob.core.windows.net)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:medium.com)"
     ],
     "deny": []
   }

@@ -67,15 +67,14 @@ jobs:
         run: yarn audit || true # Don't fail on audit issues for now
 
   # Build and push Docker images after CI passes
-  build-images:
-    name: Build Docker Images
+  build-demo-image:
+    name: Build Demo Image
     runs-on: ubuntu-latest
     needs: [quality-checks, security-checks]
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     
     outputs:
       demo-image: ${{ steps.image.outputs.demo-image }}
-      staging-image: ${{ steps.image.outputs.staging-image }}
 
     steps:
       - name: Checkout code
@@ -92,24 +91,21 @@ jobs:
       - name: Configure Docker for gcr.io
         run: gcloud auth configure-docker --quiet
 
-      - name: Set image tags
+      - name: Set demo image tag
         id: image
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "demo-image=gcr.io/api-best-shot-demo/api-best-shot-demo:pr-${{ github.event.pull_request.number }}-${{ github.sha }}" >> $GITHUB_OUTPUT
           else
             echo "demo-image=gcr.io/api-best-shot-demo/api-best-shot-demo:${{ github.sha }}" >> $GITHUB_OUTPUT
-            echo "staging-image=gcr.io/api-best-shot-staging/api-best-shot:staging-${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build and push Docker image with GitHub Actions cache
+      - name: Build and push Demo Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: |
-            ${{ steps.image.outputs.demo-image }}
-            ${{ github.ref == 'refs/heads/main' && steps.image.outputs.staging-image || '' }}
+          tags: ${{ steps.image.outputs.demo-image }}
           platforms: linux/amd64
           build-args: |
             BUILDKIT_INLINE_CACHE=1

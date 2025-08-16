@@ -43,7 +43,10 @@
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "validate:secrets": "./scripts/validate-secrets.sh",
+    "validate:gcp": "./scripts/validate-gcp-setup.sh",
+    "validate:all": "./scripts/validate-secrets.sh && ./scripts/validate-gcp-setup.sh"
   },
   "author": "Mario Brusarosco",
   "license": "ISC",

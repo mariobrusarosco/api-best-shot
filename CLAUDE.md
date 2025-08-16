@@ -6,11 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Core Development
 
-- `yarn dev` - Start development server with hot reload (uses ts-node-dev)
-- `yarn dev:aws` - Start with AWS LocalStack services
+- `yarn dev` - Start development server with hot reload (uses ts-node-dev via ./dev-with-logs.sh)
+- `yarn dev:no-logs` - Start development server without log file output
 - `yarn dev:full` - Start API, database, and frontend concurrently
 - `yarn build` - Build for production (TypeScript compilation + tsc-alias)
 - `yarn compile` - Type check without emitting files
+- `yarn dev:status` - Check Docker container and Volta status
+- `yarn dev:clean` - Complete reset: stop containers, remove volumes, reinstall dependencies
 
 ### Database Operations
 
@@ -63,7 +65,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `yarn test` - Run Jest tests
 - `yarn test:watch` - Run tests in watch mode
 - `yarn test:cov` - Run tests with coverage report
-- `yarn test:scraper` - Test web scraping functionality
+- `yarn test:scraper` - Test web scraping functionality (Playwright-based)
+- `yarn test:cov` - Run tests with coverage report (70% threshold)
 
 ### Code Quality
 
@@ -89,19 +92,29 @@ Each domain (auth, tournament, match, guess, etc.) follows this pattern:
 
 ```
 src/domains/{domain}/
-├── api/           # HTTP endpoints and route handlers
-├── services/      # Business logic and data transformation
-├── queries/       # Database operations (using Drizzle ORM)
-├── routes/        # Express route definitions (v1, v2)
-├── schema/        # Zod validation schemas
-└── typing.ts      # TypeScript type definitions
+├── api/                # HTTP endpoints and route handlers
+├── services/           # Business logic and data transformation
+├── queries/            # Database operations (using Drizzle ORM)
+├── routes/             # Express route definitions (v1, v2)
+├── schema/             # Database schema definitions (Drizzle tables)
+├── typing.ts           # TypeScript type definitions
+└── (optional):
+    ├── controllers/    # Complex business logic (some domains)
+    ├── error-handling/ # Domain-specific error mapping
+    └── utils/          # Domain-specific utilities
 ```
+
+### Naming Conventions
+
+- **Exports**: `API_{DOMAIN}`, `SERVICES_{DOMAIN}`, `QUERIES_{DOMAIN}`
+- **Database Tables**: `T_` prefix (e.g., `T_Tournament`, `T_Match`)
+- **Database Types**: `DB_Insert{Entity}`, `DB_Update{Entity}`, `DB_Select{Entity}`
 
 ### Key Architectural Principles
 
-1. **Query Layer** (`queries/`) - Raw database operations using Drizzle ORM
-2. **Service Layer** (`services/`) - Business logic, data transformation, error handling
-3. **API Layer** (`api/`) - HTTP concerns, input validation, response formatting
+1. **Query Layer** (`queries/`) - Pure database operations using Drizzle ORM, no business logic
+2. **Service Layer** (`services/`) - Business logic, data transformation, cross-domain orchestration
+3. **API Layer** (`api/`) - HTTP concerns, request/response handling, calls services for business logic
 
 ### Main Entry Points
 
@@ -112,17 +125,25 @@ src/domains/{domain}/
 ### Technology Stack
 
 - **Database**: PostgreSQL with Drizzle ORM
-- **Runtime**: Node.js 18.17.1 (managed by Volta)
+- **Runtime**: Node.js 22.17.0 (managed by Volta with Yarn 3.8.7)
 - **Framework**: Express.js with TypeScript
 - **Testing**: Jest with ts-jest
 - **Validation**: Zod schemas
 - **Monitoring**: Sentry integration
-- **Web Scraping**: Playwright for data collection
-- **Cloud**: AWS S3 and Scheduler integration
+- **Web Scraping**: Playwright for automated data collection from external sources
+- **Cloud**: AWS S3 (file storage), Scheduler (automated tasks), GCP Cloud Run (hosting)
+- **Data Providers**: Sofascore integration for live sports data
 
 ### Database Schema
 
-Database schemas are defined per domain and exported through `src/services/database/schema.ts`. Migrations are stored in `supabase/migrations/` and managed via Drizzle Kit.
+Database schemas are defined per domain in `src/domains/{domain}/schema/index.ts` and aggregated in `src/services/database/schema.ts`. All tables include timestamps (`createdAt`, `updatedAt`) with automatic updates. Migrations are stored in `supabase/migrations/` and managed via Drizzle Kit with automatic CI/CD deployment.
+
+### Cross-Domain Communication
+
+- Services can call other domain services directly
+- Routes can mount endpoints from other domains
+- Example: Tournament routes include match and guess endpoints
+- Maintains separation while allowing necessary integration
 
 ### Development Environment
 
@@ -163,10 +184,14 @@ The API supports multiple versions (v1, v2) with routes organized by domain and 
 ## Important Notes
 
 - Always run `yarn lint` and `yarn compile` before committing
-- Database operations should go in the queries layer
-- Business logic belongs in the services layer
-- HTTP concerns stay in the API layer
+- Follow the three-layer architecture strictly:
+  - Database operations: queries layer only
+  - Business logic: services layer only
+  - HTTP concerns: API layer only
+- Use consistent naming conventions across domains
+- Cross-domain calls should go through services, not queries
 - Follow existing domain patterns when adding new features
+- All database tables must include `createdAt` and `updatedAt` timestamps
 
 ## 🚨 CRITICAL: Environment Variable Management
 

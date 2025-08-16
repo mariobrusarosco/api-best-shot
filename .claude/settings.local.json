@@ -82,7 +82,8 @@
       "Bash(yarn db:connect:*)",
       "Bash(docker compose exec:*)",
       "Bash(yarn lint:*)",
-      "Bash(yarn prepare)"
+      "Bash(yarn prepare)",
+      "WebFetch(domain:orm.drizzle.team)"
     ],
     "deny": []
   }

@@ -1,11 +1,41 @@
-# Multi-stage Dockerfile for Cloud Run
-# Build stage: Compiles TypeScript with all dependencies
+# Multi-stage Dockerfile for Cloud Run with optimized caching
+# Dependencies stage: Install and cache dependencies separately
+# Builder stage: Compile TypeScript using cached dependencies  
 # Production stage: Lean runtime with only production dependencies
 
 # ================================
-# Build Stage
+# Dependencies Stage (Cached Layer)
 # ================================
-FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS builder
+FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS dependencies
+
+WORKDIR /app
+
+# Enable Yarn 3
+RUN corepack enable && corepack prepare yarn@3.8.7 --activate
+
+# Copy ONLY package management files for better caching
+# This layer will be cached unless package.json/yarn.lock changes
+COPY package.json yarn.lock .yarnrc.yml ./
+
+# Install ALL dependencies (including dev dependencies for building)
+# This expensive step gets cached when dependencies don't change
+RUN yarn install --immutable --frozen-lockfile
+
+# ================================
+# Builder Stage (Uses Cached Dependencies)
+# ================================
+FROM dependencies AS builder
+
+# Copy source code (separate from dependencies for better caching)
+COPY . .
+
+# Build the application using pre-installed dependencies
+RUN yarn build
+
+# ================================
+# Production Dependencies Stage
+# ================================
+FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS prod-deps
 
 WORKDIR /app
 
@@ -15,35 +45,25 @@ RUN corepack enable && corepack prepare yarn@3.8.7 --activate
 # Copy package management files
 COPY package.json yarn.lock .yarnrc.yml ./
 
-# Install ALL dependencies (needed for TypeScript compilation)
-RUN yarn install --immutable
-
-# Copy source code
-COPY . .
-
-# Build the application
-RUN yarn build
+# Install ONLY production dependencies for smaller final image
+RUN NODE_ENV=production yarn install --immutable --frozen-lockfile && \
+    yarn cache clean --all
 
 # ================================
-# Production Stage
+# Production Runtime Stage
 # ================================
 FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS production
 
 WORKDIR /app
 
-# Enable Yarn 3
-RUN corepack enable && corepack prepare yarn@3.8.7 --activate
-
-# Copy package management files
-COPY package.json yarn.lock .yarnrc.yml ./
-
-# Create a production-only install by temporarily setting NODE_ENV
-# This ensures only production dependencies are installed
-RUN NODE_ENV=production yarn install --immutable && \
-    yarn cache clean --all
+# Copy production dependencies from cached layer
+COPY --from=prod-deps /app/node_modules ./node_modules
 
 # Copy the built application from builder stage
 COPY --from=builder /app/dist ./dist
+
+# Copy package.json for metadata (version, etc.)
+COPY --from=builder /app/package.json ./package.json
 
 # Set up directories and permissions for pwuser
 RUN mkdir -p /home/pwuser/Downloads && \

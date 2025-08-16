@@ -1,0 +1,117 @@
+name: Deploy to Staging
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      image-tag:
+        required: true
+        type: string
+    secrets:
+      GCP_SA_KEY:
+        required: true
+      DB_STRING_CONNECTION_STAGING:
+        required: true
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: api-best-shot-staging
+
+      - name: Configure Docker for gcr.io
+        run: gcloud auth configure-docker --quiet
+
+      - name: Set deployment variables
+        id: vars
+        run: |
+          echo "DEPLOY_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=${{ inputs.image-tag || github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Enable Yarn 3
+        run: corepack enable && corepack prepare yarn@3.8.7 --activate
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run Database Migrations - Staging
+        run: npx drizzle-kit migrate
+        env:
+          DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION_STAGING }}
+          NODE_ENV: staging
+
+      - name: Trigger Cloud Build deployment
+        run: |
+          gcloud builds submit --no-source \
+            --config=cloudbuild.staging.yaml \
+            --substitutions=COMMIT_SHA=${{ steps.vars.outputs.IMAGE_TAG }},SHORT_SHA=${{ steps.vars.outputs.SHORT_SHA }},BRANCH_NAME=${GITHUB_REF#refs/heads/},_DEPLOY_TIME=${{ steps.vars.outputs.DEPLOY_TIME }}
+
+      - name: Verify deployment
+        run: |
+          echo "🚀 Deployment to staging initiated"
+          echo "📍 Service URL: https://api-best-shot-staging-415034926128.us-east1.run.app"
+          echo "🔍 Image tag: ${{ steps.vars.outputs.IMAGE_TAG }}"
+          
+      - name: Wait for service to be ready
+        run: |
+          echo "Waiting for service to be ready..."
+          for i in {1..30}; do
+            if gcloud run services describe api-best-shot-staging --region=us-east1 --format="value(status.conditions[0].status)" | grep -q "True"; then
+              echo "✅ Service is ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 10
+          done
+
+      - name: Health check
+        id: health
+        run: |
+          HEALTH_URL="https://api-best-shot-staging-415034926128.us-east1.run.app/health"
+          echo "Checking health endpoint: $HEALTH_URL"
+          
+          for i in {1..5}; do
+            if curl -f -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" | grep -q "200"; then
+              echo "✅ Health check passed!"
+              echo "health_status=success" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            echo "Health check attempt $i failed, retrying..."
+            sleep 10
+          done
+          
+          echo "❌ Health check failed after 5 attempts"
+          echo "health_status=failed" >> $GITHUB_OUTPUT
+          exit 1
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "## 🚀 Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Staging" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag**: ${{ steps.vars.outputs.IMAGE_TAG }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Time**: ${{ steps.vars.outputs.DEPLOY_TIME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service URL**: https://api-best-shot-staging-415034926128.us-east1.run.app" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Check**: ${{ steps.health.outputs.health_status || 'not performed' }}" >> $GITHUB_STEP_SUMMARY

@@ -1,26 +1,21 @@
 import dotenv from 'dotenv';
 
-// Load environment variables
-const envPath = process.env.ENV_PATH || '.env';
-dotenv.config({ path: envPath });
+dotenv.config({ path: process.env.ENV_PATH || '.env' });
 
-// Simple database connection for drizzle-kit only
-function getDatabaseUrl(): string {
-  // Use full connection string if available
-  if (process.env.DB_STRING_CONNECTION) {
-    return process.env.DB_STRING_CONNECTION;
+function getDbUrl(): string {
+  const nodeEnv = process.env.NODE_ENV || 'development';
+
+  // Use environment-specific connection strings
+  if (nodeEnv === 'production') {
+    return process.env.DB_STRING_CONNECTION_PRODUCTION!;
   }
 
-  // Build from components
-  const { DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT = '5432' } = process.env;
-
-  if (!DB_USER || !DB_PASSWORD || !DB_NAME || !DB_HOST) {
-    console.error('❌ Database configuration missing');
-    console.error('Set DB_STRING_CONNECTION or DB_USER, DB_PASSWORD, DB_NAME, DB_HOST');
-    process.exit(1);
+  if (nodeEnv === 'demo') {
+    return process.env.DB_STRING_CONNECTION_DEMO!;
   }
 
-  return `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
+  // Local development - build from components
+  return `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT || '5432'}/${process.env.DB_NAME}`;
 }
 
-export const dbUrl = getDatabaseUrl();
+export const dbUrl = getDbUrl();

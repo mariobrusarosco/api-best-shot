@@ -83,7 +83,8 @@
       "Bash(docker compose exec:*)",
       "Bash(yarn lint:*)",
       "Bash(yarn prepare)",
-      "WebFetch(domain:orm.drizzle.team)"
+      "WebFetch(domain:orm.drizzle.team)",
+      "WebFetch(domain:productionresultssa12.blob.core.windows.net)"
     ],
     "deny": []
   }

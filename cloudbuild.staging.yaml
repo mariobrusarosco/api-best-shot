@@ -11,7 +11,7 @@ steps:
       - 'deploy'
       - 'api-best-shot-staging'  # Staging service name
       - '--image'
-      - 'gcr.io/$PROJECT_ID/api-best-shot:staging-${COMMIT_SHA}'
+      - 'gcr.io/api-best-shot-staging/api-best-shot:staging-${COMMIT_SHA}'
       - '--region'
       - 'us-east1'
       - '--platform'

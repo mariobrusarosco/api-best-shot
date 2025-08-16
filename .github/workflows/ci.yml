@@ -102,7 +102,7 @@ jobs:
             echo "staging-image=gcr.io/api-best-shot-staging/api-best-shot:staging-${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build and push Docker image with cache
+      - name: Build and push Docker image with GitHub Actions cache
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -110,16 +110,12 @@ jobs:
           tags: |
             ${{ steps.image.outputs.demo-image }}
             ${{ github.ref == 'refs/heads/main' && steps.image.outputs.staging-image || '' }}
-          cache-from: |
-            type=registry,ref=gcr.io/api-best-shot-demo/api-best-shot-demo:buildcache-deps
-            type=registry,ref=gcr.io/api-best-shot-demo/api-best-shot-demo:buildcache-prod-deps
-            type=registry,ref=gcr.io/api-best-shot-demo/api-best-shot-demo:latest
-          cache-to: |
-            type=registry,ref=gcr.io/api-best-shot-demo/api-best-shot-demo:buildcache-deps,mode=max
-            type=registry,ref=gcr.io/api-best-shot-demo/api-best-shot-demo:buildcache-prod-deps,mode=max
           platforms: linux/amd64
           build-args: |
             BUILDKIT_INLINE_CACHE=1
+          # Use GitHub Actions cache instead of registry cache to avoid GCR auth issues
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   # Deploy to Demo environment (PRs and non-main branches)
   deploy-demo:

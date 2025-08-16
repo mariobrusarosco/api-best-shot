@@ -119,7 +119,7 @@ jobs:
           docker push gcr.io/api-best-shot-demo/api-best-shot-demo:latest
 
       - name: Run Database Migrations
-        run: yarn db:migrate
+        run: npx drizzle-kit migrate
         env:
           DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION_DEMO }}
 

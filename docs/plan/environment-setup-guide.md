@@ -14,6 +14,7 @@ Before starting, ensure you have:
 - ✅ Access to Google Cloud Console
 - ✅ Your Supabase staging project credentials
 - ✅ Existing demo environment secrets to reference
+- ✅ Created environment-specific service accounts (see Step 0)
 
 ---
 
@@ -27,6 +28,81 @@ You need to create these 6 secrets in Google Secret Manager:
 4. **`aws-access-key`** - AWS access key ID (can reuse from demo)
 5. **`aws-secret-key`** - AWS secret access key (can reuse from demo)
 6. **`internal-service-token`** - Internal API token (can reuse from demo)
+
+---
+
+## **Step 0: Create Environment-Specific Service Accounts**
+
+**⚠️ NEW REQUIREMENT**: Each environment now uses its own service account for better security isolation.
+
+### **For Demo Environment:**
+
+```bash
+# Switch to demo project
+gcloud config set project api-best-shot-demo
+
+# Create service account
+gcloud iam service-accounts create github-actions-demo \
+  --display-name="GitHub Actions Demo Deployment" \
+  --description="Service account for GitHub Actions to deploy to demo environment"
+
+# Grant required permissions
+gcloud projects add-iam-policy-binding api-best-shot-demo \
+  --member="serviceAccount:github-actions-demo@api-best-shot-demo.iam.gserviceaccount.com" \
+  --role="roles/run.admin"
+
+gcloud projects add-iam-policy-binding api-best-shot-demo \
+  --member="serviceAccount:github-actions-demo@api-best-shot-demo.iam.gserviceaccount.com" \
+  --role="roles/storage.admin"
+
+gcloud projects add-iam-policy-binding api-best-shot-demo \
+  --member="serviceAccount:github-actions-demo@api-best-shot-demo.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser"
+
+# Create GitHub secret key
+gcloud iam service-accounts keys create demo-key.json \
+  --iam-account=github-actions-demo@api-best-shot-demo.iam.gserviceaccount.com
+```
+
+### **For Staging Environment:**
+
+```bash
+# Switch to staging project
+gcloud config set project api-best-shot-staging
+
+# Create service account
+gcloud iam service-accounts create github-actions-staging \
+  --display-name="GitHub Actions Staging Deployment" \
+  --description="Service account for GitHub Actions to deploy to staging environment"
+
+# Grant required permissions
+gcloud projects add-iam-policy-binding api-best-shot-staging \
+  --member="serviceAccount:github-actions-staging@api-best-shot-staging.iam.gserviceaccount.com" \
+  --role="roles/run.admin"
+
+gcloud projects add-iam-policy-binding api-best-shot-staging \
+  --member="serviceAccount:github-actions-staging@api-best-shot-staging.iam.gserviceaccount.com" \
+  --role="roles/storage.admin"
+
+gcloud projects add-iam-policy-binding api-best-shot-staging \
+  --member="serviceAccount:github-actions-staging@api-best-shot-staging.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser"
+
+# Grant demo service account cross-project access (for build job)
+gcloud projects add-iam-policy-binding api-best-shot-staging \
+  --member="serviceAccount:github-actions-demo@api-best-shot-demo.iam.gserviceaccount.com" \
+  --role="roles/storage.admin"
+
+# Create GitHub secret key
+gcloud iam service-accounts keys create staging-key.json \
+  --iam-account=github-actions-staging@api-best-shot-staging.iam.gserviceaccount.com
+```
+
+### **Add Keys to GitHub Secrets:**
+
+1. Copy content of `demo-key.json` → Add as `GCP_SA_KEY_DEMO` in GitHub
+2. Copy content of `staging-key.json` → Add as `GCP_SA_KEY_STAGING` in GitHub
+3. Delete the key files: `rm demo-key.json staging-key.json`
 
 ---
 
@@ -181,17 +257,29 @@ done
 
 ## **Step 6: GitHub Repository Secrets**
 
-You also need to add one secret to your GitHub repository for deployments:
+You need to add **4 secrets** to your GitHub repository for deployments:
 
 1. Go to your GitHub repository
 2. Navigate to **Settings** → **Secrets and variables** → **Actions**
-3. Click **"New repository secret"**
-4. Add:
-   - **Name**: `DB_STRING_CONNECTION_STAGING`
-   - **Value**: Same as `db-connection-staging` secret value
-5. Click **"Add secret"**
+3. Add these secrets:
 
-This is used for database migrations in the CI/CD pipeline.
+### **Database Secrets:**
+
+- **Name**: `DB_STRING_CONNECTION_DEMO`
+- **Value**: Same as demo database connection string
+
+- **Name**: `DB_STRING_CONNECTION_STAGING`
+- **Value**: Same as `db-connection-staging` secret value
+
+### **Service Account Secrets:**
+
+- **Name**: `GCP_SA_KEY_DEMO`
+- **Value**: Content from `demo-key.json` (Step 0)
+
+- **Name**: `GCP_SA_KEY_STAGING`
+- **Value**: Content from `staging-key.json` (Step 0)
+
+These are used for authentication and database migrations in the CI/CD pipeline.
 
 ---
 

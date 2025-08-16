@@ -10,11 +10,12 @@ This guide shows all secrets required for the CI/CD pipeline to function properl
 
 ## **📋 Required Secrets Overview**
 
-The CI/CD pipeline requires exactly **3 secrets** in your GitHub repository:
+The CI/CD pipeline requires exactly **4 secrets** in your GitHub repository:
 
-1. `GCP_SA_KEY` - Google Cloud Service Account key
-2. `DB_STRING_CONNECTION_DEMO` - Demo database connection string
-3. `DB_STRING_CONNECTION_STAGING` - Staging database connection string
+1. `GCP_SA_KEY_DEMO` - Google Cloud Service Account key for demo environment
+2. `GCP_SA_KEY_STAGING` - Google Cloud Service Account key for staging environment
+3. `DB_STRING_CONNECTION_DEMO` - Demo database connection string
+4. `DB_STRING_CONNECTION_STAGING` - Staging database connection string
 
 ---
 
@@ -24,8 +25,9 @@ Before adding secrets, verify what you already have:
 
 1. Go to your GitHub repository
 2. Click **Settings** → **Secrets and variables** → **Actions**
-3. Check which of these 3 secrets already exist:
-   - `GCP_SA_KEY`
+3. Check which of these 4 secrets already exist:
+   - `GCP_SA_KEY_DEMO`
+   - `GCP_SA_KEY_STAGING`
    - `DB_STRING_CONNECTION_DEMO`
    - `DB_STRING_CONNECTION_STAGING`
 
@@ -46,15 +48,27 @@ For each secret you're missing, follow these steps:
 
 ### **Step 2: Add the Missing Secret**
 
-#### **If missing: `GCP_SA_KEY`**
+#### **If missing: `GCP_SA_KEY_DEMO`**
 
-- **Name**: `GCP_SA_KEY`
-- **Value**: Google Cloud Service Account JSON key
+- **Name**: `GCP_SA_KEY_DEMO`
+- **Value**: Google Cloud Service Account JSON key for demo environment
 - **How to get**:
-  1. Go to Google Cloud Console
+  1. Go to Google Cloud Console → **api-best-shot-demo** project
   2. Navigate to **IAM & Admin** → **Service Accounts**
-  3. Find your existing service account or create a new one
-  4. Click **Actions** → **Create Key** → **JSON**
+  3. Find `github-actions-demo@api-best-shot-demo.iam.gserviceaccount.com`
+  4. Click **Actions** → **Manage keys** → **Add Key** → **Create new key** → **JSON**
+  5. Download the JSON file and copy its entire content
+- Click **Add secret**
+
+#### **If missing: `GCP_SA_KEY_STAGING`**
+
+- **Name**: `GCP_SA_KEY_STAGING`
+- **Value**: Google Cloud Service Account JSON key for staging environment
+- **How to get**:
+  1. Go to Google Cloud Console → **api-best-shot-staging** project
+  2. Navigate to **IAM & Admin** → **Service Accounts**
+  3. Find `github-actions-staging@api-best-shot-staging.iam.gserviceaccount.com`
+  4. Click **Actions** → **Manage keys** → **Add Key** → **Create new key** → **JSON**
   5. Download the JSON file and copy its entire content
 - Click **Add secret**
 
@@ -87,34 +101,37 @@ For each secret you're missing, follow these steps:
 
 ## **✅ Verification**
 
-After adding any missing secrets, verify you have all 3 required secrets:
+After adding any missing secrets, verify you have all 4 required secrets:
 
 ```
-Repository Secrets (3 required)
+Repository Secrets (4 required)
 ├── DB_STRING_CONNECTION_DEMO
 ├── DB_STRING_CONNECTION_STAGING
-└── GCP_SA_KEY
+├── GCP_SA_KEY_DEMO
+└── GCP_SA_KEY_STAGING
 ```
 
-**All 3 must be present for the CI/CD pipeline to work correctly.**
+**All 4 must be present for the CI/CD pipeline to work correctly.**
 
 ---
 
 ## **Important Notes**
 
-### **Why Only 3 Secrets?**
+### **Why 4 Secrets?**
 
+- **Environment isolation**: Each environment uses its own Google Cloud service account
 - **Google Cloud secrets** (jwt-secret, sentry-dsn, etc.) are stored in Google Secret Manager
-- **GitHub only needs** database connections for migrations + GCP authentication
+- **GitHub only needs** database connections for migrations + environment-specific GCP authentication
 - **Cloud Run** pulls other secrets directly from Secret Manager
 
 ### **Secret Usage**
 
-| Secret                         | Used By             | Purpose                      |
-| ------------------------------ | ------------------- | ---------------------------- |
-| `GCP_SA_KEY`                   | All workflows       | Authenticate to Google Cloud |
-| `DB_STRING_CONNECTION_DEMO`    | Demo deployments    | Run migrations on demo DB    |
-| `DB_STRING_CONNECTION_STAGING` | Staging deployments | Run migrations on staging DB |
+| Secret                         | Used By             | Purpose                         |
+| ------------------------------ | ------------------- | ------------------------------- |
+| `GCP_SA_KEY_DEMO`              | Demo workflows      | Authenticate to demo project    |
+| `GCP_SA_KEY_STAGING`           | Staging workflows   | Authenticate to staging project |
+| `DB_STRING_CONNECTION_DEMO`    | Demo deployments    | Run migrations on demo DB       |
+| `DB_STRING_CONNECTION_STAGING` | Staging deployments | Run migrations on staging DB    |
 
 ### **Security Best Practices**
 
@@ -143,9 +160,10 @@ Once you've added the secret, you can test by:
 2. **Add only the missing secrets** from the required list of 3
 3. **Verify all 3 secrets are present** before running CI/CD
 
-**The 3 required secrets:**
+**The 4 required secrets:**
 
-- `GCP_SA_KEY` - Google Cloud authentication
+- `GCP_SA_KEY_DEMO` - Google Cloud authentication for demo environment
+- `GCP_SA_KEY_STAGING` - Google Cloud authentication for staging environment
 - `DB_STRING_CONNECTION_DEMO` - Demo database migrations
 - `DB_STRING_CONNECTION_STAGING` - Staging database migrations
 

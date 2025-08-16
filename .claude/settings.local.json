@@ -84,7 +84,10 @@
       "Bash(yarn lint:*)",
       "Bash(yarn prepare)",
       "WebFetch(domain:orm.drizzle.team)",
-      "WebFetch(domain:productionresultssa12.blob.core.windows.net)"
+      "WebFetch(domain:productionresultssa12.blob.core.windows.net)",
+      "Bash(./scripts/validate-secrets.sh:*)",
+      "Bash(./scripts/validate-gcp-setup.sh:*)",
+      "Bash(git rev-parse:*)"
     ],
     "deny": []
   }

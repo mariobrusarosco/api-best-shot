@@ -22,7 +22,7 @@
     "typeRoots": ["./src/types", "./node_modules/@types"]
   },
   "include": ["src/**/*", "scripts/**/*"],
-  "exclude": ["node_modules", "dist"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
   "files": ["src/types/express/index.d.ts", "drizzle.config.ts", "global.d.ts"],
   "ts-node": {
     "require": ["tsconfig-paths/register"]

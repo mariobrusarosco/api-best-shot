@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import dotenv from 'dotenv';
+import { z } from 'zod';
 
 // Load environment variables based on NODE_ENV
 const envPath = process.env.ENV_PATH || '.env';
@@ -24,7 +24,9 @@ const envSchema = z.object({
     .optional(),
 
   // App
-  NODE_ENV: z.enum(['development', 'demo', 'staging', 'production']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'demo', 'staging', 'production'])
+    .default('development'),
   PORT: z
     .string()
     .transform(val => {

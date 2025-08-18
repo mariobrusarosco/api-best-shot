@@ -22,16 +22,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       
-      # Setup Node.js with caching
+      # Enable corepack FIRST for Yarn 3
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack prepare yarn@3.8.7 --activate
+      
+      # Setup Node.js with caching (after corepack)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'yarn'
-      
-      # Enable corepack for Yarn 3
-      - name: Enable Corepack
-        run: corepack enable
       
       # Install dependencies and run tests
       - name: Install & Test

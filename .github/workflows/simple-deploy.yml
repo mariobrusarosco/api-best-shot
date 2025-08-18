@@ -22,11 +22,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       
-      # Enable corepack FIRST for Yarn 3
+      # Enable corepack FIRST for Yarn 4
       - name: Enable Corepack
         run: |
           corepack enable
-          corepack prepare yarn@3.8.7 --activate
+          corepack prepare yarn@4.9.2 --activate
       
       # Setup Node.js with caching (after corepack)
       - name: Setup Node.js

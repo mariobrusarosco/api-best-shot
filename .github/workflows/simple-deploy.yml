@@ -38,7 +38,7 @@ jobs:
       # Install dependencies and run tests
       - name: Install & Test
         run: |
-          yarn install
+          yarn install --immutable
           yarn lint
           yarn compile
           yarn test

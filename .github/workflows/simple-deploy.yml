@@ -64,6 +64,11 @@ jobs:
             --max-instances=10
             --port=8080
             --allow-unauthenticated
+            --tag=latest
           env_vars: |
             NODE_ENV=staging
-            PORT=8080
+            API_DOMAIN=api-best-shot-staging-415034926128.us-east1.run.app
+            API_VERSION=/v2
+          secrets: |
+            JWT_SECRET=jwt-secret:latest
+            DB_STRING_CONNECTION=db-connection-staging:latest

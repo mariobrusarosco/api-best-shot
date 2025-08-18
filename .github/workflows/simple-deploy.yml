@@ -29,6 +29,10 @@ jobs:
           node-version: '22'
           cache: 'yarn'
       
+      # Enable corepack for Yarn 3
+      - name: Enable Corepack
+        run: corepack enable
+      
       # Install dependencies and run tests
       - name: Install & Test
         run: |

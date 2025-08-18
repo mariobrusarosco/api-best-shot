@@ -24,7 +24,7 @@ const envSchema = z.object({
     .optional(),
 
   // App
-  NODE_ENV: z.enum(['development', 'demo', 'production']).default('development'),
+  NODE_ENV: z.enum(['development', 'demo', 'staging', 'production']).default('development'),
   PORT: z
     .string()
     .transform(val => {

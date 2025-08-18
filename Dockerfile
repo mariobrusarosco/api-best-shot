@@ -10,8 +10,8 @@ FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS dependencies
 
 WORKDIR /app
 
-# Enable Yarn 3
-RUN corepack enable && corepack prepare yarn@3.8.7 --activate
+# Enable Yarn 4
+RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 
 # Copy ONLY package management files for better caching
 # This layer will be cached unless package.json/yarn.lock changes
@@ -39,8 +39,8 @@ FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS prod-deps
 
 WORKDIR /app
 
-# Enable Yarn 3
-RUN corepack enable && corepack prepare yarn@3.8.7 --activate
+# Enable Yarn 4
+RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 
 # Copy package management files
 COPY package.json yarn.lock .yarnrc.yml ./

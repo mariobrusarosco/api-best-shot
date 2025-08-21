@@ -1,3 +1,4 @@
+// Admin API endpoints for execution management
 import { Request, Response } from 'express';
 import { DataProviderExecutionService } from '@/domains/data-provider/services';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
@@ -15,7 +16,15 @@ interface ExecutionsQuery {
 
 export const API_ADMIN_EXECUTIONS = {
   // GET /api/v1/admin/executions - List all executions with filtering
-  async getAllExecutions(req: Request<{}, {}, {}, ExecutionsQuery>, res: Response) {
+  async getAllExecutions(
+    req: Request<
+      Record<string, never>,
+      Record<string, never>,
+      Record<string, never>,
+      ExecutionsQuery
+    >,
+    res: Response
+  ) {
     try {
       const {
         tournamentId,
@@ -96,23 +105,26 @@ export const API_ADMIN_EXECUTIONS = {
       const stats = await DataProviderExecutionService.getExecutionStats(tournamentId);
 
       // Group executions by operation type for frontend display
-      const groupedExecutions = executions.reduce((acc, execution) => {
-        const operationType = execution.operationType;
-        if (!acc[operationType]) {
-          acc[operationType] = [];
-        }
-        acc[operationType].push({
-          id: execution.id,
-          requestId: execution.requestId,
-          ranAt: execution.startedAt,
-          completedAt: execution.completedAt,
-          status: execution.status,
-          duration: execution.duration,
-          summary: execution.summary,
-          reportFileUrl: execution.reportFileUrl,
-        });
-        return acc;
-      }, {} as Record<string, any[]>);
+      const groupedExecutions = executions.reduce(
+        (acc, execution) => {
+          const operationType = execution.operationType;
+          if (!acc[operationType]) {
+            acc[operationType] = [];
+          }
+          acc[operationType].push({
+            id: execution.id,
+            requestId: execution.requestId,
+            ranAt: execution.startedAt,
+            completedAt: execution.completedAt,
+            status: execution.status,
+            duration: execution.duration,
+            summary: execution.summary,
+            reportFileUrl: execution.reportFileUrl,
+          });
+          return acc;
+        },
+        {} as Record<string, unknown[]>
+      );
 
       return res.status(200).json({
         success: true,
@@ -164,10 +176,12 @@ export const API_ADMIN_EXECUTIONS = {
         success: true,
         data: {
           execution,
-          tournament: tournament ? {
-            id: tournament.id,
-            label: tournament.label,
-          } : null,
+          tournament: tournament
+            ? {
+                id: tournament.id,
+                label: tournament.label,
+              }
+            : null,
         },
       });
     } catch (error) {

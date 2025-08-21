@@ -45,7 +45,7 @@ type TeamsScrapingOperationData =
     }
   | Record<string, unknown>;
 
-interface TeamsScrapingOperation {
+interface TeamsOperation {
   step: string;
   operation: string;
   status: 'started' | 'completed' | 'failed';
@@ -53,7 +53,7 @@ interface TeamsScrapingOperation {
   timestamp: string;
 }
 
-interface TeamsScrapingInvoice {
+interface TeamsOperationReport {
   requestId: string;
   tournament: {
     id: string;
@@ -61,7 +61,7 @@ interface TeamsScrapingInvoice {
   };
   startTime: string;
   endTime?: string;
-  operations: TeamsScrapingOperation[];
+  operations: TeamsOperation[];
   summary: {
     totalOperations: number;
     successfulOperations: number;
@@ -78,11 +78,11 @@ interface TeamsScrapingInvoice {
 
 export class TeamsDataProviderService {
   private scraper: BaseScraper;
-  private invoice: TeamsScrapingInvoice;
+  private report: TeamsOperationReport;
 
   constructor(scraper: BaseScraper, requestId: string) {
     this.scraper = scraper;
-    this.invoice = {
+    this.report = {
       requestId,
       tournament: {
         id: '',
@@ -111,7 +111,7 @@ export class TeamsDataProviderService {
     status: 'started' | 'completed' | 'failed',
     data?: TeamsScrapingOperationData
   ): void {
-    this.invoice.operations.push({
+    this.report.operations.push({
       step,
       operation,
       status,
@@ -119,34 +119,34 @@ export class TeamsDataProviderService {
       timestamp: new Date().toISOString(),
     });
 
-    this.invoice.summary.totalOperations++;
+    this.report.summary.totalOperations++;
     if (status === 'completed') {
-      this.invoice.summary.successfulOperations++;
+      this.report.summary.successfulOperations++;
     } else if (status === 'failed') {
-      this.invoice.summary.failedOperations++;
+      this.report.summary.failedOperations++;
     }
   }
 
-  private async generateInvoiceFile(): Promise<void> {
-    this.invoice.endTime = new Date().toISOString();
-    const filename = `teams-scraping-${this.invoice.requestId}`;
-    const jsonContent = JSON.stringify(this.invoice, null, 2);
+  private async generateOperationReport(): Promise<void> {
+    this.report.endTime = new Date().toISOString();
+    const filename = `teams-operation-${this.report.requestId}`;
+    const jsonContent = JSON.stringify(this.report, null, 2);
 
     try {
       const isLocal = process.env.NODE_ENV === 'development';
 
       if (isLocal) {
         // Store locally for development
-        const reportsDir = join(process.cwd(), 'tournament-scraping-reports');
+        const reportsDir = join(process.cwd(), 'data-provider-operation-reports');
         const filepath = join(reportsDir, `${filename}.json`);
 
         mkdirSync(reportsDir, { recursive: true });
         writeFileSync(filepath, jsonContent);
 
         Profiling.log({
-          msg: `[INVOICE] Teams scraping report generated successfully (local)`,
-          data: { filepath, requestId: this.invoice.requestId },
-          source: 'DATA_PROVIDER_V2_TEAMS_generateInvoiceFile',
+          msg: `[REPORT] Teams operation report generated successfully (local)`,
+          data: { filepath, requestId: this.report.requestId },
+          source: 'DATA_PROVIDER_V2_TEAMS_generateOperationReport',
         });
       } else {
         // Store in S3 for demo/production environments
@@ -155,24 +155,24 @@ export class TeamsDataProviderService {
           buffer: Buffer.from(jsonContent, 'utf8'),
           filename,
           contentType: 'application/json',
-          directory: 'tournament-scraping-reports',
+          directory: 'data-provider-operation-reports',
           cacheControl: 'max-age=604800, public', // 7 days cache
         });
 
         Profiling.log({
-          msg: `[INVOICE] Teams scraping report generated successfully (S3)`,
-          data: { s3Key, requestId: this.invoice.requestId },
-          source: 'DATA_PROVIDER_V2_TEAMS_generateInvoiceFile',
+          msg: `[REPORT] Teams operation report generated successfully (S3)`,
+          data: { s3Key, requestId: this.report.requestId },
+          source: 'DATA_PROVIDER_V2_TEAMS_generateOperationReport',
         });
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       Profiling.error({
-        source: 'DATA_PROVIDER_V2_TEAMS_generateInvoiceFile',
+        source: 'DATA_PROVIDER_V2_TEAMS_generateOperationReport',
         error: error instanceof Error ? error : new Error(errorMessage),
-        data: { requestId: this.invoice.requestId, filename },
+        data: { requestId: this.report.requestId, filename },
       });
-      console.error('Failed to write teams invoice file:', errorMessage);
+      console.error('Failed to write teams operation report file:', errorMessage);
     }
   }
 
@@ -517,8 +517,8 @@ export class TeamsDataProviderService {
   public async init(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
-    // Initialize invoice tournament data
-    this.invoice.tournament = {
+    // Initialize report tournament data
+    this.report.tournament = {
       id: tournament.id,
       label: tournament.label,
     };
@@ -549,8 +549,8 @@ export class TeamsDataProviderService {
         const teamsFromKnockoutRounds =
           await this.fetchTeamsFromKnockoutRounds(tournament);
         mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
-        this.invoice.summary.teamCounts.fromStandings = 0;
-        this.invoice.summary.teamCounts.fromKnockout =
+        this.report.summary.teamCounts.fromStandings = 0;
+        this.report.summary.teamCounts.fromKnockout =
           mappedTeamsFromKnockoutRounds.length;
       } else {
         this.addOperation('initialization', 'tournament_mode_decision', 'completed', {
@@ -570,12 +570,12 @@ export class TeamsDataProviderService {
             note: 'No standings available yet - proceeding with knockout rounds only',
           });
         }
-        this.invoice.summary.teamCounts.fromStandings = mappedTeamsFromStandings.length;
+        this.report.summary.teamCounts.fromStandings = mappedTeamsFromStandings.length;
 
         const teamsFromKnockoutRounds =
           await this.fetchTeamsFromKnockoutRounds(tournament);
         mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
-        this.invoice.summary.teamCounts.fromKnockout =
+        this.report.summary.teamCounts.fromKnockout =
           mappedTeamsFromKnockoutRounds.length;
       }
 
@@ -589,7 +589,7 @@ export class TeamsDataProviderService {
         mappedTeamsFromStandings,
         mappedTeamsFromKnockoutRounds
       );
-      this.invoice.summary.teamCounts.afterDeduplication = allTeams.length;
+      this.report.summary.teamCounts.afterDeduplication = allTeams.length;
 
       this.addOperation('transformation', 'deduplicate_teams', 'completed', {
         uniqueTeamsCount: allTeams.length,
@@ -636,7 +636,7 @@ export class TeamsDataProviderService {
         }
       }
 
-      this.invoice.summary.teamCounts.afterEnhancement = enhancedTeams.length;
+      this.report.summary.teamCounts.afterEnhancement = enhancedTeams.length;
       this.addOperation('enhancement', 'enhance_teams_batch', 'completed', {
         enhancedTeamsCount: enhancedTeams.length,
         failedEnhancements: allTeams.length - enhancedTeams.length,
@@ -651,15 +651,15 @@ export class TeamsDataProviderService {
       let query;
       if (tournament.mode === 'knockout-only') {
         await this.upsertOnDatabase(enhancedTeams);
-        this.invoice.summary.teamCounts.created = enhancedTeams.length;
+        this.report.summary.teamCounts.created = enhancedTeams.length;
         query = enhancedTeams; // Return teams for consistency
       } else {
         query = await this.createOnDatabase(enhancedTeams);
-        this.invoice.summary.teamCounts.created = query.length;
+        this.report.summary.teamCounts.created = query.length;
       }
 
       // Generate invoice file at the very end
-      await this.generateInvoiceFile();
+      await this.generateOperationReport();
 
       return query;
     } catch (error: unknown) {
@@ -667,7 +667,7 @@ export class TeamsDataProviderService {
       this.addOperation('initialization', 'process_teams', 'failed', {
         error: errorMessage,
       });
-      await this.generateInvoiceFile();
+      await this.generateOperationReport();
       Profiling.error({
         source: 'DATA_PROVIDER_V2_TEAMS_init',
         error: error instanceof Error ? error : new Error(errorMessage),

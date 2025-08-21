@@ -17,7 +17,7 @@ const safeSofaDate = (date: unknown): Date | null => {
     : new Date(date as string | number | Date);
 };
 
-type MatchesScrapingOperationData =
+type MatchesOperationData =
   | {
       url?: string;
       roundId?: string;
@@ -40,15 +40,15 @@ type MatchesScrapingOperationData =
     }
   | Record<string, unknown>;
 
-interface MatchesScrapingOperation {
+interface MatchesOperation {
   step: string;
   operation: string;
   status: 'started' | 'completed' | 'failed';
-  data?: MatchesScrapingOperationData;
+  data?: MatchesOperationData;
   timestamp: string;
 }
 
-interface MatchesScrapingInvoice {
+interface MatchesOperationReport {
   requestId: string;
   tournament: {
     id: string;
@@ -57,7 +57,7 @@ interface MatchesScrapingInvoice {
   operationType: 'create' | 'update';
   startTime: string;
   endTime?: string;
-  operations: MatchesScrapingOperation[];
+  operations: MatchesOperation[];
   summary: {
     totalOperations: number;
     successfulOperations: number;
@@ -74,11 +74,11 @@ interface MatchesScrapingInvoice {
 
 export class MatchesDataProviderService {
   private scraper: BaseScraper;
-  private invoice: MatchesScrapingInvoice;
+  private report: MatchesOperationReport;
 
   constructor(scraper: BaseScraper, requestId: string) {
     this.scraper = scraper;
-    this.invoice = {
+    this.report = {
       requestId,
       tournament: {
         id: '',
@@ -106,9 +106,9 @@ export class MatchesDataProviderService {
     step: string,
     operation: string,
     status: 'started' | 'completed' | 'failed',
-    data?: MatchesScrapingOperationData
+    data?: MatchesOperationData
   ): void {
-    this.invoice.operations.push({
+    this.report.operations.push({
       step,
       operation,
       status,
@@ -116,34 +116,34 @@ export class MatchesDataProviderService {
       timestamp: new Date().toISOString(),
     });
 
-    this.invoice.summary.totalOperations++;
+    this.report.summary.totalOperations++;
     if (status === 'completed') {
-      this.invoice.summary.successfulOperations++;
+      this.report.summary.successfulOperations++;
     } else if (status === 'failed') {
-      this.invoice.summary.failedOperations++;
+      this.report.summary.failedOperations++;
     }
   }
 
-  private async generateInvoiceFile(): Promise<void> {
-    this.invoice.endTime = new Date().toISOString();
-    const filename = `matches-scraping-${this.invoice.requestId}`;
-    const jsonContent = JSON.stringify(this.invoice, null, 2);
+  private async generateOperationReport(): Promise<void> {
+    this.report.endTime = new Date().toISOString();
+    const filename = `matches-operation-${this.report.requestId}`;
+    const jsonContent = JSON.stringify(this.report, null, 2);
 
     try {
       const isLocal = process.env.NODE_ENV === 'development';
 
       if (isLocal) {
         // Store locally for development
-        const reportsDir = join(process.cwd(), 'tournament-scraping-reports');
+        const reportsDir = join(process.cwd(), 'data-provider-operation-reports');
         const filepath = join(reportsDir, `${filename}.json`);
 
         mkdirSync(reportsDir, { recursive: true });
         writeFileSync(filepath, jsonContent);
 
         Profiling.log({
-          msg: `[INVOICE] Matches scraping report generated successfully (local)`,
-          data: { filepath, requestId: this.invoice.requestId },
-          source: 'DATA_PROVIDER_V2_MATCHES_generateInvoiceFile',
+          msg: `[REPORT] Matches operation report generated successfully (local)`,
+          data: { filepath, requestId: this.report.requestId },
+          source: 'DATA_PROVIDER_V2_MATCHES_generateOperationReport',
         });
       } else {
         // Store in S3 for demo/production environments
@@ -152,24 +152,24 @@ export class MatchesDataProviderService {
           buffer: Buffer.from(jsonContent, 'utf8'),
           filename,
           contentType: 'application/json',
-          directory: 'tournament-scraping-reports',
+          directory: 'data-provider-operation-reports',
           cacheControl: 'max-age=604800, public', // 7 days cache
         });
 
         Profiling.log({
-          msg: `[INVOICE] Matches scraping report generated successfully (S3)`,
-          data: { s3Key, requestId: this.invoice.requestId },
-          source: 'DATA_PROVIDER_V2_MATCHES_generateInvoiceFile',
+          msg: `[REPORT] Matches operation report generated successfully (S3)`,
+          data: { s3Key, requestId: this.report.requestId },
+          source: 'DATA_PROVIDER_V2_MATCHES_generateOperationReport',
         });
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       Profiling.error({
-        source: 'DATA_PROVIDER_V2_MATCHES_generateInvoiceFile',
+        source: 'DATA_PROVIDER_V2_MATCHES_generateOperationReport',
         error: error instanceof Error ? error : new Error(errorMessage),
-        data: { requestId: this.invoice.requestId, filename },
+        data: { requestId: this.report.requestId, filename },
       });
-      console.error('Failed to write matches invoice file:', errorMessage);
+      console.error('Failed to write matches operation report file:', errorMessage);
     }
   }
 
@@ -191,7 +191,7 @@ export class MatchesDataProviderService {
           matchesCount: 0,
           note: 'No matches found',
         });
-        this.invoice.summary.matchCounts.roundsWithoutMatches++;
+        this.report.summary.matchCounts.roundsWithoutMatches++;
         return null;
       }
 
@@ -203,8 +203,8 @@ export class MatchesDataProviderService {
         rawEventsCount: rawContent.events.length,
       });
 
-      this.invoice.summary.matchCounts.roundsWithMatches++;
-      this.invoice.summary.matchCounts.totalMatchesScraped += matches.length;
+      this.report.summary.matchCounts.roundsWithMatches++;
+      this.report.summary.matchCounts.totalMatchesScraped += matches.length;
 
       return rawContent;
     } catch (error) {
@@ -263,7 +263,7 @@ export class MatchesDataProviderService {
               matchesCount: 0,
               note: 'No matches found, skipping round',
             });
-            this.invoice.summary.matchCounts.roundsWithoutMatches++;
+            this.report.summary.matchCounts.roundsWithoutMatches++;
             successfulRounds++;
             await this.scraper.sleep(2500);
             continue;
@@ -278,8 +278,8 @@ export class MatchesDataProviderService {
             rawEventsCount: rawContent.events.length,
           });
 
-          this.invoice.summary.matchCounts.roundsWithMatches++;
-          this.invoice.summary.matchCounts.totalMatchesScraped += matches.length;
+          this.report.summary.matchCounts.roundsWithMatches++;
+          this.report.summary.matchCounts.totalMatchesScraped += matches.length;
           successfulRounds++;
           await this.scraper.sleep(2500);
         } catch (roundError) {
@@ -296,13 +296,13 @@ export class MatchesDataProviderService {
           });
 
           console.log(`[DEBUG] Match round ${round.slug} failed: ${errorMessage}`);
-          this.invoice.summary.matchCounts.roundsWithoutMatches++;
+          this.report.summary.matchCounts.roundsWithoutMatches++;
           await this.scraper.sleep(2500);
           continue;
         }
       }
 
-      this.invoice.summary.matchCounts.totalRoundsProcessed = rounds.length;
+      this.report.summary.matchCounts.totalRoundsProcessed = rounds.length;
 
       const allMatches = roundsWithMatches.flat();
       this.addOperation('scraping', 'fetch_tournament_matches', 'completed', {
@@ -310,8 +310,8 @@ export class MatchesDataProviderService {
         roundsProcessed: rounds.length,
         successfulRounds,
         failedRounds,
-        roundsWithMatches: this.invoice.summary.matchCounts.roundsWithMatches,
-        roundsWithoutMatches: this.invoice.summary.matchCounts.roundsWithoutMatches,
+        roundsWithMatches: this.report.summary.matchCounts.roundsWithMatches,
+        roundsWithoutMatches: this.report.summary.matchCounts.roundsWithoutMatches,
         note: `Processed ${successfulRounds}/${rounds.length} rounds successfully. ${failedRounds > 0 ? `${failedRounds} rounds failed but were skipped.` : ''}`,
       });
 
@@ -390,7 +390,7 @@ export class MatchesDataProviderService {
         createdMatchesCount: matches.length,
       });
 
-      this.invoice.summary.matchCounts.totalMatchesCreated = matches.length;
+      this.report.summary.matchCounts.totalMatchesCreated = matches.length;
 
       return query;
     } catch (error) {
@@ -445,12 +445,12 @@ export class MatchesDataProviderService {
     rounds: DB_SelectTournamentRound[],
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
-    // Initialize invoice tournament data
-    this.invoice.tournament = {
+    // Initialize report tournament data
+    this.report.tournament = {
       id: tournament.id,
       label: tournament.label,
     };
-    this.invoice.operationType = 'create';
+    this.report.operationType = 'create';
 
     this.addOperation('initialization', 'validate_input', 'started', {
       tournamentId: tournament.id,
@@ -467,14 +467,14 @@ export class MatchesDataProviderService {
       const query = await this.createOnDatabase(rawMatches);
 
       // Generate invoice file at the very end
-      await this.generateInvoiceFile();
+      await this.generateOperationReport();
 
       return query;
     } catch (error) {
       this.addOperation('initialization', 'process_matches', 'failed', {
         error: (error as Error).message,
       });
-      await this.generateInvoiceFile();
+      await this.generateOperationReport();
       Profiling.error({
         error,
         source: 'MatchesDataProviderService.init',
@@ -484,12 +484,12 @@ export class MatchesDataProviderService {
   }
 
   public async updateRound(round: DB_SelectTournamentRound) {
-    // Initialize invoice for update operation
-    this.invoice.tournament = {
+    // Initialize report for update operation
+    this.report.tournament = {
       id: round.tournamentId,
       label: 'Tournament (Update Round)',
     };
-    this.invoice.operationType = 'update';
+    this.report.operationType = 'update';
 
     this.addOperation('initialization', 'validate_input', 'started', {
       roundId: round.id,
@@ -504,21 +504,21 @@ export class MatchesDataProviderService {
 
       const rawMatches = await this.getTournamentMatchesByRound(round);
       if (!rawMatches) {
-        await this.generateInvoiceFile();
+        await this.generateOperationReport();
         return [];
       }
       const matches = this.mapMatches(rawMatches, round.tournamentId, round.slug);
       const query = await this.updateOnDatabase(matches);
 
       // Generate invoice file at the very end
-      await this.generateInvoiceFile();
+      await this.generateOperationReport();
 
       return query;
     } catch (error) {
       this.addOperation('update', 'process_round_matches', 'failed', {
         error: (error as Error).message,
       });
-      await this.generateInvoiceFile();
+      await this.generateOperationReport();
       Profiling.error({
         error,
         source: 'MatchesDataProviderService.updateRound',

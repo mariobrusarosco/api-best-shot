@@ -23,7 +23,7 @@ type RoundScrapingOperationData =
     }
   | Record<string, unknown>;
 
-interface RoundScrapingOperation {
+interface RoundOperation {
   step: string;
   operation: string;
   status: 'started' | 'completed' | 'failed';
@@ -31,7 +31,7 @@ interface RoundScrapingOperation {
   timestamp: string;
 }
 
-interface RoundScrapingInvoice {
+interface RoundOperationReport {
   requestId: string;
   tournament: {
     id: string;
@@ -40,7 +40,7 @@ interface RoundScrapingInvoice {
   operationType: 'create' | 'update';
   startTime: string;
   endTime?: string;
-  operations: RoundScrapingOperation[];
+  operations: RoundOperation[];
   summary: {
     totalOperations: number;
     successfulOperations: number;
@@ -50,11 +50,11 @@ interface RoundScrapingInvoice {
 
 export class RoundDataProviderService {
   private scraper: BaseScraper;
-  private invoice: RoundScrapingInvoice;
+  private report: RoundOperationReport;
 
   constructor(scraper: BaseScraper, requestId: string) {
     this.scraper = scraper;
-    this.invoice = {
+    this.report = {
       requestId,
       tournament: {
         id: '',
@@ -77,7 +77,7 @@ export class RoundDataProviderService {
     status: 'started' | 'completed' | 'failed',
     data?: RoundScrapingOperationData
   ): void {
-    this.invoice.operations.push({
+    this.report.operations.push({
       step,
       operation,
       status,
@@ -85,25 +85,25 @@ export class RoundDataProviderService {
       timestamp: new Date().toISOString(),
     });
 
-    this.invoice.summary.totalOperations++;
+    this.report.summary.totalOperations++;
     if (status === 'completed') {
-      this.invoice.summary.successfulOperations++;
+      this.report.summary.successfulOperations++;
     } else if (status === 'failed') {
-      this.invoice.summary.failedOperations++;
+      this.report.summary.failedOperations++;
     }
   }
 
-  private async generateInvoiceFile(): Promise<void> {
-    this.invoice.endTime = new Date().toISOString();
-    const filename = `rounds-scraping-${this.invoice.requestId}`;
-    const jsonContent = JSON.stringify(this.invoice, null, 2);
+  private async generateOperationReport(): Promise<void> {
+    this.report.endTime = new Date().toISOString();
+    const filename = `rounds-operation-${this.report.requestId}`;
+    const jsonContent = JSON.stringify(this.report, null, 2);
 
     try {
       const isLocal = process.env.NODE_ENV === 'development';
 
       if (isLocal) {
         // Store locally for development
-        const reportsDir = join(process.cwd(), 'tournament-scraping-reports');
+        const reportsDir = join(process.cwd(), 'data-provider-operation-reports');
         const filepath = join(reportsDir, `${filename}.json`);
 
         mkdirSync(reportsDir, { recursive: true });
@@ -111,8 +111,8 @@ export class RoundDataProviderService {
 
         Profiling.log({
           msg: `[INVOICE] Tournament rounds scraping report generated successfully (local)`,
-          data: { filepath, requestId: this.invoice.requestId },
-          source: 'DATA_PROVIDER_V2_ROUNDS_generateInvoiceFile',
+          data: { filepath, requestId: this.report.requestId },
+          source: 'DATA_PROVIDER_V2_ROUNDS_generateOperationReport',
         });
       } else {
         // Store in S3 for demo/production environments
@@ -121,24 +121,24 @@ export class RoundDataProviderService {
           buffer: Buffer.from(jsonContent, 'utf8'),
           filename,
           contentType: 'application/json',
-          directory: 'tournament-scraping-reports',
+          directory: 'data-provider-operation-reports',
           cacheControl: 'max-age=604800, public', // 7 days cache
         });
 
         Profiling.log({
           msg: `[INVOICE] Tournament rounds scraping report generated successfully (S3)`,
-          data: { s3Key, requestId: this.invoice.requestId },
-          source: 'DATA_PROVIDER_V2_ROUNDS_generateInvoiceFile',
+          data: { s3Key, requestId: this.report.requestId },
+          source: 'DATA_PROVIDER_V2_ROUNDS_generateOperationReport',
         });
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       Profiling.error({
-        source: 'DATA_PROVIDER_V2_ROUNDS_generateInvoiceFile',
+        source: 'DATA_PROVIDER_V2_ROUNDS_generateOperationReport',
         error: error instanceof Error ? error : new Error(errorMessage),
-        data: { requestId: this.invoice.requestId, filename },
+        data: { requestId: this.report.requestId, filename },
       });
-      console.error('Failed to write rounds invoice file:', errorMessage);
+      console.error('Failed to write rounds report file:', errorMessage);
     }
   }
 
@@ -261,12 +261,12 @@ export class RoundDataProviderService {
   }
 
   public async init(tournamentId: string, tournamentBaseUrl: string) {
-    // Initialize invoice tournament data
-    this.invoice.tournament = {
+    // Initialize report tournament data
+    this.report.tournament = {
       id: tournamentId,
       baseUrl: tournamentBaseUrl,
     };
-    this.invoice.operationType = 'create';
+    this.report.operationType = 'create';
 
     this.addOperation('initialization', 'validate_input', 'started', {
       tournamentId,
@@ -286,8 +286,8 @@ export class RoundDataProviderService {
       );
       const query = await this.createOnDatabase(enhancedRounds);
 
-      // Generate invoice file at the very end
-      await this.generateInvoiceFile();
+      // Generate report file at the very end
+      await this.generateOperationReport();
 
       return query;
     } catch (error) {
@@ -295,7 +295,7 @@ export class RoundDataProviderService {
       this.addOperation('initialization', 'process_rounds', 'failed', {
         error: errorMessage,
       });
-      await this.generateInvoiceFile();
+      await this.generateOperationReport();
       throw error;
     }
   }
@@ -342,12 +342,12 @@ export class RoundDataProviderService {
     tournamentId: string,
     tournamentBaseUrl: string
   ): Promise<unknown> {
-    // Initialize invoice tournament data
-    this.invoice.tournament = {
+    // Initialize report tournament data
+    this.report.tournament = {
       id: tournamentId,
       baseUrl: tournamentBaseUrl,
     };
-    this.invoice.operationType = 'update';
+    this.report.operationType = 'update';
 
     this.addOperation('initialization', 'validate_input', 'started', {
       tournamentId,
@@ -376,14 +376,14 @@ export class RoundDataProviderService {
         data: { rounds: enhancedRounds },
       });
 
-      // Generate invoice file at the very end
-      await this.generateInvoiceFile();
+      // Generate report file at the very end
+      await this.generateOperationReport();
 
       return query;
     } catch (error) {
       const errorMessage = (error as Error).message;
       this.addOperation('update', 'process_rounds', 'failed', { error: errorMessage });
-      await this.generateInvoiceFile();
+      await this.generateOperationReport();
       Profiling.error({
         source: 'RoundDataProviderService.updateTournament',
         error,

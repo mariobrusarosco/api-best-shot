@@ -8,6 +8,13 @@
       "when": 1755301110449,
       "tag": "0000_initial_complete_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1755736606240,
+      "tag": "0001_cold_psynapse",
+      "breakpoints": true
     }
   ]
 }

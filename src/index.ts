@@ -18,6 +18,9 @@ logInfo('Starting API Best Shot...', {
   version: env.API_VERSION,
 });
 
+// Intentional TypeScript error to test pre-commit hook
+const intentionalError: string = 123;
+
 const app = express();
 const port = Number(process.env.PORT || env.PORT || 8080);
 

@@ -1,25 +1,22 @@
 import { config } from 'dotenv';
-config({ path: process.env.ENV_PATH || '.env' });
 import './services/profiling/sentry-instrument';
+config({ path: process.env.ENV_PATH || '.env' });
 
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import express from 'express';
 import requestLogger from './middlewares/logger';
 import apiRouter from './router';
-import cookieParser from 'cookie-parser';
-import cors from 'cors';
 
-import accessControl from './domains/shared/middlewares/access-control';
 import { env } from './config/env';
-import { logInfo, logError } from './services/logger';
+import accessControl from './domains/shared/middlewares/access-control';
+import { logError, logInfo } from './services/logger';
 
 logInfo('Starting API Best Shot...', {
   environment: env.NODE_ENV,
   port: env.PORT,
   version: env.API_VERSION,
 });
-
-// Intentional TypeScript error to test pre-commit hook
-const intentionalError: string = 123;
 
 const app = express();
 const port = Number(process.env.PORT || env.PORT || 8080);

@@ -1,7 +1,7 @@
+import { AdminMiddleware } from '@/domains/auth/middleware';
 import express from 'express';
 import { API_ADMIN } from '../api';
 import { API_ADMIN_EXECUTIONS } from '../api/executions';
-import { AdminMiddleware } from '@/domains/auth/middleware';
 
 const router = express.Router();
 

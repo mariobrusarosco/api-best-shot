@@ -1,23 +1,14 @@
-import { BaseScraper } from '../providers/playwright/base-scraper';
-// import { ENDPOINT_ROUNDS, ENDPOINT_STANDINGS } from "../providers/sofascore_v2/schemas/endpoints";
-// import { IRound } from "../providers/sofascore_v2/schemas/rounds";
-// import { StandingsService } from "./standings";
-// import { TournamentService } from "./tournaments";
-// import { RoundService } from "./rounds";
-// import { MatchesService } from "./matches";
-import { CreateTournamentInput } from '../api/v2/tournament/typing';
-import { TeamsDataProviderService } from './teams';
-import { RoundDataProviderService } from './rounds';
-import { TournamentDataProviderService } from './tournaments';
-import { MatchesDataProviderService } from './match';
-import { StandingsDataProviderService } from './standings';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { randomUUID } from 'crypto';
+import { CreateTournamentInput } from '../api/v2/tournament/typing';
+import { BaseScraper } from '../providers/playwright/base-scraper';
 import { QUERIES_DATA_PROVIDER_EXECUTIONS } from '../queries';
-import type {
-  DB_InsertDataProviderExecution,
-  DB_SelectDataProviderExecution,
-} from '../schema';
+import type { DB_InsertDataProviderExecution, DB_SelectDataProviderExecution } from '../schema';
+import { MatchesDataProviderService } from './match';
+import { RoundDataProviderService } from './rounds';
+import { StandingsDataProviderService } from './standings';
+import { TeamsDataProviderService } from './teams';
+import { TournamentDataProviderService } from './tournaments';
 
 export class DataProviderExecutionService {
   // Create a new execution record
@@ -44,7 +35,7 @@ export class DataProviderExecutionService {
       status: 'completed' | 'failed';
       reportFileUrl?: string;
       reportFileKey?: string;
-      summary?: any;
+      summary?: Record<string, unknown>;
       duration?: number;
     }
   ): Promise<DB_SelectDataProviderExecution | null> {
@@ -68,10 +59,7 @@ export class DataProviderExecutionService {
       offset?: number;
     }
   ): Promise<DB_SelectDataProviderExecution[]> {
-    return await QUERIES_DATA_PROVIDER_EXECUTIONS.getExecutionsByTournament(
-      tournamentId,
-      options
-    );
+    return await QUERIES_DATA_PROVIDER_EXECUTIONS.getExecutionsByTournament(tournamentId, options);
   }
 
   // Get all executions with filtering
@@ -100,9 +88,7 @@ export class DataProviderExecutionService {
     in_progress: number;
     byOperationType: Record<string, { total: number; completed: number; failed: number }>;
   }> {
-    const executions = await QUERIES_DATA_PROVIDER_EXECUTIONS.getExecutionsByTournament(
-      tournamentId
-    );
+    const executions = await QUERIES_DATA_PROVIDER_EXECUTIONS.getExecutionsByTournament(tournamentId);
 
     const stats = {
       total: executions.length,

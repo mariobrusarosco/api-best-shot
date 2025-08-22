@@ -1,18 +1,15 @@
 import type { ENDPOINT_STANDINGS } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
-import {
-  DB_InsertTournamentStandings,
-  T_TournamentStandings,
-} from '@/domains/tournament/schema';
+import { DB_InsertTournamentStandings, T_TournamentStandings } from '@/domains/tournament/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
 import { Profiling } from '@/services/profiling';
-import { safeString } from '@/utils';
-import { writeFileSync, mkdirSync } from 'fs';
-import { join } from 'path';
-import { BaseScraper } from '../providers/playwright/base-scraper';
-import { S3FileStorage } from '../providers/file-storage';
 import { ServiceLogger } from '@/services/profiling/logger';
+import { safeString } from '@/utils';
+import { mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { S3FileStorage } from '../providers/file-storage';
+import { BaseScraper } from '../providers/playwright/base-scraper';
 import { DataProviderExecutionService } from './index';
 
 type ScrapingOperationData =
@@ -161,15 +158,10 @@ export class StandingsDataProviderService {
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      ServiceLogger.error(
-        'GENERATE',
-        error instanceof Error ? error : new Error(errorMessage),
-        'REPORTS',
-        {
-          requestId: this.report.requestId,
-          filename,
-        }
-      );
+      ServiceLogger.error('GENERATE', error instanceof Error ? error : new Error(errorMessage), 'REPORTS', {
+        requestId: this.report.requestId,
+        filename,
+      });
       console.error('Failed to write standings operation report file:', errorMessage);
     }
   }
@@ -225,12 +217,9 @@ export class StandingsDataProviderService {
         };
       });
 
-      const results = standings.flatMap(
-        group => group.standings
-      ) as DB_InsertTournamentStandings[];
+      const results = standings.flatMap(group => group.standings) as DB_InsertTournamentStandings[];
 
-      this.report.summary.standingsCounts.totalGroups =
-        standingsResponse.standings.length;
+      this.report.summary.standingsCounts.totalGroups = standingsResponse.standings.length;
 
       this.addOperation('transformation', 'map_standings', 'completed', {
         totalStandingsCreated: results.length,
@@ -358,11 +347,9 @@ export class StandingsDataProviderService {
     }
   }
 
-  public async init(
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ) {
+  public async init(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
     const startTime = Date.now();
-    
+
     // Create execution tracking record
     await DataProviderExecutionService.createExecution({
       requestId: this.report.requestId,
@@ -394,14 +381,14 @@ export class StandingsDataProviderService {
           note: 'No standings data available for tournament',
         });
         await this.generateOperationReport();
-        
+
         // Complete execution tracking with success
         await DataProviderExecutionService.completeExecution(this.report.requestId, {
           status: 'completed',
           summary: this.report.summary,
           duration: Date.now() - startTime,
         });
-        
+
         return [];
       }
 
@@ -425,14 +412,14 @@ export class StandingsDataProviderService {
         error: errorMessage,
       });
       await this.generateOperationReport();
-      
+
       // Complete execution tracking with failure
       await DataProviderExecutionService.completeExecution(this.report.requestId, {
         status: 'failed',
         summary: this.report.summary,
         duration: Date.now() - startTime,
       });
-      
+
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_init',
         error: error instanceof Error ? error : new Error(errorMessage),
@@ -441,11 +428,9 @@ export class StandingsDataProviderService {
     }
   }
 
-  public async updateTournament(
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ) {
+  public async updateTournament(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
     const startTime = Date.now();
-    
+
     // Create execution tracking record
     await DataProviderExecutionService.createExecution({
       requestId: this.report.requestId,
@@ -477,14 +462,14 @@ export class StandingsDataProviderService {
           note: 'No standings data found for tournament',
         });
         await this.generateOperationReport();
-        
+
         // Complete execution tracking with success
         await DataProviderExecutionService.completeExecution(this.report.requestId, {
           status: 'completed',
           summary: this.report.summary,
           duration: Date.now() - startTime,
         });
-        
+
         return [];
       }
 
@@ -508,14 +493,14 @@ export class StandingsDataProviderService {
         error: errorMessage,
       });
       await this.generateOperationReport();
-      
+
       // Complete execution tracking with failure
       await DataProviderExecutionService.completeExecution(this.report.requestId, {
         status: 'failed',
         summary: this.report.summary,
         duration: Date.now() - startTime,
       });
-      
+
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_updateTournament',
         error: error instanceof Error ? error : new Error(errorMessage),

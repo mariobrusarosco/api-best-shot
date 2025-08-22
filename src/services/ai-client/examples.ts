@@ -79,9 +79,7 @@ export async function exampleProviderSwitching() {
 
     try {
       const config =
-        provider === 'openai'
-          ? { apiKey: process.env.OPENAI_API_KEY, model: 'gpt-4o-mini' }
-          : { model: 'llama3.2' };
+        provider === 'openai' ? { apiKey: process.env.OPENAI_API_KEY, model: 'gpt-4o-mini' } : { model: 'llama3.2' };
 
       const client = new AIClient(provider, config);
       const response = await client.generateResponse(prompt);

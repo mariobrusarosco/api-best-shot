@@ -9,10 +9,7 @@ import { AuthenticateMemberRequest } from '../typing';
 async function authenticateUser(req: AuthenticateMemberRequest, res: Response) {
   try {
     const publicId = req.body.publicId;
-    const [member] = await db
-      .select()
-      .from(T_Member)
-      .where(eq(T_Member.publicId, publicId));
+    const [member] = await db.select().from(T_Member).where(eq(T_Member.publicId, publicId));
 
     if (!member) throw new Error('no user found to authenticate');
 

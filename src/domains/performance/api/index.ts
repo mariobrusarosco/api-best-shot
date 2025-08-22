@@ -9,11 +9,7 @@ const updateTournamentPerformance = async (req: Request, res: Response) => {
     const { tournamentId } = req.params;
     const { points } = req.body;
 
-    await SERVICES_PERFORMANCE.updateTournamentPerformance(
-      memberId,
-      tournamentId,
-      points
-    );
+    await SERVICES_PERFORMANCE.updateTournamentPerformance(memberId, tournamentId, points);
     return res.status(200).send('SUCCESS');
   } catch (error: unknown) {
     console.error('[PERFORMANCE - updateTournamentPerformance]', error);

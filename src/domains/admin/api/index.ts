@@ -55,10 +55,7 @@ export const API_ADMIN = {
         console.error('Token verification failed:', error);
         return res.status(403).json({
           error: 'Invalid token',
-          message:
-            error instanceof Error
-              ? error.message
-              : 'Unknown error during token verification',
+          message: error instanceof Error ? error.message : 'Unknown error during token verification',
         });
       }
 

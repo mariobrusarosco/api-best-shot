@@ -1,12 +1,4 @@
-import {
-  pgTable,
-  uuid,
-  text,
-  timestamp,
-  integer,
-  jsonb,
-  index,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, integer, jsonb, index } from 'drizzle-orm/pg-core';
 
 export const T_DataProviderExecutions = pgTable(
   'data_provider_executions',
@@ -30,12 +22,8 @@ export const T_DataProviderExecutions = pgTable(
   },
   table => ({
     // Indexes for efficient querying
-    tournamentIdIdx: index('data_provider_executions_tournament_id_idx').on(
-      table.tournamentId
-    ),
-    operationTypeIdx: index('data_provider_executions_operation_type_idx').on(
-      table.operationType
-    ),
+    tournamentIdIdx: index('data_provider_executions_tournament_id_idx').on(table.tournamentId),
+    operationTypeIdx: index('data_provider_executions_operation_type_idx').on(table.operationType),
     statusIdx: index('data_provider_executions_status_idx').on(table.status),
     startedAtIdx: index('data_provider_executions_started_at_idx').on(table.startedAt),
     requestIdIdx: index('data_provider_executions_request_id_idx').on(table.requestId),

@@ -23,17 +23,11 @@ export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) 
       error: error as Error,
     });
 
-    res
-      .status(GlobalErrorMapper.NOT_AUTHORIZED.status)
-      .send(GlobalErrorMapper.NOT_AUTHORIZED.userMessage);
+    res.status(GlobalErrorMapper.NOT_AUTHORIZED.status).send(GlobalErrorMapper.NOT_AUTHORIZED.userMessage);
   }
 };
 
-export const AdminMiddleware = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const AdminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // First run the normal auth middleware logic
     const authCookie = Utils.getUserCookie(req);
@@ -57,9 +51,7 @@ export const AdminMiddleware = async (
       error: error as Error,
     });
 
-    res
-      .status(GlobalErrorMapper.NOT_AUTHORIZED.status)
-      .send(GlobalErrorMapper.NOT_AUTHORIZED.userMessage);
+    res.status(GlobalErrorMapper.NOT_AUTHORIZED.status).send(GlobalErrorMapper.NOT_AUTHORIZED.userMessage);
   }
 };
 

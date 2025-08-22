@@ -10,10 +10,7 @@ type GetLeagueStandingsParams = {
   leagueId: string;
 };
 
-const getLeagueStandings = async (
-  req: Request<GetLeagueStandingsParams>,
-  res: Response
-) => {
+const getLeagueStandings = async (req: Request<GetLeagueStandingsParams>, res: Response) => {
   const { leagueId } = req.params;
   const standings = await SERVICES_LEAGUE.getLeagueStandings(leagueId);
   const lastUpdated = await SERVICES_LEAGUE.getLeaguePerformanceLastUpdated(leagueId);
@@ -23,8 +20,7 @@ const getLeagueStandings = async (
 
 const updateLeaguePerformance = async (req: Request, res: Response) => {
   const { leagueId } = req.params;
-  const performance =
-    await SERVICES_PERFORMANCE_V2.league.updateLeaguePerformance(leagueId);
+  const performance = await SERVICES_PERFORMANCE_V2.league.updateLeaguePerformance(leagueId);
 
   return res.status(200).send(performance);
 };
@@ -69,9 +65,7 @@ const inviteToLeague = async (req: Request, res: Response) => {
     return res.status(201).send('user invited to league');
   } catch (error: unknown) {
     if (error instanceof Error && 'status' in error && 'user' in error) {
-      return res
-        .status((error as { status: number }).status)
-        .send((error as { user: string }).user);
+      return res.status((error as { status: number }).status).send((error as { user: string }).user);
     }
     console.error(`[LEAGUE - inviteToLeague] ${error}`);
     return res
@@ -88,9 +82,7 @@ const getLeague = async (req: Request, res: Response) => {
     try {
       const isParticipant = await isLeagueParticipant(req, res, leagueId);
       if (!isParticipant) {
-        return res
-          .status(ErrorMapper.NOT_LEAGUE_MEMBER.status)
-          .send(ErrorMapper.NOT_LEAGUE_MEMBER.user);
+        return res.status(ErrorMapper.NOT_LEAGUE_MEMBER.status).send(ErrorMapper.NOT_LEAGUE_MEMBER.user);
       }
 
       const leagueDetails = await SERVICES_LEAGUE.getLeagueDetails(leagueId, memberId);
@@ -100,9 +92,7 @@ const getLeague = async (req: Request, res: Response) => {
         error === ErrorMapper.LEAGUE_NOT_FOUND ||
         (error && typeof error === 'object' && 'status' in error && 'user' in error)
       ) {
-        return res
-          .status(ErrorMapper.LEAGUE_NOT_FOUND.status)
-          .send(ErrorMapper.LEAGUE_NOT_FOUND.user);
+        return res.status(ErrorMapper.LEAGUE_NOT_FOUND.status).send(ErrorMapper.LEAGUE_NOT_FOUND.user);
       }
       throw error;
     }

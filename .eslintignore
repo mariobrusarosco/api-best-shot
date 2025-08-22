@@ -10,3 +10,6 @@ seed.ts
 
 # Supabase
 supabase
+
+# TypeScript declaration files
+*.d.ts

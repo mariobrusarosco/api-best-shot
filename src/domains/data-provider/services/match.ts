@@ -12,9 +12,7 @@ import { join } from 'path';
 import { S3FileStorage } from '../providers/file-storage';
 
 const safeSofaDate = (date: unknown): Date | null => {
-  return date === null || date === undefined
-    ? null
-    : new Date(date as string | number | Date);
+  return date === null || date === undefined ? null : new Date(date as string | number | Date);
 };
 
 type MatchesOperationData =
@@ -173,9 +171,7 @@ export class MatchesDataProviderService {
     }
   }
 
-  public async getTournamentMatchesByRound(
-    round: DB_SelectTournamentRound
-  ): Promise<ENDPOINT_ROUND | null> {
+  public async getTournamentMatchesByRound(round: DB_SelectTournamentRound): Promise<ENDPOINT_ROUND | null> {
     this.addOperation('scraping', 'fetch_round_matches', 'started', {
       roundSlug: round.slug,
       providerUrl: round.providerUrl,

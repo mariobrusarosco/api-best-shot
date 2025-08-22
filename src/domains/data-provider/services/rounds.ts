@@ -1,10 +1,7 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import type { ENDPOINT_ROUNDS } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
 import db from '@/services/database';
-import {
-  DB_InsertTournamentRound,
-  DB_UpdateTournamentRound,
-} from '@/domains/tournament-round/schema';
+import { DB_InsertTournamentRound, DB_UpdateTournamentRound } from '@/domains/tournament-round/schema';
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { Profiling } from '@/services/profiling';
@@ -238,10 +235,7 @@ export class RoundDataProviderService {
     });
 
     try {
-      const rounds = await db
-        .insert(T_TournamentRound)
-        .values(roundsToInsert)
-        .returning();
+      const rounds = await db.insert(T_TournamentRound).values(roundsToInsert).returning();
 
       this.addOperation('database', 'create_rounds', 'completed', {
         createdRoundsCount: rounds.length,
@@ -252,10 +246,7 @@ export class RoundDataProviderService {
     } catch (error) {
       const errorMessage = (error as Error).message;
       this.addOperation('database', 'create_rounds', 'failed', { error: errorMessage });
-      console.error(
-        '[SOFASCORE] - [ERROR] - [CREATE TOURNAMENT ROUNDS ON DATABASE]',
-        error
-      );
+      console.error('[SOFASCORE] - [ERROR] - [CREATE TOURNAMENT ROUNDS ON DATABASE]', error);
       throw error;
     }
   }
@@ -279,11 +270,7 @@ export class RoundDataProviderService {
       });
 
       const rawRounds = await this.getTournamentRounds(tournamentBaseUrl);
-      const enhancedRounds = this.enhanceRounds(
-        tournamentBaseUrl,
-        tournamentId,
-        rawRounds
-      );
+      const enhancedRounds = this.enhanceRounds(tournamentBaseUrl, tournamentId, rawRounds);
       const query = await this.createOnDatabase(enhancedRounds);
 
       // Generate report file at the very end
@@ -300,9 +287,7 @@ export class RoundDataProviderService {
     }
   }
 
-  public async updateOnDatabase(
-    roundsToUpdate: DB_UpdateTournamentRound[]
-  ): Promise<unknown> {
+  public async updateOnDatabase(roundsToUpdate: DB_UpdateTournamentRound[]): Promise<unknown> {
     this.addOperation('database', 'update_rounds', 'started', {
       roundsCount: roundsToUpdate.length,
       tournamentId: roundsToUpdate[0]?.tournamentId,
@@ -338,10 +323,7 @@ export class RoundDataProviderService {
     }
   }
 
-  public async updateTournament(
-    tournamentId: string,
-    tournamentBaseUrl: string
-  ): Promise<unknown> {
+  public async updateTournament(tournamentId: string, tournamentBaseUrl: string): Promise<unknown> {
     // Initialize report tournament data
     this.report.tournament = {
       id: tournamentId,
@@ -364,11 +346,7 @@ export class RoundDataProviderService {
       });
 
       const rawRounds = await this.getTournamentRounds(tournamentBaseUrl);
-      const enhancedRounds = this.enhanceRounds(
-        tournamentBaseUrl,
-        tournamentId,
-        rawRounds
-      );
+      const enhancedRounds = this.enhanceRounds(tournamentBaseUrl, tournamentId, rawRounds);
       const query = await this.updateOnDatabase(enhancedRounds);
 
       Profiling.log({

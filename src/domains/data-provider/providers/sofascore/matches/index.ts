@@ -5,9 +5,7 @@ import db from '@/services/database';
 import { safeString } from '@/utils';
 
 const safeSofaDate = (date: unknown): Date | null => {
-  return date === null || date === undefined
-    ? null
-    : new Date(date as string | number | Date);
+  return date === null || date === undefined ? null : new Date(date as string | number | Date);
 };
 
 export const SofascoreMatches: IApiProvider['matches'] = {

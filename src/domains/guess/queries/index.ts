@@ -3,10 +3,7 @@ import { T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
 import { eq, and } from 'drizzle-orm';
 
-const selectMemberGuessesForTournament = async (
-  memberId: string,
-  tournamentId: string
-) => {
+const selectMemberGuessesForTournament = async (memberId: string, tournamentId: string) => {
   const guesses = await db
     .select()
     .from(T_Guess)

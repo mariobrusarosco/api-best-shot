@@ -65,11 +65,7 @@ export class S3FileStorage {
     }
   }
 
-  public async uploadBase64Image(
-    base64Data: string,
-    filename: string,
-    directory = 'uploads'
-  ): Promise<string> {
+  public async uploadBase64Image(base64Data: string, filename: string, directory = 'uploads'): Promise<string> {
     const buffer = Buffer.from(base64Data, 'base64');
     return this.uploadFile({
       buffer,

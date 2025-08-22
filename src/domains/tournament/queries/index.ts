@@ -70,12 +70,7 @@ const knockoutRounds = async (tournamentId: string) => {
     return db
       .select()
       .from(T_TournamentRound)
-      .where(
-        and(
-          eq(T_TournamentRound.tournamentId, tournamentId),
-          eq(T_TournamentRound.type, 'knockout')
-        )
-      );
+      .where(and(eq(T_TournamentRound.tournamentId, tournamentId), eq(T_TournamentRound.type, 'knockout')));
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
     console.error('[TournamentQueries] - [allKnockoutRounds]', dbError);
@@ -89,10 +84,7 @@ const checkOnboardingStatus = async (memberId: string, tournamentId: string) => 
       .select()
       .from(T_TournamentPerformance)
       .where(
-        and(
-          eq(T_TournamentPerformance.tournamentId, tournamentId),
-          eq(T_TournamentPerformance.memberId, memberId)
-        )
+        and(eq(T_TournamentPerformance.tournamentId, tournamentId), eq(T_TournamentPerformance.memberId, memberId))
       );
 
     return !!tournamentPerformance;
@@ -130,19 +122,12 @@ const getTournamentGuesses = async (memberId: string, tournamentId: string) => {
   }
 };
 
-const getMatchesWithNullGuess = async (
-  memberId: string,
-  tournamentId: string,
-  round: string
-) => {
+const getMatchesWithNullGuess = async (memberId: string, tournamentId: string, round: string) => {
   try {
     const rows = await db
       .select()
       .from(T_Match)
-      .leftJoin(
-        T_Guess,
-        and(eq(T_Match.id, T_Guess.matchId), eq(T_Guess.memberId, memberId))
-      )
+      .leftJoin(T_Guess, and(eq(T_Match.id, T_Guess.matchId), eq(T_Guess.memberId, memberId)))
       .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round)));
 
     return rows.filter((row: (typeof rows)[number]) => row.guess === null);

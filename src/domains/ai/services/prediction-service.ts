@@ -2,10 +2,7 @@ import { OpenAI } from 'openai';
 import { T_Match, DB_SelectMatch } from '@/domains/match/schema';
 import { T_Team, DB_SelectTeam } from '@/domains/team/schema';
 import { T_Tournament, DB_SelectTournament } from '@/domains/tournament/schema';
-import {
-  T_TournamentStandings,
-  DB_SelectTournamentStandings,
-} from '@/domains/tournament/schema';
+import { T_TournamentStandings, DB_SelectTournamentStandings } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -31,9 +28,7 @@ const MatchAnalysisResponse = z.object({
   confidence: z.number(),
 });
 
-export const getAIPredictionForMatch = async (
-  matchId: string
-): Promise<z.infer<typeof MatchAnalysisResponse>> => {
+export const getAIPredictionForMatch = async (matchId: string): Promise<z.infer<typeof MatchAnalysisResponse>> => {
   // 1. Fetch match data
   const [match] = await db.select().from(T_Match).where(eq(T_Match.id, matchId));
 
@@ -44,21 +39,12 @@ export const getAIPredictionForMatch = async (
   console.log('match', match);
 
   // 2. Fetch both teams data
-  const [homeTeam] = await db
-    .select()
-    .from(T_Team)
-    .where(eq(T_Team.externalId, match.homeTeamId));
+  const [homeTeam] = await db.select().from(T_Team).where(eq(T_Team.externalId, match.homeTeamId));
 
-  const [awayTeam] = await db
-    .select()
-    .from(T_Team)
-    .where(eq(T_Team.externalId, match.awayTeamId));
+  const [awayTeam] = await db.select().from(T_Team).where(eq(T_Team.externalId, match.awayTeamId));
 
   // 3. Get tournament data
-  const [tournament] = await db
-    .select()
-    .from(T_Tournament)
-    .where(eq(T_Tournament.id, match.tournamentId));
+  const [tournament] = await db.select().from(T_Tournament).where(eq(T_Tournament.id, match.tournamentId));
 
   // 4. Get tournament standings for both teams
   const homeTeamStandings = await db
@@ -97,8 +83,7 @@ export const getAIPredictionForMatch = async (
     messages: [
       {
         role: 'system',
-        content:
-          'You are a football analysis assistant. Analyze the match data provided and give predictions.',
+        content: 'You are a football analysis assistant. Analyze the match data provided and give predictions.',
       },
       {
         role: 'user',
@@ -126,9 +111,7 @@ function generateMatchAnalysisPrompt(
   awayStandings: DB_SelectTournamentStandings | undefined
 ): string {
   // Get form string (format as W-W-L-D-W for example)
-  const getFormString = (
-    teamStandings: DB_SelectTournamentStandings | undefined
-  ): string => {
+  const getFormString = (teamStandings: DB_SelectTournamentStandings | undefined): string => {
     if (!teamStandings) return 'Unknown';
     // Simple form representation based on wins, draws and losses
     // In a real implementation, you would fetch the last 5 match results

@@ -11,7 +11,5 @@ export function handleInternalServerErrorResponse(res: Response, error: unknown)
     error,
   });
 
-  return res
-    .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
-    .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
+  return res.status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status).send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
 }

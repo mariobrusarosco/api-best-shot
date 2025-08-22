@@ -9,13 +9,8 @@ import {
 
 export const QUERIES_DATA_PROVIDER_EXECUTIONS = {
   // Create a new execution record
-  async createExecution(
-    execution: DB_InsertDataProviderExecution
-  ): Promise<DB_SelectDataProviderExecution> {
-    const [result] = await db
-      .insert(T_DataProviderExecutions)
-      .values(execution)
-      .returning();
+  async createExecution(execution: DB_InsertDataProviderExecution): Promise<DB_SelectDataProviderExecution> {
+    const [result] = await db.insert(T_DataProviderExecutions).values(execution).returning();
     return result;
   },
 
@@ -56,9 +51,7 @@ export const QUERIES_DATA_PROVIDER_EXECUTIONS = {
   },
 
   // Get execution by request ID
-  async getExecutionByRequestId(
-    requestId: string
-  ): Promise<DB_SelectDataProviderExecution | null> {
+  async getExecutionByRequestId(requestId: string): Promise<DB_SelectDataProviderExecution | null> {
     const [result] = await db
       .select()
       .from(T_DataProviderExecutions)
@@ -143,10 +136,7 @@ export const QUERIES_DATA_PROVIDER_EXECUTIONS = {
             .from(T_DataProviderExecutions)
             .where(and(...conditions))
             .orderBy(desc(T_DataProviderExecutions.startedAt))
-        : db
-            .select()
-            .from(T_DataProviderExecutions)
-            .orderBy(desc(T_DataProviderExecutions.startedAt));
+        : db.select().from(T_DataProviderExecutions).orderBy(desc(T_DataProviderExecutions.startedAt));
 
     if (options?.limit && options?.offset) {
       return await baseQuery.limit(options.limit).offset(options.offset);
@@ -160,9 +150,7 @@ export const QUERIES_DATA_PROVIDER_EXECUTIONS = {
   },
 
   // Get execution count by status for a tournament
-  async getExecutionCountsByStatus(
-    tournamentId: string
-  ): Promise<Array<{ status: string; count: number }>> {
+  async getExecutionCountsByStatus(tournamentId: string): Promise<Array<{ status: string; count: number }>> {
     // This would require raw SQL or a more complex query
     // For now, we'll implement a simple version
     const executions = await db

@@ -17,24 +17,11 @@ interface ExecutionsQuery {
 export const API_ADMIN_EXECUTIONS = {
   // GET /api/v1/admin/executions - List all executions with filtering
   async getAllExecutions(
-    req: Request<
-      Record<string, never>,
-      Record<string, never>,
-      Record<string, never>,
-      ExecutionsQuery
-    >,
+    req: Request<Record<string, never>, Record<string, never>, Record<string, never>, ExecutionsQuery>,
     res: Response
   ) {
     try {
-      const {
-        tournamentId,
-        operationType,
-        status,
-        startDate,
-        endDate,
-        limit = '50',
-        offset = '0',
-      } = req.query;
+      const { tournamentId, operationType, status, startDate, endDate, limit = '50', offset = '0' } = req.query;
 
       const options = {
         tournamentId,
@@ -67,12 +54,7 @@ export const API_ADMIN_EXECUTIONS = {
   async getExecutionsByTournament(req: Request, res: Response) {
     try {
       const { tournamentId } = req.params;
-      const {
-        operationType,
-        status,
-        limit = '50',
-        offset = '0',
-      } = req.query as ExecutionsQuery;
+      const { operationType, status, limit = '50', offset = '0' } = req.query as ExecutionsQuery;
 
       if (!tournamentId) {
         return res.status(400).json({
@@ -97,10 +79,7 @@ export const API_ADMIN_EXECUTIONS = {
         offset: parseInt(offset as string, 10),
       };
 
-      const executions = await DataProviderExecutionService.getExecutionsByTournament(
-        tournamentId,
-        options
-      );
+      const executions = await DataProviderExecutionService.getExecutionsByTournament(tournamentId, options);
 
       const stats = await DataProviderExecutionService.getExecutionStats(tournamentId);
 

@@ -28,9 +28,7 @@ const consoleFormat = winston.format.combine(
   winston.format.colorize(),
   winston.format.timestamp({ format: 'HH:mm:ss' }),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
-    const metaStr = Object.keys(meta).filter(
-      key => !['service', 'environment', 'version'].includes(key)
-    ).length
+    const metaStr = Object.keys(meta).filter(key => !['service', 'environment', 'version'].includes(key)).length
       ? JSON.stringify(meta, null, 2)
       : '';
     return `${timestamp} [${level}]: ${message} ${metaStr}`;

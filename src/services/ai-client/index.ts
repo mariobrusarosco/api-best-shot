@@ -1,11 +1,5 @@
 // Export all types
-export type {
-  AIClientConfig,
-  AIMessage,
-  AIProvider,
-  AIResponse,
-  IAIClient,
-} from './types';
+export type { AIClientConfig, AIMessage, AIProvider, AIResponse, IAIClient } from './types';
 
 // Export base class (for extending if needed)
 export { BaseAIClient } from './base-ai-client';

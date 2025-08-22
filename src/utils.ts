@@ -31,7 +31,4 @@ export const toNumberOrZero = (val: string | null | undefined) => {
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Re-export asset fetch functions and types
-export {
-  fetchAndStoreAssetFromApi,
-  FetchAndStoreAssetPayload,
-} from './utils/assets-fetch';
+export { fetchAndStoreAssetFromApi, FetchAndStoreAssetPayload } from './utils/assets-fetch';

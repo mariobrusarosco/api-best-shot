@@ -4,10 +4,7 @@ import db from '@/services/database';
 import axios from 'axios';
 import { Profiling } from '@/services/profiling';
 import puppeteer from 'puppeteer';
-import {
-  T_TournamentRound,
-  DB_InsertTournamentRound,
-} from '@/domains/tournament-round/schema';
+import { T_TournamentRound, DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
 
 export const SofascoreTournamentRound: IApiProvider['rounds'] = {
   fetchShallowListOfRoundsFromProvider: async baseUrl => {

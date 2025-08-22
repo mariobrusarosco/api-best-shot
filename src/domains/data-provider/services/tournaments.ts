@@ -3,11 +3,7 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 import { S3FileStorage } from '../providers/file-storage';
-import {
-  T_Tournament,
-  DB_InsertTournament,
-  DB_UpdateTournament,
-} from '@/domains/tournament/schema';
+import { T_Tournament, DB_InsertTournament, DB_UpdateTournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { CreateTournamentInput } from '../api/v2/tournament/typing';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
@@ -174,12 +170,7 @@ export class TournamentDataProviderService {
       const [tournament] = await db
         .update(T_Tournament)
         .set(data)
-        .where(
-          and(
-            eq(T_Tournament.externalId, data.externalId),
-            eq(T_Tournament.provider, data.provider)
-          )
-        )
+        .where(and(eq(T_Tournament.externalId, data.externalId), eq(T_Tournament.provider, data.provider)))
         .returning();
 
       this.addOperation('database', 'update_tournament', 'completed', {
@@ -217,9 +208,7 @@ export class TournamentDataProviderService {
       this.addOperation('initialization', 'validate_input', 'failed', {
         error: 'Tournament public ID is null',
       });
-      throw new Error(
-        `[TournamentDataProviderService] - [ERROR] - [INIT] - [TOURNAMENT PUBLIC ID IS NULL]`
-      );
+      throw new Error(`[TournamentDataProviderService] - [ERROR] - [INIT] - [TOURNAMENT PUBLIC ID IS NULL]`);
     }
 
     this.addOperation('initialization', 'validate_input', 'completed', {

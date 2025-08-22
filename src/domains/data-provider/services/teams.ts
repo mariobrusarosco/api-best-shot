@@ -216,9 +216,7 @@ export class TeamsDataProviderService {
       Profiling.error({
         source: 'TEAMS_SERVICE_enhanceTeamWithLogo',
         error:
-          error instanceof Error
-            ? error
-            : new Error(`Failed to enhance team ${team.name} with logo: ${errorMessage}`),
+          error instanceof Error ? error : new Error(`Failed to enhance team ${team.name} with logo: ${errorMessage}`),
       });
       throw error;
     }
@@ -276,10 +274,7 @@ export class TeamsDataProviderService {
       await this.scraper.goto(url);
       const fetchResult = (await this.scraper.getPageContent()) as ENDPOINT_STANDINGS;
 
-      const teamsCount = fetchResult.standings.reduce(
-        (total, group) => total + group.rows.length,
-        0
-      );
+      const teamsCount = fetchResult.standings.reduce((total, group) => total + group.rows.length, 0);
       this.addOperation('scraping', 'fetch_teams_standings', 'completed', {
         url,
         teamsCount,
@@ -350,9 +345,7 @@ export class TeamsDataProviderService {
 
       this.addOperation('database', 'get_knockout_rounds', 'completed', {
         roundsCount: rounds.length,
-        rounds: rounds.map(
-          (round: { slug?: string; label?: string }) => round.slug || round.label
-        ),
+        rounds: rounds.map((round: { slug?: string; label?: string }) => round.slug || round.label),
       });
 
       const ALL_KNOCKOUT_TEAMS = [] as I_TEAM_FROM_ROUND[];
@@ -384,10 +377,7 @@ export class TeamsDataProviderService {
           }
 
           const roundMatches = rawContent.events;
-          const roundTeams = roundMatches.flatMap(match => [
-            match.homeTeam,
-            match.awayTeam,
-          ]);
+          const roundTeams = roundMatches.flatMap(match => [match.homeTeam, match.awayTeam]);
 
           // Early deduplication: only add teams that haven't been seen before
           const newTeams = roundTeams.filter(team => {
@@ -514,9 +504,7 @@ export class TeamsDataProviderService {
     }
   }
 
-  public async init(
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ) {
+  public async init(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
     // Initialize report tournament data
     this.report.tournament = {
       id: tournament.id,
@@ -546,12 +534,10 @@ export class TeamsDataProviderService {
         });
 
         // Only fetch from knockout rounds for knockout-only tournaments
-        const teamsFromKnockoutRounds =
-          await this.fetchTeamsFromKnockoutRounds(tournament);
+        const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
         mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
         this.report.summary.teamCounts.fromStandings = 0;
-        this.report.summary.teamCounts.fromKnockout =
-          mappedTeamsFromKnockoutRounds.length;
+        this.report.summary.teamCounts.fromKnockout = mappedTeamsFromKnockoutRounds.length;
       } else {
         this.addOperation('initialization', 'tournament_mode_decision', 'completed', {
           mode: tournament.mode || 'regular-season-and-knockout',
@@ -572,11 +558,9 @@ export class TeamsDataProviderService {
         }
         this.report.summary.teamCounts.fromStandings = mappedTeamsFromStandings.length;
 
-        const teamsFromKnockoutRounds =
-          await this.fetchTeamsFromKnockoutRounds(tournament);
+        const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
         mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
-        this.report.summary.teamCounts.fromKnockout =
-          mappedTeamsFromKnockoutRounds.length;
+        this.report.summary.teamCounts.fromKnockout = mappedTeamsFromKnockoutRounds.length;
       }
 
       // Deduplicate teams (handles both scenarios)
@@ -585,18 +569,12 @@ export class TeamsDataProviderService {
         knockoutTeams: mappedTeamsFromKnockoutRounds.length,
       });
 
-      const allTeams = removeDuplicatesTeams(
-        mappedTeamsFromStandings,
-        mappedTeamsFromKnockoutRounds
-      );
+      const allTeams = removeDuplicatesTeams(mappedTeamsFromStandings, mappedTeamsFromKnockoutRounds);
       this.report.summary.teamCounts.afterDeduplication = allTeams.length;
 
       this.addOperation('transformation', 'deduplicate_teams', 'completed', {
         uniqueTeamsCount: allTeams.length,
-        duplicatesRemoved:
-          mappedTeamsFromStandings.length +
-          mappedTeamsFromKnockoutRounds.length -
-          allTeams.length,
+        duplicatesRemoved: mappedTeamsFromStandings.length + mappedTeamsFromKnockoutRounds.length - allTeams.length,
       });
 
       this.addOperation('enhancement', 'enhance_teams_batch', 'started', {
@@ -626,10 +604,7 @@ export class TeamsDataProviderService {
           const errorMessage = error instanceof Error ? error.message : String(error);
           Profiling.error({
             source: 'DATA_PROVIDER_TEAMS_enhanceTeamWithLogo',
-            error:
-              error instanceof Error
-                ? error
-                : new Error(`Failed to enhance team ${team.name}: ${errorMessage}`),
+            error: error instanceof Error ? error : new Error(`Failed to enhance team ${team.name}: ${errorMessage}`),
           });
           // Continue with next team even if one fails
           continue;
@@ -640,10 +615,7 @@ export class TeamsDataProviderService {
       this.addOperation('enhancement', 'enhance_teams_batch', 'completed', {
         enhancedTeamsCount: enhancedTeams.length,
         failedEnhancements: allTeams.length - enhancedTeams.length,
-        skippedDuplicates:
-          allTeams.length -
-          enhancedTeams.length -
-          (allTeams.length - enhancedTeams.length),
+        skippedDuplicates: allTeams.length - enhancedTeams.length - (allTeams.length - enhancedTeams.length),
       });
 
       // Use upsert for knockout-only tournaments (handles new rounds appearing later)
@@ -677,10 +649,7 @@ export class TeamsDataProviderService {
   }
 }
 
-const removeDuplicatesTeams = (
-  teamFromStandings: DB_InsertTeam[],
-  teamFromKnockoutRounds: DB_InsertTeam[]
-) => {
+const removeDuplicatesTeams = (teamFromStandings: DB_InsertTeam[], teamFromKnockoutRounds: DB_InsertTeam[]) => {
   const uniqueTeamsMap = new Map<string, DB_InsertTeam>();
 
   // Add all teams, using externalId as the key for deduplication

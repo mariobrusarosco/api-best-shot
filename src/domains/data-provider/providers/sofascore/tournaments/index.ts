@@ -14,12 +14,7 @@ export const SofascoreTournament: IApiProvider['tournament'] = {
     const [tournament] = await db
       .update(T_Tournament)
       .set(data)
-      .where(
-        and(
-          eq(T_Tournament.externalId, data.externalId),
-          eq(T_Tournament.provider, data.provider)
-        )
-      )
+      .where(and(eq(T_Tournament.externalId, data.externalId), eq(T_Tournament.provider, data.provider)))
       .returning();
 
     return tournament;

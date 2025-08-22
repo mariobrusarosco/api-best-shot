@@ -56,8 +56,7 @@ app.get('/debug/env', (_req, res) => {
     HAS_CORS_ORIGIN: !!process.env.ACCESS_CONTROL_ALLOW_ORIGIN,
     HAS_COOKIE_NAME: !!process.env.MEMBER_PUBLIC_ID_COOKIE,
     SENTRY_DSN_PREFIX: `${process.env.SENTRY_DSN?.substring(0, 20)}...` || 'NOT_SET',
-    AWS_CLOUDFRONT_PREFIX:
-      `${process.env.AWS_CLOUDFRONT_URL?.substring(0, 20)}...` || 'NOT_SET',
+    AWS_CLOUDFRONT_PREFIX: `${process.env.AWS_CLOUDFRONT_URL?.substring(0, 20)}...` || 'NOT_SET',
   };
 
   res.status(200).json({
@@ -104,10 +103,7 @@ process.on('uncaughtException', err => {
   logError('Uncaught Exception', err);
 });
 process.on('unhandledRejection', reason => {
-  logError(
-    'Unhandled Rejection',
-    reason instanceof Error ? reason : new Error(String(reason))
-  );
+  logError('Unhandled Rejection', reason instanceof Error ? reason : new Error(String(reason)));
 });
 
 export default app;

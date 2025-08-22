@@ -21,9 +21,7 @@ const create = async (tournamentId: string) => {
     });
     await sleep(3000);
 
-    const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(
-      round.providerUrl
-    );
+    const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(round.providerUrl);
 
     const newMatches = SofascoreMatches.mapRoundMatches({
       roundSlug: round.slug!,
@@ -53,16 +51,11 @@ const update = async (tournamentId: string) => {
   let matches: DB_InsertMatch[] = [];
 
   for (const round of roundList) {
-    console.log(
-      '[LOG] - [DATA PROVIDER] - [UPDATE] - FETCHING ROUND:',
-      round.providerUrl
-    );
+    console.log('[LOG] - [DATA PROVIDER] - [UPDATE] - FETCHING ROUND:', round.providerUrl);
     await sleep(3000);
 
     // Call the fetch round process to all rounds
-    const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(
-      round.providerUrl
-    );
+    const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(round.providerUrl);
     const newMatches = SofascoreMatches.mapRoundMatches({
       roundSlug: round.slug!,
       round: roundData,
@@ -90,9 +83,7 @@ const updateRound = async (tournamentId: string, roundSlug: string) => {
   const round = await QUERIES_TOURNAMENT_ROUND.getRound(tournamentId, roundSlug);
   if (!round) throw new Error('Round not found');
 
-  const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(
-    round.providerUrl
-  );
+  const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(round.providerUrl);
   const matches = SofascoreMatches.mapRoundMatches({
     roundSlug: round.slug!,
     round: roundData,

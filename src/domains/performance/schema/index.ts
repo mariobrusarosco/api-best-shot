@@ -1,11 +1,4 @@
-import {
-  numeric,
-  pgTable,
-  primaryKey,
-  timestamp,
-  uniqueIndex,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { numeric, pgTable, primaryKey, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_LeaguePerformance = pgTable(
   'league_performance',
@@ -23,10 +16,7 @@ export const T_LeaguePerformance = pgTable(
   table => {
     return {
       pk: primaryKey({ columns: [table.memberId, table.leagueId] }),
-      uniquePerformance: uniqueIndex('unique_league_perfomance').on(
-        table.memberId,
-        table.leagueId
-      ),
+      uniquePerformance: uniqueIndex('unique_league_perfomance').on(table.memberId, table.leagueId),
     };
   }
 );
@@ -51,10 +41,7 @@ export const T_TournamentPerformance = pgTable(
   table => {
     return {
       pk: primaryKey({ columns: [table.memberId, table.tournamentId] }),
-      uniquePerformance: uniqueIndex('unique_tournament_perfomance').on(
-        table.memberId,
-        table.tournamentId
-      ),
+      uniquePerformance: uniqueIndex('unique_tournament_perfomance').on(table.memberId, table.tournamentId),
     };
   }
 );

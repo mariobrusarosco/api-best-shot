@@ -47,13 +47,7 @@ const nearestMatchOnDatabase = async (filter: { tournamentId: string }) => {
     })
     .from(T_Match)
     .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
-    .where(
-      and(
-        eq(T_Match.tournamentId, filter.tournamentId),
-        eq(T_Match.status, 'open'),
-        gte(T_Match.date, now)
-      )
-    )
+    .where(and(eq(T_Match.tournamentId, filter.tournamentId), eq(T_Match.status, 'open'), gte(T_Match.date, now)))
     .orderBy(asc(T_Match.date))
     .limit(1);
 
@@ -97,13 +91,7 @@ const nearestMatch = async (filter: { tournamentId: string }) => {
     })
     .from(T_Match)
     .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
-    .where(
-      and(
-        eq(T_Match.tournamentId, filter.tournamentId),
-        eq(T_Match.status, 'open'),
-        gte(T_Match.date, now)
-      )
-    )
+    .where(and(eq(T_Match.tournamentId, filter.tournamentId), eq(T_Match.status, 'open'), gte(T_Match.date, now)))
     .orderBy(asc(T_Match.date))
     .limit(1);
 

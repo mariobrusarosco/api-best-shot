@@ -14,14 +14,8 @@ const create = async (tournamentId: string) => {
     source: 'DATA_PROVIDER_TOURNAMENT_ROUNDS_CONTROLLER',
   });
 
-  const shallowListOfRounds =
-    await SofascoreTournamentRound.fetchShallowListOfRoundsFromProvider(
-      tournament.baseUrl
-    );
-  const roundsToInsert = await SofascoreTournamentRound.mapShallowListOfRounds(
-    shallowListOfRounds,
-    tournament!
-  );
+  const shallowListOfRounds = await SofascoreTournamentRound.fetchShallowListOfRoundsFromProvider(tournament.baseUrl);
+  const roundsToInsert = await SofascoreTournamentRound.mapShallowListOfRounds(shallowListOfRounds, tournament!);
   const roundsInserted = await SofascoreTournamentRound.createOnDatabase(roundsToInsert);
 
   Profiling.log({
@@ -42,13 +36,8 @@ const update = async (tournamentId: string) => {
     source: 'DATA_PROVIDER_TOURNAMENT_ROUNDS_CONTROLLER',
   });
 
-  const rounds = await SofascoreTournamentRound.fetchShallowListOfRoundsFromProvider(
-    tournament.baseUrl
-  );
-  const roundsToUpdate = await SofascoreTournamentRound.mapShallowListOfRounds(
-    rounds,
-    tournament
-  );
+  const rounds = await SofascoreTournamentRound.fetchShallowListOfRoundsFromProvider(tournament.baseUrl);
+  const roundsToUpdate = await SofascoreTournamentRound.mapShallowListOfRounds(rounds, tournament);
   const roundsUpdated = await SofascoreTournamentRound.upsertOnDatabase(roundsToUpdate);
 
   return roundsUpdated;
@@ -56,8 +45,7 @@ const update = async (tournamentId: string) => {
 
 const getRoundProviderData = async (tournamentId: string, roundSlug: string) => {
   const roundQuery = await QUERIES_TOURNAMENT_ROUND.getRound(tournamentId, roundSlug);
-  if (roundQuery === undefined)
-    throw new Error('Tournament does not have a record for this round');
+  if (roundQuery === undefined) throw new Error('Tournament does not have a record for this round');
   return await SofascoreTournamentRound.fetchRoundFromProvider(roundQuery.providerUrl);
 };
 
@@ -71,20 +59,15 @@ const knockoutRoundsUpdate = async (tournamentId: string) => {
     source: 'DATA_PROVIDER_TOURNAMENT_ROUNDS_CONTROLLER',
   });
 
-  const listOfRoundsFromDataProvider =
-    await SofascoreTournamentRound.mapShallowListOfRounds(
-      await SofascoreTournamentRound.fetchShallowListOfRoundsFromProvider(
-        tournament.baseUrl
-      ),
-      tournament
-    );
-  const listOfRoundsFromDatabase =
-    await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournamentId);
+  const listOfRoundsFromDataProvider = await SofascoreTournamentRound.mapShallowListOfRounds(
+    await SofascoreTournamentRound.fetchShallowListOfRoundsFromProvider(tournament.baseUrl),
+    tournament
+  );
+  const listOfRoundsFromDatabase = await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournamentId);
 
   const newDetectedRounds = listOfRoundsFromDataProvider.filter(round => {
     return !listOfRoundsFromDatabase.find(
-      (currentRound: (typeof listOfRoundsFromDatabase)[number]) =>
-        currentRound.slug === round.slug
+      (currentRound: (typeof listOfRoundsFromDatabase)[number]) => currentRound.slug === round.slug
     );
   });
 

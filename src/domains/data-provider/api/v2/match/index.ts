@@ -5,10 +5,7 @@ import { SERVICES_TOURNAMENT_ROUND } from '@/domains/tournament-round/services';
 import Profiling from '@/services/profiling';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
-import {
-  CreateMatchesRequest,
-  UpdateMatchesForRoundRequest,
-} from '@/domains/match/typing';
+import { CreateMatchesRequest, UpdateMatchesForRoundRequest } from '@/domains/match/typing';
 import { randomUUID } from 'crypto';
 
 const create = async (req: CreateMatchesRequest, res: Response) => {
@@ -98,10 +95,7 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
   }
 };
 
-const updateMatchesForRound = async (
-  req: UpdateMatchesForRoundRequest,
-  res: Response
-) => {
+const updateMatchesForRound = async (req: UpdateMatchesForRoundRequest, res: Response) => {
   const requestId = randomUUID();
   let scraper: BaseScraper | null = null;
   try {
@@ -143,10 +137,7 @@ const updateMatchesForRound = async (
       });
     }
 
-    const round = await SERVICES_TOURNAMENT_ROUND.getRound(
-      tournament.id,
-      req.body.roundSlug
-    );
+    const round = await SERVICES_TOURNAMENT_ROUND.getRound(tournament.id, req.body.roundSlug);
     if (!round) {
       Profiling.error({
         source: 'DATA_PROVIDER_V2_MATCHES_updateMatchesForRound',

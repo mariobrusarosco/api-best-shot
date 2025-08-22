@@ -9,9 +9,7 @@ const create = async (tournamentId: string) => {
   const mode = tournament.mode;
   const label = tournament.label;
 
-  console.log(
-    `[LOG] - [DATA PROVIDER] - [START] - CREATING STANDINGS FOR TOURNAMENT ${label}`
-  );
+  console.log(`[LOG] - [DATA PROVIDER] - [START] - CREATING STANDINGS FOR TOURNAMENT ${label}`);
 
   if (mode === 'knockout-only') {
     Profiling.log({
@@ -31,11 +29,7 @@ const create = async (tournamentId: string) => {
     return null;
   }
 
-  const mappedStandings = await SofascoreStandings.mapStandings(
-    data,
-    tournamentId,
-    tournament.standingsMode
-  );
+  const mappedStandings = await SofascoreStandings.mapStandings(data, tournamentId, tournament.standingsMode);
   const query = await SofascoreStandings.createOnDatabase(mappedStandings);
 
   Profiling.log({
@@ -55,9 +49,7 @@ const update = async (tournamentId: string) => {
   const label = tournament.label;
   const standingsMode = tournament.standingsMode;
 
-  console.log(
-    `[LOG] - [DATA PROVIDER] - [STANDINGS] - UPDATING STANDINGS FOR TOURNAMENT ${label}`
-  );
+  console.log(`[LOG] - [DATA PROVIDER] - [STANDINGS] - UPDATING STANDINGS FOR TOURNAMENT ${label}`);
 
   if (mode === 'knockout-only') {
     Profiling.log({
@@ -77,11 +69,7 @@ const update = async (tournamentId: string) => {
     return null;
   }
 
-  const mappedStandings = await SofascoreStandings.mapStandings(
-    data,
-    tournamentId,
-    standingsMode
-  );
+  const mappedStandings = await SofascoreStandings.mapStandings(data, tournamentId, standingsMode);
   const query = await SofascoreStandings.upsertOnDatabase(mappedStandings);
 
   Profiling.log({

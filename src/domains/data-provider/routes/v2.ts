@@ -22,10 +22,7 @@ router.post('/teams', API_TEAMS_V2.create);
 // MATCHES
 router.post('/matches', API_MATCH_V2.create);
 router.patch('/matches', API_MATCH_V2.updateMatchesForRound);
-router.patch(
-  '/tournaments/:tournamentId/matches/:roundSlug',
-  API_MATCH_V2.updateMatchesForRound
-);
+router.patch('/tournaments/:tournamentId/matches/:roundSlug', API_MATCH_V2.updateMatchesForRound);
 
 // STANDINGS
 router.post('/standings', API_STANDINGS_V2.create);
@@ -36,9 +33,6 @@ router.patch('/tournaments/:tournamentId/standings', API_STANDINGS_V2.update);
 router.post('/scheduler', API_SCHEDULER.dailyRoutine);
 
 // TOURNAMENT KNOCKOUT UPDATES (for Lambda callbacks)
-router.post(
-  '/tournaments/:tournamentId/rounds/knockout-update',
-  API_TOURNAMENT_ROUNDS_V2.update
-);
+router.post('/tournaments/:tournamentId/rounds/knockout-update', API_TOURNAMENT_ROUNDS_V2.update);
 
 export default router;

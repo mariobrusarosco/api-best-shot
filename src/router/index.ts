@@ -5,20 +5,11 @@ import adminV1Router from '@/domains/admin/routes/v1';
 // AI
 import aiV2Router from '@/domains/ai/routes/v2';
 // Auth
-import {
-  v1Router as authV1Router,
-  v2Router as authV2Router,
-} from '@/domains/auth/routes';
+import { v1Router as authV1Router, v2Router as authV2Router } from '@/domains/auth/routes';
 // Dashboard
-import {
-  v1 as dashboardV1Router,
-  v2 as dashboardV2Router,
-} from '@/domains/dashboard/routes';
+import { v1 as dashboardV1Router, v2 as dashboardV2Router } from '@/domains/dashboard/routes';
 // Data Provider
-import {
-  v1 as dataProviderV1Router,
-  v2 as dataProviderV2Router,
-} from '@/domains/data-provider/routes';
+import { v1 as dataProviderV1Router, v2 as dataProviderV2Router } from '@/domains/data-provider/routes';
 // Guess
 import { v1 as guessV1Router, v2 as guessV2Router } from '@/domains/guess/routes';
 // League
@@ -28,10 +19,7 @@ import { v1 as matchV1Router, v2 as matchV2Router } from '@/domains/match/routes
 // Member
 import { v1 as memberV1Router, v2 as memberV2Router } from '@/domains/member/routes';
 // Tournament
-import {
-  v1 as tournamentV1Router,
-  v2 as tournamentV2Router,
-} from '@/domains/tournament/routes';
+import { v1 as tournamentV1Router, v2 as tournamentV2Router } from '@/domains/tournament/routes';
 
 const apiRouter = express.Router();
 

@@ -11,13 +11,13 @@ graph TB
         A --> A2[API_DOMAIN]
         A --> A3[NODE_ENV]
         A --> A4[PORT]
-        
+
         B[🔐 Secret Variables] --> B1[JWT_SECRET]
         B --> B2[DB_STRING_CONNECTION]
         B --> B3[AWS_ACCESS_KEY_ID]
         B --> B4[SENTRY_DSN]
     end
-    
+
     style A fill:#e3f2fd
     style B fill:#ffebee
 ```
@@ -25,27 +25,29 @@ graph TB
 ## 🔍 **Variable Categories**
 
 ### **🌐 Public Variables** (Safe to expose)
-| Variable | Type | Description | Example |
-|----------|------|-------------|---------|
-| `NODE_ENV` | **Required** | Environment mode | `development`, `demo`, `staging`, `production` |
-| `API_VERSION` | **Required** | API version prefix | `/v2` |
-| `API_DOMAIN` | **Required** | Domain for API calls | `api-best-shot-staging.run.app` |
-| `PORT` | **Optional** | Server port | `8080` (default: `9090`) |
-| `AWS_REGION` | **Optional** | AWS region | `us-east-1` |
-| `MEMBER_PUBLIC_ID_COOKIE` | **Required** | Cookie name for member IDs | `member_public_id` |
-| `ACCESS_CONTROL_ALLOW_ORIGIN` | **Required** | CORS allowed origins | `https://bestshot.com` |
-| `AWS_ACCOUNT_ID` | **Required** | AWS account identifier | `415034926128` |
-| `AWS_BUCKET_NAME` | **Required** | S3 bucket for assets | `bestshot-assets-staging` |
-| `AWS_CLOUDFRONT_URL` | **Required** | CDN URL for assets | `https://bestshot-cdn.cloudfront.net` |
+
+| Variable                      | Type         | Description                | Example                                        |
+| ----------------------------- | ------------ | -------------------------- | ---------------------------------------------- |
+| `NODE_ENV`                    | **Required** | Environment mode           | `development`, `demo`, `staging`, `production` |
+| `API_VERSION`                 | **Required** | API version prefix         | `/v2`                                          |
+| `API_DOMAIN`                  | **Required** | Domain for API calls       | `api-best-shot-staging.run.app`                |
+| `PORT`                        | **Optional** | Server port                | `8080` (default: `9090`)                       |
+| `AWS_REGION`                  | **Optional** | AWS region                 | `us-east-1`                                    |
+| `MEMBER_PUBLIC_ID_COOKIE`     | **Required** | Cookie name for member IDs | `member_public_id`                             |
+| `ACCESS_CONTROL_ALLOW_ORIGIN` | **Required** | CORS allowed origins       | `https://bestshot.com`                         |
+| `AWS_ACCOUNT_ID`              | **Required** | AWS account identifier     | `415034926128`                                 |
+| `AWS_BUCKET_NAME`             | **Required** | S3 bucket for assets       | `bestshot-assets-staging`                      |
+| `AWS_CLOUDFRONT_URL`          | **Required** | CDN URL for assets         | `https://bestshot-cdn.cloudfront.net`          |
 
 ### **🔐 Secret Variables** (Never expose)
-| Variable | Type | Description | Storage |
-|----------|------|-------------|---------|
-| `JWT_SECRET` | **Required** | JWT signing key | Secret Manager |
-| `DB_STRING_CONNECTION` | **Required** | Database connection string | Secret Manager |
-| `AWS_ACCESS_KEY_ID` | **Required** | AWS access key | Secret Manager |
-| `AWS_SECRET_ACCESS_KEY` | **Required** | AWS secret key | Secret Manager |
-| `SENTRY_DSN` | **Required** | Sentry error tracking | Secret Manager |
+
+| Variable                 | Type         | Description                 | Storage        |
+| ------------------------ | ------------ | --------------------------- | -------------- |
+| `JWT_SECRET`             | **Required** | JWT signing key             | Secret Manager |
+| `DB_STRING_CONNECTION`   | **Required** | Database connection string  | Secret Manager |
+| `AWS_ACCESS_KEY_ID`      | **Required** | AWS access key              | Secret Manager |
+| `AWS_SECRET_ACCESS_KEY`  | **Required** | AWS secret key              | Secret Manager |
+| `SENTRY_DSN`             | **Required** | Sentry error tracking       | Secret Manager |
 | `INTERNAL_SERVICE_TOKEN` | **Required** | Internal API authentication | Secret Manager |
 
 ## 🏗️ **Environment Architecture**
@@ -56,19 +58,19 @@ graph LR
         DEV[💻 Local Dev] --> DOTENV[.env files]
         DOTENV --> DEVAPP[Your App]
     end
-    
+
     subgraph "Staging/Production"
         STAGING[🚀 Cloud Run] --> SM[🔐 Secret Manager]
         SM --> STAGINGAPP[Deployed App]
-        
+
         ENV[📄 Environment Variables] --> STAGINGAPP
     end
-    
+
     subgraph "CI/CD"
         GH[📦 GitHub Actions] --> SM
         GH --> ENV
     end
-    
+
     style SM fill:#c8e6c9
     style DOTENV fill:#fff3e0
 ```
@@ -76,9 +78,10 @@ graph LR
 ## 📁 **Local Development Setup**
 
 ### **1. Environment Files Structure**
+
 ```
 ├── .env                    # Default (development)
-├── .env.demo              # Demo environment  
+├── .env.demo              # Demo environment
 ├── .env.production        # Production environment
 ├── .env.example           # Template (committed to git)
 └── .gitignore            # Excludes .env files
@@ -87,11 +90,13 @@ graph LR
 ### **2. Setting Up Local Environment**
 
 #### **Step 1: Copy the template**
+
 ```bash
 cp .env.example .env
 ```
 
 #### **Step 2: Fill in your values**
+
 ```bash
 # .env file
 NODE_ENV=development
@@ -115,6 +120,7 @@ INTERNAL_SERVICE_TOKEN=your-internal-service-token
 ```
 
 #### **Step 3: Verify configuration**
+
 ```bash
 yarn dev
 # Should see: "Server running on port 9090 in development mode"
@@ -127,14 +133,14 @@ graph TD
     A[App Starts] --> B{ENV_PATH set?}
     B -->|Yes| C[Load from ENV_PATH]
     B -->|No| D[Load from .env]
-    
+
     C --> E[Validate with Zod]
     D --> E
-    
+
     E --> F{Validation Pass?}
     F -->|Yes| G[✅ App Continues]
     F -->|No| H[❌ App Exits]
-    
+
     style G fill:#c8e6c9
     style H fill:#ffcdd2
 ```
@@ -151,28 +157,28 @@ graph TB
         SM3[🔐 aws-access-key]
         SM4[🔐 sentry-dsn]
     end
-    
+
     subgraph "Cloud Run"
         CR[Container] --> ENV1[JWT_SECRET]
         CR --> ENV2[DB_STRING_CONNECTION]
         CR --> ENV3[AWS_ACCESS_KEY_ID]
         CR --> ENV4[SENTRY_DSN]
     end
-    
+
     SM1 --> ENV1
     SM2 --> ENV2
     SM3 --> ENV3
     SM4 --> ENV4
-    
+
     subgraph "GitHub Actions"
         GH[Workflow] --> PUB[Public Env Vars]
         GH --> SEC[Secret References]
     end
-    
+
     PUB --> CR
     SEC --> SM1
     SEC --> SM2
-    
+
     style SM1 fill:#ffcdd2
     style SM2 fill:#ffcdd2
     style SM3 fill:#ffcdd2
@@ -181,15 +187,16 @@ graph TB
 
 ### **Environment Configuration by Stage**
 
-| Environment | Public Vars Source | Secrets Source | Database |
-|-------------|-------------------|----------------|----------|
-| **Development** | `.env` file | `.env` file | Local PostgreSQL |
-| **Staging** | GitHub Actions | Secret Manager | Cloud SQL |
-| **Production** | GitHub Actions | Secret Manager | Cloud SQL |
+| Environment     | Public Vars Source | Secrets Source | Database         |
+| --------------- | ------------------ | -------------- | ---------------- |
+| **Development** | `.env` file        | `.env` file    | Local PostgreSQL |
+| **Staging**     | GitHub Actions     | Secret Manager | Cloud SQL        |
+| **Production**  | GitHub Actions     | Secret Manager | Cloud SQL        |
 
 ## 🔧 **Management Commands**
 
 ### **Local Development**
+
 ```bash
 # Start with default .env
 yarn dev
@@ -202,6 +209,7 @@ yarn compile
 ```
 
 ### **Secret Manager Operations**
+
 ```bash
 # Create a new secret
 echo -n "your-secret-value" | gcloud secrets create my-secret --data-file=-
@@ -219,6 +227,7 @@ gcloud secrets list
 ## 🛡️ **Security Best Practices**
 
 ### **✅ DO:**
+
 - Use Secret Manager for all sensitive data
 - Keep `.env` files in `.gitignore`
 - Use different secrets per environment
@@ -226,6 +235,7 @@ gcloud secrets list
 - Use least-privilege access
 
 ### **❌ DON'T:**
+
 - Commit secrets to git
 - Share secrets in Slack/email
 - Use the same secret across environments
@@ -266,6 +276,7 @@ Validate with Zod Schema
 ### **Common Issues:**
 
 #### **"Environment Validation Failed"**
+
 ```bash
 # Check your .env file has all required variables
 cat .env
@@ -275,6 +286,7 @@ cat .env
 ```
 
 #### **"Cannot connect to database"**
+
 ```bash
 # Check DB_STRING_CONNECTION format
 # Should be: postgresql://user:pass@host:port/dbname
@@ -284,6 +296,7 @@ DB_STRING_CONNECTION=postgresql://bestshot_user:your_password@localhost:5432/bes
 ```
 
 #### **"Secret not found" in Cloud Run**
+
 ```bash
 # Verify secret exists in Secret Manager
 gcloud secrets list
@@ -295,6 +308,7 @@ gcloud projects get-iam-policy PROJECT_ID
 ## 📝 **Quick Reference**
 
 ### **Environment Switching**
+
 ```bash
 # Development (default)
 yarn dev
@@ -302,13 +316,14 @@ yarn dev
 # Demo environment
 ENV_PATH=.env.demo yarn dev
 
-# Production environment  
+# Production environment
 ENV_PATH=.env.production yarn dev
 ```
 
 ### **Required Variables Checklist**
 
 #### **🌐 Public Variables:**
+
 - ✅ `NODE_ENV` - Environment mode (`development`, `demo`, `staging`, `production`)
 - ✅ `API_DOMAIN` - Your domain
 - ✅ `MEMBER_PUBLIC_ID_COOKIE` - Cookie name for member IDs
@@ -318,6 +333,7 @@ ENV_PATH=.env.production yarn dev
 - ✅ `AWS_CLOUDFRONT_URL` - CDN URL for assets
 
 #### **🔐 Secret Variables:**
+
 - ✅ `JWT_SECRET` - JWT signing key
 - ✅ `DB_STRING_CONNECTION` - Database connection string
 - ✅ `AWS_ACCESS_KEY_ID` - AWS access key
@@ -326,6 +342,7 @@ ENV_PATH=.env.production yarn dev
 - ✅ `INTERNAL_SERVICE_TOKEN` - Internal API authentication
 
 ### **Optional Variables**
+
 - `PORT` - Server port (default: 9090)
 - `API_VERSION` - API prefix (default: /v2)
 - `AWS_REGION` - AWS region (default: us-east-1)

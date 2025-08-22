@@ -40,9 +40,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "prepare": "husky install",
     "validate:secrets": "./scripts/validate-secrets.sh",
     "validate:gcp": "./scripts/validate-gcp-setup.sh",
@@ -59,12 +59,12 @@
   },
   "homepage": "https://github.com/mariobrusarosco/api-best-shot/#readme",
   "lint-staged": {
-    "*.{ts,tsx}": [
+    "src/**/*.{ts,tsx}": [
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md}": [
-      "prettier --write"
+    "src/**/*.{test,spec}.{ts,tsx}": [
+      "echo 'Skipping test files'"
     ]
   },
   "dependencies": {

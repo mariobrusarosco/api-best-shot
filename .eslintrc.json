@@ -1,4 +1,5 @@
 {
+  "root": true,
   "env": {
     "node": true,
     "es2021": true
@@ -14,11 +15,24 @@
     "sourceType": "module",
     "project": ["./tsconfig.json", "./tsconfig.test.json"]
   },
-
   "plugins": ["@typescript-eslint"],
   "rules": {
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
-  }
+  },
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "build",
+    "*.d.ts",
+    "*.test.ts",
+    "*.test.tsx",
+    "*.spec.ts",
+    "*.spec.tsx",
+    "drizzle.config.ts",
+    "jest.setup.js",
+    "playwright.config.ts",
+    "supabase"
+  ]
 }

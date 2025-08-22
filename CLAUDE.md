@@ -83,6 +83,7 @@ Database schemas are defined per domain and aggregated in `src/services/database
 ### API Routing
 
 All API routes are mounted under `/api` with versioning:
+
 - `/api/v1/[domain]`
 - `/api/v2/[domain]`
 
@@ -134,6 +135,7 @@ Each domain has error mappers in `error-handling/mapper.ts` that transform domai
 ### Data Providers
 
 External data fetching uses provider pattern:
+
 - SofaScore API integration
 - Playwright for web scraping
 - AWS S3 for file storage
@@ -141,6 +143,7 @@ External data fetching uses provider pattern:
 ### Scheduling
 
 AWS Scheduler integration for automated tasks:
+
 - Daily score updates
 - Knockout stage updates
 - Standings refresh
@@ -155,6 +158,7 @@ AWS Scheduler integration for automated tasks:
 ## Deployment
 
 The application supports multiple environments:
+
 - Development (local)
 - Demo (staging)
 - Production

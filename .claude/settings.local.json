@@ -94,7 +94,9 @@
       "Bash(cat:*)",
       "Bash(yarn test:*)",
       "Bash(docker compose:*)",
-      "Bash(sudo docker compose:*)"
+      "Bash(sudo docker compose:*)",
+      "WebSearch",
+      "WebFetch(domain:prettier.io)"
     ],
     "deny": []
   }

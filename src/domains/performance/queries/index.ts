@@ -25,12 +25,7 @@ const league = {
         tournamentId: T_LeagueTournament.tournamentId,
       })
       .from(T_LeagueTournament)
-      .where(
-        and(
-          eq(T_LeagueTournament.leagueId, leagueId),
-          eq(T_LeagueTournament.status, 'tracked')
-        )
-      );
+      .where(and(eq(T_LeagueTournament.leagueId, leagueId), eq(T_LeagueTournament.status, 'tracked')));
 
     // Main query combining the subquery
     const query = await db
@@ -79,8 +74,7 @@ const tournament = {
 
     const query = await db.query.T_TournamentPerformance.findFirst({
       where: (tournamentPerformance, { eq }) =>
-        eq(tournamentPerformance.memberId, memberId) &&
-        eq(tournamentPerformance.tournamentId, tournamentId),
+        eq(tournamentPerformance.memberId, memberId) && eq(tournamentPerformance.tournamentId, tournamentId),
     });
 
     return query ?? null;
@@ -92,11 +86,7 @@ const tournament = {
       .leftJoin(T_Tournament, eq(T_Tournament.id, T_TournamentPerformance.tournamentId))
       .where(eq(T_TournamentPerformance.memberId, memberId));
   },
-  updatePerformance: async (
-    points: number | null | undefined,
-    memberId: string,
-    tournamentId: string
-  ) => {
+  updatePerformance: async (points: number | null | undefined, memberId: string, tournamentId: string) => {
     const [query] = await db
       .update(T_TournamentPerformance)
       .set({
@@ -104,10 +94,7 @@ const tournament = {
         updatedAt: new Date(),
       })
       .where(
-        and(
-          eq(T_TournamentPerformance.memberId, memberId),
-          eq(T_TournamentPerformance.tournamentId, tournamentId)
-        )
+        and(eq(T_TournamentPerformance.memberId, memberId), eq(T_TournamentPerformance.tournamentId, tournamentId))
       )
       .returning();
 

@@ -92,7 +92,11 @@
       "WebFetch(domain:dev.to)",
       "WebFetch(domain:medium.com)",
       "Bash(cat:*)",
-      "Bash(yarn test:*)"
+      "Bash(yarn test:*)",
+      "Bash(docker compose:*)",
+      "Bash(sudo docker compose:*)",
+      "WebSearch",
+      "WebFetch(domain:prettier.io)"
     ],
     "deny": []
   }

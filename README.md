@@ -56,6 +56,7 @@ docker compose --profile initial up initial_setup
 
 # Verify .env was created
 cat .env
+
 ```
 
 #### Regular Development

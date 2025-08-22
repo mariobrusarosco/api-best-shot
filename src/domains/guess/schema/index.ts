@@ -1,13 +1,4 @@
-import {
-  boolean,
-  numeric,
-  pgTable,
-  primaryKey,
-  text,
-  timestamp,
-  uniqueIndex,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { boolean, numeric, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Guess = pgTable(
   'guess',

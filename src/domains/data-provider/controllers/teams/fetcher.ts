@@ -7,12 +7,8 @@ import { sleep } from '@/utils';
 import { SofascoreStandings } from '../../providers/sofascore/standings';
 import { SofascoreTournamentRound } from '../../providers/sofascore/tournament-rounds';
 
-export const fetchAndMapTeamsForRegularSeason = async (
-  tournament: NonNullable<TournamentQuery>
-) => {
-  const standings = await SofascoreStandings.fetchStandingsFromProvider(
-    tournament.baseUrl
-  );
+export const fetchAndMapTeamsForRegularSeason = async (tournament: NonNullable<TournamentQuery>) => {
+  const standings = await SofascoreStandings.fetchStandingsFromProvider(tournament.baseUrl);
 
   if (!standings) {
     Profiling.error({
@@ -42,26 +38,17 @@ export const fetchAndMapTeamsForRegularSeason = async (
   return mappedTeamsFromStandings;
 };
 
-export const fetchAndMapTeamsFromKnockoutRounds = async (
-  tournament: NonNullable<TournamentQuery>
-) => {
-  const knockoutRoundsList = await QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(
-    tournament.id!
-  );
+export const fetchAndMapTeamsFromKnockoutRounds = async (tournament: NonNullable<TournamentQuery>) => {
+  const knockoutRoundsList = await QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(tournament.id!);
 
   const ALL_TEAMS = [];
 
   for (const round of knockoutRoundsList) {
     console.log('[LOG] - [START] - FETCHING ROUND:', round.providerUrl);
 
-    const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(
-      round.providerUrl
-    );
+    const roundData = await SofascoreTournamentRound.fetchRoundFromProvider(round.providerUrl);
 
-    const roundTeams = await SofascoreTeams.mapTeamsFromRound(
-      roundData,
-      tournament.provider
-    );
+    const roundTeams = await SofascoreTeams.mapTeamsFromRound(roundData, tournament.provider);
 
     ALL_TEAMS.push(...roundTeams);
     console.log('[LOG] - [END] - FETCHING ROUND:');
@@ -80,9 +67,7 @@ export const fetchAndMapTeamsFromKnockoutRounds = async (
   return ALL_TEAMS;
 };
 
-export const fetchAndMapTeamsForRegularAndKnockout = async (
-  tournament: NonNullable<TournamentQuery>
-) => {
+export const fetchAndMapTeamsForRegularAndKnockout = async (tournament: NonNullable<TournamentQuery>) => {
   const regularSeasonTeams = await fetchAndMapTeamsForRegularSeason(tournament);
   const knockoutSeasonTeams = await fetchAndMapTeamsFromKnockoutRounds(tournament);
 

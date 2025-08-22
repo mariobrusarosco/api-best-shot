@@ -5,12 +5,7 @@ import { QUERIES_PERFORMANCE } from '../queries';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import _ from 'lodash';
 import db from '@/services/database';
-import {
-  T_LeaguePerformance,
-  T_LeagueRole,
-  T_LeagueTournament,
-  T_Member,
-} from '@/services/database/schema';
+import { T_LeaguePerformance, T_LeagueRole, T_LeagueTournament, T_Member } from '@/services/database/schema';
 import { SERVICES_GUESS_V2 } from '@/domains/guess/services';
 import Profiling from '@/services/profiling';
 import { and, eq } from 'drizzle-orm';
@@ -24,23 +19,16 @@ interface GuessWithMatch {
 
 const calculatePoints = (guesses: GuessWithMatch[]): string => {
   const parsedGuesses = guesses.map(row => runGuessAnalysis(row.guess, row.match));
-  const totalPoints =
-    SERVICES_GUESS_V2.getTotalPointsFromTournamentGuesses(parsedGuesses);
+  const totalPoints = SERVICES_GUESS_V2.getTotalPointsFromTournamentGuesses(parsedGuesses);
 
   return totalPoints?.toString() ?? '0';
 };
 
 const getMemberPerformance = async (memberId: string, tournamentId: string) => {
   try {
-    const guesses = await QUERIES_GUESS.selectMemberGuessesForTournament(
-      tournamentId,
-      memberId
-    );
+    const guesses = await QUERIES_GUESS.selectMemberGuessesForTournament(tournamentId, memberId);
     const parsedGuesses = SERVICES_GUESS_V2.runGuessAnalysis_V2(guesses);
-    const performance = await QUERIES_PERFORMANCE.tournament.getPerformance(
-      memberId,
-      tournamentId
-    );
+    const performance = await QUERIES_PERFORMANCE.tournament.getPerformance(memberId, tournamentId);
 
     return {
       details: parsedGuesses,
@@ -58,26 +46,19 @@ const getMemberPerformance = async (memberId: string, tournamentId: string) => {
 
 const getMemberBestAndWorstPerformance = async (memberId: string) => {
   try {
-    const tournamentPerformance =
-      await QUERIES_PERFORMANCE.tournament.getMemberGeneralPerformance(memberId);
+    const tournamentPerformance = await QUERIES_PERFORMANCE.tournament.getMemberGeneralPerformance(memberId);
     if (!tournamentPerformance.length) {
       return { worstPerformance: null, bestPerformance: null };
     }
-    const mapped = tournamentPerformance.map(
-      (row: (typeof tournamentPerformance)[number]) => ({
-        points: Number(row.tournament_performance.points),
-        label: row.tournament?.label,
-        id: row.tournament?.id,
-        logo: row.tournament?.logo,
-      })
-    );
+    const mapped = tournamentPerformance.map((row: (typeof tournamentPerformance)[number]) => ({
+      points: Number(row.tournament_performance.points),
+      label: row.tournament?.label,
+      id: row.tournament?.id,
+      logo: row.tournament?.logo,
+    }));
 
-    const worstPerformance = _.minBy(mapped, (p: (typeof mapped)[number]) =>
-      Number(p.points)
-    );
-    const bestPerformance = _.maxBy(mapped, (p: (typeof mapped)[number]) =>
-      Number(p.points)
-    );
+    const worstPerformance = _.minBy(mapped, (p: (typeof mapped)[number]) => Number(p.points));
+    const bestPerformance = _.maxBy(mapped, (p: (typeof mapped)[number]) => Number(p.points));
 
     return { worstPerformance, bestPerformance };
   } catch (error: unknown) {
@@ -90,26 +71,17 @@ const getMemberBestAndWorstPerformance = async (memberId: string) => {
 };
 
 const updateMemberPerformance = async (memberId: string, tournamentId: string) => {
-  const guesses = await QUERIES_GUESS.selectMemberGuessesForTournament(
-    memberId,
-    tournamentId
-  );
+  const guesses = await QUERIES_GUESS.selectMemberGuessesForTournament(memberId, tournamentId);
   const parsedGuesses = SERVICES_GUESS_V2.runGuessAnalysis_V2(guesses);
   const points = SERVICES_GUESS_V2.getTotalPointsFromTournamentGuesses(parsedGuesses);
-  const updatedPerformance = await QUERIES_PERFORMANCE.tournament.updatePerformance(
-    points,
-    memberId,
-    tournamentId
-  );
+  const updatedPerformance = await QUERIES_PERFORMANCE.tournament.updatePerformance(points, memberId, tournamentId);
   const parsedUpdatedPerformance = parsePerformance(updatedPerformance);
 
   return parsedUpdatedPerformance;
 };
 
 const parsePerformance = (
-  performance: Awaited<
-    ReturnType<typeof QUERIES_PERFORMANCE.tournament.updatePerformance>
-  >
+  performance: Awaited<ReturnType<typeof QUERIES_PERFORMANCE.tournament.updatePerformance>>
 ) => {
   return {
     ...performance,
@@ -117,10 +89,7 @@ const parsePerformance = (
   };
 };
 
-export const updateTournamentsForMember = async (
-  memberId: string,
-  tournaments: { id: string }[]
-) => {
+export const updateTournamentsForMember = async (memberId: string, tournaments: { id: string }[]) => {
   const promises = tournaments.map(async tournament => {
     // QUery
     const parsedGuesses = await queryMemberTournamentGuesses(memberId, tournament.id);
@@ -156,49 +125,36 @@ const updateLeaguePerformance = async (leagueId: string) => {
     const leagueTournaments = await db
       .select({ id: T_LeagueTournament.tournamentId })
       .from(T_LeagueTournament)
-      .where(
-        and(
-          eq(T_LeagueTournament.leagueId, leagueId),
-          eq(T_LeagueTournament.status, 'tracked')
-        )
-      );
+      .where(and(eq(T_LeagueTournament.leagueId, leagueId), eq(T_LeagueTournament.status, 'tracked')));
 
-    const promises = leagueMembers.map(
-      async (leagueMember: (typeof leagueMembers)[number]) => {
-        console.log('UPDATE LEAGUE PERF FOR MEMBER', leagueMember.memberId);
-        console.log('UPDATE TOURN PERFORMANCE FOR TOURNAMENTS', leagueTournaments);
+    const promises = leagueMembers.map(async (leagueMember: (typeof leagueMembers)[number]) => {
+      console.log('UPDATE LEAGUE PERF FOR MEMBER', leagueMember.memberId);
+      console.log('UPDATE TOURN PERFORMANCE FOR TOURNAMENTS', leagueTournaments);
 
-        const updatedData = await updateTournamentsForMember(
-          leagueMember.memberId,
-          leagueTournaments
-        );
+      const updatedData = await updateTournamentsForMember(leagueMember.memberId, leagueTournaments);
 
-        const totalPoints = updatedData.reduce(
-          (points, performance) => (points += Number(performance?.points || 0)),
-          0
-        );
-        const [query] = await db
-          .update(T_LeaguePerformance)
-          .set({
-            leagueId: leagueId,
-            memberId: leagueMember.memberId,
-            points: String(totalPoints),
-          })
-          .where(
-            and(
-              eq(T_LeaguePerformance.memberId, leagueMember.memberId),
-              eq(T_LeaguePerformance.leagueId, leagueMember.leagueId)
-            )
+      const totalPoints = updatedData.reduce((points, performance) => (points += Number(performance?.points || 0)), 0);
+      const [query] = await db
+        .update(T_LeaguePerformance)
+        .set({
+          leagueId: leagueId,
+          memberId: leagueMember.memberId,
+          points: String(totalPoints),
+        })
+        .where(
+          and(
+            eq(T_LeaguePerformance.memberId, leagueMember.memberId),
+            eq(T_LeaguePerformance.leagueId, leagueMember.leagueId)
           )
-          .returning();
+        )
+        .returning();
 
-        return {
-          memberName: leagueMember.memberName,
-          points: parseInt(query.points ?? '0'),
-          lastUpdated: query.updatedAt,
-        };
-      }
-    );
+      return {
+        memberName: leagueMember.memberName,
+        points: parseInt(query.points ?? '0'),
+        lastUpdated: query.updatedAt,
+      };
+    });
 
     const result = await Promise.all(promises);
     console.log('promises -', promises, 'result', _.orderBy(result, 'points', ['desc']));
@@ -209,11 +165,7 @@ const updateLeaguePerformance = async (leagueId: string) => {
   }
 };
 
-const updateTournamentPerformance = async (
-  memberId: string,
-  tournamentId: string,
-  points: number
-) => {
+const updateTournamentPerformance = async (memberId: string, tournamentId: string, points: number) => {
   return QUERIES_PERFORMANCE.tournament.updatePerformance(points, memberId, tournamentId);
 };
 
@@ -234,17 +186,11 @@ export const SERVICES_PERFORMANCE_V2 = {
         const guessesByTournament = _.groupBy(memberGuesses, 'match.tournamentId');
 
         // 2. Update each tournament performance
-        const promises = Object.entries(guessesByTournament).map(
-          async ([tournamentId, guesses]) => {
-            const points = parseFloat(calculatePoints(guesses));
+        const promises = Object.entries(guessesByTournament).map(async ([tournamentId, guesses]) => {
+          const points = parseFloat(calculatePoints(guesses));
 
-            return QUERIES_PERFORMANCE.tournament.updatePerformance(
-              points,
-              memberId,
-              tournamentId
-            );
-          }
-        );
+          return QUERIES_PERFORMANCE.tournament.updatePerformance(points, memberId, tournamentId);
+        });
 
         const results = await Promise.all(promises);
         return results.map(parsePerformance);

@@ -6,3 +6,4 @@ export * from '../../domains/performance/schema';
 export * from '../../domains/team/schema';
 export * from '../../domains/tournament/schema';
 export * from '../../domains/tournament-round/schema';
+export * from '../../domains/data-provider/schema';

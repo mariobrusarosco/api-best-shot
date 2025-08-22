@@ -1,8 +1,5 @@
 import { IApiProvider } from '@/domains/data-provider/typing';
-import {
-  DB_InsertTournamentStandings,
-  T_TournamentStandings,
-} from '@/domains/tournament/schema';
+import { DB_InsertTournamentStandings, T_TournamentStandings } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import axios, { AxiosError } from 'axios';
 import { API_SOFASCORE_STANDINGS, API_SOFASCORE_STANDING_TEAM } from './typing';
@@ -29,20 +26,14 @@ export const SofascoreStandings: IApiProvider['standings'] = {
       console.log(`[LOG] - [END] - FETCHING STANDINGS`);
     }
   },
-  mapStandings: async (
-    data: API_SOFASCORE_STANDINGS,
-    tournamentId,
-    tournamentStandingsMode
-  ) => {
+  mapStandings: async (data: API_SOFASCORE_STANDINGS, tournamentId, tournamentStandingsMode) => {
     if (!data?.standings) return [];
     let standings = [] as DB_InsertTournamentStandings[];
 
     console.log(`[LOG] - [MAPPING] - STANDINGS - TYPE: ${tournamentStandingsMode}`);
 
     if (tournamentStandingsMode === 'unique-group') {
-      standings = data.standings[0].rows.map(team =>
-        mapTeamStandings(team, tournamentId)
-      );
+      standings = data.standings[0].rows.map(team => mapTeamStandings(team, tournamentId));
     }
 
     if (tournamentStandingsMode === 'multi-group') {
@@ -51,17 +42,12 @@ export const SofascoreStandings: IApiProvider['standings'] = {
         teams: groupOfTeams.rows,
       }));
 
-      standings = groups
-        .map(group =>
-          group.teams.map(team => mapTeamStandings(team, tournamentId, group.name))
-        )
-        .flat();
+      standings = groups.map(group => group.teams.map(team => mapTeamStandings(team, tournamentId, group.name))).flat();
     }
 
     return standings;
   },
-  createOnDatabase: async standings =>
-    await db.insert(T_TournamentStandings).values(standings).returning(),
+  createOnDatabase: async standings => await db.insert(T_TournamentStandings).values(standings).returning(),
   upsertOnDatabase: async standings => {
     console.log('[LOG] - [START] - UPSERTING STANDINGS');
 
@@ -84,11 +70,7 @@ export const SofascoreStandings: IApiProvider['standings'] = {
   },
 };
 
-const mapTeamStandings = (
-  team: API_SOFASCORE_STANDING_TEAM,
-  tournamentId: string,
-  groupName?: string
-) => {
+const mapTeamStandings = (team: API_SOFASCORE_STANDING_TEAM, tournamentId: string, groupName?: string) => {
   return {
     teamExternalId: String(team.team.id),
     tournamentId: String(tournamentId),

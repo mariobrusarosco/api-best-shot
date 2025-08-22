@@ -6,5 +6,11 @@ build
 supabase/migrations/meta/
 *.json
 
-# Kiro files
-.kiro/
+# TypeScript declaration files
+*.d.ts
+
+# Test files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx

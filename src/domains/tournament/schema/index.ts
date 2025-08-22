@@ -1,12 +1,4 @@
-import {
-  numeric,
-  pgTable,
-  primaryKey,
-  text,
-  timestamp,
-  uniqueIndex,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { numeric, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Tournament = pgTable(
   'tournament',
@@ -29,10 +21,7 @@ export const T_Tournament = pgTable(
   },
   table => {
     return {
-      uniqueExternalIdSlug: uniqueIndex('unique_external_id_slug').on(
-        table.externalId,
-        table.slug
-      ),
+      uniqueExternalIdSlug: uniqueIndex('unique_external_id_slug').on(table.externalId, table.slug),
     };
   }
 );

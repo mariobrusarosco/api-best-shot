@@ -102,10 +102,7 @@ const update = async (req: TournamentRoundRequest, res: Response) => {
     scraper = await BaseScraper.createInstance();
     const dataProviderService = new RoundDataProviderService(scraper, requestId);
 
-    const rounds = await dataProviderService.updateTournament(
-      tournament.id,
-      tournament.baseUrl
-    );
+    const rounds = await dataProviderService.updateTournament(tournament.id, tournament.baseUrl);
 
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament rounds update completed successfully`,

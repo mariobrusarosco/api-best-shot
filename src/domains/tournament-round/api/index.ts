@@ -119,8 +119,7 @@ const createMultipleTournamentRounds = async (req: Request, res: Response) => {
   try {
     const roundsData: DB_InsertTournamentRound[] = req.body;
 
-    const rounds =
-      await SERVICES_TOURNAMENT_ROUND.createMultipleTournamentRounds(roundsData);
+    const rounds = await SERVICES_TOURNAMENT_ROUND.createMultipleTournamentRounds(roundsData);
 
     return res.status(201).json({
       success: true,
@@ -131,8 +130,7 @@ const createMultipleTournamentRounds = async (req: Request, res: Response) => {
 
     if (
       error instanceof Error &&
-      (error.message.includes('Missing required') ||
-        error.message.includes('No tournament rounds data'))
+      (error.message.includes('Missing required') || error.message.includes('No tournament rounds data'))
     ) {
       return res.status(400).json({
         success: false,

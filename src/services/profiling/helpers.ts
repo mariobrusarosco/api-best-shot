@@ -72,8 +72,7 @@ export function createLogTags(
     environment?: Environment;
   }
 ): LogTags {
-  const autoEnvironment =
-    (process.env.NODE_ENV as Environment) || ENVIRONMENTS.DEVELOPMENT;
+  const autoEnvironment = (process.env.NODE_ENV as Environment) || ENVIRONMENTS.DEVELOPMENT;
 
   return {
     ...options,
@@ -130,11 +129,7 @@ export function createApiLogMessage(
 /**
  * Helper for Service logging
  */
-export function createServiceLogMessage(
-  operation: Operation,
-  resource?: Resource,
-  status?: Status
-): string {
+export function createServiceLogMessage(operation: Operation, resource?: Resource, status?: Status): string {
   return createLogMessage('SERVICE', operation, resource, status);
 }
 
@@ -187,11 +182,9 @@ export function migrateSourceToTags(source: string): LogTags {
 
   // Extract operation
   if (source.includes('create') || source.includes('CREATE')) tags.operation = 'CREATE';
-  else if (source.includes('update') || source.includes('UPDATE'))
-    tags.operation = 'UPDATE';
+  else if (source.includes('update') || source.includes('UPDATE')) tags.operation = 'UPDATE';
   else if (source.includes('fetch') || source.includes('FETCH')) tags.operation = 'FETCH';
-  else if (source.includes('generate') || source.includes('GENERATE'))
-    tags.operation = 'GENERATE';
+  else if (source.includes('generate') || source.includes('GENERATE')) tags.operation = 'GENERATE';
 
   return createLogTags(tags);
 }

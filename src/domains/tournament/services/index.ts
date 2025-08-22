@@ -40,9 +40,7 @@ const getAllTournaments = async () => {
 
 const getTournamentScore = async (memberId: string, tournamentId: string) => {
   const guesses = await QUERIES_TOURNAMENT.getTournamentGuesses(memberId, tournamentId);
-  const parsedGuesses = guesses.map((row: (typeof guesses)[number]) =>
-    runGuessAnalysis(row.guess, row.match)
-  );
+  const parsedGuesses = guesses.map((row: (typeof guesses)[number]) => runGuessAnalysis(row.guess, row.match));
 
   return {
     details: parsedGuesses,
@@ -74,19 +72,13 @@ const setupTournament = async (memberId: string, tournamentId: string) => {
   return true;
 };
 
-const getTournamentPerformanceForMember = async (
-  memberId: string,
-  tournamentId: string
-) => {
+const getTournamentPerformanceForMember = async (memberId: string, tournamentId: string) => {
   const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
   if (!tournament) {
     throw new Error('Tournament not found');
   }
 
-  const performance = await QUERIES_PERFORMANCE.tournament.getPerformance(
-    memberId,
-    tournamentId
-  );
+  const performance = await QUERIES_PERFORMANCE.tournament.getPerformance(memberId, tournamentId);
   if (!performance) {
     throw new Error('Performance not found');
   }
@@ -94,11 +86,7 @@ const getTournamentPerformanceForMember = async (
   return performance;
 };
 
-const getMatchesWithNullGuess = async (
-  memberId: string,
-  tournamentId: string,
-  round: string
-) => {
+const getMatchesWithNullGuess = async (memberId: string, tournamentId: string, round: string) => {
   return QUERIES_TOURNAMENT.getMatchesWithNullGuess(memberId, tournamentId, round);
 };
 

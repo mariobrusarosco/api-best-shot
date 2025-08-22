@@ -26,9 +26,7 @@ async function getMatchesByTournament(req: Request, res: Response) {
     const round = await QUERIES_TOURNAMENT_ROUND.getRound(tournamentId, roundId);
 
     if (!round || !round.slug) {
-      return res
-        .status(ErrorMapper.INVALID_ROUND.status)
-        .send(ErrorMapper.INVALID_ROUND.status);
+      return res.status(ErrorMapper.INVALID_ROUND.status).send(ErrorMapper.INVALID_ROUND.status);
     }
 
     const matches = await db

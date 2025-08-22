@@ -1,0 +1,176 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Best Shot API is a TypeScript/Express.js backend service for a football application, using PostgreSQL with Drizzle ORM. The project follows a domain-driven design architecture with clear separation of concerns.
+
+## Key Commands
+
+### Development
+
+```bash
+# Start development environment (database + API with hot reload)
+yarn dev                    # Start API with logs
+yarn dev:no-logs           # Start API without logs
+yarn dev:full              # Start DB, API, and frontend concurrently
+
+# Database management
+docker compose up -d        # Start PostgreSQL container
+yarn db:migrate            # Run database migrations
+yarn db:generate           # Generate new migration files
+yarn db:studio             # Open Drizzle Studio UI (visual DB management)
+yarn db:seed               # Seed database with initial data
+yarn db:reset              # Reset database (removes all data)
+
+# Testing
+yarn test                  # Run all tests
+yarn test:watch           # Run tests in watch mode
+yarn test:cov             # Run tests with coverage
+
+# Code quality
+yarn lint                  # Run ESLint
+yarn lint:fix             # Fix linting issues
+yarn format               # Format code with Prettier
+yarn compile              # Type-check without building
+
+# Build & Deploy
+yarn build                 # Build for production
+yarn build-demo           # Build for demo environment
+yarn build-prod           # Build for production with Sentry
+```
+
+### Environment Validation
+
+```bash
+yarn validate:secrets      # Validate environment secrets are configured
+yarn validate:gcp         # Validate GCP setup
+yarn validate:all        # Run all validations
+```
+
+## Architecture
+
+### Domain-Driven Design Structure
+
+The codebase is organized into domains under `src/domains/`, each containing:
+
+- **api/**: HTTP endpoint handlers
+- **routes/**: Express route definitions (v1/v2 versioning)
+- **controllers/**: Business logic orchestration
+- **services/**: Core business logic
+- **queries/**: Database query layer (Drizzle ORM)
+- **schema/**: Database schema definitions
+- **typing/**: TypeScript type definitions
+- **error-handling/**: Domain-specific error mappers
+
+### Key Domains
+
+- **auth**: Authentication/authorization with JWT
+- **data-provider**: External data fetching (SofaScore integration, web scraping)
+- **dashboard**: Analytics and reporting
+- **guess**: User predictions/guesses functionality
+- **league**: League management
+- **match**: Match data and operations
+- **member**: User management
+- **tournament**: Tournament operations
+- **admin**: Administrative functions
+
+### Database Schema
+
+Database schemas are defined per domain and aggregated in `src/services/database/schema.ts`. Migrations are managed with Drizzle Kit and stored in `supabase/migrations/`.
+
+### API Routing
+
+All API routes are mounted under `/api` with versioning:
+
+- `/api/v1/[domain]`
+- `/api/v2/[domain]`
+
+Routes are centrally registered in `src/router/index.ts`.
+
+## Development Workflow
+
+### Environment Setup
+
+The project uses Docker for PostgreSQL and local Node.js (managed by Volta) for the API:
+
+1. `.env` file is auto-created by Docker Compose if missing
+2. Database runs in container on port 5432 (configurable)
+3. API runs locally on port 9090 with hot reloading
+
+### TypeScript Configuration
+
+- Path alias: `@/` maps to `src/`
+- Strict mode enabled
+- Source maps enabled for debugging
+- Target: ESNext, Module: CommonJS
+
+### Testing
+
+- Jest with ts-jest for unit tests
+- Test files: `*.test.ts` or `*.spec.ts`
+- Coverage thresholds: 70% for all metrics
+- Path aliases work in tests
+
+### Code Quality
+
+- ESLint with TypeScript plugin
+- Prettier for formatting
+- Husky pre-commit hooks run: `yarn compile && yarn lint-staged`
+- Lint-staged runs ESLint and Prettier on staged files
+
+## Important Patterns
+
+### Error Handling
+
+Each domain has error mappers in `error-handling/mapper.ts` that transform domain errors to HTTP responses.
+
+### Middleware
+
+- Authentication middleware in `src/domains/auth/middleware.ts`
+- Internal service auth in `src/domains/auth/internal-middleware.ts`
+- Access control in `src/domains/shared/middlewares/access-control.ts`
+
+### Data Providers
+
+External data fetching uses provider pattern:
+
+- SofaScore API integration
+- Playwright for web scraping
+- AWS S3 for file storage
+
+### Scheduling
+
+AWS Scheduler integration for automated tasks:
+
+- Daily score updates
+- Knockout stage updates
+- Standings refresh
+
+## External Services
+
+- **AWS**: S3 (file storage), Scheduler (cron jobs)
+- **Sentry**: Error tracking and performance monitoring
+- **OpenAI**: AI predictions service
+- **SofaScore**: Football data provider
+
+## Deployment
+
+The application supports multiple environments:
+
+- Development (local)
+- Demo (staging)
+- Production
+
+Each environment has specific build commands and uses environment-specific `.env` files.
+
+## Key Considerations
+
+- Always validate environment variables before starting
+- Database migrations must be run after schema changes
+- Use Drizzle Studio for visual database management
+- Follow domain boundaries - avoid cross-domain imports
+- Maintain API versioning for backward compatibility
+- File naming: Use kebab-case
+- Import types with `type` keyword: `import type { ... }`

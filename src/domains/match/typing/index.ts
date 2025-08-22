@@ -6,10 +6,7 @@ export interface CreateMatchesRequestInput {
   tournamentId: string;
 }
 
-export type UpdateMatchesForRoundRequest = Request<
-  null,
-  UpdateMatchesForRoundRequestInput
->;
+export type UpdateMatchesForRoundRequest = Request<null, UpdateMatchesForRoundRequestInput>;
 
 export interface UpdateMatchesForRoundRequestInput {
   tournamentId: string;

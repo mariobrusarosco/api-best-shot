@@ -1,12 +1,6 @@
 import * as Sentry from '@sentry/node';
 import * as pc from 'picocolors';
-import {
-  LogTags,
-  LogExtra,
-  migrateSourceToTags,
-  createLogTags,
-  createLogExtra,
-} from './helpers';
+import { LogTags, LogExtra, migrateSourceToTags, createLogTags, createLogExtra } from './helpers';
 import { STATUSES } from './constants';
 
 const ENV = process.env.NODE_ENV;

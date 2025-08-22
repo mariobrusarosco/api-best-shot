@@ -13,10 +13,7 @@ router.get('/:tournamentId', API_TOURNAMENT.getTournamentDetails);
 router.get('/:tournamentId/matches/:roundId', API_MATCH.getMatchesByTournament);
 router.get('/:tournamentId/guess', API_GUESS.getMemberGuesses);
 router.get('/:tournamentId/score', API_TOURNAMENT.getTournamentScore);
-router.get(
-  '/:tournamentId/performance',
-  API_TOURNAMENT.getTournamentPerformanceForMember
-);
+router.get('/:tournamentId/performance', API_TOURNAMENT.getTournamentPerformanceForMember);
 router.patch('/:tournamentId/performance', API_PERFORMANCE.updateTournamentPerformance);
 router.get('/:tournamentId/standings', API_TOURNAMENT.getTournamentStandings);
 router.post('/:tournamentId/setup', API_TOURNAMENT.setupTournament);

@@ -7,10 +7,7 @@ const getLeagueStandings = async (leagueId: string) => {
 
   const standings = query.reduce(
     (
-      acc: Record<
-        string,
-        { id: string; logo: string; members: { member: string; points: string }[] }
-      >,
+      acc: Record<string, { id: string; logo: string; members: { member: string; points: string }[] }>,
       tournament: (typeof query)[number]
     ) => {
       const id = tournament.id || '';
@@ -46,11 +43,7 @@ const getMemberLeagues = async (memberId: string) => {
   return QUERIES_LEAGUE.getMemberLeagues(memberId);
 };
 
-const createLeague = async (data: {
-  label: string;
-  description: string;
-  founderId: string;
-}) => {
+const createLeague = async (data: { label: string; description: string; founderId: string }) => {
   const league = await QUERIES_LEAGUE.createLeague(data);
 
   if (!league) {
@@ -106,9 +99,7 @@ const getLeagueDetails = async (leagueId: string, memberId: string) => {
     nickName: row.member.nickName,
   }));
 
-  const memberRole = mainQuery.find(
-    (row: (typeof mainQuery)[number]) => row.league_role.memberId === memberId
-  );
+  const memberRole = mainQuery.find((row: (typeof mainQuery)[number]) => row.league_role.memberId === memberId);
   const permissions = {
     edit: memberRole?.league_role.role === 'ADMIN',
     invite: memberRole?.league_role.role === 'ADMIN',
@@ -116,9 +107,7 @@ const getLeagueDetails = async (leagueId: string, memberId: string) => {
   };
 
   const tournamentsQuery = await QUERIES_LEAGUE.getLeagueTournaments(leagueId);
-  const tournaments = tournamentsQuery.map(
-    (row: (typeof tournamentsQuery)[number]) => row.tournament
-  );
+  const tournaments = tournamentsQuery.map((row: (typeof tournamentsQuery)[number]) => row.tournament);
 
   return {
     id: mainQuery[0].league.id,
@@ -130,9 +119,7 @@ const getLeagueDetails = async (leagueId: string, memberId: string) => {
   };
 };
 
-const updateLeagueTournaments = async (
-  updateInput: { leagueId: string; tournamentId: string; status: string }[]
-) => {
+const updateLeagueTournaments = async (updateInput: { leagueId: string; tournamentId: string; status: string }[]) => {
   return QUERIES_LEAGUE.updateLeagueTournaments(updateInput);
 };
 

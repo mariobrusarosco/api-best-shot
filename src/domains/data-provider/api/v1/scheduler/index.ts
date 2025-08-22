@@ -5,8 +5,7 @@ import { SchedulerController } from '../../../controllers/scheduler';
 
 const dailyRoutine = async (_: Request, res: Response) => {
   const startTime = new Date();
-  const friendlyTimestamp =
-    startTime.toISOString().replace('T', ' ').split('.')[0] + ' UTC';
+  const friendlyTimestamp = startTime.toISOString().replace('T', ' ').split('.')[0] + ' UTC';
 
   try {
     console.log(`🚀 [${friendlyTimestamp}] Starting daily scheduler routine...`);
@@ -46,8 +45,7 @@ const dailyRoutine = async (_: Request, res: Response) => {
       timestamp: endTimestamp,
     });
   } catch (error: unknown) {
-    const errorTimestamp =
-      new Date().toISOString().replace('T', ' ').split('.')[0] + ' UTC';
+    const errorTimestamp = new Date().toISOString().replace('T', ' ').split('.')[0] + ' UTC';
     console.error(`❌ [${errorTimestamp}] Daily scheduler failed:`, error);
 
     Profiling.error({

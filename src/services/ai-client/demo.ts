@@ -108,17 +108,13 @@ export async function demonstrateProviderSwitching() {
       console.log(`\n--- Testing with ${provider.toUpperCase()} ---`);
 
       const config =
-        provider === 'openai'
-          ? { apiKey: process.env.OPENAI_API_KEY, model: 'gpt-4o-mini' }
-          : { model: 'llama3.2' };
+        provider === 'openai' ? { apiKey: process.env.OPENAI_API_KEY, model: 'gpt-4o-mini' } : { model: 'llama3.2' };
 
       const client = new AIClient(provider, config);
       const response = await client.generateResponse(prompt);
 
       console.log(`✅ ${provider} response:`, response.content.substring(0, 100) + '...');
-      console.log(
-        `📊 Model: ${response.model}, Tokens: ${response.usage?.totalTokens || 'N/A'}`
-      );
+      console.log(`📊 Model: ${response.model}, Tokens: ${response.usage?.totalTokens || 'N/A'}`);
     } catch (error) {
       console.log(`❌ ${provider} failed:`, (error as Error).message);
     }

@@ -23,18 +23,8 @@ import type { Operation, Resource, Environment } from './constants';
  * Lambda logging utilities
  */
 export const LambdaLogger = {
-  success: (
-    operation: Operation,
-    resource?: Resource,
-    environment?: Environment,
-    extra?: LogExtra
-  ) => {
-    const message = createLambdaLogMessage(
-      operation,
-      resource,
-      STATUSES.SUCCESS,
-      environment
-    );
+  success: (operation: Operation, resource?: Resource, environment?: Environment, extra?: LogExtra) => {
+    const message = createLambdaLogMessage(operation, resource, STATUSES.SUCCESS, environment);
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
       component: COMPONENTS.LAMBDA,
@@ -46,13 +36,7 @@ export const LambdaLogger = {
     return Profiling.logEnhanced({ message, tags, extra });
   },
 
-  error: (
-    operation: Operation,
-    error: unknown,
-    resource?: Resource,
-    environment?: Environment,
-    extra?: LogExtra
-  ) => {
+  error: (operation: Operation, error: unknown, resource?: Resource, environment?: Environment, extra?: LogExtra) => {
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
       component: COMPONENTS.LAMBDA,
@@ -65,18 +49,8 @@ export const LambdaLogger = {
     return Profiling.errorEnhanced({ error, tags, extra });
   },
 
-  started: (
-    operation: Operation,
-    resource?: Resource,
-    environment?: Environment,
-    extra?: LogExtra
-  ) => {
-    const message = createLambdaLogMessage(
-      operation,
-      resource,
-      STATUSES.STARTED,
-      environment
-    );
+  started: (operation: Operation, resource?: Resource, environment?: Environment, extra?: LogExtra) => {
+    const message = createLambdaLogMessage(operation, resource, STATUSES.STARTED, environment);
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
       component: COMPONENTS.LAMBDA,
@@ -93,12 +67,7 @@ export const LambdaLogger = {
  * API logging utilities
  */
 export const ApiLogger = {
-  success: (
-    operation: Operation,
-    resource?: Resource,
-    version?: string,
-    extra?: LogExtra
-  ) => {
+  success: (operation: Operation, resource?: Resource, version?: string, extra?: LogExtra) => {
     const message = createApiLogMessage(operation, resource, version, STATUSES.SUCCESS);
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
@@ -111,13 +80,7 @@ export const ApiLogger = {
     return Profiling.logEnhanced({ message, tags, extra });
   },
 
-  error: (
-    operation: Operation,
-    error: unknown,
-    resource?: Resource,
-    version?: string,
-    extra?: LogExtra
-  ) => {
+  error: (operation: Operation, error: unknown, resource?: Resource, version?: string, extra?: LogExtra) => {
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
       component: COMPONENTS.API,
@@ -147,12 +110,7 @@ export const ServiceLogger = {
     return Profiling.logEnhanced({ message, tags, extra });
   },
 
-  error: (
-    operation: Operation,
-    error: unknown,
-    resource?: Resource,
-    extra?: LogExtra
-  ) => {
+  error: (operation: Operation, error: unknown, resource?: Resource, extra?: LogExtra) => {
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
       component: COMPONENTS.SERVICE,
@@ -169,12 +127,7 @@ export const ServiceLogger = {
  * Scheduler logging utilities
  */
 export const SchedulerLogger = {
-  success: (
-    operation: Operation,
-    environment?: Environment,
-    customSuffix?: string,
-    extra?: LogExtra
-  ) => {
+  success: (operation: Operation, environment?: Environment, customSuffix?: string, extra?: LogExtra) => {
     const message = createSchedulerLogMessage(operation, environment, customSuffix);
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
@@ -186,12 +139,7 @@ export const SchedulerLogger = {
     return Profiling.logEnhanced({ message, tags, extra });
   },
 
-  error: (
-    operation: Operation,
-    error: unknown,
-    environment?: Environment,
-    extra?: LogExtra
-  ) => {
+  error: (operation: Operation, error: unknown, environment?: Environment, extra?: LogExtra) => {
     const tags = createLogTags({
       domain: DOMAINS.DATA_PROVIDER,
       component: COMPONENTS.SCHEDULER,
@@ -218,11 +166,4 @@ export const EnhancedLogger = {
 };
 
 // Export constants for easy access
-export {
-  DOMAINS,
-  COMPONENTS,
-  OPERATIONS,
-  RESOURCES,
-  STATUSES,
-  ENVIRONMENTS,
-} from './constants';
+export { DOMAINS, COMPONENTS, OPERATIONS, RESOURCES, STATUSES, ENVIRONMENTS } from './constants';

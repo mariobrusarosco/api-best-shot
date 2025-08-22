@@ -30,9 +30,7 @@ const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) =
     const result = await SERVICES_AUTH.authenticateUser(publicId, res);
 
     if (!result) {
-      return res
-        .status(ErrorMapper.USER_NOT_FOUND.status)
-        .send({ message: ErrorMapper.USER_NOT_FOUND.user });
+      return res.status(ErrorMapper.USER_NOT_FOUND.status).send({ message: ErrorMapper.USER_NOT_FOUND.user });
     }
 
     return res.status(200).send(result.token);

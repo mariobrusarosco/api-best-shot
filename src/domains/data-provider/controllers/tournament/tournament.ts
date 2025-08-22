@@ -20,10 +20,7 @@ const createTournament = async ({ input }: { input: any }) => {
     if (!tournament) throw new Error('Tournament not created');
 
     const tournamentMode = tournament.mode;
-    if (
-      tournamentMode === 'knockout-only' ||
-      tournamentMode === 'regular-season-and-knockout'
-    ) {
+    if (tournamentMode === 'knockout-only' || tournamentMode === 'regular-season-and-knockout') {
       await SchedulerController.createKnockoutsUpdatesRoutine(tournament);
     }
 
@@ -60,10 +57,7 @@ const updateTournament = async ({ input }: { input: any }) => {
     const tournament = await QUERIES_TOURNAMENT.tournament(updatedTournament.id!);
     const tournamentMode = tournament?.mode;
 
-    if (
-      tournamentMode === 'knockout-only' ||
-      tournamentMode === 'regular-season-and-knockout'
-    ) {
+    if (tournamentMode === 'knockout-only' || tournamentMode === 'regular-season-and-knockout') {
       await SchedulerController.createKnockoutsUpdatesRoutine(tournament);
     }
 

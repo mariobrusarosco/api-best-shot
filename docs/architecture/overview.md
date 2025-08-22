@@ -80,10 +80,7 @@ src/domains/{domain}/
 ```typescript
 // domains/performance/queries/index.ts
 const queryPerformanceOfAllMemberTournaments = async (memberId: string) => {
-  return await db
-    .select()
-    .from(T_TournamentPerformance)
-    .where(eq(T_TournamentPerformance.memberId, memberId));
+  return await db.select().from(T_TournamentPerformance).where(eq(T_TournamentPerformance.memberId, memberId));
 };
 
 export const QUERIES_PERFORMANCE = {
@@ -108,8 +105,7 @@ export const QUERIES_PERFORMANCE = {
 ```typescript
 // domains/performance/services/index.ts
 const getMemberPerformanceExtremes = async (memberId: string) => {
-  const memberPerformance =
-    await QUERIES_PERFORMANCE.queryPerformanceOfAllMemberTournaments(memberId);
+  const memberPerformance = await QUERIES_PERFORMANCE.queryPerformanceOfAllMemberTournaments(memberId);
 
   if (!memberPerformance.length) {
     return { worstPerformance: null, bestPerformance: null };
@@ -201,9 +197,7 @@ Services can interact with:
 
 ```typescript
 const SERVICES_TOURNAMENT = {
-  async registerPlayerForTournament(
-    registration: TournamentRegistration
-  ): Promise<RegistrationResult> {
+  async registerPlayerForTournament(registration: TournamentRegistration): Promise<RegistrationResult> {
     try {
       // 1. Input validation
       if (!validateRegistration(registration)) {
@@ -211,19 +205,14 @@ const SERVICES_TOURNAMENT = {
       }
 
       // 2. Call another service for cross-domain logic
-      const playerEligible = await SERVICES_PLAYER.checkEligibility(
-        registration.playerId,
-        registration.tournamentId
-      );
+      const playerEligible = await SERVICES_PLAYER.checkEligibility(registration.playerId, registration.tournamentId);
 
       if (!playerEligible) {
         return { success: false, error: 'Player not eligible' };
       }
 
       // 3. Use queries for database operations
-      const tournamentFull = await QUERIES_TOURNAMENT.checkTournamentCapacity(
-        registration.tournamentId
-      );
+      const tournamentFull = await QUERIES_TOURNAMENT.checkTournamentCapacity(registration.tournamentId);
 
       if (tournamentFull) {
         return { success: false, error: 'Tournament at capacity' };

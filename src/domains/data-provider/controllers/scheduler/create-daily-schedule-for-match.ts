@@ -49,15 +49,9 @@ const generateScheduleId = (
     .replace(/[^0-9a-z-_.]/g, '');
 };
 
-const buildSchedule = (
-  match: Awaited<ReturnType<typeof MatchQueries.currentDayMatchesOnDatabase>>[number]
-) => {
+const buildSchedule = (match: Awaited<ReturnType<typeof MatchQueries.currentDayMatchesOnDatabase>>[number]) => {
   const estimatedEndOfMatch = getEstimatedEndOfMatch(match.date);
-  const scheduleId = generateScheduleId(
-    match.tournamentLabel,
-    match.date,
-    estimatedEndOfMatch
-  );
+  const scheduleId = generateScheduleId(match.tournamentLabel, match.date, estimatedEndOfMatch);
   const targetEnv = process.env.NODE_ENV;
 
   return {

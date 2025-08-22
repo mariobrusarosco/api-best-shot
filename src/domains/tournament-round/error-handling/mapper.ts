@@ -38,9 +38,5 @@ export const TournamentRoundErrorMapper = {
     ),
 
   databaseError: (operation: string) =>
-    new TournamentRoundError(
-      `Database error during ${operation}`,
-      'TOURNAMENT_ROUND_DATABASE_ERROR',
-      500
-    ),
+    new TournamentRoundError(`Database error during ${operation}`, 'TOURNAMENT_ROUND_DATABASE_ERROR', 500),
 };

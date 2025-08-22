@@ -7,11 +7,7 @@ export type TournamentRoundRequest = Request<
   DB_InsertTournamentRound
 >;
 
-export type TournamentRoundBulkRequest = Request<
-  { tournamentId: string },
-  unknown,
-  DB_InsertTournamentRound[]
->;
+export type TournamentRoundBulkRequest = Request<{ tournamentId: string }, unknown, DB_InsertTournamentRound[]>;
 
 export type TournamentRoundResponse = {
   success: boolean;

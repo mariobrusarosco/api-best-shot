@@ -1,7 +1,4 @@
-import {
-  MatchesForRoundRequest,
-  MatchesRequest,
-} from '@/domains/data-provider/api/v1/matches/typing';
+import { MatchesForRoundRequest, MatchesRequest } from '@/domains/data-provider/api/v1/matches/typing';
 import { MatchesController } from '@/domains/data-provider/controllers/matches';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { Profiling } from '@/services/profiling';

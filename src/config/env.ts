@@ -24,9 +24,7 @@ const envSchema = z.object({
     .optional(),
 
   // App
-  NODE_ENV: z
-    .enum(['development', 'demo', 'staging', 'production'])
-    .default('development'),
+  NODE_ENV: z.enum(['development', 'demo', 'staging', 'production']).default('development'),
   PORT: z
     .string()
     .transform(val => {
@@ -78,9 +76,7 @@ function validateEnv() {
     }
 
     console.error('\n💡 Tips:');
-    console.error(
-      "  1. Run 'docker compose --profile setup up env-setup' to generate a default .env file"
-    );
+    console.error("  1. Run 'docker compose --profile setup up env-setup' to generate a default .env file");
     console.error('  2. Check if all required variables are set in your .env file');
     console.error('  3. Verify the values match the expected types\n');
 

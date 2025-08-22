@@ -4,9 +4,7 @@ import type { NextFunction, Request, Response } from 'express';
 
 export const InternalMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const internalToken =
-      req.headers['x-internal-token'] ||
-      req.headers.authorization?.replace('Bearer ', '');
+    const internalToken = req.headers['x-internal-token'] || req.headers.authorization?.replace('Bearer ', '');
 
     if (!internalToken) {
       Profiling.error({
@@ -31,10 +29,7 @@ export const InternalMiddleware = (req: Request, res: Response, next: NextFuncti
         data: {
           path: req.path,
           method: req.method,
-          providedToken:
-            typeof internalToken === 'string'
-              ? `${internalToken.substring(0, 8)}...`
-              : 'array_value', // Log only first 8 chars for security
+          providedToken: typeof internalToken === 'string' ? `${internalToken.substring(0, 8)}...` : 'array_value', // Log only first 8 chars for security
         },
       });
 

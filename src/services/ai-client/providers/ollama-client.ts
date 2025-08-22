@@ -90,9 +90,7 @@ export class OllamaClient extends BaseAIClient {
     }
   }
 
-  async *streamResponse(
-    input: AIMessage[] | string
-  ): AsyncGenerator<string, void, unknown> {
+  async *streamResponse(input: AIMessage[] | string): AsyncGenerator<string, void, unknown> {
     try {
       const messages = this.normalizeMessages(input);
       this.logRequest(messages);

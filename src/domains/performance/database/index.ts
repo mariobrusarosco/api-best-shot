@@ -7,11 +7,7 @@ import { and, eq } from 'drizzle-orm';
 import _ from 'lodash';
 import { queryMemberTournamentGuesses } from '../controller';
 import { DB_InsertTournamentPerformance, T_TournamentPerformance } from '../schema';
-import type {
-  GuessAnalysis,
-  GuessesByOutcome,
-  GuessesByStatus,
-} from '../../../domains/guess/typing';
+import type { GuessAnalysis, GuessesByOutcome, GuessesByStatus } from '../../../domains/guess/typing';
 
 const queryPerformanceForTournament = async (memberId: string, tournamentId: string) => {
   const guesses = await db
@@ -20,9 +16,7 @@ const queryPerformanceForTournament = async (memberId: string, tournamentId: str
     .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
     .where(and(eq(T_Guess.memberId, memberId), eq(T_Match.tournamentId, tournamentId)));
 
-  const parsedGuesses = guesses.map((row: (typeof guesses)[number]) =>
-    runGuessAnalysis(row.guess, row.match)
-  );
+  const parsedGuesses = guesses.map((row: (typeof guesses)[number]) => runGuessAnalysis(row.guess, row.match));
   const guessesByOutcome = parsedGuesses.reduce(
     (acc: GuessesByOutcome, guess: (typeof parsedGuesses)[number]) => {
       const updateCount = (status: string) => {
@@ -38,9 +32,10 @@ const queryPerformanceForTournament = async (memberId: string, tournamentId: str
   );
 
   const guessesByStatus = _.groupBy(parsedGuesses, ({ status }) => status);
-  const guessesByStatusQty: GuessesByStatus = (
-    Object.entries(guessesByStatus) as [string, GuessAnalysis[]][]
-  ).reduce((acc, [key, body]) => ({ ...acc, [key]: body?.length }), {});
+  const guessesByStatusQty: GuessesByStatus = (Object.entries(guessesByStatus) as [string, GuessAnalysis[]][]).reduce(
+    (acc, [key, body]) => ({ ...acc, [key]: body?.length }),
+    {}
+  );
 
   return {
     details: guessesByStatusQty,
@@ -65,12 +60,7 @@ const updateTournamentPerformanceOnDatabase = async (
   return await db
     .update(T_TournamentPerformance)
     .set(insertValues)
-    .where(
-      and(
-        eq(T_TournamentPerformance.tournamentId, tournamentId),
-        eq(T_TournamentPerformance.memberId, memberId)
-      )
-    )
+    .where(and(eq(T_TournamentPerformance.tournamentId, tournamentId), eq(T_TournamentPerformance.memberId, memberId)))
     .returning();
 };
 

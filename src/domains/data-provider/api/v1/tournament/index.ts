@@ -27,8 +27,7 @@ const setup = async (req: TournamentRequest, res: Response) => {
       });
     }
 
-    if (!tournament)
-      throw new Error('[ERROR] - [DATA PROVIDER] - [SETUP] - Tournament not created');
+    if (!tournament) throw new Error('[ERROR] - [DATA PROVIDER] - [SETUP] - Tournament not created');
 
     try {
       // SETUP TOURNAMENTS ROUNDS

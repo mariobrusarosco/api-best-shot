@@ -21,10 +21,7 @@ type RoundData = {
 const SOFA_TEAM_LOGO_URL = 'https://img.sofascore.com/api/v1/team/:id/image';
 
 export const SofascoreTeams: IApiProvider['teams'] = {
-  mapTeamsFromStandings: async (
-    data: API_SOFASCORE_STANDINGS,
-    provider: string
-  ): Promise<DB_InsertTeam[]> => {
+  mapTeamsFromStandings: async (data: API_SOFASCORE_STANDINGS, provider: string): Promise<DB_InsertTeam[]> => {
     if (!data?.standings) return [];
 
     const standings = data?.standings;
@@ -55,10 +52,7 @@ export const SofascoreTeams: IApiProvider['teams'] = {
 
     return assetPath ? `https://${process.env['AWS_CLOUDFRONT_URL']}/${assetPath}` : '';
   },
-  mapTeamsFromRound: async (
-    round: RoundData,
-    provider: string
-  ): Promise<DB_InsertTeam[]> => {
+  mapTeamsFromRound: async (round: RoundData, provider: string): Promise<DB_InsertTeam[]> => {
     const matches = round.events;
 
     const promises = matches.map(async (match: MatchEvent) => {
@@ -100,11 +94,7 @@ export const SofascoreTeams: IApiProvider['teams'] = {
   createOnDatabase: async teams => {
     console.log(`[LOG] - [START] - CREATING TEAMS ON DATABASE`);
 
-    const createdTeams = await db
-      .insert(T_Team)
-      .values(teams)
-      .onConflictDoNothing()
-      .returning();
+    const createdTeams = await db.insert(T_Team).values(teams).onConflictDoNothing().returning();
 
     console.log(`[LOG] - [START] - CREATED TEAMS ${createdTeams.length} ON DATABASE`);
 

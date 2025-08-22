@@ -32,13 +32,7 @@ async function getMemberGuesses({
       .select()
       .from(T_Guess)
       .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
-      .where(
-        and(
-          eq(T_Match.tournamentId, tournamentId),
-          eq(T_Match.roundSlug, round),
-          eq(T_Guess.memberId, memberId)
-        )
-      );
+      .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round), eq(T_Guess.memberId, memberId)));
 
     guesses = guessesResult;
 
@@ -67,19 +61,14 @@ async function getMemberGuesses({
         .from(T_Guess)
         .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
         .where(
-          and(
-            eq(T_Match.tournamentId, tournamentId),
-            eq(T_Match.roundSlug, round),
-            eq(T_Guess.memberId, memberId)
-          )
+          and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round), eq(T_Guess.memberId, memberId))
         );
       guesses = finalGuessesResult;
     }
 
     const parsedGuesses =
-      guesses?.map((row: { guess: DB_SelectGuess; match: DB_SelectMatch }) =>
-        runGuessAnalysis(row.guess, row.match)
-      ) || [];
+      guesses?.map((row: { guess: DB_SelectGuess; match: DB_SelectMatch }) => runGuessAnalysis(row.guess, row.match)) ||
+      [];
 
     return parsedGuesses;
   } catch (error: unknown) {
@@ -115,9 +104,7 @@ async function createGuess(req: CreateGuessRequest, res: Response) {
 
     if (!guess) {
       console.error(ErrorMapper.FAILED_GUESS_CRETION.debug);
-      res
-        .status(ErrorMapper.FAILED_GUESS_CRETION.status)
-        .send(ErrorMapper.FAILED_GUESS_CRETION.user);
+      res.status(ErrorMapper.FAILED_GUESS_CRETION.status).send(ErrorMapper.FAILED_GUESS_CRETION.user);
       return;
     }
 
@@ -136,10 +123,7 @@ async function createGuess(req: CreateGuessRequest, res: Response) {
   }
 }
 
-const selectMemberGuessesForTournament = async (
-  memberId: string,
-  tournamentId: string
-) => {
+const selectMemberGuessesForTournament = async (memberId: string, tournamentId: string) => {
   const guesses = await db
     .select()
     .from(T_Guess)

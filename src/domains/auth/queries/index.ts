@@ -3,10 +3,7 @@ import db from '@/services/database';
 import { eq } from 'drizzle-orm';
 
 const getMemberByPublicId = async (publicId: string) => {
-  const [member] = await db
-    .select()
-    .from(T_Member)
-    .where(eq(T_Member.publicId, publicId));
+  const [member] = await db.select().from(T_Member).where(eq(T_Member.publicId, publicId));
 
   return member;
 };

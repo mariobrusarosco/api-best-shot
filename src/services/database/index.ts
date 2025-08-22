@@ -27,9 +27,7 @@ Error: ${err instanceof Error ? err.message : String(err)}
     if (env.NODE_ENV === 'development') {
       process.exit(1);
     } else {
-      console.warn(
-        '⚠️ Continuing without database connection in non-development environment'
-      );
+      console.warn('⚠️ Continuing without database connection in non-development environment');
       return false;
     }
   }

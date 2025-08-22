@@ -13,12 +13,7 @@ const getRound = async (tournamentId: string, roundSlug: string) => {
     const [round] = await db
       .select()
       .from(T_TournamentRound)
-      .where(
-        and(
-          eq(T_TournamentRound.tournamentId, tournamentId),
-          eq(T_TournamentRound.slug, roundSlug)
-        )
-      );
+      .where(and(eq(T_TournamentRound.tournamentId, tournamentId), eq(T_TournamentRound.slug, roundSlug)));
 
     return round || null;
   } catch (error: unknown) {
@@ -33,12 +28,7 @@ const getRegularSeasonRounds = async (tournamentId: string) => {
     const rounds = await db
       .select()
       .from(T_TournamentRound)
-      .where(
-        and(
-          eq(T_TournamentRound.tournamentId, tournamentId),
-          eq(T_TournamentRound.type, 'season')
-        )
-      )
+      .where(and(eq(T_TournamentRound.tournamentId, tournamentId), eq(T_TournamentRound.type, 'season')))
       .orderBy(asc(T_TournamentRound.order));
 
     return rounds;
@@ -54,12 +44,7 @@ const getKnockoutRounds = async (tournamentId: string) => {
     const rounds = await db
       .select()
       .from(T_TournamentRound)
-      .where(
-        and(
-          eq(T_TournamentRound.tournamentId, tournamentId),
-          eq(T_TournamentRound.type, 'knockout')
-        )
-      )
+      .where(and(eq(T_TournamentRound.tournamentId, tournamentId), eq(T_TournamentRound.type, 'knockout')))
       .orderBy(asc(T_TournamentRound.order));
 
     return rounds;

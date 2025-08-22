@@ -26,11 +26,7 @@ const getMemberLeagues = async (memberId: string) => {
   return leagues;
 };
 
-const createLeague = async (data: {
-  label: string;
-  description: string;
-  founderId: string;
-}) => {
+const createLeague = async (data: { label: string; description: string; founderId: string }) => {
   const [league] = await db
     .insert(T_League)
     .values({
@@ -43,21 +39,13 @@ const createLeague = async (data: {
   return league;
 };
 
-const createLeagueRole = async (data: {
-  leagueId: string;
-  memberId: string;
-  role: string;
-}) => {
+const createLeagueRole = async (data: { leagueId: string; memberId: string; role: string }) => {
   const [role] = await db.insert(T_LeagueRole).values(data).returning();
 
   return role;
 };
 
-const createLeaguePerformance = async (data: {
-  leagueId: string;
-  memberId: string;
-  points: string;
-}) => {
+const createLeaguePerformance = async (data: { leagueId: string; memberId: string; points: string }) => {
   const [performance] = await db.insert(T_LeaguePerformance).values(data).returning();
 
   return performance;
@@ -85,19 +73,12 @@ const getLeagueTournaments = async (leagueId: string) => {
     .select()
     .from(T_LeagueTournament)
     .leftJoin(T_Tournament, eq(T_LeagueTournament.tournamentId, T_Tournament.id))
-    .where(
-      and(
-        eq(T_LeagueTournament.leagueId, leagueId),
-        eq(T_LeagueTournament.status, 'tracked')
-      )
-    );
+    .where(and(eq(T_LeagueTournament.leagueId, leagueId), eq(T_LeagueTournament.status, 'tracked')));
 
   return tournaments;
 };
 
-const updateLeagueTournaments = async (
-  updateInput: { leagueId: string; tournamentId: string; status: string }[]
-) => {
+const updateLeagueTournaments = async (updateInput: { leagueId: string; tournamentId: string; status: string }[]) => {
   const result = await db
     .insert(T_LeagueTournament)
     .values(updateInput)

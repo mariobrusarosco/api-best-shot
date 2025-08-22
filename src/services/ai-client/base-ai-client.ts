@@ -41,15 +41,11 @@ export abstract class BaseAIClient implements IAIClient {
   }
 
   protected logError(error: unknown, context?: string): void {
-    logger.error(
-      'AI Client Error',
-      error instanceof Error ? error : new Error(String(error)),
-      {
-        provider: this.constructor.name,
-        model: this.config.model,
-        context,
-      }
-    );
+    logger.error('AI Client Error', error instanceof Error ? error : new Error(String(error)), {
+      provider: this.constructor.name,
+      model: this.config.model,
+      context,
+    });
   }
 
   // Main interface methods

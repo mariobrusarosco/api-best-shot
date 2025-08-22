@@ -1,8 +1,5 @@
 import { T_Member } from '@/domains/member/schema';
-import {
-  DB_SelectLeaguePerformance,
-  DB_SelectTournamentPerformance,
-} from '@/domains/performance/schema';
+import { DB_SelectLeaguePerformance, DB_SelectTournamentPerformance } from '@/domains/performance/schema';
 import { DB_SelectTournament } from '@/domains/tournament/schema';
 import { SERVICES_PERFORMANCE_V2 } from '@/domains/performance/services';
 import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
@@ -40,8 +37,7 @@ const getGeneralTournamentPerformanceV2 = async (memberId: string) => {
   await SERVICES_PERFORMANCE_V2.tournament.updateGeneralPerformance(memberId);
 
   // Then fetch the updated data
-  const tournamentPerformance =
-    await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
+  const tournamentPerformance = await SERVICES_PERFORMANCE_V2.tournament.getMemberBestAndWorstPerformance(memberId);
 
   return {
     tournaments: tournamentPerformance,
@@ -63,10 +59,7 @@ const getBestAndWorstPerformance = (
 };
 
 const isMemberAdmin = async (memberId: string): Promise<boolean> => {
-  const [member] = await db
-    .select({ role: T_Member.role })
-    .from(T_Member)
-    .where(eq(T_Member.id, memberId));
+  const [member] = await db.select({ role: T_Member.role }).from(T_Member).where(eq(T_Member.id, memberId));
 
   return member?.role === 'admin';
 };

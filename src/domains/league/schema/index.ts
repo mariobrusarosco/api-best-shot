@@ -1,11 +1,4 @@
-import {
-  pgTable,
-  primaryKey,
-  text,
-  timestamp,
-  uniqueIndex,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_League = pgTable('league', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -50,10 +43,7 @@ export const T_LeagueTournament = pgTable(
   table => {
     return {
       pk: primaryKey({ columns: [table.leagueId, table.tournamentId] }),
-      uniqueTournament: uniqueIndex('unique_tournament').on(
-        table.leagueId,
-        table.tournamentId
-      ),
+      uniqueTournament: uniqueIndex('unique_tournament').on(table.leagueId, table.tournamentId),
     };
   }
 );

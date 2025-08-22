@@ -11,9 +11,7 @@ dayjs.extend(isSameOrAfter);
 
 export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const hasNullGuesses = guess.homeScore === null || guess.awayScore === null;
-  const hasLostTimewindowToGuess = dayjs()
-    .utc()
-    .isSameOrAfter(dayjs.utc(match.date).toDate());
+  const hasLostTimewindowToGuess = dayjs().utc().isSameOrAfter(dayjs.utc(match.date).toDate());
 
   const guessPaused = match.status === 'not-defined';
   const guessExpired = hasNullGuesses && hasLostTimewindowToGuess;
@@ -21,12 +19,9 @@ export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) =
   const waitingForGame = match.status === 'open' && !hasNullGuesses;
 
   if (guessPaused) return generatePausedGuess(guess, match, { hasLostTimewindowToGuess });
-  if (guessExpired)
-    return generateExpiredGuess(guess, match, { hasLostTimewindowToGuess });
-  if (notStartedGuess)
-    return generateNotStartedGuess(guess, match, { hasLostTimewindowToGuess });
-  if (waitingForGame)
-    return generateWaitingForGameGuess(guess, match, { hasLostTimewindowToGuess });
+  if (guessExpired) return generateExpiredGuess(guess, match, { hasLostTimewindowToGuess });
+  if (notStartedGuess) return generateNotStartedGuess(guess, match, { hasLostTimewindowToGuess });
+  if (waitingForGame) return generateWaitingForGameGuess(guess, match, { hasLostTimewindowToGuess });
 
   return generateFinalizedGuess(guess, match, { hasLostTimewindowToGuess });
 };
@@ -169,10 +164,8 @@ const generateFinalizedGuess = (
   const POINTS_FOR_MISS = 0;
   const CORRECT_GUESS = GUESS_STATUSES.CORRECT;
   const INCORRECT_GUESS = GUESS_STATUSES.INCORRECT;
-  const hasGuessedHome =
-    toNumberOrNull(guess.homeScore) === toNumberOrNull(match.homeScore);
-  const hasGuessedAway =
-    toNumberOrNull(guess.awayScore) === toNumberOrNull(match.awayScore);
+  const hasGuessedHome = toNumberOrNull(guess.homeScore) === toNumberOrNull(match.homeScore);
+  const hasGuessedAway = toNumberOrNull(guess.awayScore) === toNumberOrNull(match.awayScore);
   const matchOutcome = getMatchOutcome(guess, match);
 
   const home = {
@@ -221,18 +214,13 @@ const getMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
 
   console.log(
     { homeGuess, homeMatch, awayGuess, awayMatch, matchOutcome, guessPrediction },
-    guessPrediction.label === matchOutcome.label
-      ? GUESS_STATUSES.CORRECT
-      : GUESS_STATUSES.INCORRECT
+    guessPrediction.label === matchOutcome.label ? GUESS_STATUSES.CORRECT : GUESS_STATUSES.INCORRECT
   );
 
   return {
     label: matchOutcome.label,
     points: guessPrediction.label === matchOutcome.label ? POINTS_FOR_MATCH_OUTCOME : 0,
-    status:
-      guessPrediction.label === matchOutcome.label
-        ? GUESS_STATUSES.CORRECT
-        : GUESS_STATUSES.INCORRECT,
+    status: guessPrediction.label === matchOutcome.label ? GUESS_STATUSES.CORRECT : GUESS_STATUSES.INCORRECT,
   };
 };
 

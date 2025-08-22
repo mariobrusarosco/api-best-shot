@@ -40,9 +40,7 @@ const response2 = await ollamaClient.generateResponse('Hello, world!');
 // Configuration-driven provider selection
 const provider = process.env.AI_PROVIDER as 'openai' | 'ollama';
 const config =
-  provider === 'openai'
-    ? { apiKey: process.env.OPENAI_API_KEY, model: 'gpt-4o-mini' }
-    : { model: 'llama3.2' };
+  provider === 'openai' ? { apiKey: process.env.OPENAI_API_KEY, model: 'gpt-4o-mini' } : { model: 'llama3.2' };
 
 const client = new AIClient(provider, config);
 

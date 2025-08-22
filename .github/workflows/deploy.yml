@@ -1,0 +1,312 @@
+name: CI/CD - Deploy Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  
+  # Manual deployment trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - demo
+
+env:
+  NODE_VERSION: '22'
+  YARN_VERSION: '3.8.7'
+  REGION: us-east1
+
+jobs:
+  # Detect what changed to optimize the pipeline
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      dependencies-changed: ${{ steps.changes.outputs.dependencies }}
+      migrations-changed: ${{ steps.changes.outputs.migrations }}
+      source-changed: ${{ steps.changes.outputs.source }}
+      should-deploy: ${{ steps.deploy-check.outputs.should-deploy }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      
+      - name: Detect File Changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            dependencies:
+              - 'package.json'
+              - 'yarn.lock'
+              - '.yarnrc.yml'
+            migrations:
+              - 'supabase/migrations/**'
+            source:
+              - 'src/**'
+              - 'tsconfig.json'
+              - 'Dockerfile'
+      
+      - name: Check if should deploy
+        id: deploy-check
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+            echo "🚀 Will deploy (push to main or manual trigger)"
+          else
+            echo "should-deploy=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Skipping deployment (PR or other branch)"
+          fi
+
+  # Setup dependencies once and share across all jobs
+  setup:
+    name: Setup Dependencies
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack prepare yarn@${{ env.YARN_VERSION }} --activate
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+      
+      - name: Install Dependencies
+        run: yarn install --immutable
+      
+      - name: Upload Dependencies
+        uses: actions/upload-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules/
+          retention-days: 1
+
+  # Run all quality checks in parallel
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    needs: [setup, detect-changes]
+    
+    strategy:
+      matrix:
+        check: [lint, format, compile, test]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Download Dependencies
+        uses: actions/download-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules/
+      
+      - name: Run ${{ matrix.check }}
+        run: |
+          case "${{ matrix.check }}" in
+            lint)
+              yarn lint
+              ;;
+            format)
+              yarn format --check
+              ;;
+            compile)
+              yarn compile
+              ;;
+            test)
+              yarn test
+              ;;
+          esac
+
+  # Run migrations if needed (parallel with quality checks)
+  migrate:
+    name: Database Migrations
+    runs-on: ubuntu-latest
+    needs: [setup, detect-changes]
+    if: needs.detect-changes.outputs.should-deploy == 'true' && needs.detect-changes.outputs.migrations-changed == 'true'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack prepare yarn@${{ env.YARN_VERSION }} --activate
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+      
+      - name: Download Dependencies
+        uses: actions/download-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules/
+      
+      - name: Set Environment Variables
+        id: env
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'staging' }}"
+          if [[ "$ENVIRONMENT" == "demo" ]]; then
+            echo "db_connection=${{ secrets.DB_STRING_CONNECTION_DEMO }}" >> $GITHUB_OUTPUT
+          elif [[ "$ENVIRONMENT" == "staging" ]]; then
+            echo "db_connection=${{ secrets.DB_STRING_CONNECTION_STAGING }}" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Invalid environment: $ENVIRONMENT"
+            exit 1
+          fi
+      
+      - name: Run Database Migrations
+        run: yarn db:migrate
+        env:
+          DB_STRING_CONNECTION: ${{ steps.env.outputs.db_connection }}
+
+  # Deploy to Google Cloud Run (only after quality checks pass)
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    needs: [detect-changes, quality-checks, migrate]
+    if: always() && needs.detect-changes.outputs.should-deploy == 'true' && needs.quality-checks.result == 'success' && (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
+    outputs:
+      environment: ${{ steps.deploy-config.outputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set Environment Configuration
+        id: deploy-config
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'staging' }}"
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          
+          if [[ "$ENVIRONMENT" == "demo" ]]; then
+            echo "project_id=api-best-shot-demo" >> $GITHUB_OUTPUT
+            echo "service_name=api-best-shot-demo" >> $GITHUB_OUTPUT
+            echo "gcp_sa_key=${{ secrets.GCP_SA_KEY_DEMO }}" >> $GITHUB_OUTPUT
+            echo "api_domain=api-best-shot-demo.mariobrusarosco.com" >> $GITHUB_OUTPUT
+            echo "access_control_origin=https://best-shot-demo.mariobrusarosco.com" >> $GITHUB_OUTPUT
+            echo "db_secret=db-connection-demo:latest" >> $GITHUB_OUTPUT
+          elif [[ "$ENVIRONMENT" == "staging" ]]; then
+            echo "project_id=api-best-shot-staging" >> $GITHUB_OUTPUT
+            echo "service_name=api-best-shot-staging" >> $GITHUB_OUTPUT
+            echo "gcp_sa_key=${{ secrets.GCP_SA_KEY_STAGING }}" >> $GITHUB_OUTPUT
+            echo "api_domain=api-best-shot-staging-415034926128.us-east1.run.app" >> $GITHUB_OUTPUT
+            echo "access_control_origin=https://best-shot-staging.mariobrusarosco.com" >> $GITHUB_OUTPUT
+            echo "db_secret=db-connection-staging:latest" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Invalid environment: $ENVIRONMENT"
+            exit 1
+          fi
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ steps.deploy-config.outputs.gcp_sa_key }}
+      
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ steps.deploy-config.outputs.service_name }}
+          source: .
+          region: ${{ env.REGION }}
+          project: ${{ steps.deploy-config.outputs.project_id }}
+          flags: |
+            --cpu=2
+            --memory=2Gi
+            --min-instances=0
+            --max-instances=10
+            --port=8080
+            --allow-unauthenticated
+            --tag=latest
+          env_vars: |
+            NODE_ENV=${{ steps.deploy-config.outputs.environment }}
+            API_DOMAIN=${{ steps.deploy-config.outputs.api_domain }}
+            API_VERSION=/v2
+            AWS_REGION=us-east-1
+            MEMBER_PUBLIC_ID_COOKIE=best-shot-auth
+            ACCESS_CONTROL_ALLOW_ORIGIN=${{ steps.deploy-config.outputs.access_control_origin }}
+            AWS_ACCOUNT_ID=905418297381
+            AWS_BUCKET_NAME=assets.mariobrusarosco.com
+            AWS_CLOUDFRONT_URL=dk57aekjop3j1.cloudfront.net
+          secrets: |
+            JWT_SECRET=jwt-secret:latest
+            DB_STRING_CONNECTION=${{ steps.deploy-config.outputs.db_secret }}
+            AWS_ACCESS_KEY_ID=aws-access-key:latest
+            AWS_SECRET_ACCESS_KEY=aws-secret-key:latest
+            SENTRY_DSN=sentry-dsn:latest
+            INTERNAL_SERVICE_TOKEN=internal-service-token:latest
+
+  # Summary job for better visibility
+  pipeline-summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [detect-changes, quality-checks, migrate, deploy]
+    if: always()
+    
+    steps:
+      - name: Pipeline Summary
+        run: |
+          echo "## 🚀 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Changes detected
+          echo "### 📋 Changes Detected" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dependencies**: ${{ needs.detect-changes.outputs.dependencies-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Migrations**: ${{ needs.detect-changes.outputs.migrations-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Source Code**: ${{ needs.detect-changes.outputs.source-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Quality checks
+          if [[ "${{ needs.quality-checks.result }}" == "success" ]]; then
+            echo "✅ **Quality Checks**: All passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Quality Checks**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Migrations
+          if [[ "${{ needs.migrate.result }}" == "success" ]]; then
+            echo "✅ **Migrations**: Applied successfully" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.migrate.result }}" == "skipped" ]]; then
+            echo "⏭️ **Migrations**: No changes detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Migrations**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Deployment
+          if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+            echo "✅ **Deployment**: Successful" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.deploy.result }}" == "skipped" ]]; then
+            echo "⏭️ **Deployment**: Skipped (PR or quality checks failed)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Deployment**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: ${{ needs.deploy.outputs.environment || 'staging' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY

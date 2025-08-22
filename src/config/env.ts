@@ -9,20 +9,6 @@ dotenv.config({ path: envPath });
 const envSchema = z.object({
   // Database - optional for Cloud Run testing
   DB_STRING_CONNECTION: z.string().optional(),
-  DB_USER: z.string().optional(),
-  DB_PASSWORD: z.string().optional(),
-  DB_NAME: z.string().optional(),
-  DB_HOST: z.string().optional(),
-  DB_PORT: z
-    .string()
-    .transform(val => {
-      if (!val) return 5432;
-      const port = parseInt(val, 10);
-      if (isNaN(port)) throw new Error('Port must be a number');
-      return port;
-    })
-    .optional(),
-
   // App
   NODE_ENV: z.enum(['development', 'demo', 'staging', 'production']).default('development'),
   PORT: z

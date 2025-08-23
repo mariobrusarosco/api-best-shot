@@ -93,8 +93,10 @@ jobs:
       - name: Upload Dependencies
         uses: actions/upload-artifact@v4
         with:
-          name: node_modules
-          path: node_modules/
+          name: dependencies
+          path: |
+            node_modules/
+            .yarn/
           retention-days: 1
 
   # Run all quality checks in parallel
@@ -125,8 +127,8 @@ jobs:
       - name: Download Dependencies
         uses: actions/download-artifact@v4
         with:
-          name: node_modules
-          path: node_modules/
+          name: dependencies
+          path: .
 
       - name: Run ${{ matrix.check }}
         run: |
@@ -169,8 +171,8 @@ jobs:
       - name: Download Dependencies
         uses: actions/download-artifact@v4
         with:
-          name: node_modules
-          path: node_modules/
+          name: dependencies
+          path: .
 
       - name: Set Environment Variables
         id: env

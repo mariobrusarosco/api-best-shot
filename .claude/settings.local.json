@@ -96,7 +96,8 @@
       "Bash(docker compose:*)",
       "Bash(sudo docker compose:*)",
       "WebSearch",
-      "WebFetch(domain:prettier.io)"
+      "WebFetch(domain:prettier.io)",
+      "WebFetch(domain:productionresultssa6.blob.core.windows.net)"
     ],
     "deny": []
   }

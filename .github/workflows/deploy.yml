@@ -77,16 +77,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       
+<<<<<<< HEAD
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       
+=======
+>>>>>>> fd7dd78246c21bbb3fcbd97242f2467b0684eb55
       - name: Enable Corepack
         run: |
           corepack enable
           corepack prepare yarn@${{ env.YARN_VERSION }} --activate
       
+<<<<<<< HEAD
+=======
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+      
+>>>>>>> fd7dd78246c21bbb3fcbd97242f2467b0684eb55
       - name: Install Dependencies
         run: yarn install --immutable
       
@@ -146,16 +158,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       
+<<<<<<< HEAD
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       
+=======
+>>>>>>> fd7dd78246c21bbb3fcbd97242f2467b0684eb55
       - name: Enable Corepack
         run: |
           corepack enable
           corepack prepare yarn@${{ env.YARN_VERSION }} --activate
       
+<<<<<<< HEAD
+=======
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+      
+>>>>>>> fd7dd78246c21bbb3fcbd97242f2467b0684eb55
       - name: Download Dependencies
         uses: actions/download-artifact@v4
         with:

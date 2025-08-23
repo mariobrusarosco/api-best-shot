@@ -20,7 +20,6 @@ on:
 
 env:
   NODE_VERSION: '22'
-  YARN_VERSION: '3.8.7'
   REGION: us-east1
 
 jobs:
@@ -81,22 +80,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@${{ env.YARN_VERSION }} --activate
+          cache: 'yarn'
 
       - name: Install Dependencies
-        run: yarn install --immutable
+        run: yarn install --frozen-lockfile
 
       - name: Upload Dependencies
         uses: actions/upload-artifact@v4
         with:
-          name: dependencies
-          path: |
-            node_modules/
-            .yarn/
+          name: node_modules
+          path: node_modules/
           retention-days: 1
 
   # Run all quality checks in parallel
@@ -114,21 +107,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@${{ env.YARN_VERSION }} --activate
-
       - name: Download Dependencies
         uses: actions/download-artifact@v4
         with:
-          name: dependencies
-          path: .
+          name: node_modules
+          path: node_modules/
 
       - name: Run ${{ matrix.check }}
         run: |
@@ -158,21 +141,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@${{ env.YARN_VERSION }} --activate
-
       - name: Download Dependencies
         uses: actions/download-artifact@v4
         with:
-          name: dependencies
-          path: .
+          name: node_modules
+          path: node_modules/
 
       - name: Set Environment Variables
         id: env

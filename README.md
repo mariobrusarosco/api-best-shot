@@ -604,3 +604,5 @@ If you encounter issues with database connection when using `yarn db:studio`, ma
 1. The Postgres Docker container is running (`docker compose ps`)
 2. Your `.env` file contains the correct DB_STRING_CONNECTION_LOCAL value
 3. The database port isn't blocked by another application
+
+

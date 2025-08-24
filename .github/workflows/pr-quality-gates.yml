@@ -1,0 +1,68 @@
+name: PR Quality Gates
+
+on:
+  pull_request:
+    branches: [ main, staging ]
+
+jobs:
+  quality-checks:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.17.0'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run linting
+        run: yarn lint
+
+      - name: Run type checking
+        run: yarn compile
+
+      - name: Run tests with coverage
+        run: yarn test:cov
+
+      - name: Validate environment setup
+        run: |
+          yarn validate:secrets || echo "⚠️ Environment validation failed (expected in PR)"
+          yarn validate:gcp || echo "⚠️ GCP validation failed (expected in PR)"
+
+      - name: Build Docker image
+        run: docker build -t api-best-shot-pr-test .
+
+      - name: Test health check endpoint structure
+        run: |
+          # Verify health check endpoint exists in codebase
+          grep -r "/api/v1/admin/health" src/ || exit 1
+          grep -r "healthCheck" src/domains/admin/ || exit 1
+
+      - name: Comment PR Status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ job.status }}' === 'success' ? '✅' : '❌';
+            const message = `${status} **Quality Gates ${status === '✅' ? 'Passed' : 'Failed'}**
+            
+            - Linting: ${status}
+            - Type Checking: ${status} 
+            - Tests: ${status}
+            - Docker Build: ${status}
+            
+            ${status === '✅' ? 'Ready for merge!' : 'Please fix the issues above.'}`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });

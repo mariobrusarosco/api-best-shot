@@ -1,4 +1,4 @@
-name: Deploy AWS Lambda Functions
+name: Data Provider Lambdas
 
 on:
   push:
@@ -16,8 +16,8 @@ on:
         default: 'demo'
         type: choice
         options:
-        - demo
-        - production
+          - demo
+          - production
 
 env:
   AWS_REGION: us-east-1
@@ -59,7 +59,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.layers-changed == 'true' || github.event_name == 'workflow_dispatch'
     environment: ${{ github.event.inputs.environment || 'demo' }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -74,7 +74,7 @@ jobs:
       - name: Deploy best-shot-main layer
         run: |
           cd src/lambdas/layers/best-shot-main
-          
+
           # Update layer
           LAYER_VERSION=$(aws lambda publish-layer-version \
             --layer-name best-shot-main \
@@ -83,14 +83,14 @@ jobs:
             --compatible-runtimes nodejs18.x nodejs20.x \
             --region $AWS_REGION \
             --query 'Version' --output text)
-          
+
           echo "MAIN_LAYER_VERSION=$LAYER_VERSION" >> $GITHUB_ENV
           echo "✅ Published best-shot-main layer version: $LAYER_VERSION"
 
       - name: Deploy sentry layer
         run: |
           cd src/lambdas/layers/sentry
-          
+
           # Update layer
           LAYER_VERSION=$(aws lambda publish-layer-version \
             --layer-name sentry \
@@ -99,7 +99,7 @@ jobs:
             --compatible-runtimes nodejs18.x nodejs20.x \
             --region $AWS_REGION \
             --query 'Version' --output text)
-          
+
           echo "SENTRY_LAYER_VERSION=$LAYER_VERSION" >> $GITHUB_ENV
           echo "✅ Published sentry layer version: $LAYER_VERSION"
 
@@ -109,16 +109,16 @@ jobs:
     needs: [detect-changes, deploy-layers]
     if: always() && (needs.detect-changes.outputs.caller-scores-and-standings == 'true' || needs.detect-changes.outputs.caller-knockouts-update == 'true' || needs.detect-changes.outputs.caller-daily-routine == 'true' || needs.deploy-layers.result == 'success' || github.event_name == 'workflow_dispatch')
     environment: ${{ github.event.inputs.environment || 'demo' }}
-    
+
     strategy:
       matrix:
         function:
           - name: caller-scores-and-standings
-            description: "Updates match scores and tournament standings"
-          - name: caller-knockouts-update  
-            description: "Updates knockout tournament brackets"
+            description: 'Updates match scores and tournament standings'
+          - name: caller-knockouts-update
+            description: 'Updates knockout tournament brackets'
           - name: caller-daily-routine
-            description: "Creates daily schedules for match automation"
+            description: 'Creates daily schedules for match automation'
 
     steps:
       - name: Checkout code
@@ -135,7 +135,7 @@ jobs:
         id: check-function
         run: |
           FUNCTION_NAME="${{ matrix.function.name }}"
-          
+
           # Check if this specific function changed
           if [[ "$FUNCTION_NAME" == "caller-scores-and-standings" ]]; then
             CHANGED="${{ needs.detect-changes.outputs.caller-scores-and-standings }}"
@@ -146,11 +146,11 @@ jobs:
           else
             CHANGED="false"
           fi
-          
+
           # Also update if layers changed or manual dispatch
           LAYERS_CHANGED="${{ needs.detect-changes.outputs.layers-changed }}"
           MANUAL_DISPATCH="${{ github.event_name == 'workflow_dispatch' }}"
-          
+
           if [[ "$CHANGED" == "true" || "$LAYERS_CHANGED" == "true" || "$MANUAL_DISPATCH" == "true" ]]; then
             echo "should-deploy=true" >> $GITHUB_OUTPUT
             echo "🚀 Will deploy $FUNCTION_NAME (function changed: $CHANGED, layers changed: $LAYERS_CHANGED, manual: $MANUAL_DISPATCH)"
@@ -163,10 +163,10 @@ jobs:
         if: steps.check-function.outputs.should-deploy == 'true'
         run: |
           cd src/lambdas
-          
+
           # Create clean zip file
           zip -r ${{ matrix.function.name }}.zip ${{ matrix.function.name }}.mjs
-          
+
           echo "📦 Created deployment package for ${{ matrix.function.name }}"
           ls -la ${{ matrix.function.name }}.zip
 
@@ -174,12 +174,12 @@ jobs:
         if: steps.check-function.outputs.should-deploy == 'true'
         run: |
           cd src/lambdas
-          
+
           aws lambda update-function-code \
             --function-name ${{ matrix.function.name }} \
             --zip-file fileb://${{ matrix.function.name }}.zip \
             --region $AWS_REGION
-          
+
           echo "✅ Updated ${{ matrix.function.name }} code"
 
       - name: Update Lambda function layers
@@ -190,18 +190,18 @@ jobs:
             --layer-name best-shot-main \
             --query 'LayerVersions[0].LayerVersionArn' \
             --output text --region $AWS_REGION)
-          
+
           SENTRY_LAYER_ARN=$(aws lambda list-layer-versions \
             --layer-name sentry \
             --query 'LayerVersions[0].LayerVersionArn' \
             --output text --region $AWS_REGION)
-          
+
           # Update function configuration with new layers
           aws lambda update-function-configuration \
             --function-name ${{ matrix.function.name }} \
             --layers "$MAIN_LAYER_ARN" "$SENTRY_LAYER_ARN" \
             --region $AWS_REGION
-          
+
           echo "✅ Updated ${{ matrix.function.name }} layers"
           echo "   Main layer: $MAIN_LAYER_ARN"
           echo "   Sentry layer: $SENTRY_LAYER_ARN"
@@ -210,11 +210,11 @@ jobs:
         if: steps.check-function.outputs.should-deploy == 'true'
         run: |
           echo "⏳ Waiting for ${{ matrix.function.name }} to be active..."
-          
+
           aws lambda wait function-updated \
             --function-name ${{ matrix.function.name }} \
             --region $AWS_REGION
-          
+
           echo "✅ ${{ matrix.function.name }} is now active"
 
       - name: Test Lambda function
@@ -226,7 +226,7 @@ jobs:
             --region $AWS_REGION \
             --query '{FunctionName:FunctionName,LastModified:LastModified,State:State,CodeSha256:CodeSha256}' \
             --output table
-          
+
           echo "🧪 Function configuration verified"
 
   deployment-summary:
@@ -234,13 +234,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: [detect-changes, deploy-layers, deploy-functions]
     if: always()
-    
+
     steps:
       - name: Deployment Summary
         run: |
           echo "## 🚀 Lambda Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [[ "${{ needs.deploy-layers.result }}" == "success" ]]; then
             echo "✅ **Layers**: Updated successfully" >> $GITHUB_STEP_SUMMARY
           elif [[ "${{ needs.deploy-layers.result }}" == "skipped" ]]; then
@@ -248,7 +248,7 @@ jobs:
           else
             echo "❌ **Layers**: Deployment failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ needs.deploy-functions.result }}" == "success" ]]; then
             echo "✅ **Functions**: Updated successfully" >> $GITHUB_STEP_SUMMARY
           elif [[ "${{ needs.deploy-functions.result }}" == "skipped" ]]; then
@@ -256,7 +256,7 @@ jobs:
           else
             echo "❌ **Functions**: Deployment failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: ${{ github.event.inputs.environment || 'demo' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

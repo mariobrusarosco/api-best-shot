@@ -29,6 +29,19 @@ yarn test                  # Run all tests
 yarn test:watch           # Run tests in watch mode
 yarn test:cov             # Run tests with coverage
 
+# Environment Management
+yarn dev-demo             # Run API with demo environment (.env.demo)
+yarn dev-prod             # Run API with production environment (.env.production)
+yarn serve-demo           # Serve built demo version
+yarn serve-prod           # Serve built production version
+
+# Development Utilities
+yarn dev:clean            # Reset development environment (stop containers, clean deps)
+yarn dev:stop             # Stop Docker containers
+yarn dev:status           # Check Docker containers and Volta versions
+yarn dev:logs             # View API development logs
+yarn dev:logs:clear       # Clear API development logs
+
 # Code quality
 yarn lint                  # Run ESLint
 yarn lint:fix             # Fix linting issues
@@ -150,10 +163,29 @@ AWS Scheduler integration for automated tasks:
 
 ## External Services
 
-- **AWS**: S3 (file storage), Scheduler (cron jobs)
+- **AWS**: S3 (file storage), Scheduler (cron jobs), Lambda (serverless functions)
 - **Sentry**: Error tracking and performance monitoring
 - **OpenAI**: AI predictions service
 - **SofaScore**: Football data provider
+- **PostgreSQL**: Primary database (Docker container in development)
+
+## CI/CD & Deployment
+
+The project has GitHub Actions workflows for automated deployment:
+
+- **Lambda Functions**: Automated deployment of AWS Lambda functions (`data-provider-lambdas.yml`)
+  - Supports demo and production environments
+  - Deploys layers and functions based on file changes
+  - Includes comprehensive testing and validation
+
+### Lambda Functions
+- `caller-scores-and-standings`: Updates match scores and tournament standings
+- `caller-knockouts-update`: Updates knockout tournament brackets  
+- `caller-daily-routine`: Creates daily schedules for match automation
+
+### Deployment Scripts
+- Lambda deployment scripts in `scripts/` directory
+- Environment-specific validation scripts
 
 ## Deployment
 
@@ -174,3 +206,34 @@ Each environment has specific build commands and uses environment-specific `.env
 - Maintain API versioning for backward compatibility
 - File naming: Use kebab-case
 - Import types with `type` keyword: `import type { ... }`
+- Never run Git commands directly (per project cursor rules)
+- Log fixes in `docs/fixing-log` when requested with "LOG THE FIX"
+
+## Development Guidelines
+
+### Project Organization
+- Store ADRs in `docs/decisions`
+- Developer guides in `docs/guides`  
+- Planning phases in `docs/plan`
+- Use checklists to track phase completion
+
+### Single Test Execution
+```bash
+# Run specific test file
+yarn test path/to/test-file.test.ts
+
+# Run tests in watch mode for specific pattern
+yarn test:watch --testNamePattern="specific test name"
+```
+
+### Database Operations
+```bash
+# Connect to database directly
+yarn db:connect
+
+# Check database logs
+docker compose logs -f postgres
+
+# Reset database completely
+yarn db:reset
+```

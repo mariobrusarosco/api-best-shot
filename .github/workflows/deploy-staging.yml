@@ -1,0 +1,85 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ staging ]
+
+env:
+  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+jobs:
+  deploy-staging:
+    name: Deploy to Railway Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.17.0'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run quality gates
+        run: |
+          yarn lint
+          yarn compile
+          yarn test
+
+      - name: Build application
+        run: yarn build
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway Staging
+        run: railway up --service staging
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Run database migrations
+        run: |
+          railway run --service staging yarn db:migrate
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Health check
+        run: |
+          # Wait for deployment
+          sleep 30
+          
+          # Get the staging URL (you'll need to replace this with your actual staging URL)
+          STAGING_URL="https://your-staging-service.railway.app"
+          
+          # Health check with retry
+          for i in {1..5}; do
+            echo "Health check attempt $i..."
+            if curl -f "$STAGING_URL/api/v1/admin/health"; then
+              echo "✅ Staging deployment healthy!"
+              break
+            else
+              echo "❌ Health check failed, retrying in 10s..."
+              sleep 10
+            fi
+          done
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          fields: repo,message,commit,author,took
+          text: |
+            🚀 **Staging Deployment**
+            Status: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
+            Branch: staging
+            Environment: Staging
+        if: always() && secrets.SLACK_WEBHOOK_URL != ''

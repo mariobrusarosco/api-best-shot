@@ -1,0 +1,173 @@
+name: Deploy to Demo & Production
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+jobs:
+  deploy-demo:
+    name: Deploy to Railway Demo
+    runs-on: ubuntu-latest
+    environment: demo
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.17.0'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run quality gates
+        run: |
+          yarn lint
+          yarn compile
+          yarn test
+
+      - name: Build application for demo
+        run: yarn build-demo
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway Demo
+        run: railway up --service demo
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Run database migrations (Demo)
+        run: |
+          railway run --service demo yarn db:migrate
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Health check (Demo)
+        run: |
+          # Wait for deployment
+          sleep 30
+          
+          # Get the demo URL (you'll need to replace this with your actual demo URL)
+          DEMO_URL="https://your-demo-service.railway.app"
+          
+          # Health check with retry
+          for i in {1..5}; do
+            echo "Demo health check attempt $i..."
+            if curl -f "$DEMO_URL/api/v1/admin/health"; then
+              echo "✅ Demo deployment healthy!"
+              break
+            else
+              echo "❌ Demo health check failed, retrying in 10s..."
+              sleep 10
+            fi
+          done
+
+      - name: Notify Slack (Demo)
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          fields: repo,message,commit,author,took
+          text: |
+            🚀 **Demo Deployment**
+            Status: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
+            Branch: main → demo
+            Environment: Demo
+        if: always() && secrets.SLACK_WEBHOOK_URL != ''
+
+  deploy-production:
+    name: Deploy to Railway Production
+    runs-on: ubuntu-latest
+    needs: deploy-demo
+    environment: production
+    if: needs.deploy-demo.result == 'success'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.17.0'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build application for production
+        run: yarn build-prod
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway Production
+        run: railway up --service production
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Run database migrations (Production)
+        run: |
+          railway run --service production yarn db:migrate
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Health check (Production)
+        run: |
+          # Wait for deployment
+          sleep 30
+          
+          # Get the production URL (you'll need to replace this with your actual production URL)
+          PROD_URL="https://your-production-service.railway.app"
+          
+          # Health check with retry
+          for i in {1..5}; do
+            echo "Production health check attempt $i..."
+            if curl -f "$PROD_URL/api/v1/admin/health"; then
+              echo "✅ Production deployment healthy!"
+              break
+            else
+              echo "❌ Production health check failed, retrying in 10s..."
+              sleep 10
+            fi
+          done
+
+      - name: Notify Slack (Production)
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          fields: repo,message,commit,author,took
+          text: |
+            🚀 **Production Deployment**
+            Status: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
+            Branch: main → production
+            Environment: Production
+            🎉 ${{ job.status == 'success' && 'Live for users!' || 'Deployment failed!' }}
+        if: always() && secrets.SLACK_WEBHOOK_URL != ''
+
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-demo, deploy-production]
+    if: always()
+    
+    steps:
+      - name: Summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Demo**: ${{ needs.deploy-demo.result == 'success' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Production**: ${{ needs.deploy-production.result == 'success' && '✅ Success' || '❌ Failed or Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: main" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

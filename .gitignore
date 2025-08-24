@@ -58,6 +58,8 @@ crash.log
 
 # Package Manager
 .yarn/
+.pnp.cjs
+.pnp.loader.mjs
 
 
 tournament-scraping-reports/

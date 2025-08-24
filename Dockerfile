@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for Cloud Run with optimized caching
+# Multi-stage Dockerfile for Railway with optimized caching
 # Dependencies stage: Install and cache dependencies separately
 # Builder stage: Compile TypeScript using cached dependencies  
 # Production stage: Lean runtime with only production dependencies
@@ -10,16 +10,14 @@ FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS dependencies
 
 WORKDIR /app
 
-# Enable Yarn 4
-RUN corepack enable && corepack prepare yarn@4.9.2 --activate
-
 # Copy ONLY package management files for better caching
 # This layer will be cached unless package.json/yarn.lock changes
-COPY package.json yarn.lock .yarnrc.yml ./
+COPY package.json yarn.lock ./
 
 # Install ALL dependencies (including dev dependencies for building)
 # This expensive step gets cached when dependencies don't change
-RUN yarn install --immutable --frozen-lockfile
+# Use the system yarn (which works with any lockfile format)
+RUN yarn install --ignore-engines
 
 # ================================
 # Builder Stage (Uses Cached Dependencies)
@@ -39,15 +37,13 @@ FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS prod-deps
 
 WORKDIR /app
 
-# Enable Yarn 4
-RUN corepack enable && corepack prepare yarn@4.9.2 --activate
-
 # Copy package management files
-COPY package.json yarn.lock .yarnrc.yml ./
+COPY package.json yarn.lock ./
 
 # Install ONLY production dependencies for smaller final image
-RUN NODE_ENV=production yarn install --immutable --frozen-lockfile && \
-    yarn cache clean --all
+# Use the system yarn with ignore-engines to handle version differences
+RUN NODE_ENV=production yarn install --production --ignore-engines && \
+    yarn cache clean
 
 # ================================
 # Production Runtime Stage
@@ -73,17 +69,17 @@ RUN mkdir -p /home/pwuser/Downloads && \
 # Switch to non-root user for security
 USER pwuser
 
-# Expose port (Cloud Run expects 8080)
+# Expose port (Railway will use PORT environment variable)
 EXPOSE 8080
 
-# Playwright optimizations for Cloud Run environment
+# Playwright optimizations for Railway environment
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
 
-# Health check for container orchestration
+# Health check for Railway deployment monitoring
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+    CMD node -e "require('http').get('http://localhost:8080/api/v1/admin/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
 # Start the application
-# NODE_ENV will be provided by Cloud Run environment variables
+# NODE_ENV will be provided by Railway environment variables
 CMD ["node", "dist/src/index.js"] 

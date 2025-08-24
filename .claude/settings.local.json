@@ -97,7 +97,10 @@
       "Bash(sudo docker compose:*)",
       "WebSearch",
       "WebFetch(domain:prettier.io)",
-      "WebFetch(domain:productionresultssa6.blob.core.windows.net)"
+      "WebFetch(domain:productionresultssa6.blob.core.windows.net)",
+      "Bash(npm install:*)",
+      "Bash(/usr/local/bin/yarn --version)",
+      "Bash(volta list:*)"
     ],
     "deny": []
   }

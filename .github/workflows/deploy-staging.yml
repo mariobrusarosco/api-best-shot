@@ -71,7 +71,7 @@ jobs:
           done
 
       - name: Notify Slack
-        if: always()
+        if: always() && secrets.SLACK_WEBHOOK_URL != ''
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
@@ -83,4 +83,3 @@ jobs:
             Status: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
             Branch: staging
             Environment: Staging
-        if: always() && secrets.SLACK_WEBHOOK_URL != ''

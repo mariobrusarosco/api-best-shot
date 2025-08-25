@@ -39,15 +39,16 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway Demo
-        run: railway up --service demo
+        run: |
+          railway link ${{ secrets.DEMO_PROJECT_ID }}
+          railway up
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Run database migrations (Demo)
-        run: |
-          railway run --service demo yarn db:migrate
+        run: yarn db:migrate
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          DB_STRING_CONNECTION: postgresql://postgres.pppzfkndwrtekdyfknym:${{ secrets.DEMO_DB_PASSWORD }}@aws-0-us-east-1.pooler.supabase.com:6543/postgres
 
       - name: Health check (Demo)
         run: |
@@ -110,15 +111,16 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway Production
-        run: railway up --service production
+        run: |
+          railway link ${{ secrets.PROD_PROJECT_ID }}
+          railway up
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Run database migrations (Production)
-        run: |
-          railway run --service production yarn db:migrate
+        run: yarn db:migrate
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          DB_STRING_CONNECTION: postgresql://postgres.pppzfkndwrtekdyfknym:${{ secrets.PROD_DB_PASSWORD }}@aws-0-us-east-1.pooler.supabase.com:6543/postgres
 
       - name: Health check (Production)
         run: |

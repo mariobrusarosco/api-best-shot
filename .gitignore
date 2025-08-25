@@ -5,11 +5,7 @@ node_modules/
 
 # Environment
 .env
-.env.local
-.env.*.local
-.env.new-file-with-default-values
-.env.demo
-.demo.env
+.env.*
 
 # Build
 dist/

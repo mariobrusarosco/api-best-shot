@@ -2,6 +2,29 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## MANDATORY: Systematic Engineering Analysis
+
+**BEFORE making ANY changes or proposing solutions, Claude MUST:**
+
+1. **Full Context Analysis**: Read and understand ALL relevant files in their entirety
+2. **System Flow Understanding**: Map out how components interact and affect each other
+3. **Research First**: Look up official documentation and current best practices
+4. **Impact Assessment**: Analyze how proposed changes affect upstream and downstream systems
+5. **Multiple Approaches**: Present 2-3 different solution approaches with trade-offs
+6. **Evidence-Based**: Never guess - provide research and evidence for recommendations
+
+**NEVER:**
+- Jump to quick fixes without understanding the full system
+- Make isolated changes without considering broader impacts  
+- Propose solutions based on assumptions
+- Skip research and documentation review
+
+**For CI/CD, Docker, Deployment Issues:**
+- Analyze the complete pipeline: build → test → deploy → runtime
+- Check ALL related configuration files (Dockerfile, workflows, package.json, etc.)
+- Understand multi-stage build processes and dependencies
+- Research tool-specific best practices and breaking changes
+
 ## Project Overview
 
 Best Shot API is a TypeScript/Express.js backend service for a football application, using PostgreSQL with Drizzle ORM. The project follows a domain-driven design architecture with clear separation of concerns.

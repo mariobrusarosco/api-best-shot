@@ -6,10 +6,11 @@ This document lists all the GitHub secrets required for the CI/CD pipeline to wo
 
 ### Railway Configuration
 
-| Secret Name          | Description                                    | How to Get                                                       |
-| -------------------- | ---------------------------------------------- | ---------------------------------------------------------------- |
-| `RAILWAY_TOKEN`      | Railway API token for deployments              | Railway Dashboard → Account Settings → Tokens → Create New Token |
-| `RAILWAY_PROJECT_ID` | Railway project ID (used for all environments) | Railway Dashboard → Your Project → Settings → Project ID         |
+| Secret Name             | Description                          | How to Get                                                                       |
+| ----------------------- | ------------------------------------ | -------------------------------------------------------------------------------- |
+| `RAILWAY_TOKEN_DEMO`    | Railway project token for demo       | Railway Dashboard → Your Project → Settings → Tokens → Create Token (Demo)       |
+| `RAILWAY_TOKEN_STAGING` | Railway project token for staging    | Railway Dashboard → Your Project → Settings → Tokens → Create Token (Staging)    |
+| `RAILWAY_TOKEN_PROD`    | Railway project token for production | Railway Dashboard → Your Project → Settings → Tokens → Create Token (Production) |
 
 ### Database Configuration
 
@@ -48,8 +49,9 @@ This document lists all the GitHub secrets required for the CI/CD pipeline to wo
 
 Use this checklist to ensure all secrets are configured:
 
-- [x] RAILWAY_TOKEN
-- [x] RAILWAY_PROJECT_ID
+- [x] RAILWAY_TOKEN_DEMO
+- [x] RAILWAY_TOKEN_STAGING
+- [ ] RAILWAY_TOKEN_PROD
 - [x] DEMO_DB_PASSWORD
 - [x] STAGING_DB_PASSWORD
 - [ ] PROD_DB_PASSWORD
@@ -62,7 +64,7 @@ Use this checklist to ensure all secrets are configured:
 
 ## Notes
 
-- **Railway Project IDs**: Look like `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+- **Railway Project Tokens**: Start with long alphanumeric strings, created per environment
 - **Sentry Auth Tokens**: Start with `sntrys_` followed by a long string
 - **Slack Webhooks**: Look like `https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX`
 - **Database Passwords**: Usually long alphanumeric strings from Supabase

@@ -46,11 +46,9 @@ jobs:
         run: yarn dlx @railway/cli --version
 
       - name: Deploy to Railway Demo
-        run: |
-          yarn dlx @railway/cli link -p ${{ secrets.RAILWAY_PROJECT_ID }} -e demo
-          yarn dlx @railway/cli up
+        run: yarn dlx @railway/cli up
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEMO }}
 
       - name: Run database migrations (Demo)
         run: yarn db:migrate
@@ -125,11 +123,9 @@ jobs:
         run: yarn dlx @railway/cli --version
 
       - name: Deploy to Railway Production
-        run: |
-          yarn dlx @railway/cli link -p ${{ secrets.RAILWAY_PROJECT_ID }} -e production
-          yarn dlx @railway/cli up
+        run: yarn dlx @railway/cli up
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PROD }}
 
       - name: Run database migrations (Production)
         run: yarn db:migrate

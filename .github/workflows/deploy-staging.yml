@@ -46,11 +46,9 @@ jobs:
         run: yarn dlx @railway/cli --version
 
       - name: Deploy to Railway Staging
-        run: |
-          yarn dlx @railway/cli link -p ${{ secrets.RAILWAY_PROJECT_ID }} -e staging
-          yarn dlx @railway/cli up
+        run: yarn dlx @railway/cli up
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
 
       - name: Run database migrations on Supabase
         run: yarn db:migrate

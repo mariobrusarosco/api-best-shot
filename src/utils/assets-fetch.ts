@@ -1,7 +1,7 @@
 import { Profiling } from '@/services/profiling';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { fetchImageWithPuppeteer } from './puppeteer';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
+
 export type FetchAndStoreAssetPayload = {
   logoUrl?: string;
   logoPngBase64?: string;
@@ -45,9 +45,9 @@ export async function fetchAndStoreAssetFromApi(payload: FetchAndStoreAssetPaylo
         source: 'fetchAndStoreAssetFromApi',
       });
       try {
-        const puppeteerResult = await fetchImageWithPuppeteer(payload.logoUrl || '');
-        Body = puppeteerResult.buffer;
-        ContentType = puppeteerResult.contentType;
+        const response = await fetch(payload.logoUrl || '');
+        Body = Buffer.from(await response.arrayBuffer());
+        ContentType = response.headers.get('content-type') || 'image/png';
         const ext = mime.extension(ContentType);
         Key = `data-providers/${payload?.filename}.${ext || 'png'}`;
         Profiling.log({

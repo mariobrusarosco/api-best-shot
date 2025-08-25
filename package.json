@@ -65,7 +65,6 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.703.0",
     "@aws-sdk/client-scheduler": "^3.716.0",
-    "@google-cloud/scheduler": "^5.3.0",
     "@sentry/cli": "^2.39.1",
     "@sentry/node": "^8.47.0",
     "@sentry/profiling-node": "^8.47.0",
@@ -87,7 +86,6 @@
     "picocolors": "^1.1.1",
     "playwright": "^1.54.1",
     "postgres": "^3.4.4",
-    "puppeteer": "^22.12.1",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.16.0",
     "uuid": "^11.0.3",
@@ -108,7 +106,6 @@
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "6.21.0",
     "@typescript-eslint/parser": "6.21.0",
-    "cheerio": "^1.0.0",
     "concurrently": "^9.1.2",
     "drizzle-kit": "^0.24.2",
     "eslint": "8.56.0",

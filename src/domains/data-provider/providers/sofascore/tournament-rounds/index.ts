@@ -1,10 +1,9 @@
-import { API_SOFASCORE_ROUNDS } from './typing';
 import { IApiProvider } from '@/domains/data-provider/typing';
+import { DB_InsertTournamentRound, T_TournamentRound } from '@/domains/tournament-round/schema';
 import db from '@/services/database';
-import axios from 'axios';
 import { Profiling } from '@/services/profiling';
-import puppeteer from 'puppeteer';
-import { T_TournamentRound, DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
+import axios from 'axios';
+import { API_SOFASCORE_ROUNDS } from './typing';
 
 export const SofascoreTournamentRound: IApiProvider['rounds'] = {
   fetchShallowListOfRoundsFromProvider: async baseUrl => {
@@ -36,31 +35,6 @@ export const SofascoreTournamentRound: IApiProvider['rounds'] = {
         source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
         error: axiosError as Error,
       });
-      // Fallback to Puppeteer to perform fetch in browser context
-      const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      });
-      try {
-        const page = await browser.newPage();
-        // Use fetch inside the page to retrieve JSON
-        const content = await page.evaluate(
-          async (url, headers) => {
-            const resp = await fetch(url, { headers });
-            if (!resp.ok) throw new Error(`HTTP error ${resp.status}`);
-            return await resp.text();
-          },
-          roundsUrl,
-          headers
-        );
-        data = JSON.parse(content);
-        Profiling.log({
-          msg: '[SUCCESS] - SHALLOW LIST OF ROUNDS DONE via Puppeteer',
-          source: 'DATA_PROVIDER_SOFASCORE_TOURNAMENT_ROUNDS',
-        });
-      } finally {
-        await browser.close();
-      }
     }
 
     Profiling.log({

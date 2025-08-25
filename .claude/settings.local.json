@@ -101,7 +101,9 @@
       "Bash(npm install:*)",
       "Bash(/usr/local/bin/yarn --version)",
       "Bash(volta list:*)",
-      "Bash(yarn set version:*)"
+      "Bash(yarn set version:*)",
+      "WebFetch(domain:docs.railway.app)",
+      "WebFetch(domain:docs.railway.com)"
     ],
     "deny": []
   }

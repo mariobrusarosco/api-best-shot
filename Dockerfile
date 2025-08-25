@@ -35,34 +35,14 @@ COPY . .
 RUN yarn build
 
 # ================================
-# Production Dependencies Stage
-# ================================
-FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS prod-deps
-
-WORKDIR /app
-
-# Copy package management files
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn ./.yarn
-
-# Enable Corepack and install specific Yarn version
-RUN corepack enable && \
-    corepack prepare yarn@3.8.7 --activate
-
-# Install ONLY production dependencies for smaller final image  
-# Note: --production flag shows deprecation warning but still works in Yarn 3
-RUN NODE_ENV=production yarn install --immutable --production && \
-    yarn cache clean
-
-# ================================
 # Production Runtime Stage
 # ================================
 FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS production
 
 WORKDIR /app
 
-# Copy production dependencies from cached layer
-COPY --from=prod-deps /app/node_modules ./node_modules
+# Copy node_modules from dependencies stage (includes all deps, but that's fine for runtime)
+COPY --from=dependencies /app/node_modules ./node_modules
 
 # Copy the built application from builder stage
 COPY --from=builder /app/dist ./dist

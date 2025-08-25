@@ -50,7 +50,7 @@ RUN corepack enable && \
     corepack prepare yarn@3.8.7 --activate
 
 # Install ONLY production dependencies for smaller final image
-RUN NODE_ENV=production yarn install --immutable --production && \
+RUN NODE_ENV=production yarn workspaces focus --production && \
     yarn cache clean
 
 # ================================

@@ -103,7 +103,8 @@
       "Bash(volta list:*)",
       "Bash(yarn set version:*)",
       "WebFetch(domain:docs.railway.app)",
-      "WebFetch(domain:docs.railway.com)"
+      "WebFetch(domain:docs.railway.com)",
+      "WebFetch(domain:blog.railway.com)"
     ],
     "deny": []
   }

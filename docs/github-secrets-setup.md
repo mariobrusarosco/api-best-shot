@@ -11,7 +11,6 @@ This document lists all the GitHub secrets required for the CI/CD pipeline to wo
 | `RAILWAY_TOKEN_DEMO`    | Railway project token for demo       | Railway Dashboard → Your Project → Settings → Tokens → Create Token (Demo)       |
 | `RAILWAY_TOKEN_STAGING` | Railway project token for staging    | Railway Dashboard → Your Project → Settings → Tokens → Create Token (Staging)    |
 | `RAILWAY_TOKEN_PROD`    | Railway project token for production | Railway Dashboard → Your Project → Settings → Tokens → Create Token (Production) |
-| `RAILWAY_SERVICE_NAME`  | Railway service name to deploy       | Railway Dashboard → Your Project → Services (e.g., "api-best-shot")            |
 
 ### Database Configuration
 
@@ -52,17 +51,16 @@ Use this checklist to ensure all secrets are configured:
 
 - [x] RAILWAY_TOKEN_DEMO
 - [x] RAILWAY_TOKEN_STAGING
-- [ ] RAILWAY_TOKEN_PROD
-- [ ] RAILWAY_SERVICE_NAME
+- [x] RAILWAY_TOKEN_PROD
 - [x] DEMO_DB_PASSWORD
 - [x] STAGING_DB_PASSWORD
-- [ ] PROD_DB_PASSWORD
+- [x] PROD_DB_PASSWORD
 - [x] SENTRY_AUTH_TOKEN_DEMO
 - [x] SENTRY_AUTH_TOKEN_STAGING
-- [ ] SENTRY_AUTH_TOKEN_PROD
+- [x] SENTRY_AUTH_TOKEN_PROD
 - [x] SLACK_WEBHOOK_URL_DEMO
 - [x] SLACK_WEBHOOK_URL_STAGING
-- [ ] SLACK_WEBHOOK_URL_PROD
+- [x] SLACK_WEBHOOK_URL_PROD
 
 ## Notes
 

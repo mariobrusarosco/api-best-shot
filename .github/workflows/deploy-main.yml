@@ -82,7 +82,7 @@ jobs:
             Status: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
             Branch: main → demo
             Environment: Demo
-        if: always() && secrets.SLACK_WEBHOOK_URL != ''
+        if: always()
 
   deploy-production:
     name: Deploy to Railway Production
@@ -155,7 +155,7 @@ jobs:
             Branch: main → production
             Environment: Production
             🎉 ${{ job.status == 'success' && 'Live for users!' || 'Deployment failed!' }}
-        if: always() && secrets.SLACK_WEBHOOK_URL != ''
+        if: always()
 
   deployment-summary:
     name: Deployment Summary

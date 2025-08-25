@@ -49,8 +49,9 @@ COPY .yarn ./.yarn
 RUN corepack enable && \
     corepack prepare yarn@3.8.7 --activate
 
-# Install ONLY production dependencies for smaller final image
-RUN NODE_ENV=production yarn workspaces focus --production && \
+# Install ONLY production dependencies for smaller final image  
+# Note: --production flag shows deprecation warning but still works in Yarn 3
+RUN NODE_ENV=production yarn install --immutable --production && \
     yarn cache clean
 
 # ================================

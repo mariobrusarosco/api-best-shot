@@ -46,7 +46,7 @@ jobs:
         run: yarn dlx @railway/cli --version
 
       - name: Deploy to Railway Staging
-        run: yarn dlx @railway/cli up
+        run: yarn dlx @railway/cli up --service api-best-shot
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
 

@@ -81,7 +81,7 @@ jobs:
         with:
           status: ${{ job.status }}
           channel: '#deployments'
-          fields: repo,message,commit,author,took
+          fields: repo,message,commit,author
           text: |
             🚀 **Demo Deployment**
             Status: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
@@ -159,7 +159,7 @@ jobs:
         with:
           status: ${{ job.status }}
           channel: '#deployments'
-          fields: repo,message,commit,author,took
+          fields: repo,message,commit,author
           text: |
             🚀 **Production Deployment**
             Status: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}

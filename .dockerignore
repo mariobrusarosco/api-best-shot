@@ -8,6 +8,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# Ensure Yarn 3 files are included
+!.yarn/
+
 # Development files
 .git
 .gitignore

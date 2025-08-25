@@ -12,12 +12,16 @@ WORKDIR /app
 
 # Copy ONLY package management files for better caching
 # This layer will be cached unless package.json/yarn.lock changes
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
+
+# Enable Corepack and install specific Yarn version
+RUN corepack enable && \
+    corepack prepare yarn@3.8.7 --activate
 
 # Install ALL dependencies (including dev dependencies for building)
 # This expensive step gets cached when dependencies don't change
-# Use the system yarn (which works with any lockfile format)
-RUN yarn install --ignore-engines
+RUN yarn install --immutable
 
 # ================================
 # Builder Stage (Uses Cached Dependencies)
@@ -38,11 +42,15 @@ FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS prod-deps
 WORKDIR /app
 
 # Copy package management files
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
+
+# Enable Corepack and install specific Yarn version
+RUN corepack enable && \
+    corepack prepare yarn@3.8.7 --activate
 
 # Install ONLY production dependencies for smaller final image
-# Use the system yarn with ignore-engines to handle version differences
-RUN NODE_ENV=production yarn install --production --ignore-engines && \
+RUN NODE_ENV=production yarn install --immutable --production && \
     yarn cache clean
 
 # ================================

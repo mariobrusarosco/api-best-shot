@@ -81,10 +81,11 @@ jobs:
         with:
           status: ${{ job.status }}
           channel: '#deployments'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL_STAGING }}
           fields: repo,message,commit,author,took
           text: |
             🚀 **Staging Deployment**
             Status: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
             Branch: staging
             Environment: Staging
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_STAGING }}

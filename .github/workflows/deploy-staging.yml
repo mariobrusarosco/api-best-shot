@@ -39,6 +39,8 @@ jobs:
 
       - name: Build application
         run: yarn build
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_STAGING }}
 
       - name: Install Railway CLI
         run: yarn dlx @railway/cli --version
@@ -81,7 +83,7 @@ jobs:
         with:
           status: ${{ job.status }}
           channel: '#deployments'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL_STAGING }}
           fields: repo,message,commit,author,took
           text: |
             🚀 **Staging Deployment**

@@ -39,6 +39,8 @@ jobs:
 
       - name: Build application for demo
         run: yarn build-demo
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_DEMO }}
 
       - name: Install Railway CLI
         run: yarn dlx @railway/cli --version
@@ -80,7 +82,7 @@ jobs:
         with:
           status: ${{ job.status }}
           channel: '#deployments'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL_DEMO }}
           fields: repo,message,commit,author,took
           text: |
             🚀 **Demo Deployment**
@@ -116,6 +118,8 @@ jobs:
 
       - name: Build application for production
         run: yarn build-prod
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_PROD }}
 
       - name: Install Railway CLI
         run: yarn dlx @railway/cli --version
@@ -157,7 +161,7 @@ jobs:
         with:
           status: ${{ job.status }}
           channel: '#deployments'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
           fields: repo,message,commit,author,took
           text: |
             🚀 **Production Deployment**

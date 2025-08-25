@@ -39,15 +39,16 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway Staging
-        run: railway up --service staging
+        run: |
+          railway link ${{ secrets.STAGING_PROJECT_ID }}
+          railway up
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
-      - name: Run database migrations
-        run: |
-          railway run --service staging yarn db:migrate
+      - name: Run database migrations on Supabase
+        run: yarn db:migrate
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          DB_STRING_CONNECTION: postgresql://postgres.mxevncnpdmrlnwksrazx:${{ secrets.STAGING_DB_PASSWORD }}@aws-1-us-east-2.pooler.supabase.com:6543/postgres
 
       - name: Health check
         run: |

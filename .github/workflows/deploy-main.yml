@@ -47,7 +47,7 @@ jobs:
 
       - name: Deploy to Railway Demo
         run: |
-          yarn dlx @railway/cli link --project ${{ secrets.RAILWAY_PROJECT_ID }} --environment demo
+          yarn dlx @railway/cli link -p ${{ secrets.RAILWAY_PROJECT_ID }} -e demo
           yarn dlx @railway/cli up
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
@@ -126,7 +126,7 @@ jobs:
 
       - name: Deploy to Railway Production
         run: |
-          yarn dlx @railway/cli link --project ${{ secrets.RAILWAY_PROJECT_ID }} --environment production
+          yarn dlx @railway/cli link -p ${{ secrets.RAILWAY_PROJECT_ID }} -e production
           yarn dlx @railway/cli up
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

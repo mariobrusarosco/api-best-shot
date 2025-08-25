@@ -47,7 +47,7 @@ jobs:
 
       - name: Deploy to Railway Staging
         run: |
-          yarn dlx @railway/cli link --project ${{ secrets.RAILWAY_PROJECT_ID }} --environment staging
+          yarn dlx @railway/cli link -p ${{ secrets.RAILWAY_PROJECT_ID }} -e staging
           yarn dlx @railway/cli up
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

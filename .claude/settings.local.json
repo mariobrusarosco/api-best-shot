@@ -100,7 +100,8 @@
       "WebFetch(domain:productionresultssa6.blob.core.windows.net)",
       "Bash(npm install:*)",
       "Bash(/usr/local/bin/yarn --version)",
-      "Bash(volta list:*)"
+      "Bash(volta list:*)",
+      "Bash(yarn set version:*)"
     ],
     "deny": []
   }

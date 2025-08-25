@@ -5,6 +5,7 @@
   "volta": {
     "node": "22.17.0"
   },
+  "packageManager": "yarn@3.8.7",
   "scripts": {
     "dev": "./dev-with-logs.sh",
     "dev:no-logs": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register ./src/index.ts",
@@ -41,7 +42,8 @@
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "validate:yarn": "./scripts/validate-yarn-version.sh"
   },
   "author": "Mario Brusarosco",
   "license": "ISC",

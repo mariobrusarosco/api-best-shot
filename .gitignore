@@ -57,9 +57,15 @@ crash.log
 .sentryclirc
 
 # Package Manager
-.yarn/
-.pnp.cjs
-.pnp.loader.mjs
+# Yarn 3 - Keep only necessary files
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+# .yarn/cache should be ignored (no ! prefix)
+# .yarn/install-state.gz should be ignored (covered by .yarn/*)
+.pnp.*
 
 
 tournament-scraping-reports/

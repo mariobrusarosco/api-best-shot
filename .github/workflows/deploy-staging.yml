@@ -21,10 +21,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.17.0'
-          cache: 'yarn'
+      
+      - name: Enable Corepack
+        run: corepack enable
+      
+      - name: Install Yarn
+        run: corepack prepare yarn@3.8.7 --activate
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Run quality gates
         run: |
@@ -36,12 +41,12 @@ jobs:
         run: yarn build
 
       - name: Install Railway CLI
-        run: npm install -g @railway/cli
+        run: yarn dlx @railway/cli --version
 
       - name: Deploy to Railway Staging
         run: |
-          railway link ${{ secrets.STAGING_PROJECT_ID }}
-          railway up
+          yarn dlx @railway/cli link ${{ secrets.STAGING_PROJECT_ID }}
+          yarn dlx @railway/cli up
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 

@@ -1,7 +1,7 @@
 import express from 'express';
 
 // Admin
-import adminV1Router from '@/domains/admin/routes/v1';
+import { v2 as adminV2Router } from '@/domains/admin/routes';
 // AI
 import aiV2Router from '@/domains/ai/routes/v2';
 // Auth
@@ -24,7 +24,7 @@ import { v1 as tournamentV1Router, v2 as tournamentV2Router } from '@/domains/to
 const apiRouter = express.Router();
 
 // Admin
-apiRouter.use('/v1/admin', adminV1Router);
+apiRouter.use('/v2/admin', adminV2Router);
 // AI
 apiRouter.use('/v2/ai', aiV2Router);
 // Auth

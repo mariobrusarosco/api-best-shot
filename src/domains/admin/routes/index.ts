@@ -1,4 +1,5 @@
-// This file re-exports the v1 router for backward compatibility.
-// The new structure uses versioned routers (see v1.ts).
-import v1Router from './v1';
-export default v1Router;
+// Admin domain now uses v2 only - all functionality consolidated
+import v2Router from './v2';
+
+export { v2Router as v2 };
+export default v2Router;

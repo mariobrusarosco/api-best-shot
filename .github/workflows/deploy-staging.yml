@@ -37,8 +37,8 @@ jobs:
           yarn compile
           yarn test
 
-      - name: Build application
-        run: yarn build
+      - name: Build application for staging
+        run: yarn build-staging
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_STAGING }}
 

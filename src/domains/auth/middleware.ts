@@ -1,9 +1,10 @@
+import { PROFILLING_AUTH } from '@/domains/auth/constants/profiling';
+import { Utils } from '@/domains/auth/utils';
 import { DB_SelectMember } from '@/domains/member/schema';
+import { MemberService } from '@/domains/member/services';
+import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import { Profiling } from '@/services/profiling';
 import { NextFunction, Request, Response } from 'express';
-import { GlobalErrorMapper } from '../shared/error-handling/mapper';
-import { Utils } from './utils';
-import { PROFILLING_AUTH } from './constants/profiling';
 
 export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -29,12 +30,19 @@ export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) 
 
 export const AdminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // First run the normal auth middleware logic
+    // Get the JWT token and decode it (contains only user ID)
     const authCookie = Utils.getUserCookie(req);
-    const member = Utils.decodeMemberToken(authCookie) as AuthCookieContent;
+    const tokenData = Utils.decodeMemberToken(authCookie) as { id: string };
+
+    // Fetch current user data from database (including role)
+    const member = await MemberService.getMemberById(tokenData.id);
+
+    if (!member) {
+      return res.status(401).send({ message: 'User not found' });
+    }
 
     req.authenticatedUser = {
-      id: member.id || '',
+      id: tokenData.id,
       nickName: member.nickName,
       role: member.role,
     };

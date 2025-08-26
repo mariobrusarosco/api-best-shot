@@ -49,6 +49,20 @@ export class DataProviderExecutionService {
     });
   }
 
+  // Update execution with specific fields (like tournament ID)
+  static async updateExecution(
+    requestId: string,
+    data: {
+      tournamentId?: string;
+      status?: 'completed' | 'failed' | 'in_progress';
+      reportFileUrl?: string;
+      reportFileKey?: string;
+      summary?: Record<string, unknown>;
+    }
+  ): Promise<DB_SelectDataProviderExecution | null> {
+    return await QUERIES_DATA_PROVIDER_EXECUTIONS.updateExecutionByRequestId(requestId, data);
+  }
+
   // Get executions by tournament
   static async getExecutionsByTournament(
     tournamentId: string,

@@ -1,5 +1,5 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Profiling } from '@/services/profiling';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
 
 export interface UploadFileOptions {
@@ -12,23 +12,37 @@ export interface UploadFileOptions {
 }
 
 export class S3FileStorage {
-  private readonly s3Client: S3Client;
+  private readonly s3Client: S3Client | null = null;
   private readonly bucketName: string;
+  private readonly credentialsValid: boolean;
 
   constructor() {
     this.bucketName = (process.env['AWS_BUCKET_NAME'] || '').trim();
 
-    this.s3Client = new S3Client({
-      region: 'us-east-1',
-      credentials: {
-        accessKeyId: process.env['AWS_ACCESS_KEY_ID']!,
-        secretAccessKey: process.env['AWS_SECRET_ACCESS_KEY']!,
-      },
-      endpoint: 'https://s3.amazonaws.com',
-    });
+    // Validate credentials before creating client
+    const accessKeyId = process.env['AWS_ACCESS_KEY_ID'];
+    const secretAccessKey = process.env['AWS_SECRET_ACCESS_KEY'];
+
+    this.credentialsValid = !!(accessKeyId && secretAccessKey && this.bucketName);
+
+    if (this.credentialsValid) {
+      this.s3Client = new S3Client({
+        region: 'us-east-1',
+        credentials: {
+          accessKeyId: accessKeyId!,
+          secretAccessKey: secretAccessKey!,
+        },
+        endpoint: 'https://s3.amazonaws.com',
+      });
+    }
   }
 
   public async uploadFile(options: UploadFileOptions): Promise<string> {
+    // Early validation - throw error if credentials invalid
+    if (!this.credentialsValid || !this.s3Client) {
+      throw new Error('AWS credentials not properly configured for S3 upload');
+    }
+
     try {
       const {
         buffer,
@@ -60,8 +74,7 @@ export class S3FileStorage {
       return key;
     } catch (error) {
       console.error('[S3FileStorage] Error uploading file:', error);
-      // Return a dummy path to maintain compatibility with existing behavior
-      return `dummy-path/${options.filename}`;
+      throw error; // Re-throw to let caller handle fallback
     }
   }
 

@@ -1,143 +1,26 @@
-import { eq, and } from 'drizzle-orm';
-import { writeFileSync, mkdirSync } from 'fs';
-import { join } from 'path';
-
-import { S3FileStorage } from '../providers/file-storage';
-import { T_Tournament, DB_InsertTournament, DB_UpdateTournament } from '@/domains/tournament/schema';
-import db from '@/services/database';
-import { CreateTournamentInput } from '../api/v2/tournament/typing';
+import { DB_InsertTournament, DB_UpdateTournament, T_Tournament } from '@/domains/tournament/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import { BaseScraper } from '../providers/playwright/base-scraper';
+import db from '@/services/database';
 import { Profiling } from '@/services/profiling';
-
-type TournamentScrapingOperationData =
-  | { tournamentId?: string; label?: string; provider?: string; note?: string }
-  | { error: string; debugMessage?: string; errorMessage?: string }
-  | { createdTournamentCount?: number; updatedTournamentCount?: number }
-  | { tournamentExists?: boolean; existingTournament?: { id: string; label: string } }
-  | Record<string, unknown>;
-
-interface ScrapingOperation {
-  step: string;
-  operation: string;
-  status: 'started' | 'completed' | 'failed';
-  data?: TournamentScrapingOperationData;
-  timestamp: string;
-}
-
-interface TournamentOperationReport {
-  requestId: string;
-  tournament: {
-    label: string;
-    tournamentId: string;
-    provider: string;
-  };
-  startTime: string;
-  endTime?: string;
-  operations: ScrapingOperation[];
-  summary: {
-    totalOperations: number;
-    successfulOperations: number;
-    failedOperations: number;
-  };
-}
+import { and, eq } from 'drizzle-orm';
+import { CreateTournamentInput } from '../api/v2/tournament/typing';
+import { BaseScraper } from '../providers/playwright/base-scraper';
+import { DataProviderExecutionService } from './index';
+import { DataProviderReportService } from './report';
 
 export class TournamentDataProviderService {
   private scraper: BaseScraper;
-  private report: TournamentOperationReport;
+  private reportService: DataProviderReportService;
+  private requestId: string;
 
   constructor(scraper: BaseScraper, requestId: string) {
     this.scraper = scraper;
-    this.report = {
-      requestId,
-      tournament: {
-        label: '',
-        tournamentId: '',
-        provider: '',
-      },
-      startTime: new Date().toISOString(),
-      operations: [],
-      summary: {
-        totalOperations: 0,
-        successfulOperations: 0,
-        failedOperations: 0,
-      },
-    };
-  }
-
-  private addOperation(
-    step: string,
-    operation: string,
-    status: 'started' | 'completed' | 'failed',
-    data?: TournamentScrapingOperationData
-  ): void {
-    this.report.operations.push({
-      step,
-      operation,
-      status,
-      data,
-      timestamp: new Date().toISOString(),
-    });
-
-    this.report.summary.totalOperations++;
-    if (status === 'completed') {
-      this.report.summary.successfulOperations++;
-    } else if (status === 'failed') {
-      this.report.summary.failedOperations++;
-    }
-  }
-
-  private async generateOperationReport(): Promise<void> {
-    this.report.endTime = new Date().toISOString();
-    const filename = `tournament-operation-${this.report.requestId}`;
-    const jsonContent = JSON.stringify(this.report, null, 2);
-
-    try {
-      const isLocal = process.env.NODE_ENV === 'development';
-
-      if (isLocal) {
-        // Store locally for development
-        const reportsDir = join(process.cwd(), 'data-provider-operation-reports');
-        const filepath = join(reportsDir, `${filename}.json`);
-
-        mkdirSync(reportsDir, { recursive: true });
-        writeFileSync(filepath, jsonContent);
-
-        Profiling.log({
-          msg: `[INVOICE] Tournament scraping report generated successfully (local)`,
-          data: { filepath, requestId: this.report.requestId },
-          source: 'DATA_PROVIDER_V2_TOURNAMENT_generateOperationReport',
-        });
-      } else {
-        // Store in S3 for demo/production environments
-        const s3Storage = new S3FileStorage();
-        const s3Key = await s3Storage.uploadFile({
-          buffer: Buffer.from(jsonContent, 'utf8'),
-          filename,
-          contentType: 'application/json',
-          directory: 'data-provider-operation-reports',
-          cacheControl: 'max-age=604800, public', // 7 days cache
-        });
-
-        Profiling.log({
-          msg: `[INVOICE] Tournament scraping report generated successfully (S3)`,
-          data: { s3Key, requestId: this.report.requestId },
-          source: 'DATA_PROVIDER_V2_TOURNAMENT_generateOperationReport',
-        });
-      }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      Profiling.error({
-        source: 'DATA_PROVIDER_V2_TOURNAMENT_generateOperationReport',
-        error: error instanceof Error ? error : new Error(errorMessage),
-        data: { requestId: this.report.requestId, filename },
-      });
-      console.error('Failed to write tournament report file:', errorMessage);
-    }
+    this.requestId = requestId;
+    this.reportService = new DataProviderReportService(requestId);
   }
 
   public async createOnDatabase(input: DB_InsertTournament) {
-    this.addOperation('database', 'create_tournament', 'started', {
+    const reporter = this.reportService.addOperation('database', 'create_tournament', 'started', {
       externalId: input.externalId,
       label: input.label,
     });
@@ -145,23 +28,27 @@ export class TournamentDataProviderService {
     try {
       const tournament = await SERVICES_TOURNAMENT.createTournament(input);
 
-      this.addOperation('database', 'create_tournament', 'completed', {
-        tournamentId: tournament.id,
+      reporter.addOperation('database', 'create_tournament', 'completed', {
+        createdTournamentId: tournament.id,
         label: tournament.label,
       });
       return tournament;
     } catch (error) {
       const errorMessage = (error as Error).message;
-      this.addOperation('database', 'create_tournament', 'failed', {
+      reporter.addOperation('database', 'create_tournament', 'failed', {
         error: errorMessage,
       });
-      console.error('[SOFASCORE] - [ERROR] - [CREATE TOURNAMENT]', error);
+      Profiling.error({
+        error: errorMessage,
+        data: { error: errorMessage },
+        source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
+      });
       throw error;
     }
   }
 
   public async updateOnDatabase(data: DB_UpdateTournament) {
-    this.addOperation('database', 'update_tournament', 'started', {
+    const reporter = this.reportService.addOperation('database', 'update_tournament', 'started', {
       externalId: data.externalId,
       provider: data.provider,
     });
@@ -173,17 +60,21 @@ export class TournamentDataProviderService {
         .where(and(eq(T_Tournament.externalId, data.externalId), eq(T_Tournament.provider, data.provider)))
         .returning();
 
-      this.addOperation('database', 'update_tournament', 'completed', {
-        tournamentId: tournament.id,
+      reporter.addOperation('database', 'update_tournament', 'completed', {
+        updatedTournamentId: tournament.id,
         label: tournament.label,
       });
       return tournament;
     } catch (error) {
       const errorMessage = (error as Error).message;
-      this.addOperation('database', 'update_tournament', 'failed', {
+      reporter.addOperation('database', 'update_tournament', 'failed', {
         error: errorMessage,
       });
-      console.error('[SOFASCORE] - [ERROR] - [UPDATE TOURNAMENT]', error);
+      Profiling.error({
+        error: errorMessage,
+        data: { error: errorMessage },
+        source: 'DATA_PROVIDER_V2_TOURNAMENT_update',
+      });
       throw error;
     }
   }
@@ -193,31 +84,49 @@ export class TournamentDataProviderService {
   }
 
   public async init(payload: CreateTournamentInput) {
-    // Initialize report tournament data
-    this.report.tournament = {
-      label: payload.label,
-      tournamentId: payload.tournamentPublicId,
-      provider: payload.provider,
-    };
+    const startTime = Date.now();
 
-    this.addOperation('initialization', 'validate_input', 'started', {
-      tournamentId: payload.tournamentPublicId,
+    // Create execution tracking record at the start
+    await DataProviderExecutionService.createExecution({
+      requestId: this.requestId,
+      tournamentId: '00000000-0000-0000-0000-000000000000', // Temporary UUID, will be updated after tournament creation
+      operationType: 'tournament_create',
     });
 
+    // Initialize report tournament data and start validation
+    const reporter = this.reportService
+      .setTournamentInfo({
+        label: payload.label,
+        tournamentId: payload.tournamentPublicId,
+        provider: payload.provider,
+      })
+      .addOperation('initialization', 'validate_input', 'started');
+
     if (!payload.tournamentPublicId) {
-      this.addOperation('initialization', 'validate_input', 'failed', {
+      reporter.addOperation('initialization', 'validate_input', 'failed', {
         error: 'Tournament public ID is null',
       });
+
+      // Complete execution as failed for validation error
+      const duration = Date.now() - startTime;
+      const summary = reporter.getSummary();
+      await DataProviderExecutionService.completeExecution(this.requestId, {
+        status: 'failed',
+        duration,
+        summary: {
+          error: 'Tournament public ID is null',
+          operationsCount: summary.totalOperations,
+          failedOperations: summary.failedOperations,
+        },
+      });
+
+      await reporter.generateOperationReport();
       throw new Error(`[TournamentDataProviderService] - [ERROR] - [INIT] - [TOURNAMENT PUBLIC ID IS NULL]`);
     }
 
-    this.addOperation('initialization', 'validate_input', 'completed', {
-      tournamentId: payload.tournamentPublicId,
-    });
-
-    this.addOperation('scraping', 'fetch_logo', 'started', {
-      tournamentId: payload.tournamentPublicId,
-    });
+    reporter
+      .addOperation('initialization', 'validate_input', 'completed')
+      .addOperation('scraping', 'fetch_logo', 'started');
 
     try {
       const logoUrl = this.getTournamentLogoUrl(payload.tournamentPublicId);
@@ -227,7 +136,7 @@ export class TournamentDataProviderService {
       });
       const logo = this.scraper.getCloudFrontUrl(s3Key);
 
-      this.addOperation('scraping', 'fetch_logo', 'completed', { logoUrl: logo, s3Key });
+      reporter.addOperation('scraping', 'fetch_logo', 'completed', { logoUrl: logo, s3Key });
 
       Profiling.log({
         msg: `Created tournament logo: ${logo}....`,
@@ -247,14 +156,74 @@ export class TournamentDataProviderService {
         slug: payload.slug,
       });
 
-      // Generate report file at the very end
-      await this.generateOperationReport();
+      // Generate report file
+      const reportResult = await reporter.generateOperationReport();
+
+      // Complete execution tracking with report information and correct tournament ID
+      const duration = Date.now() - startTime;
+      const summary = reporter.getSummary();
+
+      // Only include report file fields if they have values
+      const executionData: any = {
+        status: 'completed',
+        duration,
+        summary: {
+          tournamentId: tournament.id,
+          tournamentLabel: tournament.label,
+          provider: payload.provider,
+          operationsCount: summary.totalOperations,
+          successfulOperations: summary.successfulOperations,
+          failedOperations: summary.failedOperations,
+        },
+      };
+
+      // Only add report file fields if they exist
+      if (reportResult.s3Key) {
+        executionData.reportFileKey = reportResult.s3Key;
+      }
+      if (reportResult.s3Url) {
+        executionData.reportFileUrl = reportResult.s3Url;
+      }
+
+      await DataProviderExecutionService.completeExecution(this.requestId, executionData);
+
+      // Update execution record with actual tournament ID
+      await DataProviderExecutionService.updateExecution(this.requestId, {
+        tournamentId: tournament.id,
+      });
 
       return tournament;
     } catch (error) {
       const errorMessage = (error as Error).message;
-      this.addOperation('scraping', 'fetch_logo', 'failed', { error: errorMessage });
-      await this.generateOperationReport();
+      reporter.addOperation('scraping', 'fetch_logo', 'failed', { error: errorMessage });
+
+      // Generate report file even on failure
+      const reportResult = await reporter.generateOperationReport();
+
+      // Complete execution tracking as failed
+      const duration = Date.now() - startTime;
+      const summary = reporter.getSummary();
+
+      // Only include report file fields if they have values
+      const executionData: any = {
+        status: 'failed',
+        duration,
+        summary: {
+          error: errorMessage,
+          operationsCount: summary.totalOperations,
+          failedOperations: summary.failedOperations + 1,
+        },
+      };
+
+      // Only add report file fields if they exist
+      if (reportResult.s3Key) {
+        executionData.reportFileKey = reportResult.s3Key;
+      }
+      if (reportResult.s3Url) {
+        executionData.reportFileUrl = reportResult.s3Url;
+      }
+
+      await DataProviderExecutionService.completeExecution(this.requestId, executionData);
       throw error;
     }
   }

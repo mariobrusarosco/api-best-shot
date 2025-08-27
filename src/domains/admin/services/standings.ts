@@ -74,6 +74,75 @@ class AdminStandingsService {
       }
     }
   }
+
+  static async updateStandings(req: Request, res: Response) {
+    const requestId = randomUUID();
+    let scraper: BaseScraper | null = null;
+
+    try {
+      if (!req.body.tournamentId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Tournament ID is required',
+        });
+      }
+
+      const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
+      if (!tournament) {
+        return res.status(404).json({
+          success: false,
+          error: 'Tournament not found',
+        });
+      }
+
+      Profiling.log({
+        msg: `[ADMIN] Updating standings for tournament ${tournament.label}..........`,
+        data: {
+          requestId,
+          tournamentLabel: tournament.label,
+          tournamentId: tournament.id,
+          updatedBy: req.authenticatedUser?.nickName,
+        },
+        source: 'ADMIN_SERVICE_STANDINGS_update',
+      });
+
+      scraper = await BaseScraper.createInstance();
+      const dataProviderService = new StandingsDataProviderService(scraper, requestId);
+      const standings = await dataProviderService.updateTournament(tournament);
+
+      Profiling.log({
+        msg: `[ADMIN] Standings for tournament ${tournament.label} updated successfully!`,
+        data: {
+          requestId,
+          tournamentId: tournament.id,
+          standingsCount: standings.length,
+          updatedBy: req.authenticatedUser?.nickName,
+        },
+        source: 'ADMIN_SERVICE_STANDINGS_update',
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: { standings },
+        message: `${standings.length} standings updated successfully for tournament "${tournament.label}"`,
+      });
+    } catch (error) {
+      Profiling.error({
+        source: 'ADMIN_SERVICE_STANDINGS_update',
+        error,
+        data: {
+          requestId,
+          operation: 'admin_standings_update',
+          adminUser: req.authenticatedUser?.nickName,
+        },
+      });
+      return handleInternalServerErrorResponse(res, error);
+    } finally {
+      if (scraper) {
+        await scraper.close();
+      }
+    }
+  }
 }
 
 export { AdminStandingsService };

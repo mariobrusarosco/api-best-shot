@@ -237,4 +237,65 @@ export const API_ADMIN_EXECUTIONS = {
       return handleInternalServerErrorResponse(res, error);
     }
   },
+
+  // GET /api/v2/admin/execution-jobs - Get all execution jobs with tournament metadata
+  async getExecutionJobs(req: Request, res: Response) {
+    try {
+      const { limit = '50', offset = '0' } = req.query as { limit?: string; offset?: string };
+
+      const options = {
+        limit: parseInt(limit, 10),
+        offset: parseInt(offset, 10),
+      };
+
+      const executions = await DataProviderExecutionService.getAllExecutions(options);
+
+      // Get tournament details for each execution
+      const executionJobs = await Promise.all(
+        executions.map(async execution => {
+          let tournament = null;
+          if (execution.tournamentId && execution.tournamentId !== '00000000-0000-0000-0000-000000000000') {
+            try {
+              tournament = await SERVICES_TOURNAMENT.getTournament(execution.tournamentId);
+            } catch (error) {
+              // Tournament might not exist, skip it
+            }
+          }
+
+          return {
+            id: execution.id,
+            requestId: execution.requestId,
+            operationType: execution.operationType,
+            status: execution.status,
+            startedAt: execution.startedAt,
+            completedAt: execution.completedAt,
+            duration: execution.duration,
+            reportFileUrl: execution.reportFileUrl,
+            reportFileKey: execution.reportFileKey,
+            summary: execution.summary,
+            tournament: tournament
+              ? {
+                  id: tournament.id,
+                  label: tournament.label,
+                  logo: tournament.logo,
+                }
+              : null,
+          };
+        })
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: executionJobs,
+        pagination: {
+          limit: options.limit,
+          offset: options.offset,
+          total: executions.length,
+        },
+      });
+    } catch (error) {
+      console.error('Error fetching execution jobs:', error);
+      return handleInternalServerErrorResponse(res, error);
+    }
+  },
 };

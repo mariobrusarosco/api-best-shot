@@ -1,13 +1,13 @@
 /* eslint-disable */
 /* prettier-ignore-file */
-import { API_SOFASCORE_ROUND, API_SOFASCORE_ROUNDS } from './providers/sofascore/tournament-rounds/typing';
 import { DB_InsertMatch } from '@/domains/match/schema';
 import { DB_InsertTeam } from '@/domains/team/schema';
+import { DB_InsertTournamentRound, DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
 import { TournamentQuery } from '@/domains/tournament/queries';
 import { DB_InsertTournament, DB_InsertTournamentStandings, DB_SelectTournament } from '@/domains/tournament/schema';
-import { DB_InsertTournamentRound, DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
 import { FetchAndStoreAssetPayload } from '@/utils';
 import { API_SOFASCORE_STANDINGS } from './providers/sofascore/standings/typing';
+import { API_SOFASCORE_ROUND, API_SOFASCORE_ROUNDS } from './providers/sofascore/tournament-rounds/typing';
 
 export type IApiProvider = {
   tournament: {
@@ -63,4 +63,15 @@ export interface IDataProviderMatchUpdate {
 
 export interface IDataProviderStandings {
   fetchStandingsFromProvider: (providerUrl: string) => Promise<API_SOFASCORE_STANDINGS | null>;
+}
+
+export enum DataProviderExecutionStatus {
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+}
+
+export enum DataProviderExecutionOperationType {
+  TOURNAMENT_CREATE = 'tournament_create',
+  TOURNAMENT_UPDATE = 'tournament_update',
 }

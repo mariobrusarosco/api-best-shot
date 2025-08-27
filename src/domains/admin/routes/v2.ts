@@ -27,6 +27,9 @@ router.get('/executions/:id/report', AdminMiddleware, API_ADMIN_EXECUTIONS.getEx
 router.get('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.getAllTournaments);
 router.post('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.createTournament);
 
+// Execution Jobs Route (admin only)
+router.get('/execution-jobs', AdminMiddleware, API_ADMIN_EXECUTIONS.getExecutionJobs);
+
 // Tournament Rounds Management (admin only)
 router.post('/rounds', AdminMiddleware, API_ADMIN_TOURNAMENTS.createRounds);
 router.patch('/rounds', AdminMiddleware, API_ADMIN_TOURNAMENTS.updateRounds);

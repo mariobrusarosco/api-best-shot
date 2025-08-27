@@ -5,6 +5,7 @@ import { Profiling } from '@/services/profiling';
 import { and, eq } from 'drizzle-orm';
 import { CreateTournamentInput } from '../api/v2/tournament/typing';
 import { BaseScraper } from '../providers/playwright/base-scraper';
+import { DataProviderExecutionOperationType } from '../typing';
 import { DataProviderExecutionService } from './index';
 import { DataProviderReportService } from './report';
 
@@ -90,7 +91,7 @@ export class TournamentDataProviderService {
     await DataProviderExecutionService.createExecution({
       requestId: this.requestId,
       tournamentId: '00000000-0000-0000-0000-000000000000', // Temporary UUID, will be updated after tournament creation
-      operationType: 'tournament_create',
+      operationType: DataProviderExecutionOperationType.TOURNAMENT_CREATE,
     });
 
     // Initialize report tournament data and start validation

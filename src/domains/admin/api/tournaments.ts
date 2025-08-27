@@ -17,11 +17,8 @@ export const API_ADMIN_TOURNAMENTS = {
     return await AdminRoundsService.createRounds(req, res);
   },
 
-  async updateRounds(_req: Request, res: Response) {
-    return res.status(501).json({
-      success: false,
-      message: 'Update rounds functionality not yet implemented',
-    });
+  async updateRounds(req: Request, res: Response) {
+    return await AdminRoundsService.updateRounds(req, res);
   },
 
   async createTeams(req: Request, res: Response) {

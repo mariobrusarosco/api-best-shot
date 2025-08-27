@@ -8,9 +8,9 @@ import { ServiceLogger } from '@/services/profiling/logger';
 import { safeString } from '@/utils';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { S3FileStorage } from '../providers/file-storage';
+import { S3FileStorage } from './file-storage';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { DataProviderExecutionService } from './index';
+import { DataProviderExecutionService } from './execution';
 
 type ScrapingOperationData =
   | {
@@ -118,7 +118,7 @@ export class StandingsDataProviderService {
     }
   }
 
-  private async generateOperationReport(): Promise<void> {
+  private async generateOperationReport(): Promise<{ s3Key?: string; s3Url?: string } | void> {
     this.report.endTime = new Date().toISOString();
     const filename = `standings-operation-${this.report.requestId}`;
     const jsonContent = JSON.stringify(this.report, null, 2);
@@ -139,6 +139,7 @@ export class StandingsDataProviderService {
           requestId: this.report.requestId,
           storageType: 'local',
         });
+        return;
       } else {
         // Store in S3 for demo/production environments
         const s3Storage = new S3FileStorage();
@@ -150,11 +151,15 @@ export class StandingsDataProviderService {
           cacheControl: 'max-age=604800, public', // 7 days cache
         });
 
+        const s3Url = s3Storage.getCloudFrontUrl(s3Key);
+
         ServiceLogger.success('GENERATE', 'REPORTS', {
           s3Key,
           requestId: this.report.requestId,
           storageType: 'S3',
         });
+
+        return { s3Key, s3Url };
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -292,13 +297,13 @@ export class StandingsDataProviderService {
     });
 
     try {
-      const query = await db.insert(T_TournamentStandings).values(standings);
+      const query = await db.insert(T_TournamentStandings).values(standings).returning();
 
       this.addOperation('database', 'create_standings', 'completed', {
-        createdStandingsCount: standings.length,
+        createdStandingsCount: query.length,
       });
 
-      this.report.summary.standingsCounts.totalStandingsCreated = standings.length;
+      this.report.summary.standingsCounts.totalStandingsCreated = query.length;
 
       return query;
     } catch (error: unknown) {
@@ -396,14 +401,23 @@ export class StandingsDataProviderService {
       const query = await this.createOnDatabase(standings);
 
       // Generate operation report at the very end
-      await this.generateOperationReport();
+      const reportResult = await this.generateOperationReport();
 
-      // Complete execution tracking with success
-      await DataProviderExecutionService.completeExecution(this.report.requestId, {
+      // Complete execution tracking with success, including report file info if available
+      const updateData: any = {
         status: 'completed',
         summary: this.report.summary,
         duration: Date.now() - startTime,
-      });
+      };
+
+      if (reportResult?.s3Key) {
+        updateData.reportFileKey = reportResult.s3Key;
+      }
+      if (reportResult?.s3Url) {
+        updateData.reportFileUrl = reportResult.s3Url;
+      }
+
+      await DataProviderExecutionService.completeExecution(this.report.requestId, updateData);
 
       return query;
     } catch (error: unknown) {
@@ -477,14 +491,23 @@ export class StandingsDataProviderService {
       const query = await this.updateOnDatabase(standings);
 
       // Generate operation report at the very end
-      await this.generateOperationReport();
+      const reportResult = await this.generateOperationReport();
 
-      // Complete execution tracking with success
-      await DataProviderExecutionService.completeExecution(this.report.requestId, {
+      // Complete execution tracking with success, including report file info if available
+      const updateData: any = {
         status: 'completed',
         summary: this.report.summary,
         duration: Date.now() - startTime,
-      });
+      };
+
+      if (reportResult?.s3Key) {
+        updateData.reportFileKey = reportResult.s3Key;
+      }
+      if (reportResult?.s3Url) {
+        updateData.reportFileUrl = reportResult.s3Url;
+      }
+
+      await DataProviderExecutionService.completeExecution(this.report.requestId, updateData);
 
       return query;
     } catch (error: unknown) {

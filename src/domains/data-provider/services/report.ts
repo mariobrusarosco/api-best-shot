@@ -1,7 +1,7 @@
 import { Profiling } from '@/services/profiling';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { S3FileStorage } from '../providers/file-storage';
+import { S3FileStorage } from './file-storage';
 
 type ScrapingOperationData =
   | { tournamentId?: string; label?: string; provider?: string; note?: string }

@@ -87,4 +87,9 @@ export class S3FileStorage {
       directory,
     });
   }
+
+  public getCloudFrontUrl(s3Key: string): string {
+    const cloudFrontDomain = process.env['CLOUDFRONT_DOMAIN'] || 'YOUR_CLOUDFRONT_DOMAIN';
+    return `https://${cloudFrontDomain}/${s3Key}`;
+  }
 }

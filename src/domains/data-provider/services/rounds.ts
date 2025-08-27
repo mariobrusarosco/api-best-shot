@@ -7,7 +7,7 @@ import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { Profiling } from '@/services/profiling';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { S3FileStorage } from '../providers/file-storage';
+import { S3FileStorage } from './file-storage';
 
 type RoundScrapingOperationData =
   | { baseUrl?: string; tournamentId?: string; roundsCount?: number; note?: string }

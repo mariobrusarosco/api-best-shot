@@ -12,7 +12,8 @@ import { safeString, sleep } from '@/utils';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { S3FileStorage } from '../providers/file-storage';
+import { S3FileStorage } from './file-storage';
+import { DataProviderExecutionService } from './execution';
 
 type TeamsScrapingOperationData =
   | {
@@ -127,7 +128,7 @@ export class TeamsDataProviderService {
     }
   }
 
-  private async generateOperationReport(): Promise<void> {
+  private async generateOperationReport(): Promise<{ s3Key?: string; s3Url?: string } | void> {
     this.report.endTime = new Date().toISOString();
     const filename = `teams-operation-${this.report.requestId}`;
     const jsonContent = JSON.stringify(this.report, null, 2);
@@ -148,6 +149,7 @@ export class TeamsDataProviderService {
           data: { filepath, requestId: this.report.requestId },
           source: 'DATA_PROVIDER_V2_TEAMS_generateOperationReport',
         });
+        return;
       } else {
         // Store in S3 for demo/production environments
         const s3Storage = new S3FileStorage();
@@ -159,11 +161,15 @@ export class TeamsDataProviderService {
           cacheControl: 'max-age=604800, public', // 7 days cache
         });
 
+        const s3Url = s3Storage.getCloudFrontUrl(s3Key);
+
         Profiling.log({
           msg: `[REPORT] Teams operation report generated successfully (S3)`,
-          data: { s3Key, requestId: this.report.requestId },
+          data: { s3Key, s3Url, requestId: this.report.requestId },
           source: 'DATA_PROVIDER_V2_TEAMS_generateOperationReport',
         });
+
+        return { s3Key, s3Url };
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -505,6 +511,15 @@ export class TeamsDataProviderService {
   }
 
   public async init(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
+    const startTime = Date.now();
+
+    // Create execution tracking record
+    await DataProviderExecutionService.createExecution({
+      requestId: this.report.requestId,
+      tournamentId: tournament.id,
+      operationType: 'teams_create',
+    });
+
     // Initialize report tournament data
     this.report.tournament = {
       id: tournament.id,
@@ -631,7 +646,23 @@ export class TeamsDataProviderService {
       }
 
       // Generate invoice file at the very end
-      await this.generateOperationReport();
+      const reportResult = await this.generateOperationReport();
+
+      // Complete execution tracking with success, including report file info if available
+      const updateData: any = {
+        status: 'completed',
+        summary: this.report.summary,
+        duration: Date.now() - startTime,
+      };
+
+      if (reportResult?.s3Key) {
+        updateData.reportFileKey = reportResult.s3Key;
+      }
+      if (reportResult?.s3Url) {
+        updateData.reportFileUrl = reportResult.s3Url;
+      }
+
+      await DataProviderExecutionService.completeExecution(this.report.requestId, updateData);
 
       return query;
     } catch (error: unknown) {
@@ -640,6 +671,14 @@ export class TeamsDataProviderService {
         error: errorMessage,
       });
       await this.generateOperationReport();
+
+      // Complete execution tracking with failure
+      await DataProviderExecutionService.completeExecution(this.report.requestId, {
+        status: 'failed',
+        summary: this.report.summary,
+        duration: Date.now() - startTime,
+      });
+
       Profiling.error({
         source: 'DATA_PROVIDER_V2_TEAMS_init',
         error: error instanceof Error ? error : new Error(errorMessage),

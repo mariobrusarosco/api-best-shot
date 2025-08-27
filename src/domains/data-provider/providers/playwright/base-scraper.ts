@@ -1,6 +1,6 @@
 import type { Browser, BrowserContext, Page, Response } from 'playwright';
 import { chromium } from 'playwright';
-import { S3FileStorage } from '../file-storage';
+import { S3FileStorage } from '../../services/file-storage';
 import mime from 'mime-types';
 import Profiling from '@/services/profiling';
 

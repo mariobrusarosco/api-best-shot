@@ -9,7 +9,7 @@ import { DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
 import { QUERIES_MATCH } from '@/domains/match/queries';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { S3FileStorage } from '../providers/file-storage';
+import { S3FileStorage } from './file-storage';
 
 const safeSofaDate = (date: unknown): Date | null => {
   return date === null || date === undefined ? null : new Date(date as string | number | Date);

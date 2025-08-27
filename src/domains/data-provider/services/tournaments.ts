@@ -6,7 +6,7 @@ import { and, eq } from 'drizzle-orm';
 import { CreateTournamentInput } from '../api/v2/tournament/typing';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { DataProviderExecutionOperationType } from '../typing';
-import { DataProviderExecutionService } from './index';
+import { DataProviderExecutionService } from './execution';
 import { DataProviderReportService } from './report';
 
 export class TournamentDataProviderService {

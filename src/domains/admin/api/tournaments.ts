@@ -1,3 +1,4 @@
+import { AdminMatchesService } from '@/domains/admin/services/matches';
 import { AdminRoundsService } from '@/domains/admin/services/rounds';
 import { AdminStandingsService } from '@/domains/admin/services/standings';
 import { AdminTeamsService } from '@/domains/admin/services/teams';
@@ -27,6 +28,14 @@ export const API_ADMIN_TOURNAMENTS = {
 
   async updateTeams(req: Request, res: Response) {
     return await AdminTeamsService.updateTeams(req, res);
+  },
+
+  async createMatches(req: Request, res: Response) {
+    return await AdminMatchesService.createMatches(req, res);
+  },
+
+  async updateMatches(req: Request, res: Response) {
+    return await AdminMatchesService.updateMatches(req, res);
   },
 
   async createStandings(req: Request, res: Response) {

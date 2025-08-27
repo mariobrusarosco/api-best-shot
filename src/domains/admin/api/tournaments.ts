@@ -25,6 +25,10 @@ export const API_ADMIN_TOURNAMENTS = {
     return await AdminTeamsService.createTeams(req, res);
   },
 
+  async updateTeams(req: Request, res: Response) {
+    return await AdminTeamsService.updateTeams(req, res);
+  },
+
   async createStandings(req: Request, res: Response) {
     return await AdminStandingsService.createStandings(req, res);
   },

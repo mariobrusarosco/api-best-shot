@@ -5,7 +5,7 @@ import { StandingsDataProviderService } from '@/domains/data-provider/services/s
 import { T_Member } from '@/domains/member/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
-import Profiling from '@/services/profiling';
+import { slackNotifications } from '@/services/notifications/slack';
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
@@ -136,6 +136,10 @@ export const API_ADMIN = {
 
   async createStandings(req: Request, res: Response) {
     let tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>> | null = null;
+    // #1 Start Scrapper
+    const scraper = await BaseScraper.createInstance();
+    // #2 Start a reporter
+    const reporter = new DataProviderReport('create_standings');
 
     try {
       if (!req.body.tournamentId) {
@@ -154,30 +158,42 @@ export const API_ADMIN = {
         });
       }
 
-      // #1 Start Scrapper
-      const scraper = await BaseScraper.createInstance();
-      // #2 Start a reporter
-      const reporter = new DataProviderReport('create_standings');
       reporter.setTournament(tournament);
       // #3 Call Standings Data Provider Service
       const provider = new StandingsDataProviderService(scraper, reporter);
-      // // #4 Init the provider
+      // #4 Init the provider
       const standings = await provider.init(tournament);
-      // #5 Save the report on the database
-      //TODO: Save the report on the database
+      // #5 Upload report to S3 and save to database (success/failure)  
+      await reporter.uploadAndSave();
+      // #5.5 Create message with report URL
+      provider.createAndSetSlackMessage(tournament, standings);
+      // #6 Send Slack notification
+      await reporter.sendSlackNotification();
+      // #7 Close Playwright browser
+      scraper.close();
 
-      // #6 Notify on Slack
       console.log({ standings, reporter: reporter.toJSON() });
 
       return res.status(200).json({
         success: true,
-        reporter: 1,
         message: 'Standings created successfully',
       });
     } catch (error) {
-      Profiling.error({
-        source: 'ADMIN_API_TOURNAMENTS_createStandings',
-        error: `Failed to create standings ${error}`,
+      console.error('Error in createStandings:', error);
+      reporter.onOperationFailure();
+      scraper.close();
+
+      // Send error notification to Slack
+      await slackNotifications.sendError(error as Error, {
+        operation: 'create_standings',
+        tournament: tournament?.label,
+        requestId: reporter.requestId,
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create standings',
+        error: (error as Error).message,
       });
     }
   },

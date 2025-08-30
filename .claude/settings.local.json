@@ -105,7 +105,8 @@
       "WebFetch(domain:docs.railway.app)",
       "WebFetch(domain:docs.railway.com)",
       "WebFetch(domain:blog.railway.com)",
-      "WebFetch(domain:productionresultssa10.blob.core.windows.net)"
+      "WebFetch(domain:productionresultssa10.blob.core.windows.net)",
+      "Bash(yarn:*)"
     ],
     "deny": []
   }

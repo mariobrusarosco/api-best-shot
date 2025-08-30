@@ -111,6 +111,11 @@ export class BaseScraper {
       this.page = null;
       this.context = null;
       this.browser = null;
+
+      Profiling.log({
+        msg: 'Playwright browser closed',
+        source: 'BaseScraper.close',
+      });
     } catch (error) {
       Profiling.error({
         source: 'BaseScraper.close',

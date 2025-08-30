@@ -15,6 +15,13 @@
       "when": 1755736606240,
       "tag": "0001_cold_psynapse",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1756560309772,
+      "tag": "0002_bent_thanos",
+      "breakpoints": true
     }
   ]
 }

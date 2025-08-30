@@ -3,6 +3,7 @@ import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import { DB_InsertTournamentStandings, T_TournamentStandings } from '@/domains/tournament/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
+import { SlackMessage } from '@/services/notifications/slack';
 import { Profiling } from '@/services/profiling';
 import { safeString } from '@/utils';
 import { BaseScraper } from '../providers/playwright/base-scraper';
@@ -21,19 +22,9 @@ export class StandingsDataProviderService {
     standingsResponse: ENDPOINT_STANDINGS,
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ): Promise<DB_InsertTournamentStandings[]> {
-    // this.addOperation('transformation', 'map_standings', 'started', {
-    //   tournamentId: tournament.id,
-    //   groupsCount: standingsResponse.standings.length,
-    // });
-
+    const mapStandingsOperation = this.report.createOperation('transformation', 'map_standings');
     try {
       const standings = standingsResponse.standings.map(group => {
-        // this.addOperation('transformation', 'process_group', 'started', {
-        //   groupId: group.id,
-        //   groupName: group.name,
-        //   teamsInGroup: group.rows.length,
-        // });
-
         const groupsStandings = group.rows.map(row => ({
           teamExternalId: safeString(row.team.id),
           tournamentId: tournament.id,
@@ -70,22 +61,16 @@ export class StandingsDataProviderService {
 
       const results = standings.flatMap(group => group.standings) as DB_InsertTournamentStandings[];
 
-      // this.report.summary.standingsCounts.totalGroups = standingsResponse.standings.length;
-
-      // this.addOperation('transformation', 'map_standings', 'completed', {
-      //   totalStandingsCreated: results.length,
-      //   groupsProcessed: standings.length,
-      // });
+      mapStandingsOperation.success({
+        totalStandingsCreated: results.length,
+        groupsProcessed: standings.length,
+      });
 
       return results;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      // this.addOperation('transformation', 'map_standings', 'failed', {
-      //   error: errorMessage,
-      // });
-      Profiling.error({
-        source: 'DATA_PROVIDER_V2_STANDINGS_mapTournamentStandings',
-        error: error instanceof Error ? error : new Error(errorMessage),
+      mapStandingsOperation.fail({
+        error: errorMessage,
       });
       throw error;
     }
@@ -194,19 +179,68 @@ export class StandingsDataProviderService {
     }
   }
 
+  private createAndSetSlackMessage(
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>,
+    standings: DB_InsertTournamentStandings[]
+  ): void {
+    const message: SlackMessage = {
+      text: '⚽ Standings Update Complete',
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: '⚽ STANDINGS UPDATE COMPLETE',
+          },
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*Tournament:* ${tournament?.label}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Teams Processed:* ${standings.length}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Operations:* ${this.report.summary.successfulOperations}/${this.report.summary.totalOperations} successful`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Provider:* SofaScore`,
+            },
+          ],
+        },
+        {
+          type: 'context',
+          elements: [
+            {
+              type: 'mrkdwn',
+              text: this.report.reportUrl ? `Report: <${this.report.reportUrl}|View Full Report>` : `Request ID: \`${this.report.requestId}\``,
+            },
+          ],
+        },
+      ],
+    };
+
+    this.report.setSlackMessage(message);
+  }
+
+
   public async init(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
     try {
-      this.report.setTournament(tournament);
-
-      // Fetching Standings
       const rawStandings = await this.fetchStandings(tournament);
+      if (!rawStandings) return rawStandings;
 
-      // const standings = await this.mapTournamentStandings(rawStandings, tournament);
-      // const query = await this.createOnDatabase(standings);
+      const mappedStandings = await this.mapTournamentStandings(rawStandings, tournament);
 
-      // return query;
+      // Set custom Slack message for this operation
+      this.createAndSetSlackMessage(tournament, mappedStandings);
 
-      console.log(rawStandings);
+      return mappedStandings;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       // this.addOperation('initialization', 'process_standings', 'failed', {
@@ -229,7 +263,7 @@ export class StandingsDataProviderService {
     }
   }
 
-  public async updateTournament(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
+  public async updateStandingds(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
     // Create execution tracking record
     // await DataProviderExecutionService.createExecution({
     //   requestId: this.report.requestId,

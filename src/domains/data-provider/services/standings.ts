@@ -48,15 +48,6 @@ export class StandingsDataProviderService {
           provider: 'sofascore',
         }));
 
-        // this.addOperation('transformation', 'process_group', 'completed', {
-        //   groupId: group.id,
-        //   groupName: group.name,
-        //   standingsCreated: groupsStandings.length,
-        // });
-
-        // this.report.summary.standingsCounts.groupsProcessed++;
-        // this.report.summary.standingsCounts.totalTeams += groupsStandings.length;
-
         return {
           groupId: group.id,
           groupName: group.name,

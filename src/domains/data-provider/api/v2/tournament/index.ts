@@ -1,10 +1,11 @@
-import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import type { TournamentRequest } from './typing';
-import { TournamentDataProviderService } from '@/domains/data-provider/services/tournaments';
-import { Response } from 'express';
-import Profiling from '@/services/profiling';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { DataProviderReport } from '@/domains/data-provider/services/reporter';
+import { TournamentDataProviderService } from '@/domains/data-provider/services/tournaments';
+import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import Profiling from '@/services/profiling';
 import { randomUUID } from 'crypto';
+import { Response } from 'express';
+import type { TournamentRequest } from './typing';
 
 const create = async (req: TournamentRequest, res: Response) => {
   const requestId = randomUUID();
@@ -29,8 +30,9 @@ const create = async (req: TournamentRequest, res: Response) => {
       source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
     });
 
-    const dataProviderService = new TournamentDataProviderService(scraper, requestId);
-    const tournament = await dataProviderService.init(req.body);
+    const report = new DataProviderReport('create_tournament', requestId);
+    const dataProviderService = new TournamentDataProviderService(scraper, report);
+    const tournament = await dataProviderService.createTournament(req.body);
 
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament creation completed successfully`,

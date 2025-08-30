@@ -3,6 +3,8 @@ import { API_ADMIN_TOURNAMENTS } from '@/domains/admin/api/tournaments';
 import { API_ADMIN_TEAMS } from '@/domains/admin/api/teams';
 import { API_ADMIN_ROUNDS } from '@/domains/admin/api/rounds';
 import { API_ADMIN_MATCHES } from '@/domains/admin/api/matches';
+import { API_ADMIN_EXECUTION_JOBS } from '@/domains/admin/api/execution-jobs';
+import { API_ADMIN_REPORTS } from '@/domains/admin/api/reports';
 import { AdminMiddleware } from '@/domains/auth/middleware';
 import express from 'express';
 import { API_ADMIN_STANDINGS } from '../api/standings';
@@ -37,5 +39,13 @@ router.patch('/standings', API_ADMIN_STANDINGS.updateStandings);
 // TEMPORARY: Remove auth for testing
 router.post('/matches', API_ADMIN_MATCHES.createMatches);
 router.patch('/matches', API_ADMIN_MATCHES.updateMatches);
+
+// Execution Jobs (admin only)
+// TEMPORARY: Remove auth for testing
+router.get('/execution-jobs', API_ADMIN_EXECUTION_JOBS.getExecutionJobs);
+
+// Data Provider Reports (admin only)
+// TEMPORARY: Remove auth for testing
+router.get('/reports', API_ADMIN_REPORTS.getReports);
 
 export default router;

@@ -10,13 +10,14 @@ export class TournamentDataProviderService {
   private scraper: BaseScraper;
   public report: DataProviderReport;
 
-  constructor(report: DataProviderReport) {
+  constructor(scraper: BaseScraper, report: DataProviderReport) {
+    this.scraper = scraper;
     this.report = report;
-    this.scraper = new BaseScraper();
   }
 
   static async create(report: DataProviderReport) {
-    return new TournamentDataProviderService(report);
+    const scraper = await BaseScraper.createInstance();
+    return new TournamentDataProviderService(scraper, report);
   }
 
   public async createOnDatabase(input: DB_InsertTournament) {

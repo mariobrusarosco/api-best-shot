@@ -31,7 +31,7 @@ export const API_ADMIN_MATCHES = {
       }
 
       // #6 Get Tournament Rounds
-      const rounds = await QUERIES_TOURNAMENT_ROUND.getTournamentRounds(tournament.id);
+      const rounds = await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournament.id);
       if (!rounds || rounds.length === 0) {
         return res.status(404).json({
           success: false,
@@ -85,7 +85,7 @@ export const API_ADMIN_MATCHES = {
       }
 
       // #6 Get Tournament Rounds
-      const rounds = await QUERIES_TOURNAMENT_ROUND.getTournamentRounds(tournament.id);
+      const rounds = await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournament.id);
       if (!rounds || rounds.length === 0) {
         return res.status(404).json({
           success: false,

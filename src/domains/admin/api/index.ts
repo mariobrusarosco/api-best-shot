@@ -1,5 +1,7 @@
 import { env } from '@/config/env';
+import { T_Member } from '@/domains/member/schema';
 import db from '@/services/database';
+import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';

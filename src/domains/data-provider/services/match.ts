@@ -18,15 +18,15 @@ export class MatchesDataProviderService {
   private scraper: BaseScraper;
   public report: DataProviderReport;
 
-  constructor(report: DataProviderReport) {
+  constructor(scraper: BaseScraper, report: DataProviderReport) {
+    this.scraper = scraper;
     this.report = report;
-    this.scraper = new BaseScraper();
   }
 
   static async create(report: DataProviderReport) {
-    return new MatchesDataProviderService(report);
+    const scraper = await BaseScraper.createInstance();
+    return new MatchesDataProviderService(scraper, report);
   }
-
 
   public async getTournamentMatchesByRound(round: DB_SelectTournamentRound): Promise<ENDPOINT_ROUND | null> {
     const op = this.report.createOperation('scraping', 'fetch_round_matches');

@@ -17,13 +17,14 @@ export class TeamsDataProviderService {
   private scraper: BaseScraper;
   public report: DataProviderReport;
 
-  constructor(report: DataProviderReport) {
+  constructor(scraper: BaseScraper, report: DataProviderReport) {
+    this.scraper = scraper;
     this.report = report;
-    this.scraper = new BaseScraper();
   }
 
   static async create(report: DataProviderReport) {
-    return new TeamsDataProviderService(report);
+    const scraper = await BaseScraper.createInstance();
+    return new TeamsDataProviderService(scraper, report);
   }
 
   private getTeamLogoUrl(teamId: string | number): string {
@@ -193,14 +194,13 @@ export class TeamsDataProviderService {
   public async fetchTeamsFromKnockoutRounds(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ): Promise<I_TEAM_FROM_ROUND[]> {
-    this.addOperation('scraping', 'fetch_teams_knockout', 'started', {
-      tournamentId: tournament.id,
-    });
+    const mainOp = this.report.createOperation('scraping', 'fetch_teams_knockout');
 
     try {
       const rounds = await QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(tournament.id);
 
-      this.addOperation('database', 'get_knockout_rounds', 'completed', {
+      const roundsOp = this.report.createOperation('database', 'get_knockout_rounds');
+      roundsOp.success({
         roundsCount: rounds.length,
         rounds: rounds.map((round: { slug?: string; label?: string }) => round.slug || round.label),
       });
@@ -213,17 +213,14 @@ export class TeamsDataProviderService {
       let failedRounds = 0;
 
       for (const round of rounds) {
-        this.addOperation('scraping', 'fetch_round_teams', 'started', {
-          roundSlug: round.slug,
-          providerUrl: round.providerUrl,
-        });
+        const roundOp = this.report.createOperation('scraping', 'fetch_round_teams');
 
         try {
           await this.scraper.goto(round.providerUrl);
           const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
 
           if (!rawContent?.events || rawContent?.events?.length === 0) {
-            this.addOperation('scraping', 'fetch_round_teams', 'completed', {
+            roundOp.success({
               roundSlug: round.slug,
               teamsCount: 0,
               note: 'No events found',
@@ -247,7 +244,7 @@ export class TeamsDataProviderService {
             return true;
           });
 
-          this.addOperation('scraping', 'fetch_round_teams', 'completed', {
+          roundOp.success({
             roundSlug: round.slug,
             totalTeamsInRound: roundTeams.length,
             newUniqueTeams: newTeams.length,
@@ -263,7 +260,7 @@ export class TeamsDataProviderService {
           failedRounds++;
 
           // Log individual round failure but continue with other rounds
-          this.addOperation('scraping', 'fetch_round_teams', 'failed', {
+          roundOp.fail({
             roundSlug: round.slug,
             providerUrl: round.providerUrl,
             error: errorMessage,
@@ -278,7 +275,7 @@ export class TeamsDataProviderService {
 
       // Determine if we should consider this successful
 
-      this.addOperation('scraping', 'fetch_teams_knockout', 'completed', {
+      mainOp.success({
         totalUniqueTeams: ALL_KNOCKOUT_TEAMS.length,
         totalSkippedDuplicates,
         roundsProcessed: rounds.length,
@@ -295,7 +292,7 @@ export class TeamsDataProviderService {
 
       console.log('[DEBUG] fetchTeamsFromKnockoutRounds unexpected error:', errorMessage);
 
-      this.addOperation('scraping', 'fetch_teams_knockout', 'failed', {
+      mainOp.fail({
         error: errorMessage,
         note: 'Unexpected error in knockout rounds processing',
       });

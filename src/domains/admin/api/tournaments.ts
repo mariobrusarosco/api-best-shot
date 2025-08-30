@@ -1,6 +1,7 @@
 import { AdminRoundsService } from '@/domains/admin/services/rounds';
 import { AdminTournamentService } from '@/domains/admin/services/tournament';
 import { Request, Response } from 'express';
+
 export const API_ADMIN_TOURNAMENTS = {
   async getAllTournaments(req: Request, res: Response) {
     return await AdminTournamentService.getAllTournaments(req, res);

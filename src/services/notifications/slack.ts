@@ -20,65 +20,7 @@ export interface SlackMessage {
 export class SlackNotificationService {
   constructor(private webhookUrl: string) {}
 
-  async sendError(error: Error, context: { operation?: string; tournament?: string; requestId?: string }): Promise<void> {
-    if (!this.webhookUrl) {
-      console.warn('Slack webhook URL not configured, skipping error notification');
-      return;
-    }
-
-    const message: SlackMessage = {
-      text: `🚨 Data Provider Error`,
-      blocks: [
-        {
-          type: 'header',
-          text: {
-            type: 'plain_text',
-            text: '🚨 Data Provider Error'
-          }
-        },
-        {
-          type: 'section',
-          fields: [
-            {
-              type: 'mrkdwn',
-              text: `*Error:* ${error.message}`
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Operation:* ${context.operation || 'Unknown'}`
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Tournament:* ${context.tournament || 'Unknown'}`
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Request ID:* ${context.requestId || 'Unknown'}`
-            }
-          ]
-        }
-      ]
-    };
-
-    if (error.stack) {
-      const truncatedStack = error.stack.substring(0, 500) + (error.stack.length > 500 ? '...' : '');
-      message.blocks?.push({
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `\`\`\`${truncatedStack}\`\`\``
-        }
-      });
-    }
-
-    await this.sendMessage(message);
-  }
-
-  async sendCustomMessage(message: SlackMessage): Promise<void> {
-    await this.sendMessage(message);
-  }
-
-  private async sendMessage(message: SlackMessage): Promise<void> {
+  public async sendMessage(message: SlackMessage): Promise<void> {
     if (!this.webhookUrl) {
       console.warn('Slack webhook URL not configured, skipping notification');
       return;
@@ -101,5 +43,3 @@ export class SlackNotificationService {
     }
   }
 }
-
-export const slackNotifications = new SlackNotificationService(process.env.SLACK_WEBHOOK_REPORT_URL || '');

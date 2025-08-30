@@ -2,6 +2,7 @@ import { API_ADMIN } from '@/domains/admin/api';
 import { API_ADMIN_TOURNAMENTS } from '@/domains/admin/api/tournaments';
 import { AdminMiddleware } from '@/domains/auth/middleware';
 import express from 'express';
+import { API_ADMIN_STANDINGS } from '../api/standings';
 
 const router = express.Router();
 
@@ -24,6 +25,7 @@ router.post('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.createTournam
 
 // Tournament Standings Management (admin only)
 // TEMPORARY: Remove auth for testing
-router.post('/standings', API_ADMIN.createStandings);
+router.post('/standings', API_ADMIN_STANDINGS.createStandings);
+router.patch('/standings', API_ADMIN_STANDINGS.updateStandings);
 
 export default router;

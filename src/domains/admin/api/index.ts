@@ -1,12 +1,5 @@
 import { env } from '@/config/env';
-import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
-import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
-import { T_Member } from '@/domains/member/schema';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
-import { slackNotifications } from '@/services/notifications/slack';
-import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
@@ -130,70 +123,6 @@ export const API_ADMIN = {
         success: false,
         error: 'Failed to seed database',
         details: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-  },
-
-  async createStandings(req: Request, res: Response) {
-    let tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>> | null = null;
-    // #1 Start Scrapper
-    const scraper = await BaseScraper.createInstance();
-    // #2 Start a reporter
-    const reporter = new DataProviderReport('create_standings');
-
-    try {
-      if (!req.body.tournamentId) {
-        return res.status(400).json({
-          success: false,
-          error: 'Tournament ID is required',
-        });
-      }
-
-      tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
-
-      if (!tournament) {
-        return res.status(404).json({
-          success: false,
-          error: 'Tournament not found',
-        });
-      }
-
-      reporter.setTournament(tournament);
-      // #3 Call Standings Data Provider Service
-      const provider = new StandingsDataProviderService(scraper, reporter);
-      // #4 Init the provider
-      const standings = await provider.init(tournament);
-      // #5 Upload report to S3 and save to database (success/failure)  
-      await reporter.uploadAndSave();
-      // #5.5 Create message with report URL
-      provider.createAndSetSlackMessage(tournament, standings);
-      // #6 Send Slack notification
-      await reporter.sendSlackNotification();
-      // #7 Close Playwright browser
-      scraper.close();
-
-      console.log({ standings, reporter: reporter.toJSON() });
-
-      return res.status(200).json({
-        success: true,
-        message: 'Standings created successfully',
-      });
-    } catch (error) {
-      console.error('Error in createStandings:', error);
-      reporter.onOperationFailure();
-      scraper.close();
-
-      // Send error notification to Slack
-      await slackNotifications.sendError(error as Error, {
-        operation: 'create_standings',
-        tournament: tournament?.label,
-        requestId: reporter.requestId,
-      });
-
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to create standings',
-        error: (error as Error).message,
       });
     }
   },

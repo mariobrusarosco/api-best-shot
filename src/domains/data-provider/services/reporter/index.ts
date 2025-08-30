@@ -1,6 +1,6 @@
 import { QUERIES_DATA_PROVIDER_REPORTS } from '@/domains/data-provider/queries/reports';
 import { S3FileStorage } from '@/services/file-storage';
-import { SlackMessage, slackNotifications } from '@/services/notifications/slack';
+import { SlackMessage, SlackNotificationService } from '@/services/notifications/slack';
 import { v4 as uuidv4 } from 'uuid';
 import { Operation } from './operation';
 
@@ -9,7 +9,6 @@ export class DataProviderReport {
   public reportUrl: string | null = null;
   public tournament: { label: string; id: string; provider?: string } | null = null;
   public operationType: string;
-  private slackMessage: SlackMessage | null = null;
   public summary: {
     totalOperations: number;
     successfulOperations: number;
@@ -66,10 +65,6 @@ export class DataProviderReport {
     return this.summary;
   }
 
-  public setSlackMessage(message: SlackMessage): void {
-    this.slackMessage = message;
-  }
-
   public async uploadToS3(): Promise<void> {
     const reportData = this.toJSON();
     const jsonContent = JSON.stringify(reportData, null, 2);
@@ -86,12 +81,11 @@ export class DataProviderReport {
     this.reportUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${key}`;
   }
 
-  public async uploadAndSave(): Promise<DataProviderReport> {
+  public async saveOnDatabase(): Promise<DataProviderReport> {
+    console.log('Saving report to database', this.reportUrl);
     if (!this.tournament) {
       throw new Error('Tournament must be set before saving to database');
     }
-    // Upload to S3 first
-    await this.uploadToS3();
     // Determine status based on operations
     const status = this.summary.failedOperations > 0 ? 'failed' : 'completed';
     // Save complete report to database
@@ -108,10 +102,9 @@ export class DataProviderReport {
     return this;
   }
 
-  public async sendSlackNotification(): Promise<void> {
-    if (this.slackMessage) {
-      await slackNotifications.sendCustomMessage(this.slackMessage);
-    }
+  public async sendNotification(slackMessage: SlackMessage): Promise<void> {
+    const slack = new SlackNotificationService(process.env.SLACK_WEBHOOK_REPORT_URL || '');
+    slack.sendMessage(slackMessage);
   }
 
   public toJSON() {

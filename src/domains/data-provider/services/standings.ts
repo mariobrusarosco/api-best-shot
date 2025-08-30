@@ -11,11 +11,16 @@ import { DataProviderReport } from './reporter';
 
 export class StandingsDataProviderService {
   private scraper: BaseScraper;
-  private report: DataProviderReport;
+  public report: DataProviderReport;
 
   constructor(scraper: BaseScraper, reporter: DataProviderReport) {
     this.scraper = scraper;
     this.report = reporter;
+  }
+
+  static async create(reporter: DataProviderReport): Promise<StandingsDataProviderService> {
+    const scraper = await BaseScraper.createInstance();
+    return new StandingsDataProviderService(scraper, reporter);
   }
 
   public async mapTournamentStandings(
@@ -120,40 +125,28 @@ export class StandingsDataProviderService {
   }
 
   public async createOnDatabase(standings: DB_InsertTournamentStandings[]) {
-    // this.addOperation('database', 'create_standings', 'started', {
-    //   standingsCount: standings.length,
-    // });
+    const op = this.report.createOperation('database', 'insert_standings');
 
     try {
       const query = await db.insert(T_TournamentStandings).values(standings);
-
-      // this.addOperation('database', 'create_standings', 'completed', {
-      //   createdStandingsCount: standings.length,
-      // });
-
-      // this.report.summary.standingsCounts.totalStandingsCreated = standings.length;
-
+      op.success({
+        queryCount: query.length,
+      });
       return query;
     } catch (error: unknown) {
-      // this.addOperation('database', 'create_standings', 'failed', {
-      //   error: errorMessage,
-      // });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      op.fail({
+        error: errorMessage,
+      });
       throw error;
     }
   }
 
   public async updateOnDatabase(standings: DB_InsertTournamentStandings[]) {
-    // this.addOperation('database', 'update_standings', 'started', {
-    //   standingsCount: standings.length,
-    // });
-
+    const op = this.report.createOperation('database', 'update_standings');
     if (standings.length === 0) {
-      // this.addOperation('database', 'update_standings', 'failed', {
-      //   error: 'No standings to update',
-      // });
-      Profiling.error({
-        error: new Error('No standings to update in the database'),
-        source: 'StandingsDataProviderService.updateOnDatabase',
+      op.success({
+        queryCount: 0,
       });
       return [];
     }
@@ -161,36 +154,136 @@ export class StandingsDataProviderService {
     try {
       const query = await QUERIES_TOURNAMENT.upsertTournamentStandings(standings);
 
-      // this.addOperation('database', 'update_standings', 'completed', {
-      //   updatedStandingsCount: query.length,
-      // });
+      op.success({
+        queryCount: query.length,
+      });
 
       return query;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      // this.addOperation('database', 'update_standings', 'failed', {
-      //   error: errorMessage,
-      // });
-      Profiling.error({
-        error: error instanceof Error ? error : new Error(errorMessage),
-        source: 'StandingsDataProviderService.updateOnDatabase',
+      op.fail({
+        error: errorMessage,
       });
       throw error;
     }
   }
 
-  private createAndSetSlackMessage(
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>,
-    standings: DB_InsertTournamentStandings[]
-  ): void {
+  public async createStandings(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
+    try {
+      const rawStandings = await this.fetchStandings(tournament);
+      if (!rawStandings) return rawStandings;
+
+      const mappedStandings = await this.mapTournamentStandings(rawStandings, tournament);
+      const query = await this.createOnDatabase(mappedStandings);
+
+      await this.report.uploadToS3();
+      await this.report.saveOnDatabase();
+
+      const slackMessage = this.createAndSetSlackMessage(tournament, mappedStandings);
+      await this.report.sendNotification(slackMessage);
+      this.scraper.close();
+
+      return query;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      Profiling.error({
+        source: 'DATA_PROVIDER_V2_STANDINGS_init',
+        error: error instanceof Error ? error : new Error(errorMessage),
+      });
+      throw error;
+    }
+  }
+
+  public async updateStandings(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
+    try {
+      const rawStandings = await this.fetchStandings(tournament);
+      if (!rawStandings) return rawStandings;
+
+      const mappedStandings = await this.mapTournamentStandings(rawStandings, tournament);
+      const query = await this.updateOnDatabase(mappedStandings);
+
+      await this.report.uploadToS3();
+      await this.report.saveOnDatabase();
+
+      const slackMessage = this.createAndSetSlackMessage(tournament, mappedStandings);
+      await this.report.sendNotification(slackMessage);
+      this.scraper.close();
+
+      return query;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      Profiling.error({
+        source: 'DATA_PROVIDER_V2_STANDINGS_init',
+        error: error instanceof Error ? error : new Error(errorMessage),
+      });
+      throw error;
+    }
+  }
+
+  public createErrorMessage(
+    error: Error,
+    context: { operation?: string; tournament?: string; requestId?: string }
+  ): SlackMessage {
     const message: SlackMessage = {
-      text: '⚽ Standings Update Complete',
+      text: `🚨 Data Provider Error`,
       blocks: [
         {
           type: 'header',
           text: {
             type: 'plain_text',
-            text: '⚽ STANDINGS UPDATE COMPLETE',
+            text: '🚨 Data Provider Error',
+          },
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*Error:* ${error.message}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Operation:* ${context.operation || 'Unknown'}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Tournament:* ${context.tournament || 'Unknown'}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Request ID:* ${context.requestId || 'Unknown'}`,
+            },
+          ],
+        },
+      ],
+    };
+
+    if (error.stack) {
+      const truncatedStack = error.stack.substring(0, 500) + (error.stack.length > 500 ? '...' : '');
+      message.blocks?.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `\`\`\`${truncatedStack}\`\`\``,
+        },
+      });
+    }
+
+    return message;
+  }
+
+  public createAndSetSlackMessage(
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>,
+    standings: DB_InsertTournamentStandings[]
+  ): SlackMessage {
+    const message: SlackMessage = {
+      text: `⚽ ${this.report.operationType} Complete`,
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: `⚽ ${this.report.operationType} COMPLETE`,
           },
         },
         {
@@ -219,126 +312,13 @@ export class StandingsDataProviderService {
           elements: [
             {
               type: 'mrkdwn',
-              text: this.report.reportUrl ? `Report: <${this.report.reportUrl}|View Full Report>` : `Request ID: \`${this.report.requestId}\``,
+              text: `Report: <${this.report.reportUrl}|View Full Report>`,
             },
           ],
         },
       ],
     };
 
-    this.report.setSlackMessage(message);
-  }
-
-
-  public async init(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
-    try {
-      const rawStandings = await this.fetchStandings(tournament);
-      if (!rawStandings) return rawStandings;
-
-      const mappedStandings = await this.mapTournamentStandings(rawStandings, tournament);
-
-      // Set custom Slack message for this operation
-      this.createAndSetSlackMessage(tournament, mappedStandings);
-
-      return mappedStandings;
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      // this.addOperation('initialization', 'process_standings', 'failed', {
-      //   error: errorMessage,
-      // });
-      // await this.generateOperationReport();
-
-      // Complete execution tracking with failure
-      // await DataProviderExecutionService.completeExecution(this.report.requestId, {
-      //   status: 'failed',
-      //   summary: this.report.summary,
-      //   duration: Date.now() - startTime,
-      // });
-
-      Profiling.error({
-        source: 'DATA_PROVIDER_V2_STANDINGS_init',
-        error: error instanceof Error ? error : new Error(errorMessage),
-      });
-      throw error;
-    }
-  }
-
-  public async updateStandingds(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
-    // Create execution tracking record
-    // await DataProviderExecutionService.createExecution({
-    //   requestId: this.report.requestId,
-    //   tournamentId: tournament.id,
-    //   operationType: 'standings_update',
-    // });
-
-    // Initialize report tournament data
-    this.report.tournament = {
-      id: tournament.id,
-      label: tournament.label,
-    };
-    this.report.operationType = 'update';
-
-    // this.addOperation('initialization', 'validate_input', 'started', {
-    //   tournamentId: tournament.id,
-    //   tournamentLabel: tournament.label,
-    // });
-
-    try {
-      // this.addOperation('initialization', 'validate_input', 'completed', {
-      //   tournamentId: tournament.id,
-      // });
-
-      const rawStandings = await this.fetchStandings(tournament);
-
-      if (!rawStandings) {
-        // this.addOperation('update', 'process_standings', 'completed', {
-        //   note: 'No standings data found for tournament',
-        // });
-        // await this.generateOperationReport();
-
-        // Complete execution tracking with success
-        // await DataProviderExecutionService.completeExecution(this.report.requestId, {
-        //   status: 'completed',
-        //   summary: this.report.summary,
-        //   duration: Date.now() - startTime,
-        // });
-
-        return [];
-      }
-
-      const standings = await this.mapTournamentStandings(rawStandings, tournament);
-      const query = await this.updateOnDatabase(standings);
-
-      // Generate operation report at the very end
-      // await this.generateOperationReport();
-
-      // Complete execution tracking with success
-      // await DataProviderExecutionService.completeExecution(this.report.requestId, {
-      //   status: 'completed',
-      //   summary: this.report.summary,
-      //   duration: Date.now() - startTime,
-      // });
-
-      return query;
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      // this.addOperation('update', 'process_standings', 'failed', {
-      //   error: errorMessage,
-      // });
-      // await this.generateOperationReport();
-
-      // Complete execution tracking with failure
-      // await DataProviderExecutionService.completeExecution(this.report.requestId, {
-      //   status: 'failed',
-      //   summary: this.report.summary,
-      //   duration: Date.now() - startTime,
-      // });
-
-      Profiling.error({
-        source: 'DATA_PROVIDER_V2_STANDINGS_updateTournament',
-        error: error instanceof Error ? error : new Error(errorMessage),
-      });
-      throw error;
-    }
+    return message;
   }
 }

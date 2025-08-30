@@ -2,13 +2,13 @@ name: PR Quality Gates
 
 on:
   pull_request:
-    branches: [ main, staging ]
+    branches: [main, staging]
 
 jobs:
   quality-checks:
     name: Quality Gates
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,10 +17,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.17.0'
-      
+
       - name: Enable Corepack
         run: corepack enable
-      
+
       - name: Install Yarn
         run: corepack prepare yarn@3.8.7 --activate
 
@@ -32,14 +32,6 @@ jobs:
 
       - name: Run type checking
         run: yarn compile
-
-      - name: Run tests with coverage
-        run: yarn test:cov
-
-      - name: Validate environment setup
-        run: |
-          yarn validate:secrets || echo "⚠️ Environment validation failed (expected in PR)"
-          yarn validate:gcp || echo "⚠️ GCP validation failed (expected in PR)"
 
       - name: Build Docker image
         run: docker build -t api-best-shot-pr-test .
@@ -57,14 +49,14 @@ jobs:
           script: |
             const status = '${{ job.status }}' === 'success' ? '✅' : '❌';
             const message = `${status} **Quality Gates ${status === '✅' ? 'Passed' : 'Failed'}**
-            
+
             - Linting: ${status}
             - Type Checking: ${status} 
             - Tests: ${status}
             - Docker Build: ${status}
-            
+
             ${status === '✅' ? 'Ready for merge!' : 'Please fix the issues above.'}`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

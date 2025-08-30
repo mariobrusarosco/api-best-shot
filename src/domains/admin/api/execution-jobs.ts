@@ -31,7 +31,7 @@ export const API_ADMIN_EXECUTION_JOBS = {
 
       // Transform the data to match what the frontend expects
       const formattedJobs = executionJobs.map(job => {
-        const summary = (job.summary as any) || {};
+        const summary = (job.summary as Record<string, unknown>) || {};
         return {
           id: job.id,
           operationType: job.operationType,

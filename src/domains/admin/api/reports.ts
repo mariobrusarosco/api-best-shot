@@ -36,7 +36,7 @@ export const API_ADMIN_REPORTS = {
 
       // Transform the data
       const formattedReports = reports.map(report => {
-        const summary = (report.summary as any) || {};
+        const summary = (report.summary as Record<string, unknown>) || {};
         return {
           id: report.id,
           requestId: report.requestId,

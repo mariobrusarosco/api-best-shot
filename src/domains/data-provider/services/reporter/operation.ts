@@ -10,11 +10,11 @@ export class Operation {
     private report?: DataProviderReport,
     public status: 'started' | 'completed' | 'failed' = 'started',
     public startTime = Date.now(),
-    public data?: any,
-    public error?: any
+    public data?: unknown,
+    public error?: unknown
   ) {}
 
-  success(data?: any) {
+  success(data?: unknown) {
     this.status = 'completed';
     this.endTime = Date.now();
     this.duration = this.endTime - this.startTime;
@@ -22,7 +22,7 @@ export class Operation {
     Object.assign(this, { data });
   }
 
-  fail(error?: any) {
+  fail(error?: unknown) {
     this.status = 'failed';
     this.endTime = Date.now();
     this.duration = this.endTime - this.startTime;

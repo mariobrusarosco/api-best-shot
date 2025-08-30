@@ -196,7 +196,7 @@ export class TournamentDataProviderService {
     }
   }
 
-  public createSlackMessage(tournament: any): SlackMessage {
+  public createSlackMessage(tournament: Record<string, unknown>): SlackMessage {
     return {
       text: `🏆 Tournament Created`,
       blocks: [

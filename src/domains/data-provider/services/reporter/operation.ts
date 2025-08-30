@@ -3,7 +3,7 @@ import type { DataProviderReport } from './index';
 export class Operation {
   public endTime?: number;
   public duration?: number;
-  
+
   constructor(
     public type: string,
     public name: string,

@@ -76,8 +76,7 @@ export const API_ADMIN_STANDINGS = {
       // #6 Set Tournament on Reporter
       provider.report.setTournament(tournament);
       // #7 Create Standings
-      const standings = await provider.updateStandings(tournament);
-      console.log({ standings, reporter: provider.report.toJSON() });
+      await provider.updateStandings(tournament);
 
       return res.status(200).json({
         success: true,

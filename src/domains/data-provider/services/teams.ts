@@ -9,10 +9,10 @@ import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { Profiling } from '@/services/profiling';
 import { safeString, sleep } from '@/utils';
-import { writeFileSync, mkdirSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { S3FileStorage } from '../../../services/file-storage';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { S3FileStorage } from '../providers/file-storage';
 
 type TeamsScrapingOperationData =
   | {

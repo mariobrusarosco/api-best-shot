@@ -4,184 +4,35 @@ import { DB_InsertTournamentStandings, T_TournamentStandings } from '@/domains/t
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
 import { Profiling } from '@/services/profiling';
-import { ServiceLogger } from '@/services/profiling/logger';
 import { safeString } from '@/utils';
-import { mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { S3FileStorage } from '../providers/file-storage';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { DataProviderExecutionService } from './index';
-
-type ScrapingOperationData =
-  | {
-      url?: string;
-      tournamentId?: string;
-      groupsCount?: number;
-      standingsCount?: number;
-      note?: string;
-    }
-  | { error: string; debugMessage?: string }
-  | {
-      groupId?: string | number;
-      groupName?: string;
-      teamsInGroup?: number;
-      standingsCreated?: number;
-    }
-  | {
-      totalStandingsCreated?: number;
-      groupsProcessed?: number;
-      createdStandingsCount?: number;
-      updatedStandingsCount?: number;
-      standingsCount?: number;
-    }
-  | Record<string, unknown>;
-
-interface StandingsOperation {
-  step: string;
-  operation: string;
-  status: 'started' | 'completed' | 'failed';
-  data?: ScrapingOperationData;
-  timestamp: string;
-}
-
-interface StandingsOperationReport {
-  requestId: string;
-  tournament: {
-    id: string;
-    label: string;
-  };
-  operationType: 'create' | 'update';
-  startTime: string;
-  endTime?: string;
-  operations: StandingsOperation[];
-  summary: {
-    totalOperations: number;
-    successfulOperations: number;
-    failedOperations: number;
-    standingsCounts: {
-      totalGroups: number;
-      totalTeams: number;
-      totalStandingsCreated: number;
-      groupsProcessed: number;
-    };
-  };
-}
+import { DataProviderReport } from './reporter';
 
 export class StandingsDataProviderService {
   private scraper: BaseScraper;
-  private report: StandingsOperationReport;
+  private report: DataProviderReport;
 
-  constructor(scraper: BaseScraper, requestId: string) {
+  constructor(scraper: BaseScraper, reporter: DataProviderReport) {
     this.scraper = scraper;
-    this.report = {
-      requestId,
-      tournament: {
-        id: '',
-        label: '',
-      },
-      operationType: 'create',
-      startTime: new Date().toISOString(),
-      operations: [],
-      summary: {
-        totalOperations: 0,
-        successfulOperations: 0,
-        failedOperations: 0,
-        standingsCounts: {
-          totalGroups: 0,
-          totalTeams: 0,
-          totalStandingsCreated: 0,
-          groupsProcessed: 0,
-        },
-      },
-    };
-  }
-
-  private addOperation(
-    step: string,
-    operation: string,
-    status: 'started' | 'completed' | 'failed',
-    data?: ScrapingOperationData
-  ): void {
-    this.report.operations.push({
-      step,
-      operation,
-      status,
-      data,
-      timestamp: new Date().toISOString(),
-    });
-
-    this.report.summary.totalOperations++;
-    if (status === 'completed') {
-      this.report.summary.successfulOperations++;
-    } else if (status === 'failed') {
-      this.report.summary.failedOperations++;
-    }
-  }
-
-  private async generateOperationReport(): Promise<void> {
-    this.report.endTime = new Date().toISOString();
-    const filename = `standings-operation-${this.report.requestId}`;
-    const jsonContent = JSON.stringify(this.report, null, 2);
-
-    try {
-      const isLocal = process.env.NODE_ENV === 'development';
-
-      if (isLocal) {
-        // Store locally for development
-        const reportsDir = join(process.cwd(), 'data-provider-operation-reports');
-        const filepath = join(reportsDir, `${filename}.json`);
-
-        mkdirSync(reportsDir, { recursive: true });
-        writeFileSync(filepath, jsonContent);
-
-        ServiceLogger.success('GENERATE', 'REPORTS', {
-          filepath,
-          requestId: this.report.requestId,
-          storageType: 'local',
-        });
-      } else {
-        // Store in S3 for demo/production environments
-        const s3Storage = new S3FileStorage();
-        const s3Key = await s3Storage.uploadFile({
-          buffer: Buffer.from(jsonContent, 'utf8'),
-          filename,
-          contentType: 'application/json',
-          directory: 'data-provider-operation-reports',
-          cacheControl: 'max-age=604800, public', // 7 days cache
-        });
-
-        ServiceLogger.success('GENERATE', 'REPORTS', {
-          s3Key,
-          requestId: this.report.requestId,
-          storageType: 'S3',
-        });
-      }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      ServiceLogger.error('GENERATE', error instanceof Error ? error : new Error(errorMessage), 'REPORTS', {
-        requestId: this.report.requestId,
-        filename,
-      });
-      console.error('Failed to write standings operation report file:', errorMessage);
-    }
+    this.report = reporter;
   }
 
   public async mapTournamentStandings(
     standingsResponse: ENDPOINT_STANDINGS,
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ): Promise<DB_InsertTournamentStandings[]> {
-    this.addOperation('transformation', 'map_standings', 'started', {
-      tournamentId: tournament.id,
-      groupsCount: standingsResponse.standings.length,
-    });
+    // this.addOperation('transformation', 'map_standings', 'started', {
+    //   tournamentId: tournament.id,
+    //   groupsCount: standingsResponse.standings.length,
+    // });
 
     try {
       const standings = standingsResponse.standings.map(group => {
-        this.addOperation('transformation', 'process_group', 'started', {
-          groupId: group.id,
-          groupName: group.name,
-          teamsInGroup: group.rows.length,
-        });
+        // this.addOperation('transformation', 'process_group', 'started', {
+        //   groupId: group.id,
+        //   groupName: group.name,
+        //   teamsInGroup: group.rows.length,
+        // });
 
         const groupsStandings = group.rows.map(row => ({
           teamExternalId: safeString(row.team.id),
@@ -201,14 +52,14 @@ export class StandingsDataProviderService {
           provider: 'sofascore',
         }));
 
-        this.addOperation('transformation', 'process_group', 'completed', {
-          groupId: group.id,
-          groupName: group.name,
-          standingsCreated: groupsStandings.length,
-        });
+        // this.addOperation('transformation', 'process_group', 'completed', {
+        //   groupId: group.id,
+        //   groupName: group.name,
+        //   standingsCreated: groupsStandings.length,
+        // });
 
-        this.report.summary.standingsCounts.groupsProcessed++;
-        this.report.summary.standingsCounts.totalTeams += groupsStandings.length;
+        // this.report.summary.standingsCounts.groupsProcessed++;
+        // this.report.summary.standingsCounts.totalTeams += groupsStandings.length;
 
         return {
           groupId: group.id,
@@ -219,19 +70,19 @@ export class StandingsDataProviderService {
 
       const results = standings.flatMap(group => group.standings) as DB_InsertTournamentStandings[];
 
-      this.report.summary.standingsCounts.totalGroups = standingsResponse.standings.length;
+      // this.report.summary.standingsCounts.totalGroups = standingsResponse.standings.length;
 
-      this.addOperation('transformation', 'map_standings', 'completed', {
-        totalStandingsCreated: results.length,
-        groupsProcessed: standings.length,
-      });
+      // this.addOperation('transformation', 'map_standings', 'completed', {
+      //   totalStandingsCreated: results.length,
+      //   groupsProcessed: standings.length,
+      // });
 
       return results;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.addOperation('transformation', 'map_standings', 'failed', {
-        error: errorMessage,
-      });
+      // this.addOperation('transformation', 'map_standings', 'failed', {
+      //   error: errorMessage,
+      // });
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_mapTournamentStandings',
         error: error instanceof Error ? error : new Error(errorMessage),
@@ -240,29 +91,25 @@ export class StandingsDataProviderService {
     }
   }
 
-  public async getStandings(
+  public async fetchStandings(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ): Promise<ENDPOINT_STANDINGS | null> {
+    const getStandingsOperation = this.report.createOperation('scraping', 'fetch_standings');
     const url = `${tournament.baseUrl}/standings/total`;
-    this.addOperation('scraping', 'fetch_standings', 'started', {
-      tournamentId: tournament.id,
-      url,
-    });
 
     try {
       await this.scraper.goto(url);
       const rawContent = await this.scraper.getPageContent();
 
       if (!rawContent?.standings || rawContent?.standings?.length === 0) {
-        this.addOperation('scraping', 'fetch_standings', 'completed', {
+        getStandingsOperation.success({
           url,
           standingsCount: 0,
-          note: 'No standings data found',
         });
         return null;
       }
 
-      this.addOperation('scraping', 'fetch_standings', 'completed', {
+      getStandingsOperation.success({
         url,
         groupsCount: rawContent.standings.length,
         totalTeamsInStandings: rawContent.standings.reduce(
@@ -274,10 +121,11 @@ export class StandingsDataProviderService {
       return rawContent;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.addOperation('scraping', 'fetch_standings', 'failed', {
+      getStandingsOperation.fail({
         url,
         error: errorMessage,
       });
+
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_getStandings',
         error: error instanceof Error ? error : new Error(errorMessage),
@@ -287,38 +135,37 @@ export class StandingsDataProviderService {
   }
 
   public async createOnDatabase(standings: DB_InsertTournamentStandings[]) {
-    this.addOperation('database', 'create_standings', 'started', {
-      standingsCount: standings.length,
-    });
+    // this.addOperation('database', 'create_standings', 'started', {
+    //   standingsCount: standings.length,
+    // });
 
     try {
       const query = await db.insert(T_TournamentStandings).values(standings);
 
-      this.addOperation('database', 'create_standings', 'completed', {
-        createdStandingsCount: standings.length,
-      });
+      // this.addOperation('database', 'create_standings', 'completed', {
+      //   createdStandingsCount: standings.length,
+      // });
 
-      this.report.summary.standingsCounts.totalStandingsCreated = standings.length;
+      // this.report.summary.standingsCounts.totalStandingsCreated = standings.length;
 
       return query;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      this.addOperation('database', 'create_standings', 'failed', {
-        error: errorMessage,
-      });
+      // this.addOperation('database', 'create_standings', 'failed', {
+      //   error: errorMessage,
+      // });
       throw error;
     }
   }
 
   public async updateOnDatabase(standings: DB_InsertTournamentStandings[]) {
-    this.addOperation('database', 'update_standings', 'started', {
-      standingsCount: standings.length,
-    });
+    // this.addOperation('database', 'update_standings', 'started', {
+    //   standingsCount: standings.length,
+    // });
 
     if (standings.length === 0) {
-      this.addOperation('database', 'update_standings', 'failed', {
-        error: 'No standings to update',
-      });
+      // this.addOperation('database', 'update_standings', 'failed', {
+      //   error: 'No standings to update',
+      // });
       Profiling.error({
         error: new Error('No standings to update in the database'),
         source: 'StandingsDataProviderService.updateOnDatabase',
@@ -329,16 +176,16 @@ export class StandingsDataProviderService {
     try {
       const query = await QUERIES_TOURNAMENT.upsertTournamentStandings(standings);
 
-      this.addOperation('database', 'update_standings', 'completed', {
-        updatedStandingsCount: query.length,
-      });
+      // this.addOperation('database', 'update_standings', 'completed', {
+      //   updatedStandingsCount: query.length,
+      // });
 
       return query;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.addOperation('database', 'update_standings', 'failed', {
-        error: errorMessage,
-      });
+      // this.addOperation('database', 'update_standings', 'failed', {
+      //   error: errorMessage,
+      // });
       Profiling.error({
         error: error instanceof Error ? error : new Error(errorMessage),
         source: 'StandingsDataProviderService.updateOnDatabase',
@@ -348,77 +195,31 @@ export class StandingsDataProviderService {
   }
 
   public async init(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
-    const startTime = Date.now();
-
-    // Create execution tracking record
-    await DataProviderExecutionService.createExecution({
-      requestId: this.report.requestId,
-      tournamentId: tournament.id,
-      operationType: 'standings_create',
-    });
-
-    // Initialize report tournament data
-    this.report.tournament = {
-      id: tournament.id,
-      label: tournament.label,
-    };
-    this.report.operationType = 'create';
-
-    this.addOperation('initialization', 'validate_input', 'started', {
-      tournamentId: tournament.id,
-      tournamentLabel: tournament.label,
-    });
-
     try {
-      this.addOperation('initialization', 'validate_input', 'completed', {
-        tournamentId: tournament.id,
-      });
+      this.report.setTournament(tournament);
 
-      const rawStandings = await this.getStandings(tournament);
+      // Fetching Standings
+      const rawStandings = await this.fetchStandings(tournament);
 
-      if (!rawStandings) {
-        this.addOperation('initialization', 'process_standings', 'completed', {
-          note: 'No standings data available for tournament',
-        });
-        await this.generateOperationReport();
+      // const standings = await this.mapTournamentStandings(rawStandings, tournament);
+      // const query = await this.createOnDatabase(standings);
 
-        // Complete execution tracking with success
-        await DataProviderExecutionService.completeExecution(this.report.requestId, {
-          status: 'completed',
-          summary: this.report.summary,
-          duration: Date.now() - startTime,
-        });
+      // return query;
 
-        return [];
-      }
-
-      const standings = await this.mapTournamentStandings(rawStandings, tournament);
-      const query = await this.createOnDatabase(standings);
-
-      // Generate operation report at the very end
-      await this.generateOperationReport();
-
-      // Complete execution tracking with success
-      await DataProviderExecutionService.completeExecution(this.report.requestId, {
-        status: 'completed',
-        summary: this.report.summary,
-        duration: Date.now() - startTime,
-      });
-
-      return query;
+      console.log(rawStandings);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.addOperation('initialization', 'process_standings', 'failed', {
-        error: errorMessage,
-      });
-      await this.generateOperationReport();
+      // this.addOperation('initialization', 'process_standings', 'failed', {
+      //   error: errorMessage,
+      // });
+      // await this.generateOperationReport();
 
       // Complete execution tracking with failure
-      await DataProviderExecutionService.completeExecution(this.report.requestId, {
-        status: 'failed',
-        summary: this.report.summary,
-        duration: Date.now() - startTime,
-      });
+      // await DataProviderExecutionService.completeExecution(this.report.requestId, {
+      //   status: 'failed',
+      //   summary: this.report.summary,
+      //   duration: Date.now() - startTime,
+      // });
 
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_init',
@@ -429,14 +230,12 @@ export class StandingsDataProviderService {
   }
 
   public async updateTournament(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
-    const startTime = Date.now();
-
     // Create execution tracking record
-    await DataProviderExecutionService.createExecution({
-      requestId: this.report.requestId,
-      tournamentId: tournament.id,
-      operationType: 'standings_update',
-    });
+    // await DataProviderExecutionService.createExecution({
+    //   requestId: this.report.requestId,
+    //   tournamentId: tournament.id,
+    //   operationType: 'standings_update',
+    // });
 
     // Initialize report tournament data
     this.report.tournament = {
@@ -445,30 +244,30 @@ export class StandingsDataProviderService {
     };
     this.report.operationType = 'update';
 
-    this.addOperation('initialization', 'validate_input', 'started', {
-      tournamentId: tournament.id,
-      tournamentLabel: tournament.label,
-    });
+    // this.addOperation('initialization', 'validate_input', 'started', {
+    //   tournamentId: tournament.id,
+    //   tournamentLabel: tournament.label,
+    // });
 
     try {
-      this.addOperation('initialization', 'validate_input', 'completed', {
-        tournamentId: tournament.id,
-      });
+      // this.addOperation('initialization', 'validate_input', 'completed', {
+      //   tournamentId: tournament.id,
+      // });
 
-      const rawStandings = await this.getStandings(tournament);
+      const rawStandings = await this.fetchStandings(tournament);
 
       if (!rawStandings) {
-        this.addOperation('update', 'process_standings', 'completed', {
-          note: 'No standings data found for tournament',
-        });
-        await this.generateOperationReport();
+        // this.addOperation('update', 'process_standings', 'completed', {
+        //   note: 'No standings data found for tournament',
+        // });
+        // await this.generateOperationReport();
 
         // Complete execution tracking with success
-        await DataProviderExecutionService.completeExecution(this.report.requestId, {
-          status: 'completed',
-          summary: this.report.summary,
-          duration: Date.now() - startTime,
-        });
+        // await DataProviderExecutionService.completeExecution(this.report.requestId, {
+        //   status: 'completed',
+        //   summary: this.report.summary,
+        //   duration: Date.now() - startTime,
+        // });
 
         return [];
       }
@@ -477,29 +276,29 @@ export class StandingsDataProviderService {
       const query = await this.updateOnDatabase(standings);
 
       // Generate operation report at the very end
-      await this.generateOperationReport();
+      // await this.generateOperationReport();
 
       // Complete execution tracking with success
-      await DataProviderExecutionService.completeExecution(this.report.requestId, {
-        status: 'completed',
-        summary: this.report.summary,
-        duration: Date.now() - startTime,
-      });
+      // await DataProviderExecutionService.completeExecution(this.report.requestId, {
+      //   status: 'completed',
+      //   summary: this.report.summary,
+      //   duration: Date.now() - startTime,
+      // });
 
       return query;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.addOperation('update', 'process_standings', 'failed', {
-        error: errorMessage,
-      });
-      await this.generateOperationReport();
+      // this.addOperation('update', 'process_standings', 'failed', {
+      //   error: errorMessage,
+      // });
+      // await this.generateOperationReport();
 
       // Complete execution tracking with failure
-      await DataProviderExecutionService.completeExecution(this.report.requestId, {
-        status: 'failed',
-        summary: this.report.summary,
-        duration: Date.now() - startTime,
-      });
+      // await DataProviderExecutionService.completeExecution(this.report.requestId, {
+      //   status: 'failed',
+      //   summary: this.report.summary,
+      //   duration: Date.now() - startTime,
+      // });
 
       Profiling.error({
         source: 'DATA_PROVIDER_V2_STANDINGS_updateTournament',

@@ -1,15 +1,15 @@
-import { BaseScraper } from '../providers/playwright/base-scraper';
-import { DB_InsertMatch, T_Match } from '@/domains/match/schema';
-import { safeString } from '@/utils';
-import db from '@/services/database';
-import { ENDPOINT_ROUND } from '../providers/sofascore_v2/schemas/endpoints';
-import { Profiling } from '@/services/profiling';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import { DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
 import { QUERIES_MATCH } from '@/domains/match/queries';
-import { writeFileSync, mkdirSync } from 'fs';
+import { DB_InsertMatch, T_Match } from '@/domains/match/schema';
+import { DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import db from '@/services/database';
+import { Profiling } from '@/services/profiling';
+import { safeString } from '@/utils';
+import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { S3FileStorage } from '../providers/file-storage';
+import { S3FileStorage } from '../../../services/file-storage';
+import { BaseScraper } from '../providers/playwright/base-scraper';
+import { ENDPOINT_ROUND } from '../providers/sofascore_v2/schemas/endpoints';
 
 const safeSofaDate = (date: unknown): Date | null => {
   return date === null || date === undefined ? null : new Date(date as string | number | Date);

@@ -1,13 +1,16 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import type { ENDPOINT_ROUNDS } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
-import db from '@/services/database';
-import { DB_InsertTournamentRound, DB_UpdateTournamentRound } from '@/domains/tournament-round/schema';
-import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
+import {
+  DB_InsertTournamentRound,
+  DB_UpdateTournamentRound,
+  T_TournamentRound,
+} from '@/domains/tournament-round/schema';
+import db from '@/services/database';
 import { Profiling } from '@/services/profiling';
-import { writeFileSync, mkdirSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { S3FileStorage } from '../providers/file-storage';
+import { S3FileStorage } from '../../../services/file-storage';
 
 type RoundScrapingOperationData =
   | { baseUrl?: string; tournamentId?: string; roundsCount?: number; note?: string }

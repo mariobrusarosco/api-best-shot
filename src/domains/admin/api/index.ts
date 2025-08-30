@@ -1,14 +1,18 @@
-import { Request, Response } from 'express';
-import db from '@/services/database';
-import { T_Member } from '@/domains/member/schema';
-import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcryptjs';
 import { env } from '@/config/env';
+import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { DataProviderReport } from '@/domains/data-provider/services/reporter';
+import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
+import { T_Member } from '@/domains/member/schema';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import db from '@/services/database';
+import Profiling from '@/services/profiling';
+import bcrypt from 'bcryptjs';
+import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { MemberService } from '@/domains/member/services';
+import { v4 as uuidv4 } from 'uuid';
 
 export const API_ADMIN = {
-  healthCheck: async (req: Request, res: Response) => {
+  healthCheck: async (_req: Request, res: Response) => {
     try {
       res.status(200).json({
         success: true,
@@ -130,66 +134,50 @@ export const API_ADMIN = {
     }
   },
 
-  promoteToAdmin: async (req: Request, res: Response) => {
-    try {
-      const { memberId } = req.body;
+  async createStandings(req: Request, res: Response) {
+    let tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>> | null = null;
 
-      if (!memberId) {
+    try {
+      if (!req.body.tournamentId) {
         return res.status(400).json({
-          error: 'Member ID is required',
+          success: false,
+          error: 'Tournament ID is required',
         });
       }
 
-      const updatedMember = await MemberService.updateMemberRole(memberId, 'admin');
+      tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
 
-      res.status(200).json({
-        success: true,
-        message: `Member ${updatedMember.nickName} promoted to admin`,
-        member: {
-          id: updatedMember.id,
-          nickName: updatedMember.nickName,
-          email: updatedMember.email,
-          role: updatedMember.role,
-        },
-      });
-    } catch (error) {
-      console.error('Error promoting member to admin:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to promote member to admin',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-  },
-
-  demoteFromAdmin: async (req: Request, res: Response) => {
-    try {
-      const { memberId } = req.body;
-
-      if (!memberId) {
-        return res.status(400).json({
-          error: 'Member ID is required',
+      if (!tournament) {
+        return res.status(404).json({
+          success: false,
+          error: 'Tournament not found',
         });
       }
 
-      const updatedMember = await MemberService.updateMemberRole(memberId, 'member');
+      // #1 Start Scrapper
+      const scraper = await BaseScraper.createInstance();
+      // #2 Start a reporter
+      const reporter = new DataProviderReport('create_standings');
+      reporter.setTournament(tournament);
+      // #3 Call Standings Data Provider Service
+      const provider = new StandingsDataProviderService(scraper, reporter);
+      // // #4 Init the provider
+      const standings = await provider.init(tournament);
+      // #5 Save the report on the database
+      //TODO: Save the report on the database
 
-      res.status(200).json({
+      // #6 Notify on Slack
+      console.log({ standings, reporter: reporter.toJSON() });
+
+      return res.status(200).json({
         success: true,
-        message: `Member ${updatedMember.nickName} demoted to member`,
-        member: {
-          id: updatedMember.id,
-          nickName: updatedMember.nickName,
-          email: updatedMember.email,
-          role: updatedMember.role,
-        },
+        reporter: 1,
+        message: 'Standings created successfully',
       });
     } catch (error) {
-      console.error('Error demoting member from admin:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to demote member from admin',
-        details: error instanceof Error ? error.message : 'Unknown error',
+      Profiling.error({
+        source: 'ADMIN_API_TOURNAMENTS_createStandings',
+        error: `Failed to create standings ${error}`,
       });
     }
   },

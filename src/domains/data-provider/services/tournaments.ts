@@ -88,7 +88,7 @@ export class TournamentDataProviderService {
     } catch (error) {
       // Ensure we still save the report and send notification on failure
       await this.scraper.close();
-      
+
       // Set a temporary tournament info for the report if not set
       if (!this.report.tournament) {
         this.report.setTournament({
@@ -97,16 +97,16 @@ export class TournamentDataProviderService {
           provider: 'sofascore',
         });
       }
-      
+
       // Upload report and save to database even on failure
       await this.report.uploadToS3();
       await this.report.saveOnDatabase();
-      
+
       // Send error notification
       const errorMessage = error instanceof Error ? error.message : String(error);
       const slackMessage = this.createErrorSlackMessage(payload, errorMessage);
       await this.report.sendNotification(slackMessage);
-      
+
       Profiling.error({
         source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
         error: error instanceof Error ? error : new Error(errorMessage),
@@ -169,17 +169,17 @@ export class TournamentDataProviderService {
         logoUrl,
         filename: `tournament-${tournamentPublicId}`,
       });
-      
+
       // Check if we got a dummy path (meaning the upload failed)
       if (s3Key.startsWith('dummy-path/')) {
-        op.fail({ 
+        op.fail({
           error: 'Failed to fetch tournament logo from SofaScore',
           attemptedUrl: logoUrl,
-          fallbackKey: s3Key 
+          fallbackKey: s3Key,
         });
         throw new Error(`Failed to fetch tournament logo for ID: ${tournamentPublicId}`);
       }
-      
+
       const cloudFrontUrl = this.scraper.getCloudFrontUrl(s3Key);
 
       op.success({ logoUrl: cloudFrontUrl, s3Key });

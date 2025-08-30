@@ -1,5 +1,6 @@
 import { API_ADMIN } from '@/domains/admin/api';
 import { API_ADMIN_TOURNAMENTS } from '@/domains/admin/api/tournaments';
+import { API_ADMIN_TEAMS } from '@/domains/admin/api/teams';
 import { AdminMiddleware } from '@/domains/auth/middleware';
 import express from 'express';
 import { API_ADMIN_STANDINGS } from '../api/standings';
@@ -21,7 +22,8 @@ router.post('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.createTournam
 // router.patch('/rounds', AdminMiddleware, API_ADMIN_TOURNAMENTS.updateRounds);
 
 // Tournament Teams Management (admin only)
-// router.post('/teams', AdminMiddleware, API_ADMIN_TOURNAMENTS.createTeams);
+// TEMPORARY: Remove auth for testing
+router.post('/teams', API_ADMIN_TEAMS.createTeams);
 
 // Tournament Standings Management (admin only)
 // TEMPORARY: Remove auth for testing

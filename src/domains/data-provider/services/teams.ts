@@ -8,172 +8,22 @@ import { DB_InsertTeam } from '@/domains/team/schema';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { Profiling } from '@/services/profiling';
+import { SlackMessage } from '@/services/notifications/slack';
 import { safeString, sleep } from '@/utils';
-import { mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { S3FileStorage } from '../../../services/file-storage';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-
-type TeamsScrapingOperationData =
-  | {
-      url?: string;
-      tournamentId?: string;
-      teamsCount?: number;
-      note?: string;
-      groupsCount?: number;
-    }
-  | { error: string; debugMessage?: string; errorMessage?: string }
-  | { teamName?: string; teamId?: string | number; logoUrl?: string; reason?: string }
-  | {
-      roundSlug?: string;
-      providerUrl?: string;
-      totalTeamsInRound?: number;
-      newUniqueTeams?: number;
-      skippedDuplicates?: number;
-      matchesCount?: number;
-    }
-  | { createdTeamsCount?: number; upsertedTeamsCount?: number; teamIds?: string[] }
-  | {
-      standingsTeams?: number;
-      knockoutTeams?: number;
-      uniqueTeamsCount?: number;
-      duplicatesRemoved?: number;
-      teamsToEnhance?: number;
-      enhancedTeamsCount?: number;
-      failedEnhancements?: number;
-      skippedDuplicates?: number;
-    }
-  | Record<string, unknown>;
-
-interface TeamsOperation {
-  step: string;
-  operation: string;
-  status: 'started' | 'completed' | 'failed';
-  data?: TeamsScrapingOperationData;
-  timestamp: string;
-}
-
-interface TeamsOperationReport {
-  requestId: string;
-  tournament: {
-    id: string;
-    label: string;
-  };
-  startTime: string;
-  endTime?: string;
-  operations: TeamsOperation[];
-  summary: {
-    totalOperations: number;
-    successfulOperations: number;
-    failedOperations: number;
-    teamCounts: {
-      fromStandings: number;
-      fromKnockout: number;
-      afterDeduplication: number;
-      afterEnhancement: number;
-      created: number;
-    };
-  };
-}
+import { DataProviderReport } from './reporter';
 
 export class TeamsDataProviderService {
   private scraper: BaseScraper;
-  private report: TeamsOperationReport;
+  public report: DataProviderReport;
 
-  constructor(scraper: BaseScraper, requestId: string) {
-    this.scraper = scraper;
-    this.report = {
-      requestId,
-      tournament: {
-        id: '',
-        label: '',
-      },
-      startTime: new Date().toISOString(),
-      operations: [],
-      summary: {
-        totalOperations: 0,
-        successfulOperations: 0,
-        failedOperations: 0,
-        teamCounts: {
-          fromStandings: 0,
-          fromKnockout: 0,
-          afterDeduplication: 0,
-          afterEnhancement: 0,
-          created: 0,
-        },
-      },
-    };
+  constructor(report: DataProviderReport) {
+    this.report = report;
+    this.scraper = new BaseScraper();
   }
 
-  private addOperation(
-    step: string,
-    operation: string,
-    status: 'started' | 'completed' | 'failed',
-    data?: TeamsScrapingOperationData
-  ): void {
-    this.report.operations.push({
-      step,
-      operation,
-      status,
-      data,
-      timestamp: new Date().toISOString(),
-    });
-
-    this.report.summary.totalOperations++;
-    if (status === 'completed') {
-      this.report.summary.successfulOperations++;
-    } else if (status === 'failed') {
-      this.report.summary.failedOperations++;
-    }
-  }
-
-  private async generateOperationReport(): Promise<void> {
-    this.report.endTime = new Date().toISOString();
-    const filename = `teams-operation-${this.report.requestId}`;
-    const jsonContent = JSON.stringify(this.report, null, 2);
-
-    try {
-      const isLocal = process.env.NODE_ENV === 'development';
-
-      if (isLocal) {
-        // Store locally for development
-        const reportsDir = join(process.cwd(), 'data-provider-operation-reports');
-        const filepath = join(reportsDir, `${filename}.json`);
-
-        mkdirSync(reportsDir, { recursive: true });
-        writeFileSync(filepath, jsonContent);
-
-        Profiling.log({
-          msg: `[REPORT] Teams operation report generated successfully (local)`,
-          data: { filepath, requestId: this.report.requestId },
-          source: 'DATA_PROVIDER_V2_TEAMS_generateOperationReport',
-        });
-      } else {
-        // Store in S3 for demo/production environments
-        const s3Storage = new S3FileStorage();
-        const s3Key = await s3Storage.uploadFile({
-          buffer: Buffer.from(jsonContent, 'utf8'),
-          filename,
-          contentType: 'application/json',
-          directory: 'data-provider-operation-reports',
-          cacheControl: 'max-age=604800, public', // 7 days cache
-        });
-
-        Profiling.log({
-          msg: `[REPORT] Teams operation report generated successfully (S3)`,
-          data: { s3Key, requestId: this.report.requestId },
-          source: 'DATA_PROVIDER_V2_TEAMS_generateOperationReport',
-        });
-      }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      Profiling.error({
-        source: 'DATA_PROVIDER_V2_TEAMS_generateOperationReport',
-        error: error instanceof Error ? error : new Error(errorMessage),
-        data: { requestId: this.report.requestId, filename },
-      });
-      console.error('Failed to write teams operation report file:', errorMessage);
-    }
+  static async create(report: DataProviderReport) {
+    return new TeamsDataProviderService(report);
   }
 
   private getTeamLogoUrl(teamId: string | number): string {
@@ -181,10 +31,7 @@ export class TeamsDataProviderService {
   }
 
   private async enhanceTeamWithLogo(team: DB_InsertTeam): Promise<DB_InsertTeam> {
-    this.addOperation('enhancement', 'enhance_team_logo', 'started', {
-      teamName: team.name,
-      teamId: team.externalId,
-    });
+    const op = this.report.createOperation('scraping', 'enhance_team_logo');
 
     try {
       const logoUrl = this.getTeamLogoUrl(team.externalId);
@@ -192,6 +39,18 @@ export class TeamsDataProviderService {
         logoUrl,
         filename: `team-${team.externalId}`,
       });
+
+      // Check if we got a dummy path (meaning the upload failed)
+      if (s3Key.startsWith('dummy-path/')) {
+        op.fail({
+          error: `Failed to fetch team logo from SofaScore`,
+          teamName: team.name,
+          teamId: team.externalId,
+          attemptedUrl: logoUrl,
+          fallbackKey: s3Key,
+        });
+        throw new Error(`Failed to fetch team logo for ${team.name}`);
+      }
 
       const enhancedTeam = {
         name: team.name,
@@ -201,18 +60,21 @@ export class TeamsDataProviderService {
         provider: 'sofa',
       } satisfies DB_InsertTeam;
 
-      this.addOperation('enhancement', 'enhance_team_logo', 'completed', {
+      op.success({
         teamName: team.name,
         logoUrl: enhancedTeam.badge,
+        s3Key,
       });
 
       return enhancedTeam;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.addOperation('enhancement', 'enhance_team_logo', 'failed', {
-        teamName: team.name,
-        error: errorMessage,
-      });
+      if (op.status !== 'failed') {
+        op.fail({
+          teamName: team.name,
+          error: errorMessage,
+        });
+      }
       Profiling.error({
         source: 'TEAMS_SERVICE_enhanceTeamWithLogo',
         error:
@@ -267,15 +129,15 @@ export class TeamsDataProviderService {
   public async fetchTeamsFromStandings(
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ): Promise<ENDPOINT_STANDINGS | null> {
+    const op = this.report.createOperation('scraping', 'fetch_teams_standings');
     const url = `${tournament.baseUrl}/standings/total`;
-    this.addOperation('scraping', 'fetch_teams_standings', 'started', { url });
 
     try {
       await this.scraper.goto(url);
       const fetchResult = (await this.scraper.getPageContent()) as ENDPOINT_STANDINGS;
 
       const teamsCount = fetchResult.standings.reduce((total, group) => total + group.rows.length, 0);
-      this.addOperation('scraping', 'fetch_teams_standings', 'completed', {
+      op.success({
         url,
         teamsCount,
         groupsCount: fetchResult.standings.length,
@@ -285,21 +147,17 @@ export class TeamsDataProviderService {
     } catch (error: unknown) {
       const errorMessage = (error as Error).message;
 
-      // Debug logging for all errors
-      console.log('[DEBUG] fetchTeamsFromStandings error:', errorMessage);
-
       // Handle 404 gracefully - standings might not exist yet for this tournament
       if (
         errorMessage.includes('status 404') ||
         errorMessage.includes('404') ||
         errorMessage.toLowerCase().includes('not found')
       ) {
-        this.addOperation('scraping', 'fetch_teams_standings', 'completed', {
+        op.success({
           url,
           note: 'Standings not available yet (404) - will fetch teams from knockout rounds only',
           teamsCount: 0,
           groupsCount: 0,
-          errorMessage: errorMessage, // Debug: log the actual error message
         });
         return null; // Return null to indicate no standings available
       }
@@ -310,20 +168,19 @@ export class TeamsDataProviderService {
         errorMessage.includes('browser has been closed') ||
         errorMessage.includes('context has been closed')
       ) {
-        this.addOperation('scraping', 'fetch_teams_standings', 'completed', {
+        op.success({
           url,
           note: 'Browser closed during standings fetch - will fetch teams from knockout rounds only',
           teamsCount: 0,
           groupsCount: 0,
-          errorMessage: errorMessage,
         });
         return null; // Return null to indicate no standings available
       }
 
-      // For other errors, still fail
-      this.addOperation('scraping', 'fetch_teams_standings', 'failed', {
+      // For other errors, fail the operation
+      op.fail({
         error: errorMessage,
-        debugMessage: `Error not recognized as recoverable. Full message: "${errorMessage}"`,
+        url,
       });
       Profiling.error({
         source: 'DATA_PROVIDER_TEAMS_fetchTeamsFromStandings',
@@ -452,13 +309,11 @@ export class TeamsDataProviderService {
   }
 
   public async createOnDatabase(teams: DB_InsertTeam[]) {
-    this.addOperation('database', 'create_teams', 'started', {
-      teamsCount: teams.length,
-    });
+    const op = this.report.createOperation('database', 'create_teams');
 
     // Handle empty teams array gracefully
     if (teams.length === 0) {
-      this.addOperation('database', 'create_teams', 'completed', {
+      op.success({
         createdTeamsCount: 0,
         note: 'No teams to create - tournament data not available yet',
         teamIds: [],
@@ -469,7 +324,7 @@ export class TeamsDataProviderService {
     try {
       const createdTeams = await QUERIES_TEAMS.createTeams(teams);
 
-      this.addOperation('database', 'create_teams', 'completed', {
+      op.success({
         createdTeamsCount: createdTeams.length,
         teamIds: createdTeams.map(t => t.id),
       });
@@ -477,175 +332,263 @@ export class TeamsDataProviderService {
       return createdTeams;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.addOperation('database', 'create_teams', 'failed', {
+      op.fail({
         error: errorMessage,
       });
+
+      Profiling.error({
+        error: errorMessage,
+        data: { error: errorMessage },
+        source: 'DATA_PROVIDER_V2_TEAM_database',
+      });
+
       throw error;
     }
   }
 
   public async upsertOnDatabase(teams: DB_InsertTeam[]): Promise<void> {
-    this.addOperation('database', 'upsert_teams', 'started', {
-      teamsCount: teams.length,
-    });
+    const op = this.report.createOperation('database', 'upsert_teams');
 
     try {
       await QUERIES_TEAMS.updateTeams(teams);
 
-      this.addOperation('database', 'upsert_teams', 'completed', {
+      op.success({
         upsertedTeamsCount: teams.length,
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.addOperation('database', 'upsert_teams', 'failed', {
+      op.fail({
         error: errorMessage,
       });
+
+      Profiling.error({
+        error: errorMessage,
+        data: { error: errorMessage },
+        source: 'DATA_PROVIDER_V2_TEAM_upsert',
+      });
+
       throw error;
     }
   }
 
-  public async init(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
-    // Initialize report tournament data
-    this.report.tournament = {
-      id: tournament.id,
-      label: tournament.label,
-    };
-
-    this.addOperation('initialization', 'validate_input', 'started', {
-      tournamentId: tournament.id,
-      tournamentLabel: tournament.label,
-      tournamentMode: tournament.mode,
-    });
-
+  public async createTeams(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
     try {
-      this.addOperation('initialization', 'validate_input', 'completed', {
-        tournamentId: tournament.id,
-        mode: tournament.mode,
-      });
-
       let mappedTeamsFromStandings: DB_InsertTeam[] = [];
       let mappedTeamsFromKnockoutRounds: DB_InsertTeam[] = [];
 
       // Fetch teams based on tournament mode
       if (tournament.mode === 'knockout-only') {
-        this.addOperation('initialization', 'tournament_mode_decision', 'completed', {
-          mode: 'knockout-only',
-          note: 'Skipping standings fetch - knockout-only tournament',
-        });
-
         // Only fetch from knockout rounds for knockout-only tournaments
         const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
         mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
-        this.report.summary.teamCounts.fromStandings = 0;
-        this.report.summary.teamCounts.fromKnockout = mappedTeamsFromKnockoutRounds.length;
       } else {
-        this.addOperation('initialization', 'tournament_mode_decision', 'completed', {
-          mode: tournament.mode || 'regular-season-and-knockout',
-          note: 'Fetching from both standings and knockout rounds',
-        });
-
         // Fetch from both standings and knockout rounds for regular tournaments
         const teamsFromStandings = await this.fetchTeamsFromStandings(tournament);
 
         // Handle case where standings don't exist yet (404)
         if (teamsFromStandings) {
           mappedTeamsFromStandings = this.mapTeamsFromStandings(teamsFromStandings);
-        } else {
-          // No standings available yet, log this situation
-          this.addOperation('transformation', 'handle_missing_standings', 'completed', {
-            note: 'No standings available yet - proceeding with knockout rounds only',
-          });
         }
-        this.report.summary.teamCounts.fromStandings = mappedTeamsFromStandings.length;
 
         const teamsFromKnockoutRounds = await this.fetchTeamsFromKnockoutRounds(tournament);
         mappedTeamsFromKnockoutRounds = this.mapTeamsFromRound(teamsFromKnockoutRounds);
-        this.report.summary.teamCounts.fromKnockout = mappedTeamsFromKnockoutRounds.length;
       }
 
-      // Deduplicate teams (handles both scenarios)
-      this.addOperation('transformation', 'deduplicate_teams', 'started', {
-        standingsTeams: mappedTeamsFromStandings.length,
-        knockoutTeams: mappedTeamsFromKnockoutRounds.length,
-      });
-
+      // Deduplicate teams
       const allTeams = removeDuplicatesTeams(mappedTeamsFromStandings, mappedTeamsFromKnockoutRounds);
-      this.report.summary.teamCounts.afterDeduplication = allTeams.length;
 
-      this.addOperation('transformation', 'deduplicate_teams', 'completed', {
-        uniqueTeamsCount: allTeams.length,
-        duplicatesRemoved: mappedTeamsFromStandings.length + mappedTeamsFromKnockoutRounds.length - allTeams.length,
-      });
+      // Enhance teams with logos
+      const enhancedTeams = await this.enhanceTeamsWithLogos(allTeams);
 
-      this.addOperation('enhancement', 'enhance_teams_batch', 'started', {
-        teamsToEnhance: allTeams.length,
-      });
-
-      const enhancedTeams: DB_InsertTeam[] = [];
-      const enhancedTeamIds = new Set<string>(); // Track enhanced team IDs to prevent duplicates
-
-      for (const team of allTeams) {
-        // Skip if we've already enhanced this team ID
-        if (enhancedTeamIds.has(team.externalId)) {
-          this.addOperation('enhancement', 'skip_duplicate_team', 'completed', {
-            teamId: team.externalId,
-            teamName: team.name,
-            reason: 'Already enhanced this team ID',
-          });
-          continue;
-        }
-
-        try {
-          const enhancedTeam = await this.enhanceTeamWithLogo(team);
-          enhancedTeams.push(enhancedTeam);
-          enhancedTeamIds.add(team.externalId);
-          await sleep(1000);
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          Profiling.error({
-            source: 'DATA_PROVIDER_TEAMS_enhanceTeamWithLogo',
-            error: error instanceof Error ? error : new Error(`Failed to enhance team ${team.name}: ${errorMessage}`),
-          });
-          // Continue with next team even if one fails
-          continue;
-        }
-      }
-
-      this.report.summary.teamCounts.afterEnhancement = enhancedTeams.length;
-      this.addOperation('enhancement', 'enhance_teams_batch', 'completed', {
-        enhancedTeamsCount: enhancedTeams.length,
-        failedEnhancements: allTeams.length - enhancedTeams.length,
-        skippedDuplicates: allTeams.length - enhancedTeams.length - (allTeams.length - enhancedTeams.length),
-      });
-
-      // Use upsert for knockout-only tournaments (handles new rounds appearing later)
-      // Use create for regular tournaments (first-time creation)
-      let query;
+      // Save to database
+      let result;
       if (tournament.mode === 'knockout-only') {
         await this.upsertOnDatabase(enhancedTeams);
-        this.report.summary.teamCounts.created = enhancedTeams.length;
-        query = enhancedTeams; // Return teams for consistency
+        result = enhancedTeams;
       } else {
-        query = await this.createOnDatabase(enhancedTeams);
-        this.report.summary.teamCounts.created = query.length;
+        result = await this.createOnDatabase(enhancedTeams);
       }
 
-      // Generate invoice file at the very end
-      await this.generateOperationReport();
-
-      return query;
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      this.addOperation('initialization', 'process_teams', 'failed', {
-        error: errorMessage,
+      // Update reporter with tournament info
+      this.report.setTournament({
+        label: tournament.label,
+        id: tournament.id,
+        provider: 'sofascore',
       });
-      await this.generateOperationReport();
+
+      // Upload report and save to database
+      await this.report.uploadToS3();
+      await this.report.saveOnDatabase();
+
+      // Send notification
+      const slackMessage = this.createSuccessMessage(result, {
+        fromStandings: mappedTeamsFromStandings.length,
+        fromKnockout: mappedTeamsFromKnockoutRounds.length,
+        afterDeduplication: allTeams.length,
+        created: result.length,
+      });
+      await this.report.sendNotification(slackMessage);
+
+      // Close scraper
+      await this.scraper.close();
+
+      return result;
+    } catch (error) {
+      // Ensure we still save the report and send notification on failure
+      await this.scraper.close();
+
+      // Set tournament info for report if not set
+      if (!this.report.tournament) {
+        this.report.setTournament({
+          label: tournament.label,
+          id: tournament.id || '00000000-0000-0000-0000-000000000000',
+          provider: 'sofascore',
+        });
+      }
+
+      // Upload report and save to database even on failure
+      await this.report.uploadToS3();
+      await this.report.saveOnDatabase();
+
+      // Send error notification
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const slackMessage = this.createErrorMessage(tournament, errorMessage);
+      await this.report.sendNotification(slackMessage);
+
       Profiling.error({
-        source: 'DATA_PROVIDER_V2_TEAMS_init',
+        source: 'DATA_PROVIDER_V2_TEAMS_createTeams',
         error: error instanceof Error ? error : new Error(errorMessage),
       });
+
       throw error;
     }
+  }
+
+  private async enhanceTeamsWithLogos(teams: DB_InsertTeam[]): Promise<DB_InsertTeam[]> {
+    const enhancedTeams: DB_InsertTeam[] = [];
+    const enhancedTeamIds = new Set<string>();
+
+    for (const team of teams) {
+      if (enhancedTeamIds.has(team.externalId)) {
+        continue; // Skip duplicates
+      }
+
+      try {
+        const enhancedTeam = await this.enhanceTeamWithLogo(team);
+        enhancedTeams.push(enhancedTeam);
+        enhancedTeamIds.add(team.externalId);
+        await sleep(1000); // Rate limiting
+      } catch (error: unknown) {
+        // Continue with next team even if one fails
+        Profiling.error({
+          source: 'DATA_PROVIDER_TEAMS_enhanceTeamWithLogo',
+          error: error instanceof Error ? error : new Error(`Failed to enhance team ${team.name}`),
+        });
+        continue;
+      }
+    }
+
+    return enhancedTeams;
+  }
+
+  private createSuccessMessage(
+    teams: DB_InsertTeam[],
+    counts: { fromStandings: number; fromKnockout: number; afterDeduplication: number; created: number }
+  ): SlackMessage {
+    return {
+      text: `⚽ Teams Created`,
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: '⚽ TEAMS CREATED',
+          },
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*Tournament:* ${this.report.tournament?.label}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Teams Created:* ${counts.created}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*From Standings:* ${counts.fromStandings}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*From Knockout:* ${counts.fromKnockout}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*After Deduplication:* ${counts.afterDeduplication}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Operations:* ${this.report.summary.successfulOperations}/${this.report.summary.totalOperations} successful`,
+            },
+          ],
+        },
+        {
+          type: 'context',
+          elements: [
+            {
+              type: 'mrkdwn',
+              text: `Report: <${this.report.reportUrl}|View Full Report>`,
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  private createErrorMessage(
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>,
+    errorMessage: string
+  ): SlackMessage {
+    return {
+      text: `❌ Team Creation Failed`,
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: '❌ TEAM CREATION FAILED',
+          },
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*Tournament:* ${tournament.label}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Error:* ${errorMessage}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Operations:* ${this.report.summary.failedOperations} failed, ${this.report.summary.successfulOperations} successful`,
+            },
+          ],
+        },
+        {
+          type: 'context',
+          elements: [
+            {
+              type: 'mrkdwn',
+              text: `Report: <${this.report.reportUrl}|View Full Report>`,
+            },
+          ],
+        },
+      ],
+    };
   }
 }
 

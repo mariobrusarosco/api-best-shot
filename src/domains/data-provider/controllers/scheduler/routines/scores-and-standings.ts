@@ -1,10 +1,10 @@
+import { env } from '@/config/env';
 import Profiling from '@/services/profiling';
 import { CreateScheduleCommand, CreateScheduleCommandInput, SchedulerClient } from '@aws-sdk/client-scheduler';
-import { env } from '@/config/env';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
-import { SchedulerService } from '../../../services/scheduler';
+import { SchedulerService } from '@/domains/data-provider/services/data-provider-jobs';
 
 dayjs.extend(utc);
 dayjs.extend(isToday);

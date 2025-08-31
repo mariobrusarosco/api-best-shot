@@ -1,285 +1,197 @@
-import db from '@/services/database';
-import { and, desc, eq, inArray } from 'drizzle-orm';
-import type {
+import {
   DB_InsertSchedulerJob,
-  DB_SelectSchedulerJob,
-  DB_UpdateSchedulerJob,
   SchedulerJobStatus,
   SchedulerJobType,
-} from '../schema/scheduler-jobs';
-import { T_SchedulerJobs } from '../schema/scheduler-jobs';
+  T_SchedulerJobs,
+} from '@/domains/data-provider/schema/scheduler-jobs';
+import db from '@/services/database';
+import { and, desc, eq, or, sql } from 'drizzle-orm';
 
 export const QUERIES_SCHEDULER_JOBS = {
-  // Create a new scheduler job record
-  async createSchedulerJob(job: DB_InsertSchedulerJob): Promise<DB_SelectSchedulerJob> {
-    const [result] = await db.insert(T_SchedulerJobs).values(job).returning();
-    return result;
-  },
-
-  // Update an existing scheduler job record
-  async updateSchedulerJob(id: string, updates: DB_UpdateSchedulerJob): Promise<DB_SelectSchedulerJob | null> {
-    const [result] = await db
-      .update(T_SchedulerJobs)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(T_SchedulerJobs.id, id))
-      .returning();
-    return result || null;
-  },
-
-  // Update scheduler job by schedule ID
-  async updateSchedulerJobByScheduleId(
-    scheduleId: string,
-    updates: DB_UpdateSchedulerJob
-  ): Promise<DB_SelectSchedulerJob | null> {
-    const [result] = await db
-      .update(T_SchedulerJobs)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(T_SchedulerJobs.scheduleId, scheduleId))
-      .returning();
-    return result || null;
+  // Create a new scheduler job
+  async createSchedulerJob(data: DB_InsertSchedulerJob) {
+    const [job] = await db.insert(T_SchedulerJobs).values(data).returning();
+    return job;
   },
 
   // Get scheduler job by ID
-  async getSchedulerJobById(id: string): Promise<DB_SelectSchedulerJob | null> {
-    const [result] = await db.select().from(T_SchedulerJobs).where(eq(T_SchedulerJobs.id, id)).limit(1);
-    return result || null;
+  async getSchedulerJobById(id: string) {
+    const [job] = await db.select().from(T_SchedulerJobs).where(eq(T_SchedulerJobs.id, id));
+    return job || null;
   },
 
   // Get scheduler job by schedule ID
-  async getSchedulerJobByScheduleId(scheduleId: string): Promise<DB_SelectSchedulerJob | null> {
-    const [result] = await db.select().from(T_SchedulerJobs).where(eq(T_SchedulerJobs.scheduleId, scheduleId)).limit(1);
-    return result || null;
+  async getSchedulerJobByScheduleId(scheduleId: string) {
+    const [job] = await db.select().from(T_SchedulerJobs).where(eq(T_SchedulerJobs.scheduleId, scheduleId));
+    return job || null;
   },
 
-  // Get all scheduler jobs for a tournament
+  // Mark scheduler job as scheduled in AWS
+  async markSchedulerJobAsScheduled(scheduleId: string, scheduleArn: string, scheduledAt: Date) {
+    const [updated] = await db
+      .update(T_SchedulerJobs)
+      .set({
+        status: 'scheduled',
+        scheduleArn,
+        scheduledAt,
+      })
+      .where(eq(T_SchedulerJobs.scheduleId, scheduleId))
+      .returning();
+    return updated || null;
+  },
+
+  // Update scheduler job status
+  async updateSchedulerJobStatus(
+    scheduleId: string,
+    status: SchedulerJobStatus,
+    updates?: {
+      executionId?: string;
+      triggeredAt?: Date;
+      executedAt?: Date;
+      completedAt?: Date;
+      executionStatus?: string;
+      executionError?: Record<string, unknown>;
+    }
+  ) {
+    const [updated] = await db
+      .update(T_SchedulerJobs)
+      .set({
+        status,
+        ...updates,
+      })
+      .where(eq(T_SchedulerJobs.scheduleId, scheduleId))
+      .returning();
+    return updated || null;
+  },
+
+  // Increment retry count
+  async incrementRetryCount(scheduleId: string) {
+    await db
+      .update(T_SchedulerJobs)
+      .set({
+        retryCount: sql`${T_SchedulerJobs.retryCount} + 1`,
+      })
+      .where(eq(T_SchedulerJobs.scheduleId, scheduleId));
+  },
+
+  // Get all scheduler jobs
+  async getAllSchedulerJobs(filters?: {
+    tournamentId?: string;
+    environment?: string;
+    scheduleType?: SchedulerJobType;
+    status?: SchedulerJobStatus | SchedulerJobStatus[];
+    limit?: number;
+    offset?: number;
+  }) {
+    const conditions = [];
+    if (filters?.tournamentId) {
+      conditions.push(eq(T_SchedulerJobs.tournamentId, filters.tournamentId));
+    }
+    if (filters?.environment) {
+      conditions.push(eq(T_SchedulerJobs.environment, filters.environment));
+    }
+    if (filters?.scheduleType) {
+      conditions.push(eq(T_SchedulerJobs.scheduleType, filters.scheduleType));
+    }
+    if (filters?.status) {
+      if (Array.isArray(filters.status)) {
+        conditions.push(or(...filters.status.map(s => eq(T_SchedulerJobs.status, s))));
+      } else {
+        conditions.push(eq(T_SchedulerJobs.status, filters.status));
+      }
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    let query = db.select().from(T_SchedulerJobs);
+    if (whereClause) {
+      // @ts-expect-error - Drizzle ORM type issue
+      query = query.where(whereClause);
+    }
+    // @ts-expect-error - Drizzle ORM type issue
+    query = query.orderBy(desc(T_SchedulerJobs.createdAt));
+
+    if (filters?.limit) {
+      // @ts-expect-error - Drizzle ORM type issue
+      query = query.limit(filters.limit);
+    }
+    if (filters?.offset) {
+      // @ts-expect-error - Drizzle ORM type issue
+      query = query.offset(filters.offset);
+    }
+
+    return await query;
+  },
+
+  // Get scheduler jobs by tournament
   async getSchedulerJobsByTournament(
     tournamentId: string,
-    options?: {
+    filters?: {
       scheduleType?: SchedulerJobType;
       status?: SchedulerJobStatus;
       environment?: string;
       limit?: number;
       offset?: number;
     }
-  ): Promise<DB_SelectSchedulerJob[]> {
+  ) {
     const conditions = [eq(T_SchedulerJobs.tournamentId, tournamentId)];
 
-    if (options?.scheduleType) {
-      conditions.push(eq(T_SchedulerJobs.scheduleType, options.scheduleType));
+    if (filters?.scheduleType) {
+      conditions.push(eq(T_SchedulerJobs.scheduleType, filters.scheduleType));
+    }
+    if (filters?.status) {
+      conditions.push(eq(T_SchedulerJobs.status, filters.status));
+    }
+    if (filters?.environment) {
+      conditions.push(eq(T_SchedulerJobs.environment, filters.environment));
     }
 
-    if (options?.status) {
-      conditions.push(eq(T_SchedulerJobs.status, options.status));
-    }
-
-    if (options?.environment) {
-      conditions.push(eq(T_SchedulerJobs.environment, options.environment));
-    }
-
-    const baseQuery = db
+    let query = db
       .select()
       .from(T_SchedulerJobs)
-      .where(and(...conditions))
-      .orderBy(desc(T_SchedulerJobs.scheduledAt));
+      .where(and(...conditions));
+    // @ts-expect-error - Drizzle ORM type issue
+    query = query.orderBy(desc(T_SchedulerJobs.createdAt));
 
-    if (options?.limit && options?.offset) {
-      return await baseQuery.limit(options.limit).offset(options.offset);
-    } else if (options?.limit) {
-      return await baseQuery.limit(options.limit);
+    if (filters?.limit) {
+      // @ts-expect-error - Drizzle ORM type issue
+      query = query.limit(filters.limit);
+    }
+    if (filters?.offset) {
+      // @ts-expect-error - Drizzle ORM type issue
+      query = query.offset(filters.offset);
     }
 
-    return await baseQuery;
+    return await query;
   },
 
-  // Get active scheduler jobs (pending or scheduled)
-  async getActiveSchedulerJobs(options?: {
-    scheduleType?: SchedulerJobType;
-    environment?: string;
-    limit?: number;
-  }): Promise<DB_SelectSchedulerJob[]> {
-    const conditions = [inArray(T_SchedulerJobs.status, ['pending', 'scheduled'])];
-
-    if (options?.scheduleType) {
-      conditions.push(eq(T_SchedulerJobs.scheduleType, options.scheduleType));
-    }
-
-    if (options?.environment) {
-      conditions.push(eq(T_SchedulerJobs.environment, options.environment));
-    }
-
-    const baseQuery = db
-      .select()
-      .from(T_SchedulerJobs)
-      .where(and(...conditions))
-      .orderBy(desc(T_SchedulerJobs.scheduledAt));
-
-    if (options?.limit) {
-      return await baseQuery.limit(options.limit);
-    }
-
-    return await baseQuery;
-  },
-
-  // Get failed scheduler jobs for retry
-  async getFailedSchedulerJobs(options?: {
-    scheduleType?: SchedulerJobType;
-    environment?: string;
-    maxRetries?: number;
-    limit?: number;
-  }): Promise<DB_SelectSchedulerJob[]> {
+  // Get failed scheduler jobs
+  async getFailedSchedulerJobs(filters?: { maxRetries?: number }) {
     const conditions = [eq(T_SchedulerJobs.status, 'failed')];
 
-    if (options?.scheduleType) {
-      conditions.push(eq(T_SchedulerJobs.scheduleType, options.scheduleType));
-    }
-
-    if (options?.environment) {
-      conditions.push(eq(T_SchedulerJobs.environment, options.environment));
-    }
-
-    // Only include jobs that haven't exceeded max retry attempts
-    if (options?.maxRetries !== undefined) {
-      conditions.push(eq(T_SchedulerJobs.retryCount, options.maxRetries));
-    }
-
-    const baseQuery = db
-      .select()
-      .from(T_SchedulerJobs)
-      .where(and(...conditions))
-      .orderBy(desc(T_SchedulerJobs.lastRetryAt));
-
-    if (options?.limit) {
-      return await baseQuery.limit(options.limit);
-    }
-
-    return await baseQuery;
-  },
-
-  // Get scheduler jobs by match
-  async getSchedulerJobsByMatch(
-    matchExternalId: string,
-    matchProvider: string,
-    options?: {
-      status?: SchedulerJobStatus;
-      environment?: string;
-    }
-  ): Promise<DB_SelectSchedulerJob[]> {
-    const conditions = [
-      eq(T_SchedulerJobs.matchExternalId, matchExternalId),
-      eq(T_SchedulerJobs.matchProvider, matchProvider),
-    ];
-
-    if (options?.status) {
-      conditions.push(eq(T_SchedulerJobs.status, options.status));
-    }
-
-    if (options?.environment) {
-      conditions.push(eq(T_SchedulerJobs.environment, options.environment));
+    if (filters?.maxRetries !== undefined) {
+      conditions.push(eq(T_SchedulerJobs.retryCount, filters.maxRetries));
     }
 
     return await db
       .select()
       .from(T_SchedulerJobs)
       .where(and(...conditions))
-      .orderBy(desc(T_SchedulerJobs.scheduledAt));
+      .orderBy(desc(T_SchedulerJobs.createdAt));
   },
 
-  // Update scheduler job status with optional execution details
-  async updateSchedulerJobStatus(
-    scheduleId: string,
-    status: SchedulerJobStatus,
-    executionDetails?: {
-      executionId?: string;
-      executionStatus?: string;
-      executionError?: Record<string, unknown>;
-      triggeredAt?: Date;
-      executedAt?: Date;
-      completedAt?: Date;
-    }
-  ): Promise<DB_SelectSchedulerJob | null> {
-    const updates: DB_UpdateSchedulerJob = {
-      status,
-      updatedAt: new Date(),
-    };
-
-    // Add execution details if provided
-    if (executionDetails?.executionId) updates.executionId = executionDetails.executionId;
-    if (executionDetails?.executionStatus) updates.executionStatus = executionDetails.executionStatus;
-    if (executionDetails?.executionError) updates.executionError = executionDetails.executionError;
-    if (executionDetails?.triggeredAt) updates.triggeredAt = executionDetails.triggeredAt;
-    if (executionDetails?.executedAt) updates.executedAt = executionDetails.executedAt;
-    if (executionDetails?.completedAt) updates.completedAt = executionDetails.completedAt;
-
-    return await this.updateSchedulerJobByScheduleId(scheduleId, updates);
-  },
-
-  // Mark scheduler job as scheduled (when created in AWS)
-  async markSchedulerJobAsScheduled(
-    scheduleId: string,
-    scheduleArn: string,
-    scheduledAt: Date = new Date()
-  ): Promise<DB_SelectSchedulerJob | null> {
-    return await this.updateSchedulerJobByScheduleId(scheduleId, {
-      status: 'scheduled',
-      scheduleArn,
-      scheduledAt,
-    });
-  },
-
-  // Increment retry count
-  async incrementRetryCount(scheduleId: string): Promise<DB_SelectSchedulerJob | null> {
-    const job = await this.getSchedulerJobByScheduleId(scheduleId);
-    if (!job) return null;
-
-    return await this.updateSchedulerJobByScheduleId(scheduleId, {
-      retryCount: job.retryCount + 1,
-      lastRetryAt: new Date(),
-    });
-  },
-
-  // Get all scheduler jobs with pagination and filters
-  async getAllSchedulerJobs(options?: {
-    status?: SchedulerJobStatus | SchedulerJobStatus[];
-    scheduleType?: SchedulerJobType;
-    environment?: string;
-    tournamentId?: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<DB_SelectSchedulerJob[]> {
-    const conditions = [];
-
-    if (options?.status) {
-      if (Array.isArray(options.status)) {
-        conditions.push(inArray(T_SchedulerJobs.status, options.status));
-      } else {
-        conditions.push(eq(T_SchedulerJobs.status, options.status));
-      }
-    }
-
-    if (options?.scheduleType) {
-      conditions.push(eq(T_SchedulerJobs.scheduleType, options.scheduleType));
-    }
-
-    if (options?.environment) {
-      conditions.push(eq(T_SchedulerJobs.environment, options.environment));
-    }
-
-    if (options?.tournamentId) {
-      conditions.push(eq(T_SchedulerJobs.tournamentId, options.tournamentId));
-    }
-
-    const baseQuery = db.select().from(T_SchedulerJobs).orderBy(desc(T_SchedulerJobs.createdAt));
-
-    if (conditions.length > 0) {
-      baseQuery.where(and(...conditions));
-    }
-
-    if (options?.limit && options?.offset) {
-      return await baseQuery.limit(options.limit).offset(options.offset);
-    } else if (options?.limit) {
-      return await baseQuery.limit(options.limit);
-    }
-
-    return await baseQuery;
+  // Get active scheduler jobs (triggered, executing, or scheduled)
+  async getActiveSchedulerJobs() {
+    return await db
+      .select()
+      .from(T_SchedulerJobs)
+      .where(
+        or(
+          eq(T_SchedulerJobs.status, 'triggered'),
+          eq(T_SchedulerJobs.status, 'executing'),
+          eq(T_SchedulerJobs.status, 'scheduled')
+        )
+      )
+      .orderBy(desc(T_SchedulerJobs.createdAt));
   },
 };

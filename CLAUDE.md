@@ -224,11 +224,14 @@ Each environment has specific build commands and uses environment-specific `.env
 
 - Always validate environment variables before starting
 - Database migrations must be run after schema changes
+- **NEVER modify applied migrations** - Once a migration has been applied to the database, it must never be changed. Create a new migration instead to fix issues
+- **NEVER create migration files manually** - Always use `yarn db:generate` to generate migrations from schema changes. Drizzle Kit will create the proper migration files
 - Use Drizzle Studio for visual database management
 - Follow domain boundaries - avoid cross-domain imports
 - Maintain API versioning for backward compatibility
 - File naming: Use kebab-case
-- Import types with `type` keyword: `import type { ... }`
+- Import types with `type` keyword: `import type { ICreateAccountForm } from "@/domains/schemas/investment-account"`
+- **ALWAYS use absolute imports** - Never suggest or use relative imports (../, ./). Always use absolute paths from the src/ directory root. Example: `import { something } from "@/domains/auth/services"` instead of `import { something } from "../../../auth/services"`
 - Never run Git commands directly (per project cursor rules)
 - Log fixes in `docs/fixing-log` when requested with "LOG THE FIX"
 

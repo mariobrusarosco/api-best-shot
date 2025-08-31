@@ -1,12 +1,12 @@
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { Request, Response } from 'express';
+import { QUERIES_ADMIN_TOURNAMENT } from '../queries';
 
 class AdminTournamentService {
   // Get all tournaments for admin
   static async getAllTournaments(_req: Request, res: Response) {
     try {
-      const tournaments = await SERVICES_TOURNAMENT.getAllTournaments();
+      const tournaments = await QUERIES_ADMIN_TOURNAMENT.adminAllTournaments();
 
       return res.status(200).json({
         success: true,

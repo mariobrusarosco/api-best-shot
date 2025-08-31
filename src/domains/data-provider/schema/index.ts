@@ -74,3 +74,6 @@ export type DB_UpdateDataProviderReport = typeof T_DataProviderReports.$inferIns
 
 // Export scheduler jobs schema
 export * from './scheduler-jobs';
+
+// Export data-provider jobs schema
+export * from './data-provider-jobs';

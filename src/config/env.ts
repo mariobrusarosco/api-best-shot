@@ -34,6 +34,7 @@ const envSchema = z.object({
   AWS_BUCKET_NAME: z.string().min(1, 'AWS bucket name is required'),
   AWS_CLOUDFRONT_URL: z.string().min(1, 'AWS CloudFront URL is required'),
   AWS_REGION: z.string().default('us-east-1'),
+  AWS_SCHEDULER_ROLE_NAME: z.string().default('root-scheduler'),
 
   // AWS Lambda Environment Variables (for Lambda execution)
   DATA_PROVIDER_COOKIE_PRODUCTION: z.string().optional(),
@@ -44,6 +45,11 @@ const envSchema = z.object({
 
   // Internal Service Operations
   INTERNAL_SERVICE_TOKEN: z.string().min(1, 'Internal service token is required'),
+
+  // Slack
+  SLACK_WEBHOOK_URL_STAGING: z.string().optional(),
+  SLACK_WEBHOOK_REPORT_URL: z.string().optional(),
+  SLACK_WEBHOOK_JOB_SCHEDULE_URL: z.string().optional(),
 });
 
 // Parse and validate environment variables

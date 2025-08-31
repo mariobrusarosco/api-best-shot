@@ -1,8 +1,10 @@
+import { sendScheduleNotification } from '@/domains/admin/services/scheduler/notifications';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import Profiling from '@/services/profiling';
 import { Request, Response } from 'express';
-import { SchedulerService } from '../../../services/scheduler';
-import type { SchedulerJobStatus } from '../../../schema/scheduler-jobs';
+import { QUERIES_DATA_PROVIDER_JOBS } from '@/domains/data-provider/queries/data-provider-jobs';
+import type { SchedulerJobStatus } from '@/domains/data-provider/schema/scheduler-jobs';
+import { SchedulerService } from '@/domains/data-provider/services/data-provider-jobs';
 
 interface SchedulerCallbackRequest {
   scheduleId: string;
@@ -61,52 +63,15 @@ const handleSchedulerCallback = async (req: Request, res: Response) => {
       executionDetails.executionError = callbackData.executionError;
     }
 
-    // Handle different status updates
-    switch (callbackData.status) {
-      case 'triggered':
-        if (callbackData.executionId) {
-          await SchedulerService.trackScheduleExecution(
-            callbackData.scheduleId,
-            callbackData.executionId,
-            executionDetails.triggeredAt
-          );
-        }
-        break;
+    // Try to find the job in the new data_provider_jobs table first
+    const newJob = await QUERIES_DATA_PROVIDER_JOBS.getJobByScheduleId(callbackData.scheduleId);
 
-      case 'executing':
-        await SchedulerService.trackScheduleExecutionStart(callbackData.scheduleId, executionDetails.executedAt);
-        break;
-
-      case 'completed':
-        await SchedulerService.trackScheduleCompletion(
-          callbackData.scheduleId,
-          callbackData.executionStatus || 'success',
-          executionDetails.completedAt
-        );
-        break;
-
-      case 'failed':
-        await SchedulerService.trackScheduleFailure(
-          callbackData.scheduleId,
-          callbackData.executionError || { message: 'Unknown failure' },
-          callbackData.executionStatus,
-          executionDetails.completedAt
-        );
-        break;
-
-      case 'cancelled':
-        await SchedulerService.cancelSchedule(
-          callbackData.scheduleId,
-          (callbackData.executionError?.reason as string) || 'Cancelled via callback'
-        );
-        break;
-
-      default:
-        console.warn(`Unknown status received: ${callbackData.status}`);
-        return res.status(400).json({
-          success: false,
-          error: `Unknown status: ${callbackData.status}`,
-        });
+    if (newJob) {
+      // Handle new job types
+      await handleNewJobCallback(callbackData, executionDetails);
+    } else {
+      // Handle legacy scheduler jobs
+      await handleLegacyJobCallback(callbackData, executionDetails);
     }
 
     const endTime = new Date();
@@ -152,6 +117,136 @@ const handleSchedulerCallback = async (req: Request, res: Response) => {
     handleInternalServerErrorResponse(res, error);
   }
 };
+
+/**
+ * Handle callbacks for new data-provider-jobs
+ */
+async function handleNewJobCallback(
+  callbackData: SchedulerCallbackRequest,
+  executionDetails: {
+    triggeredAt?: Date;
+    executedAt?: Date;
+    completedAt?: Date;
+    executionId?: string;
+    executionStatus?: string;
+    executionError?: Record<string, unknown>;
+  }
+) {
+  const job = await QUERIES_DATA_PROVIDER_JOBS.getJobByScheduleId(callbackData.scheduleId);
+  if (!job) return;
+
+  switch (callbackData.status) {
+    case 'triggered':
+      await QUERIES_DATA_PROVIDER_JOBS.updateExecutionStatus(callbackData.scheduleId, 'triggered', {
+        triggeredAt: executionDetails.triggeredAt,
+        executionId: executionDetails.executionId,
+      });
+      break;
+
+    case 'executing':
+      await QUERIES_DATA_PROVIDER_JOBS.updateExecutionStatus(callbackData.scheduleId, 'executing', {
+        executedAt: executionDetails.executedAt,
+      });
+      break;
+
+    case 'completed':
+      await QUERIES_DATA_PROVIDER_JOBS.updateExecutionStatus(callbackData.scheduleId, 'execution_succeeded', {
+        completedAt: executionDetails.completedAt,
+        executionResult: {
+          status: callbackData.executionStatus || 'success',
+          completedAt: executionDetails.completedAt?.toISOString(),
+        },
+      });
+
+      // Send success notification
+      await sendScheduleNotification({
+        status: 'execution_succeeded',
+        tournamentId: job.tournamentId,
+        jobType: job.jobType,
+        scheduleId: callbackData.scheduleId,
+      });
+      break;
+
+    case 'failed':
+      await QUERIES_DATA_PROVIDER_JOBS.updateExecutionStatus(callbackData.scheduleId, 'execution_failed', {
+        completedAt: executionDetails.completedAt,
+        executionErrorDetails: executionDetails.executionError || { message: 'Unknown failure' },
+      });
+
+      // Send failure notification
+      await sendScheduleNotification({
+        status: 'execution_failed',
+        tournamentId: job.tournamentId,
+        jobType: job.jobType,
+        scheduleId: callbackData.scheduleId,
+        error: (executionDetails.executionError?.message as string) || 'Unknown execution error',
+      });
+      break;
+
+    default:
+      console.warn(`Unknown status received for new job: ${callbackData.status}`);
+      break;
+  }
+}
+
+/**
+ * Handle callbacks for legacy scheduler jobs
+ */
+async function handleLegacyJobCallback(
+  callbackData: SchedulerCallbackRequest,
+  executionDetails: {
+    triggeredAt?: Date;
+    executedAt?: Date;
+    completedAt?: Date;
+    executionId?: string;
+    executionStatus?: string;
+    executionError?: Record<string, unknown>;
+  }
+) {
+  switch (callbackData.status) {
+    case 'triggered':
+      if (callbackData.executionId) {
+        await SchedulerService.trackScheduleExecution(
+          callbackData.scheduleId,
+          callbackData.executionId,
+          executionDetails.triggeredAt
+        );
+      }
+      break;
+
+    case 'executing':
+      await SchedulerService.trackScheduleExecutionStart(callbackData.scheduleId, executionDetails.executedAt);
+      break;
+
+    case 'completed':
+      await SchedulerService.trackScheduleCompletion(
+        callbackData.scheduleId,
+        callbackData.executionStatus || 'success',
+        executionDetails.completedAt
+      );
+      break;
+
+    case 'failed':
+      await SchedulerService.trackScheduleFailure(
+        callbackData.scheduleId,
+        callbackData.executionError || { message: 'Unknown failure' },
+        callbackData.executionStatus,
+        executionDetails.completedAt
+      );
+      break;
+
+    case 'cancelled':
+      await SchedulerService.cancelSchedule(
+        callbackData.scheduleId,
+        (callbackData.executionError?.reason as string) || 'Cancelled via callback'
+      );
+      break;
+
+    default:
+      console.warn(`Unknown status received for legacy job: ${callbackData.status}`);
+      break;
+  }
+}
 
 export const API_SCHEDULER_CALLBACK = {
   handleSchedulerCallback,

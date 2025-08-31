@@ -1,9 +1,9 @@
+import { QUERIES_SCHEDULER_JOBS } from '@/domains/data-provider/queries/scheduler-jobs';
+import type { SchedulerJobStatus, SchedulerJobType } from '@/domains/data-provider/schema/scheduler-jobs';
+import { SchedulerService } from '@/domains/data-provider/services/data-provider-jobs';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import Profiling from '@/services/profiling';
 import { Request, Response } from 'express';
-import { QUERIES_SCHEDULER_JOBS } from '../../../queries/scheduler-jobs';
-import { SchedulerService } from '../../../services/scheduler';
-import type { SchedulerJobStatus, SchedulerJobType } from '../../../schema/scheduler-jobs';
 
 // Get all scheduler jobs with pagination and filters
 const getAllJobs = async (req: Request, res: Response) => {
@@ -161,11 +161,7 @@ const getActiveJobs = async (req: Request, res: Response) => {
   try {
     const { scheduleType, environment, limit = '50' } = req.query;
 
-    const jobs = await QUERIES_SCHEDULER_JOBS.getActiveSchedulerJobs({
-      scheduleType: scheduleType as SchedulerJobType,
-      environment: environment as string,
-      limit: parseInt(limit as string),
-    });
+    const jobs = await QUERIES_SCHEDULER_JOBS.getActiveSchedulerJobs();
 
     Profiling.log({
       msg: 'ACTIVE SCHEDULER JOBS RETRIEVED',
@@ -202,10 +198,7 @@ const getFailedJobs = async (req: Request, res: Response) => {
     const { scheduleType, environment, maxRetries = '3', limit = '50' } = req.query;
 
     const jobs = await QUERIES_SCHEDULER_JOBS.getFailedSchedulerJobs({
-      scheduleType: scheduleType as SchedulerJobType,
-      environment: environment as string,
       maxRetries: parseInt(maxRetries as string),
-      limit: parseInt(limit as string),
     });
 
     Profiling.log({

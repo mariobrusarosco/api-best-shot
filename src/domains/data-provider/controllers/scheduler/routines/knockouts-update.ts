@@ -1,10 +1,10 @@
+import { env } from '@/config/env';
 import Profiling from '@/services/profiling';
 import { CreateScheduleCommand, CreateScheduleCommandInput, SchedulerClient } from '@aws-sdk/client-scheduler';
-import { env } from '@/config/env';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
-import { SchedulerService } from '../../../services/scheduler';
+import { SchedulerService } from '../../../services/data-provider-jobs';
 
 dayjs.extend(utc);
 dayjs.extend(isToday);
@@ -20,7 +20,7 @@ export const scheduleKnockoutsUpdateRoutine = async (schedule: {
     const StartDate = dayjs().utc().add(1, 'minute').toDate();
     const GroupName = 'knockouts-update';
     const targetArn = `arn:aws:lambda:${env.AWS_REGION}:905418297381:function:caller-knockouts-update`;
-    const ScheduleExpression = 'rate(1 day)';
+    const ScheduleExpression = 'rate(2 days)';
     const environment = process.env.NODE_ENV || 'development';
 
     // Check for duplicate schedule to prevent conflicts

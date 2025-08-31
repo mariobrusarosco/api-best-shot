@@ -1,6 +1,6 @@
+import { QUERIES_SCHEDULER_JOBS } from '@/domains/data-provider/queries/scheduler-jobs';
 import Profiling from '@/services/profiling';
 import type { DB_InsertSchedulerJob, SchedulerJobStatus, SchedulerJobType } from '../schema/scheduler-jobs';
-import { QUERIES_SCHEDULER_JOBS } from '../queries/scheduler-jobs';
 
 export const SchedulerService = {
   // Track schedule creation in database when AWS schedule is created

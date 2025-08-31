@@ -170,6 +170,9 @@ export const QUERIES_DATA_PROVIDER_EXECUTIONS = {
   },
 };
 
+export * from './reports';
+export * from './scheduler-jobs';
+
 export const QUERIES_DATA_PROVIDER = {
   executions: QUERIES_DATA_PROVIDER_EXECUTIONS,
 };

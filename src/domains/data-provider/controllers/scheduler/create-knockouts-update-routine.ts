@@ -29,5 +29,6 @@ const buildSchedule = (tournament: NonNullable<TournamentQuery>) => {
       knockoutsUpdateUrl: KNOCKOUT_ROUNDS_UPDATE_URL.replace(':tournamentId', tournament.id),
     },
     id: scheduleId,
+    tournamentId: tournament.id,
   };
 };

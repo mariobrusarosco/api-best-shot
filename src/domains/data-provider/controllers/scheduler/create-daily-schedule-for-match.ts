@@ -65,6 +65,11 @@ const buildSchedule = (match: Awaited<ReturnType<typeof MatchQueries.currentDayM
     cronExpression: Utils.toCronFormat(estimatedEndOfMatch),
     startDate: estimatedEndOfMatch.toDate(),
     id: scheduleId,
+    tournamentId: match.tournamentId,
+    matchId: match.match, // This is the actual ID field from the query
+    roundSlug: match.roundSlug,
+    // Note: externalId and provider are not available in currentDayMatchesOnDatabase query
+    // We would need to modify the query or make it optional in the service
   };
 };
 

@@ -1,11 +1,12 @@
-import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import Profiling from '@/services/profiling';
-import { Response } from 'express';
-import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { StandingsRequest } from '@/domains/data-provider/api/v2/standings/typing';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { DataProviderReport } from '@/domains/data-provider/services/reporter';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
+import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import Profiling from '@/services/profiling';
 import { randomUUID } from 'crypto';
+import { Response } from 'express';
 
 const create = async (req: StandingsRequest, res: Response) => {
   const requestId = randomUUID();
@@ -67,9 +68,10 @@ const create = async (req: StandingsRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const dataProviderService = new StandingsDataProviderService(scraper, requestId);
+    const report = new DataProviderReport('create_standings', requestId);
+    const dataProviderService = new StandingsDataProviderService(scraper, report);
 
-    const standings = await dataProviderService.init(tournament);
+    const standings = await dataProviderService.createStandings(tournament);
 
     if (!standings) {
       Profiling.error({
@@ -172,9 +174,10 @@ const update = async (req: StandingsRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const dataProviderService = new StandingsDataProviderService(scraper, requestId);
+    const report = new DataProviderReport('update_standings', requestId);
+    const dataProviderService = new StandingsDataProviderService(scraper, report);
 
-    const standings = await dataProviderService.updateTournament(tournament);
+    const standings = await dataProviderService.updateStandings(tournament);
 
     if (!standings) {
       Profiling.error({

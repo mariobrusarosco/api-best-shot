@@ -1,14 +1,13 @@
-import { Request, Response } from 'express';
-import db from '@/services/database';
-import { T_Member } from '@/domains/member/schema';
-import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcryptjs';
 import { env } from '@/config/env';
+import { T_Member } from '@/domains/member/schema';
+import db from '@/services/database';
+import bcrypt from 'bcryptjs';
+import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { MemberService } from '@/domains/member/services';
+import { v4 as uuidv4 } from 'uuid';
 
 export const API_ADMIN = {
-  healthCheck: async (req: Request, res: Response) => {
+  healthCheck: async (_req: Request, res: Response) => {
     try {
       res.status(200).json({
         success: true,
@@ -125,70 +124,6 @@ export const API_ADMIN = {
       res.status(500).json({
         success: false,
         error: 'Failed to seed database',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-  },
-
-  promoteToAdmin: async (req: Request, res: Response) => {
-    try {
-      const { memberId } = req.body;
-
-      if (!memberId) {
-        return res.status(400).json({
-          error: 'Member ID is required',
-        });
-      }
-
-      const updatedMember = await MemberService.updateMemberRole(memberId, 'admin');
-
-      res.status(200).json({
-        success: true,
-        message: `Member ${updatedMember.nickName} promoted to admin`,
-        member: {
-          id: updatedMember.id,
-          nickName: updatedMember.nickName,
-          email: updatedMember.email,
-          role: updatedMember.role,
-        },
-      });
-    } catch (error) {
-      console.error('Error promoting member to admin:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to promote member to admin',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-  },
-
-  demoteFromAdmin: async (req: Request, res: Response) => {
-    try {
-      const { memberId } = req.body;
-
-      if (!memberId) {
-        return res.status(400).json({
-          error: 'Member ID is required',
-        });
-      }
-
-      const updatedMember = await MemberService.updateMemberRole(memberId, 'member');
-
-      res.status(200).json({
-        success: true,
-        message: `Member ${updatedMember.nickName} demoted to member`,
-        member: {
-          id: updatedMember.id,
-          nickName: updatedMember.nickName,
-          email: updatedMember.email,
-          role: updatedMember.role,
-        },
-      });
-    } catch (error) {
-      console.error('Error demoting member from admin:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to demote member from admin',
         details: error instanceof Error ? error.message : 'Unknown error',
       });
     }

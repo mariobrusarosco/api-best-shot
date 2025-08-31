@@ -1,4 +1,5 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { DataProviderReport } from '@/domains/data-provider/services/reporter';
 import { TeamsDataProviderService } from '@/domains/data-provider/services/teams';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
@@ -38,8 +39,9 @@ class AdminTeamsService {
       });
 
       scraper = await BaseScraper.createInstance();
-      const dataProviderService = new TeamsDataProviderService(scraper, requestId);
-      const teams = await dataProviderService.init(tournament);
+      const report = new DataProviderReport('create_teams', requestId);
+      const dataProviderService = new TeamsDataProviderService(scraper, report);
+      const teams = await dataProviderService.createTeams(tournament);
 
       Profiling.log({
         msg: `[ADMIN TEAMS CREATION] Teams created successfully`,

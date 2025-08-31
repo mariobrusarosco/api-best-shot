@@ -1,12 +1,13 @@
-import { Response } from 'express';
-import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import { SERVICES_TOURNAMENT_ROUND } from '@/domains/tournament-round/services';
-import Profiling from '@/services/profiling';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
+import { DataProviderReport } from '@/domains/data-provider/services/reporter';
 import { CreateMatchesRequest, UpdateMatchesForRoundRequest } from '@/domains/match/typing';
+import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { SERVICES_TOURNAMENT_ROUND } from '@/domains/tournament-round/services';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import Profiling from '@/services/profiling';
 import { randomUUID } from 'crypto';
+import { Response } from 'express';
 
 const create = async (req: CreateMatchesRequest, res: Response) => {
   const requestId = randomUUID();
@@ -48,11 +49,12 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const matchesDataProviderService = new MatchesDataProviderService(scraper, requestId);
+    const report = new DataProviderReport('create_matches', requestId);
+    const matchesDataProviderService = new MatchesDataProviderService(scraper, report);
 
     const rounds = await SERVICES_TOURNAMENT_ROUND.getAllRounds(tournament.id);
 
-    const matches = await matchesDataProviderService.init(rounds, tournament);
+    const matches = await matchesDataProviderService.createMatches(rounds, tournament);
 
     if (!matches) {
       Profiling.error({
@@ -161,9 +163,11 @@ const updateMatchesForRound = async (req: UpdateMatchesForRoundRequest, res: Res
     });
 
     scraper = await BaseScraper.createInstance();
-    const matchesDataProviderService = new MatchesDataProviderService(scraper, requestId);
+    const report = new DataProviderReport('update_matches', requestId);
+    const matchesDataProviderService = new MatchesDataProviderService(scraper, report);
 
-    const matches = await matchesDataProviderService.updateRound(round);
+    const rounds = await SERVICES_TOURNAMENT_ROUND.getAllRounds(tournament.id);
+    const matches = await matchesDataProviderService.updateMatches(rounds, tournament);
 
     if (matches === null || matches === undefined) {
       Profiling.error({

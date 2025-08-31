@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "API - Best Shot",
   "volta": {
     "node": "22.17.0"
@@ -14,8 +14,6 @@
     "dev:clean": "docker compose down -v && rm -rf node_modules && yarn install",
     "dev:status": "docker compose ps && volta list",
     "dev:logs": "tail -f ./logs/api-dev.log",
-    "dev:logs:clear": "rm -f ./logs/api-dev.log && echo 'API development logs cleared'",
-    "aws:logs": "docker compose --profile aws logs -f aws-local",
     "db:connect": "docker compose exec postgres psql -U ${DB_USER} -d ${DB_NAME}",
     "db:logs": "docker compose logs -f postgres",
     "db:reset": "docker compose down postgres -v && docker compose up -d postgres",

@@ -1,11 +1,12 @@
-import { RoundDataProviderService } from '@/domains/data-provider/services/rounds';
-import { Response } from 'express';
-import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { TournamentRoundRequest } from './typing';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { DataProviderReport } from '@/domains/data-provider/services/reporter';
+import { RoundDataProviderService } from '@/domains/data-provider/services/rounds';
+import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import Profiling from '@/services/profiling';
 import { randomUUID } from 'crypto';
+import { Response } from 'express';
+import { TournamentRoundRequest } from './typing';
 
 const create = async (req: TournamentRoundRequest, res: Response) => {
   const requestId = randomUUID();
@@ -38,9 +39,10 @@ const create = async (req: TournamentRoundRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const dataProviderService = new RoundDataProviderService(scraper, requestId);
+    const report = new DataProviderReport('create_rounds', requestId);
+    const dataProviderService = new RoundDataProviderService(scraper, report);
 
-    const rounds = await dataProviderService.init(tournament.id, tournament.baseUrl);
+    const rounds = await dataProviderService.createRounds(tournament);
 
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament rounds creation completed successfully`,
@@ -100,9 +102,10 @@ const update = async (req: TournamentRoundRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const dataProviderService = new RoundDataProviderService(scraper, requestId);
+    const report = new DataProviderReport('update_rounds', requestId);
+    const dataProviderService = new RoundDataProviderService(scraper, report);
 
-    const rounds = await dataProviderService.updateTournament(tournament.id, tournament.baseUrl);
+    const rounds = await dataProviderService.updateRounds(tournament);
 
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament rounds update completed successfully`,

@@ -1,4 +1,5 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { DataProviderReport } from '@/domains/data-provider/services/reporter';
 import { RoundDataProviderService } from '@/domains/data-provider/services/rounds';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
@@ -39,8 +40,9 @@ class AdminRoundsService {
       });
 
       scraper = await BaseScraper.createInstance();
-      const dataProviderService = new RoundDataProviderService(scraper, requestId);
-      const rounds = await dataProviderService.init(tournament.id, tournament.baseUrl);
+      const report = new DataProviderReport('create_rounds', requestId);
+      const dataProviderService = new RoundDataProviderService(scraper, report);
+      const rounds = await dataProviderService.createRounds(tournament);
 
       Profiling.log({
         msg: `[ADMIN] Rounds for tournament ${tournament.label} created successfully!`,

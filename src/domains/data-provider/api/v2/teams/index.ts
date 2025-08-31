@@ -1,12 +1,13 @@
-import { TeamsRequest } from './typing';
-import { TeamsDataProviderService } from '@/domains/data-provider/services/teams';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import Profiling from '@/services/profiling';
-import { Response } from 'express';
+import { DataProviderReport } from '@/domains/data-provider/services/reporter';
+import { TeamsDataProviderService } from '@/domains/data-provider/services/teams';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { ErrorMapper } from '@/domains/tournament/error-handling/mapper';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import Profiling from '@/services/profiling';
 import { randomUUID } from 'crypto';
+import { Response } from 'express';
+import { TeamsRequest } from './typing';
 
 const create = async (req: TeamsRequest, res: Response) => {
   const requestId = randomUUID();
@@ -48,9 +49,10 @@ const create = async (req: TeamsRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const teamService = new TeamsDataProviderService(scraper, requestId);
+    const report = new DataProviderReport('create_teams', requestId);
+    const teamService = new TeamsDataProviderService(scraper, report);
 
-    const teams = await teamService.init(tournament);
+    const teams = await teamService.createTeams(tournament);
 
     if (!teams) {
       Profiling.error({

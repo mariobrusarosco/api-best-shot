@@ -232,6 +232,7 @@ export const QUERIES_DATA_PROVIDER_JOBS = {
       byJobType: {
         standings_and_scores: 0,
         new_knockout_rounds: 0,
+        daily_update: 0,
       },
     };
 

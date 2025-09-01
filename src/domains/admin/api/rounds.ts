@@ -107,4 +107,56 @@ export const API_ADMIN_ROUNDS = {
       });
     }
   },
+
+  async knockoutUpdate(req: Request, res: Response) {
+    // #1 Start Reporter
+    const reporter = new DataProviderReport('knockout_update');
+    // #2 Start Provider
+    const provider = await RoundDataProviderService.create(reporter);
+
+    try {
+      // #3 Validate Input
+      if (!req.body.tournamentId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Tournament ID is required',
+        });
+      }
+
+      // #4 Get Tournament
+      const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
+      // #5 Validate Tournament
+      if (!tournament) {
+        return res.status(404).json({
+          success: false,
+          error: 'Tournament not found',
+        });
+      }
+
+      // #6 Set Tournament on Reporter
+      provider.report.setTournament({
+        label: tournament.label,
+        id: tournament.id,
+        provider: 'sofascore',
+      });
+
+      // #7 Update Knockout Rounds - scrape new knockout matches
+      const result = await provider.updateRounds(tournament);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Knockout rounds updated successfully',
+        data: {
+          result,
+          reportUrl: reporter.reportUrl,
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update knockout rounds',
+        error: (error as Error).message,
+      });
+    }
+  },
 };

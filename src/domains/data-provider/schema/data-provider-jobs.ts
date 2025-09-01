@@ -2,7 +2,7 @@ import { pgTable, uuid, text, timestamp, integer, jsonb, index, pgEnum } from 'd
 import { T_Tournament } from '@/domains/tournament/schema';
 
 // Enum for job types (prefixed to avoid conflicts)
-export const dpJobTypeEnum = pgEnum('dp_job_type', ['standings_and_scores', 'new_knockout_rounds']);
+export const dpJobTypeEnum = pgEnum('dp_job_type', ['standings_and_scores', 'new_knockout_rounds', 'daily_update']);
 
 // Enum for schedule status (prefixed to avoid conflicts)
 export const dpScheduleStatusEnum = pgEnum('dp_schedule_status', ['pending', 'scheduled', 'schedule_failed']);
@@ -36,10 +36,8 @@ export const T_DataProviderJobs = pgTable(
     targetEndpoint: text('target_endpoint').notNull(), // e.g., '/api/v2/admin/standings'
     targetPayload: jsonb('target_payload'), // Full payload for Lambda
 
-    // Relationships
-    tournamentId: uuid('tournament_id')
-      .notNull()
-      .references(() => T_Tournament.id),
+    // Relationships (nullable for daily_update jobs)
+    tournamentId: uuid('tournament_id').references(() => T_Tournament.id),
 
     // Two-Phase Status Tracking
     scheduleStatus: dpScheduleStatusEnum('schedule_status').notNull().default('pending'),
@@ -88,6 +86,6 @@ export type DB_InsertDataProviderJob = typeof T_DataProviderJobs.$inferInsert;
 export type DB_UpdateDataProviderJob = Partial<typeof T_DataProviderJobs.$inferInsert>;
 
 // Status type exports for use in application
-export type JobType = 'standings_and_scores' | 'new_knockout_rounds';
+export type JobType = 'standings_and_scores' | 'new_knockout_rounds' | 'daily_update';
 export type ScheduleStatus = 'pending' | 'scheduled' | 'schedule_failed';
 export type ExecutionStatus = 'not_triggered' | 'triggered' | 'executing' | 'execution_succeeded' | 'execution_failed';

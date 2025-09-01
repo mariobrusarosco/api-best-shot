@@ -5,9 +5,13 @@ import Profiling from '@/services/profiling';
 import type { JobType } from '@/domains/data-provider/schema/data-provider-jobs';
 
 interface ScheduleJobRequest {
-  tournament_id: string;
-  schedule_type: 'standings_and_scores' | 'new_knockout_rounds';
-  duration: number; // in days
+  jobType: 'daily_update' | 'scores_and_standings' | 'knockout_rounds';
+  environment: 'demo' | 'staging' | 'production';
+  tournamentId?: string; // Optional for daily_update jobs
+  roundSlug?: string; // Only for scores_and_standings
+  matchStartTime?: string; // Only for scores_and_standings
+  scheduleExpression?: string; // Optional - defaults based on job type
+  description?: string;
 }
 
 /**
@@ -21,36 +25,59 @@ const scheduleJob = async (req: Request, res: Response) => {
     const body = req.body as ScheduleJobRequest;
 
     // Validate required fields
-    if (!body.tournament_id || !body.schedule_type || !body.duration) {
+    if (!body.jobType || !body.environment) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: tournament_id, schedule_type, duration',
+        error: 'Missing required fields: jobType, environment',
       });
     }
 
-    // Validate schedule_type
-    if (!['standings_and_scores', 'new_knockout_rounds'].includes(body.schedule_type)) {
+    // Validate jobType
+    if (!['daily_update', 'scores_and_standings', 'knockout_rounds'].includes(body.jobType)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid schedule_type. Must be "standings_and_scores" or "new_knockout_rounds"',
+        error: 'Invalid jobType. Must be "daily_update", "scores_and_standings", or "knockout_rounds"',
       });
     }
 
-    // Validate duration
-    if (body.duration < 1 || body.duration > 365) {
+    // Validate environment
+    if (!['demo', 'staging', 'production'].includes(body.environment)) {
       return res.status(400).json({
         success: false,
-        error: 'Duration must be between 1 and 365 days',
+        error: 'Invalid environment. Must be "demo", "staging", or "production"',
       });
+    }
+
+    // Job-specific validation
+    if (body.jobType === 'scores_and_standings') {
+      if (!body.tournamentId || !body.matchStartTime) {
+        return res.status(400).json({
+          success: false,
+          error: 'scores_and_standings jobs require tournamentId and matchStartTime',
+        });
+      }
+    }
+
+    if (body.jobType === 'knockout_rounds') {
+      if (!body.tournamentId) {
+        return res.status(400).json({
+          success: false,
+          error: 'knockout_rounds jobs require tournamentId',
+        });
+      }
     }
 
     // TODO: Extract actual admin user from auth token
     const adminUser = 'admin'; // Placeholder - should come from auth
 
-    const result = await AdminSchedulerService.scheduleJob({
-      tournamentId: body.tournament_id,
-      scheduleType: body.schedule_type as JobType,
-      duration: body.duration,
+    const result = await AdminSchedulerService.scheduleJobNew({
+      jobType: body.jobType,
+      environment: body.environment,
+      tournamentId: body.tournamentId,
+      roundSlug: body.roundSlug,
+      matchStartTime: body.matchStartTime,
+      scheduleExpression: body.scheduleExpression,
+      description: body.description,
       createdBy: adminUser,
     });
 

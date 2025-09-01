@@ -5,12 +5,13 @@ import Profiling from '@/services/profiling';
 
 interface NotificationParams {
   status: 'pending' | 'scheduled' | 'schedule_failed' | 'execution_succeeded' | 'execution_failed';
-  tournamentId: string;
+  tournamentId: string | null;
   jobType: JobType;
   scheduleId: string;
   scheduleArn?: string;
   error?: string;
   executionResult?: Record<string, unknown>;
+  environment: string;
 }
 
 /**
@@ -55,10 +56,15 @@ export async function sendScheduleNotification(params: NotificationParams): Prom
  */
 function buildSlackMessage(params: NotificationParams): SlackMessage {
   const jobTypeDisplay =
-    params.jobType === 'standings_and_scores' ? 'Standings & Scores Update' : 'Knockout Rounds Update';
+    params.jobType === 'standings_and_scores'
+      ? 'Standings & Scores Update'
+      : params.jobType === 'new_knockout_rounds'
+        ? 'Knockout Rounds Update'
+        : 'Daily Update';
 
-  const environment = env.NODE_ENV || 'development';
+  const environment = params.environment;
   const timestamp = new Date().toISOString();
+  const tournamentDisplay = params.tournamentId || 'Global';
 
   switch (params.status) {
     case 'pending':
@@ -81,7 +87,7 @@ function buildSlackMessage(params: NotificationParams): SlackMessage {
               },
               {
                 type: 'mrkdwn',
-                text: `*Tournament:*\n${params.tournamentId}`,
+                text: `*Tournament:*\n${tournamentDisplay}`,
               },
               {
                 type: 'mrkdwn',
@@ -125,7 +131,7 @@ function buildSlackMessage(params: NotificationParams): SlackMessage {
               },
               {
                 type: 'mrkdwn',
-                text: `*Tournament:*\n${params.tournamentId}`,
+                text: `*Tournament:*\n${tournamentDisplay}`,
               },
               {
                 type: 'mrkdwn',
@@ -169,7 +175,7 @@ function buildSlackMessage(params: NotificationParams): SlackMessage {
               },
               {
                 type: 'mrkdwn',
-                text: `*Tournament:*\n${params.tournamentId}`,
+                text: `*Tournament:*\n${tournamentDisplay}`,
               },
               {
                 type: 'mrkdwn',
@@ -213,7 +219,7 @@ function buildSlackMessage(params: NotificationParams): SlackMessage {
               },
               {
                 type: 'mrkdwn',
-                text: `*Tournament:*\n${params.tournamentId}`,
+                text: `*Tournament:*\n${tournamentDisplay}`,
               },
               {
                 type: 'mrkdwn',
@@ -257,7 +263,7 @@ function buildSlackMessage(params: NotificationParams): SlackMessage {
               },
               {
                 type: 'mrkdwn',
-                text: `*Tournament:*\n${params.tournamentId}`,
+                text: `*Tournament:*\n${tournamentDisplay}`,
               },
               {
                 type: 'mrkdwn',

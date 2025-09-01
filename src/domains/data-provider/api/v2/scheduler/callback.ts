@@ -164,6 +164,7 @@ async function handleNewJobCallback(
         tournamentId: job.tournamentId,
         jobType: job.jobType,
         scheduleId: callbackData.scheduleId,
+        environment: job.environment,
       });
       break;
 
@@ -180,6 +181,7 @@ async function handleNewJobCallback(
         jobType: job.jobType,
         scheduleId: callbackData.scheduleId,
         error: (executionDetails.executionError?.message as string) || 'Unknown execution error',
+        environment: job.environment,
       });
       break;
 

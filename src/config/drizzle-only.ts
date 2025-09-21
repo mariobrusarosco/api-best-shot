@@ -37,7 +37,7 @@ function resolveDbConnection(): string {
 
   // Priority 3: Fallback to component-based connection (for local Docker)
   if (process.env.DB_USER && process.env.DB_PASSWORD && process.env.DB_HOST && process.env.DB_NAME) {
-    return `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT || '5432'}/${process.env.DB_NAME}`;
+    return `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT || '5433'}/${process.env.DB_NAME}`;
   }
 
   // Priority 4: Final fallback with informative error
@@ -54,7 +54,7 @@ function resolveDbConnection(): string {
     - Using placeholder connection (will likely fail)
   `);
 
-  return 'postgresql://placeholder:placeholder@placeholder:5432/placeholder';
+  return 'postgresql://placeholder:placeholder@placeholder:5433/placeholder';
 }
 
 // Export the resolved database URL

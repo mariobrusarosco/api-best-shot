@@ -1,22 +1,282 @@
+import { Profiling } from '@/services/profiling';
+import { SlackBlock, SlackNotificationPayload, slackService } from '@/services/slack';
 import { QUERIES_DATA_PROVIDER_EXECUTIONS } from '../queries';
 import type { DB_InsertDataProviderExecution, DB_SelectDataProviderExecution } from '../schema';
 
 type ConstructorProps = {
+  requestId: string;
   tournamentId: string;
   operationType: string;
 };
+
 export class DataProviderExecution {
-  execution: DB_InsertDataProviderExecution;
-  constructor(execution: ConstructorProps) {
+  private execution: DB_InsertDataProviderExecution;
+  private requestId: string;
+  private isCompleted: boolean = false;
+  private webhookUrl: string;
+
+  constructor(props: ConstructorProps) {
+    this.requestId = props.requestId;
     this.execution = {
-      tournamentId: execution.tournamentId,
-      operationType: execution.operationType,
+      requestId: props.requestId,
+      tournamentId: props.tournamentId,
+      operationType: props.operationType,
       status: 'in_progress',
       startedAt: new Date(),
     };
+
+    this.webhookUrl = process.env.SLACK_JOB_EXECUTIONS_WEBHOOK || '';
   }
 
-  // Create a new execution record
+  async complete(data: {
+    reportFileUrl?: string;
+    reportFileKey?: string;
+    summary?: Record<string, unknown>;
+    duration?: number;
+    tournamentLabel?: string;
+  }): Promise<DB_SelectDataProviderExecution | null> {
+    if (this.isCompleted) {
+      throw new Error('Execution has already been completed or failed');
+    }
+
+    this.isCompleted = true;
+
+    const result = await QUERIES_DATA_PROVIDER_EXECUTIONS.updateExecutionByRequestId(this.requestId, {
+      status: 'completed',
+      completedAt: new Date(),
+      reportFileUrl: data.reportFileUrl,
+      reportFileKey: data.reportFileKey,
+      summary: data.summary,
+      duration: data.duration,
+    });
+
+    // Send success notification
+    await this.notifySuccess(data.tournamentLabel || 'Unknown', data.duration || 0, data.summary);
+
+    return result;
+  }
+
+  async failure(data: {
+    reportFileUrl?: string;
+    reportFileKey?: string;
+    summary?: Record<string, unknown>;
+    duration?: number;
+    tournamentLabel?: string;
+    error?: string;
+  }): Promise<DB_SelectDataProviderExecution | null> {
+    if (this.isCompleted) {
+      throw new Error('Execution has already been completed or failed');
+    }
+
+    this.isCompleted = true;
+
+    const result = await QUERIES_DATA_PROVIDER_EXECUTIONS.updateExecutionByRequestId(this.requestId, {
+      status: 'failed',
+      completedAt: new Date(),
+      reportFileUrl: data.reportFileUrl,
+      reportFileKey: data.reportFileKey,
+      summary: data.summary,
+      duration: data.duration,
+    });
+
+    await this.notifyFailure(data.tournamentLabel || 'Unknown', data.duration || 0, data.error, data.summary);
+
+    return result;
+  }
+
+  async update(data: {
+    tournamentId?: string;
+    status?: 'completed' | 'failed' | 'in_progress';
+    reportFileUrl?: string;
+    reportFileKey?: string;
+    summary?: Record<string, unknown>;
+  }): Promise<DB_SelectDataProviderExecution | null> {
+    return await QUERIES_DATA_PROVIDER_EXECUTIONS.updateExecutionByRequestId(this.requestId, data);
+  }
+
+  async getCurrent(): Promise<DB_SelectDataProviderExecution | null> {
+    return await QUERIES_DATA_PROVIDER_EXECUTIONS.getExecutionByRequestId(this.requestId);
+  }
+
+  get completed(): boolean {
+    return this.isCompleted;
+  }
+
+  get id(): string {
+    return this.requestId;
+  }
+
+  private async notifySuccess(
+    tournamentLabel: string,
+    duration: number,
+    summary?: Record<string, unknown>
+  ): Promise<void> {
+    if (!this.webhookUrl) return;
+
+    try {
+      const payload = this.buildSlackPayload('success', tournamentLabel, duration, undefined, summary);
+      await slackService.sendNotification(this.webhookUrl, payload);
+    } catch (error) {
+      Profiling.error({
+        error: error instanceof Error ? error : new Error(String(error)),
+        data: { requestId: this.requestId },
+        source: 'DATA_PROVIDER_EXECUTION_notifySuccess',
+      });
+    }
+  }
+
+  private async notifyFailure(
+    tournamentLabel: string,
+    duration: number,
+    error?: string,
+    summary?: Record<string, unknown>
+  ): Promise<void> {
+    if (!this.webhookUrl) return;
+
+    try {
+      const payload = this.buildSlackPayload('failure', tournamentLabel, duration, error, summary);
+      await slackService.sendNotification(this.webhookUrl, payload);
+    } catch (err) {
+      Profiling.error({
+        error: err instanceof Error ? err : new Error(String(err)),
+        data: { requestId: this.requestId },
+        source: 'DATA_PROVIDER_EXECUTION_notifyFailure',
+      });
+    }
+  }
+
+  private buildSlackPayload(
+    status: 'success' | 'failure',
+    tournamentLabel: string,
+    duration: number,
+    error?: string,
+    summary?: Record<string, unknown>
+  ): SlackNotificationPayload {
+    const isSuccess = status === 'success';
+    const emoji = isSuccess ? '✅' : '❌';
+    const statusText = isSuccess ? 'SUCCESS' : 'FAILED';
+    const operationName = this.execution.operationType.replace('_', ' ').toUpperCase();
+
+    const blocks: SlackBlock[] = [
+      // Header block - following the official documentation
+      {
+        type: 'header',
+        text: {
+          type: 'plain_text',
+          text: `${emoji} Data Provider Execution ${statusText}`,
+          emoji: true,
+        },
+      },
+      // Section block with fields - following the official documentation
+      {
+        type: 'section',
+        fields: [
+          {
+            type: 'mrkdwn',
+            text: `*Tournament:*\n${tournamentLabel}`,
+          },
+          {
+            type: 'mrkdwn',
+            text: `*Operation:*\n${operationName}`,
+          },
+          {
+            type: 'mrkdwn',
+            text: `*Duration:*\n${this.formatDuration(duration)}`,
+          },
+          {
+            type: 'mrkdwn',
+            text: `*Status:*\n${statusText}`,
+          },
+        ],
+      },
+    ];
+
+    if (error) {
+      blocks.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*Error Details:*\n\`\`\`${error}\`\`\``,
+        },
+      });
+    }
+
+    // Add summary section if available
+    if (summary) {
+      const summaryText = this.formatSummary(summary);
+      if (summaryText) {
+        blocks.push({
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*Summary:*\n${summaryText}`,
+          },
+        });
+      }
+    }
+
+    // Context block - following the official documentation
+    blocks.push({
+      type: 'context',
+      elements: [
+        {
+          type: 'mrkdwn',
+          text: `Request ID: \`${this.requestId}\``,
+        },
+        {
+          type: 'mrkdwn',
+          text: `Timestamp: <!date^${Math.floor(Date.now() / 1000)}^{date_short_pretty} at {time}|${new Date().toISOString()}>`,
+        },
+      ],
+    });
+
+    // Add divider
+    blocks.push({
+      type: 'divider',
+    });
+
+    return {
+      text: `${emoji} Data Provider Execution ${statusText}`, // Fallback text
+      username: 'Data Provider Bot',
+      icon_emoji: ':robot_face:',
+      blocks,
+    };
+  }
+
+  private formatDuration(milliseconds: number): string {
+    if (milliseconds < 1000) {
+      return `${milliseconds}ms`;
+    }
+
+    const seconds = Math.floor(milliseconds / 1000);
+    if (seconds < 60) {
+      return `${seconds}s`;
+    }
+
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+
+  private formatSummary(summary: Record<string, unknown>): string {
+    const parts: string[] = [];
+
+    if (typeof summary.operationsCount === 'number') {
+      parts.push(`${summary.operationsCount} operations`);
+    }
+
+    if (typeof summary.successfulOperations === 'number') {
+      parts.push(`${summary.successfulOperations} successful`);
+    }
+
+    if (typeof summary.failedOperations === 'number' && summary.failedOperations > 0) {
+      parts.push(`${summary.failedOperations} failed`);
+    }
+
+    return parts.join(', ');
+  }
+
+  // Legacy static methods for backward compatibility
   static async createExecution(data: {
     requestId: string;
     tournamentId: string;
@@ -33,7 +293,7 @@ export class DataProviderExecution {
     return await QUERIES_DATA_PROVIDER_EXECUTIONS.createExecution(execution);
   }
 
-  // Update execution with completion data
+  // Legacy static methods for backward compatibility
   static async completeExecution(
     requestId: string,
     data: {
@@ -54,7 +314,7 @@ export class DataProviderExecution {
     });
   }
 
-  // Update execution with specific fields (like tournament ID)
+  // Legacy static methods for backward compatibility
   static async updateExecution(
     requestId: string,
     data: {

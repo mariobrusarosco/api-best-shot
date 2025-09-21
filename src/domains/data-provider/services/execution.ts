@@ -3,12 +3,6 @@ import { SlackBlock, SlackNotificationPayload, slackService } from '@/services/s
 import { QUERIES_DATA_PROVIDER_EXECUTIONS } from '../queries';
 import type { DB_InsertDataProviderExecution, DB_SelectDataProviderExecution } from '../schema';
 
-type ConstructorProps = {
-  requestId: string;
-  tournamentId: string;
-  operationType: string;
-};
-
 export class DataProviderExecution {
   private execution: DB_InsertDataProviderExecution;
   private requestId: string;
@@ -26,6 +20,8 @@ export class DataProviderExecution {
     };
 
     this.webhookUrl = process.env.SLACK_JOB_EXECUTIONS_WEBHOOK || '';
+
+    QUERIES_DATA_PROVIDER_EXECUTIONS.createExecution(this.execution);
   }
 
   async complete(data: {
@@ -51,7 +47,12 @@ export class DataProviderExecution {
     });
 
     // Send success notification
-    await this.notifySuccess(data.tournamentLabel || 'Unknown', data.duration || 0, data.summary);
+    await this.notifySuccess(
+      this.execution.tournamentId,
+      data.tournamentLabel || 'Unknown',
+      data.summary,
+      data.reportFileUrl
+    );
 
     return result;
   }
@@ -79,7 +80,13 @@ export class DataProviderExecution {
       duration: data.duration,
     });
 
-    await this.notifyFailure(data.tournamentLabel || 'Unknown', data.duration || 0, data.error, data.summary);
+    await this.notifyFailure(
+      this.execution.tournamentId,
+      data.tournamentLabel || 'Unknown',
+      data.error,
+      data.summary,
+      data.reportFileUrl
+    );
 
     return result;
   }
@@ -98,6 +105,16 @@ export class DataProviderExecution {
     return await QUERIES_DATA_PROVIDER_EXECUTIONS.getExecutionByRequestId(this.requestId);
   }
 
+  /**
+   * Update the tournament ID after tournament creation
+   */
+  async updateTournamentId(tournamentId: string): Promise<void> {
+    this.execution.tournamentId = tournamentId;
+    await QUERIES_DATA_PROVIDER_EXECUTIONS.updateExecutionByRequestId(this.requestId, {
+      tournamentId,
+    });
+  }
+
   get completed(): boolean {
     return this.isCompleted;
   }
@@ -107,14 +124,20 @@ export class DataProviderExecution {
   }
 
   private async notifySuccess(
+    tournamentId: string,
     tournamentLabel: string,
-    duration: number,
-    summary?: Record<string, unknown>
+    summary?: Record<string, unknown>,
+    reportFileUrl?: string
   ): Promise<void> {
     if (!this.webhookUrl) return;
 
     try {
-      const payload = this.buildSlackPayload('success', tournamentLabel, duration, undefined, summary);
+      const payload = this.buildSlackPayload('success', {
+        tournamentId,
+        tournamentLabel,
+        summary,
+        reportFileUrl,
+      });
       await slackService.sendNotification(this.webhookUrl, payload);
     } catch (error) {
       Profiling.error({
@@ -126,15 +149,22 @@ export class DataProviderExecution {
   }
 
   private async notifyFailure(
+    tournamentId: string,
     tournamentLabel: string,
-    duration: number,
     error?: string,
-    summary?: Record<string, unknown>
+    summary?: Record<string, unknown>,
+    reportFileUrl?: string
   ): Promise<void> {
     if (!this.webhookUrl) return;
 
     try {
-      const payload = this.buildSlackPayload('failure', tournamentLabel, duration, error, summary);
+      const payload = this.buildSlackPayload('failure', {
+        tournamentId,
+        tournamentLabel,
+        error,
+        summary,
+        reportFileUrl,
+      });
       await slackService.sendNotification(this.webhookUrl, payload);
     } catch (err) {
       Profiling.error({
@@ -147,10 +177,7 @@ export class DataProviderExecution {
 
   private buildSlackPayload(
     status: 'success' | 'failure',
-    tournamentLabel: string,
-    duration: number,
-    error?: string,
-    summary?: Record<string, unknown>
+    payload: NotificationPayloadSuccess | NotificationPayloadFailure
   ): SlackNotificationPayload {
     const isSuccess = status === 'success';
     const emoji = isSuccess ? '✅' : '❌';
@@ -173,15 +200,11 @@ export class DataProviderExecution {
         fields: [
           {
             type: 'mrkdwn',
-            text: `*Tournament:*\n${tournamentLabel}`,
+            text: `*Tournament:*\n${payload.tournamentLabel}`,
           },
           {
             type: 'mrkdwn',
             text: `*Operation:*\n${operationName}`,
-          },
-          {
-            type: 'mrkdwn',
-            text: `*Duration:*\n${this.formatDuration(duration)}`,
           },
           {
             type: 'mrkdwn',
@@ -191,19 +214,20 @@ export class DataProviderExecution {
       },
     ];
 
-    if (error) {
+    // Check if payload has error property (failure case)
+    if (status === 'failure' && 'error' in payload && payload.error) {
       blocks.push({
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*Error Details:*\n\`\`\`${error}\`\`\``,
+          text: `*Error Details:*\n\`\`\`${payload.error}\`\`\``,
         },
       });
     }
 
     // Add summary section if available
-    if (summary) {
-      const summaryText = this.formatSummary(summary);
+    if (payload.summary) {
+      const summaryText = this.formatSummary(payload.summary);
       if (summaryText) {
         blocks.push({
           type: 'section',
@@ -213,6 +237,17 @@ export class DataProviderExecution {
           },
         });
       }
+    }
+
+    // Add report URL as rich text link if available
+    if (payload.reportFileUrl) {
+      blocks.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `📊 <${payload.reportFileUrl}|View Report>`,
+        },
+      });
     }
 
     // Context block - following the official documentation
@@ -241,21 +276,6 @@ export class DataProviderExecution {
       icon_emoji: ':robot_face:',
       blocks,
     };
-  }
-
-  private formatDuration(milliseconds: number): string {
-    if (milliseconds < 1000) {
-      return `${milliseconds}ms`;
-    }
-
-    const seconds = Math.floor(milliseconds / 1000);
-    if (seconds < 60) {
-      return `${seconds}s`;
-    }
-
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}m ${remainingSeconds}s`;
   }
 
   private formatSummary(summary: Record<string, unknown>): string {
@@ -401,3 +421,24 @@ export class DataProviderExecution {
     return stats;
   }
 }
+
+type ConstructorProps = {
+  requestId: string;
+  tournamentId: string;
+  operationType: string;
+};
+
+type NotificationPayloadFailure = {
+  tournamentId: string;
+  tournamentLabel: string;
+  error?: string;
+  summary?: Record<string, unknown>;
+  reportFileUrl?: string;
+};
+
+type NotificationPayloadSuccess = {
+  tournamentId: string;
+  tournamentLabel: string;
+  summary?: Record<string, unknown>;
+  reportFileUrl?: string;
+};

@@ -143,6 +143,9 @@ export class TournamentDataProvider {
         slug: payload.slug,
       });
 
+      // Update execution with actual tournament ID
+      await this.execution?.updateTournamentId(tournament.id);
+
       // Generate report file
       const reportUpload = await this.reporter.createFileAndUpload();
 

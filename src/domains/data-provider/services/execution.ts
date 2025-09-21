@@ -1,7 +1,21 @@
 import { QUERIES_DATA_PROVIDER_EXECUTIONS } from '../queries';
 import type { DB_InsertDataProviderExecution, DB_SelectDataProviderExecution } from '../schema';
 
-export class DataProviderExecutionService {
+type ConstructorProps = {
+  tournamentId: string;
+  operationType: string;
+};
+export class DataProviderExecution {
+  execution: DB_InsertDataProviderExecution;
+  constructor(execution: ConstructorProps) {
+    this.execution = {
+      tournamentId: execution.tournamentId,
+      operationType: execution.operationType,
+      status: 'in_progress',
+      startedAt: new Date(),
+    };
+  }
+
   // Create a new execution record
   static async createExecution(data: {
     requestId: string;

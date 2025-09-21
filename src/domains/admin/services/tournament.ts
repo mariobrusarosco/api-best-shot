@@ -1,5 +1,5 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { TournamentDataProviderService } from '@/domains/data-provider/services/tournaments';
+import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import Profiling from '@/services/profiling';
@@ -13,31 +13,9 @@ class AdminTournamentService {
     let scraper: BaseScraper | null = null;
 
     try {
-      Profiling.log({
-        msg: `[ADMIN] Creating tournament..........`,
-        data: {
-          requestId,
-          tournamentLabel: req.body.label,
-          provider: req.body.provider,
-          adminUser: req.authenticatedUser?.nickName,
-        },
-        source: 'ADMIN_SERVICE_TOURNAMENT_create',
-      });
-
       scraper = await BaseScraper.createInstance();
-      const dataProviderService = new TournamentDataProviderService(scraper, requestId);
+      const dataProviderService = new TournamentDataProvider(scraper, requestId);
       const tournament = await dataProviderService.init(req.body);
-
-      Profiling.log({
-        msg: `[ADMIN] Tournament created successfully!`,
-        data: {
-          requestId,
-          tournamentLabel: tournament.label,
-          tournamentId: tournament.id,
-          createdBy: req.authenticatedUser?.nickName,
-        },
-        source: 'ADMIN_SERVICE_TOURNAMENT_create',
-      });
 
       return res.status(201).json({
         success: true,

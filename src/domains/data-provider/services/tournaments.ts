@@ -1,23 +1,23 @@
+import { CreateTournamentInput } from '@/domains/data-provider/api/v2/tournament/typing';
+import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { DataProviderExecution } from '@/domains/data-provider/services/execution';
+import { DataProviderReport } from '@/domains/data-provider/services/report';
+import { DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 import { DB_InsertTournament, DB_UpdateTournament, T_Tournament } from '@/domains/tournament/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
 import { Profiling } from '@/services/profiling';
 import { and, eq } from 'drizzle-orm';
-import { CreateTournamentInput } from '../api/v2/tournament/typing';
-import { BaseScraper } from '../providers/playwright/base-scraper';
-import { DataProviderExecutionOperationType } from '../typing';
-import { DataProviderExecutionService } from './execution';
-import { DataProviderReportService } from './report';
 
-export class TournamentDataProviderService {
+export class TournamentDataProvider {
   private scraper: BaseScraper;
-  private reportService: DataProviderReportService;
+  private reportService: DataProviderReport;
   private requestId: string;
 
   constructor(scraper: BaseScraper, requestId: string) {
     this.scraper = scraper;
     this.requestId = requestId;
-    this.reportService = new DataProviderReportService(requestId);
+    this.reportService = new DataProviderReport(requestId);
   }
 
   public async createOnDatabase(input: DB_InsertTournament) {
@@ -125,26 +125,10 @@ export class TournamentDataProviderService {
       throw new Error(`[TournamentDataProviderService] - [ERROR] - [INIT] - [TOURNAMENT PUBLIC ID IS NULL]`);
     }
 
-    reporter
-      .addOperation('initialization', 'validate_input', 'completed')
-      .addOperation('scraping', 'fetch_logo', 'started');
+    reporter.addOperation('initialization', 'validate_input', 'completed');
 
     try {
-      const logoUrl = this.getTournamentLogoUrl(payload.tournamentPublicId);
-      const s3Key = await this.scraper.uploadAsset({
-        logoUrl,
-        filename: `tournament-${payload.tournamentPublicId}`,
-      });
-      const logo = this.scraper.getCloudFrontUrl(s3Key);
-
-      reporter.addOperation('scraping', 'fetch_logo', 'completed', { logoUrl: logo, s3Key });
-
-      Profiling.log({
-        msg: `Created tournament logo: ${logo}....`,
-        data: { logo },
-        source: 'DATA_PROVIDER_V2_TOURNAMENT_init',
-      });
-
+      const logo = await this.uploadTournamentLogo(reporter, payload.tournamentPublicId);
       const tournament = await this.createOnDatabase({
         externalId: payload.tournamentPublicId,
         baseUrl: payload.baseUrl,
@@ -158,40 +142,40 @@ export class TournamentDataProviderService {
       });
 
       // Generate report file
-      const reportResult = await reporter.generateOperationReport();
+      const reportUpload = await reporter.createFileAndUpload();
 
       // Complete execution tracking with report information and correct tournament ID
-      const duration = Date.now() - startTime;
-      const summary = reporter.getSummary();
 
       // Only include report file fields if they have values
-      const executionData: any = {
-        status: 'completed',
-        duration,
-        summary: {
-          tournamentId: tournament.id,
-          tournamentLabel: tournament.label,
-          provider: payload.provider,
-          operationsCount: summary.totalOperations,
-          successfulOperations: summary.successfulOperations,
-          failedOperations: summary.failedOperations,
-        },
-      };
+      // const execution: any = {
+      //   status: 'completed',
+      //   duration,
+      //   summary: {
+      //     tournamentId: tournament.id,
+      //     tournamentLabel: tournament.label,
+      //     provider: payload.provider,
+      //     operationsCount: summary.totalOperations,
+      //     successfulOperations: summary.successfulOperations,
+      //     failedOperations: summary.failedOperations,
+      //   },
+      // };
+      // execution.reportFile Key = reportUpload?.s3Key || undefined;
+      // execution.reportFileUrl = reportUpload?.s3Url || undefined;
 
-      // Only add report file fields if they exist
-      if (reportResult.s3Key) {
-        executionData.reportFileKey = reportResult.s3Key;
-      }
-      if (reportResult.s3Url) {
-        executionData.reportFileUrl = reportResult.s3Url;
-      }
+      const execution = new DataProviderExecution({
+        requestId: this.requestId,
+        tournamentId: tournament.id,
+        operationType: DataProviderExecutionOperationType.TOURNAMENT_CREATE,
+        reportFileKey: reportUpload?.s3Key || undefined,
+        reportFileUrl: reportUpload?.s3Url || undefined,
+      });
 
-      await DataProviderExecutionService.completeExecution(this.requestId, executionData);
+      await execution.createExecution();
 
       // Update execution record with actual tournament ID
-      await DataProviderExecutionService.updateExecution(this.requestId, {
-        tournamentId: tournament.id,
-      });
+      // await DataProviderExecutionService.updateExecution(this.requestId, {
+      // tournamentId: tournament.id,
+      // });
 
       return tournament;
     } catch (error) {
@@ -227,5 +211,22 @@ export class TournamentDataProviderService {
       await DataProviderExecutionService.completeExecution(this.requestId, executionData);
       throw error;
     }
+  }
+
+  private async uploadTournamentLogo(reporter: DataProviderReport, tournamentId: string) {
+    reporter.addOperation('scraping', 'tournament_logo', 'started');
+    const logoUrl = this.getTournamentLogoUrl(tournamentId);
+    const s3Key = await this.scraper.uploadAsset({
+      logoUrl,
+      filename: `tournament-${tournamentId}`,
+    });
+    const logo = this.scraper.getCloudFrontUrl(s3Key);
+
+    reporter.addOperation('scraping', 'tournament_logo', 'completed', {
+      logoUrl: logo,
+      s3Key,
+    });
+
+    return logo;
   }
 }

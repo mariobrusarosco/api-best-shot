@@ -35,7 +35,7 @@ interface OperationReport {
   };
 }
 
-export class DataProviderReportService {
+export class DataProviderReport {
   private report: OperationReport;
 
   constructor(requestId: string) {
@@ -105,7 +105,7 @@ export class DataProviderReportService {
     return this.report.summary;
   }
 
-  public async generateOperationReport(): Promise<{ s3Key?: string; s3Url?: string }> {
+  public async createFileAndUpload(): Promise<{ s3Key?: string; s3Url?: string }> {
     this.report.endTime = new Date().toISOString();
     const filename = `tournament-operation-${this.report.requestId}`;
     const jsonContent = JSON.stringify(this.report, null, 2);

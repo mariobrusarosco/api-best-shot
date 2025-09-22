@@ -12,14 +12,17 @@ class AdminStandingsService {
     let scraper: BaseScraper | null = null;
 
     try {
-      if (!req.body.tournamentId) {
+      // Get tournament ID from URL params
+      const tournamentId = req.params.tournamentId;
+      if (!tournamentId) {
         return res.status(400).json({
           success: false,
           error: 'Tournament ID is required',
         });
       }
 
-      const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
+      // Get tournament data to build payload
+      const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
       if (!tournament) {
         return res.status(404).json({
           success: false,
@@ -27,35 +30,23 @@ class AdminStandingsService {
         });
       }
 
-      Profiling.log({
-        msg: `[ADMIN STANDINGS CREATION] Request received`,
-        data: {
-          requestId,
-          tournamentId: req.body.tournamentId,
-          adminUser: req.authenticatedUser?.nickName,
-        },
-        source: 'ADMIN_SERVICE_STANDINGS_create',
-      });
-
       scraper = await BaseScraper.createInstance();
       const dataProviderService = new StandingsDataProviderService(scraper, requestId);
-      const standings = await dataProviderService.init(tournament);
 
-      Profiling.log({
-        msg: `[ADMIN STANDINGS CREATION] Standings created successfully`,
-        data: {
-          requestId,
-          tournamentId: tournament.id,
-          standingsCount: standings.length,
-          createdBy: req.authenticatedUser?.nickName,
-        },
-        source: 'ADMIN_SERVICE_STANDINGS_create',
-      });
+      // Build proper payload for standings service
+      const payload = {
+        tournamentId: tournamentId,
+        baseUrl: tournament.baseUrl,
+        label: tournament.label,
+        provider: tournament.provider,
+      };
+
+      const standings = await dataProviderService.init(payload);
 
       return res.status(201).json({
         success: true,
         data: { standings },
-        message: `${standings.length} standings created successfully for tournament "${tournament.label}"`,
+        message: `Standings created successfully`,
       });
     } catch (error) {
       Profiling.error({
@@ -71,6 +62,11 @@ class AdminStandingsService {
     } finally {
       if (scraper) {
         await scraper.close();
+        Profiling.log({
+          msg: '[CLEANUP] Playwright resources cleaned up successfully',
+          data: { requestId, source: 'admin_service' },
+          source: 'ADMIN_SERVICE_STANDINGS_create',
+        });
       }
     }
   }
@@ -80,14 +76,17 @@ class AdminStandingsService {
     let scraper: BaseScraper | null = null;
 
     try {
-      if (!req.body.tournamentId) {
+      // Get tournament ID from URL params
+      const tournamentId = req.params.tournamentId;
+      if (!tournamentId) {
         return res.status(400).json({
           success: false,
           error: 'Tournament ID is required',
         });
       }
 
-      const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
+      // Get tournament data to build payload
+      const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
       if (!tournament) {
         return res.status(404).json({
           success: false,
@@ -95,36 +94,23 @@ class AdminStandingsService {
         });
       }
 
-      Profiling.log({
-        msg: `[ADMIN] Updating standings for tournament ${tournament.label}..........`,
-        data: {
-          requestId,
-          tournamentLabel: tournament.label,
-          tournamentId: tournament.id,
-          updatedBy: req.authenticatedUser?.nickName,
-        },
-        source: 'ADMIN_SERVICE_STANDINGS_update',
-      });
-
       scraper = await BaseScraper.createInstance();
       const dataProviderService = new StandingsDataProviderService(scraper, requestId);
-      const standings = await dataProviderService.updateTournament(tournament);
 
-      Profiling.log({
-        msg: `[ADMIN] Standings for tournament ${tournament.label} updated successfully!`,
-        data: {
-          requestId,
-          tournamentId: tournament.id,
-          standingsCount: standings.length,
-          updatedBy: req.authenticatedUser?.nickName,
-        },
-        source: 'ADMIN_SERVICE_STANDINGS_update',
-      });
+      // Build proper payload for standings service
+      const payload = {
+        tournamentId: tournamentId,
+        baseUrl: tournament.baseUrl,
+        label: tournament.label,
+        provider: tournament.provider,
+      };
+
+      const standings = await dataProviderService.update(payload);
 
       return res.status(200).json({
         success: true,
         data: { standings },
-        message: `${standings.length} standings updated successfully for tournament "${tournament.label}"`,
+        message: `Standings updated successfully`,
       });
     } catch (error) {
       Profiling.error({
@@ -140,6 +126,11 @@ class AdminStandingsService {
     } finally {
       if (scraper) {
         await scraper.close();
+        Profiling.log({
+          msg: '[CLEANUP] Playwright resources cleaned up successfully',
+          data: { requestId, source: 'admin_service' },
+          source: 'ADMIN_SERVICE_STANDINGS_update',
+        });
       }
     }
   }

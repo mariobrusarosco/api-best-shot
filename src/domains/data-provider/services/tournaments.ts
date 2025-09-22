@@ -112,14 +112,14 @@ export class TournamentDataProvider {
       // Complete execution as failed for validation error
       const duration = Date.now() - startTime;
       const summary = this.reporter.getSummary();
+
       await this.execution?.failure({
         duration,
         tournamentLabel: payload.label,
         error: 'Tournament public ID is null',
         summary: {
           error: 'Tournament public ID is null',
-          operationsCount: summary.totalOperations,
-          failedOperations: summary.failedOperations,
+          ...summary,
         },
       });
 
@@ -161,9 +161,7 @@ export class TournamentDataProvider {
           tournamentId: tournament.id,
           tournamentLabel: tournament.label,
           provider: payload.provider,
-          operationsCount: summary.totalOperations,
-          successfulOperations: summary.successfulOperations,
-          failedOperations: summary.failedOperations,
+          ...summary,
         },
         duration,
       });
@@ -187,8 +185,7 @@ export class TournamentDataProvider {
         error: errorMessage,
         summary: {
           error: errorMessage,
-          operationsCount: summary.totalOperations,
-          failedOperations: summary.failedOperations + 1,
+          ...summary,
         },
         duration,
       });

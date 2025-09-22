@@ -29,7 +29,6 @@ interface OperationReport {
   endTime?: string;
   operations: ScrapingOperation[];
   summary: {
-    totalOperations: number;
     successfulOperations: number;
     failedOperations: number;
   };
@@ -49,7 +48,6 @@ export class DataProviderReport {
       startTime: new Date().toISOString(),
       operations: [],
       summary: {
-        totalOperations: 0,
         successfulOperations: 0,
         failedOperations: 0,
       },
@@ -59,13 +57,7 @@ export class DataProviderReport {
   public setTournamentInfo(tournament: { label: string; tournamentId: string; provider: string }) {
     this.report.tournament = tournament;
 
-    // Automatically log the tournament setup as an operation
-    this.addOperation('initialization', 'set_tournament_info', 'completed', {
-      label: tournament.label,
-      provider: tournament.provider,
-    });
-
-    return this; // Enable method chaining
+    return this;
   }
 
   public addOperation(
@@ -87,7 +79,6 @@ export class DataProviderReport {
       timestamp: new Date().toISOString(),
     });
 
-    this.report.summary.totalOperations++;
     if (status === 'completed') {
       this.report.summary.successfulOperations++;
     } else if (status === 'failed') {

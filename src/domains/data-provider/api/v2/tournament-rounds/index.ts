@@ -1,4 +1,4 @@
-import { RoundDataProviderService } from '@/domains/data-provider/services/rounds';
+import { RoundsDataProviderService } from '@/domains/data-provider/services/rounds';
 import { Response } from 'express';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { TournamentRoundRequest } from './typing';
@@ -38,9 +38,14 @@ const create = async (req: TournamentRoundRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const dataProviderService = new RoundDataProviderService(scraper, requestId);
+    const dataProviderService = new RoundsDataProviderService(scraper, requestId);
 
-    const rounds = await dataProviderService.init(tournament.id, tournament.baseUrl);
+    const rounds = await dataProviderService.init({
+      tournamentId: tournament.id,
+      baseUrl: tournament.baseUrl,
+      label: tournament.label,
+      provider: tournament.provider,
+    });
 
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament rounds creation completed successfully`,
@@ -100,9 +105,14 @@ const update = async (req: TournamentRoundRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const dataProviderService = new RoundDataProviderService(scraper, requestId);
+    const dataProviderService = new RoundsDataProviderService(scraper, requestId);
 
-    const rounds = await dataProviderService.updateTournament(tournament.id, tournament.baseUrl);
+    const rounds = await dataProviderService.update({
+      tournamentId: tournament.id,
+      baseUrl: tournament.baseUrl,
+      label: tournament.label,
+      provider: tournament.provider,
+    });
 
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament rounds update completed successfully`,

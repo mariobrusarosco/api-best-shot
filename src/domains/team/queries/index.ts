@@ -9,9 +9,10 @@ const createTeams = async (teams: DB_InsertTeam[]) => {
 const updateTeams = async (teams: DB_InsertTeam[]) => {
   console.log('[LOG] - [START] - UPSERTING TEAMS ON DATABASE');
 
-  await db.transaction(async tx => {
+  return await db.transaction(async tx => {
+    const results = [];
     for (const team of teams) {
-      await tx
+      const result = await tx
         .insert(T_Team)
         .values(team)
         .onConflictDoUpdate({
@@ -19,7 +20,10 @@ const updateTeams = async (teams: DB_InsertTeam[]) => {
           set: {
             ...team,
           },
-        });
+        })
+        .returning();
+
+      results.push(result[0]);
 
       Profiling.log({
         msg: '[SofascoreTeams] - UPSERTING TEAM',
@@ -27,6 +31,7 @@ const updateTeams = async (teams: DB_InsertTeam[]) => {
         source: 'TEAM_QUERIES_updateTeams',
       });
     }
+    return results;
   });
 };
 

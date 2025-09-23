@@ -88,45 +88,18 @@ const getKnockoutRounds = async (req: Request, res: Response) => {
   }
 };
 
-const createTournamentRound = async (req: Request, res: Response) => {
-  try {
-    const roundData: DB_InsertTournamentRound = req.body;
-
-    const round = await SERVICES_TOURNAMENT_ROUND.createTournamentRound(roundData);
-
-    return res.status(201).json({
-      success: true,
-      data: round,
-    });
-  } catch (error) {
-    console.error('[API_TOURNAMENT_ROUND] - [createTournamentRound]', error);
-
-    if (error instanceof Error && error.message.includes('Missing required')) {
-      return res.status(400).json({
-        success: false,
-        error: error.message,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to create tournament round',
-    });
-  }
-};
-
-const createMultipleTournamentRounds = async (req: Request, res: Response) => {
+const createTournamentRounds = async (req: Request, res: Response) => {
   try {
     const roundsData: DB_InsertTournamentRound[] = req.body;
 
-    const rounds = await SERVICES_TOURNAMENT_ROUND.createMultipleTournamentRounds(roundsData);
+    const rounds = await SERVICES_TOURNAMENT_ROUND.createTournamentRounds(roundsData);
 
     return res.status(201).json({
       success: true,
       data: rounds,
     });
   } catch (error) {
-    console.error('[API_TOURNAMENT_ROUND] - [createMultipleTournamentRounds]', error);
+    console.error('[API_TOURNAMENT_ROUND] - [createTournamentRounds]', error);
 
     if (
       error instanceof Error &&
@@ -149,6 +122,5 @@ export const API_TOURNAMENT_ROUND = {
   getAllRounds,
   getRound,
   getKnockoutRounds,
-  createTournamentRound,
-  createMultipleTournamentRounds,
+  createTournamentRounds,
 };

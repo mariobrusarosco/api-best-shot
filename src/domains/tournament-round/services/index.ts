@@ -51,16 +51,7 @@ const getKnockoutRounds = async (tournamentId: string) => {
   return QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(tournamentId);
 };
 
-const createTournamentRound = async (roundData: DB_InsertTournamentRound) => {
-  // Validate required fields
-  if (!roundData.tournamentId || !roundData.label || !roundData.slug) {
-    throw new Error('Missing required tournament round data');
-  }
-
-  return QUERIES_TOURNAMENT_ROUND.createTournamentRound(roundData);
-};
-
-const createMultipleTournamentRounds = async (roundsData: DB_InsertTournamentRound[]) => {
+const createTournamentRounds = async (roundsData: DB_InsertTournamentRound[]) => {
   if (!roundsData.length) {
     throw new Error('No tournament rounds data provided');
   }
@@ -72,7 +63,7 @@ const createMultipleTournamentRounds = async (roundsData: DB_InsertTournamentRou
     }
   }
 
-  return QUERIES_TOURNAMENT_ROUND.createMultipleTournamentRounds(roundsData);
+  return QUERIES_TOURNAMENT_ROUND.createTournamentRounds(roundsData);
 };
 
 export const SERVICES_TOURNAMENT_ROUND = {
@@ -80,6 +71,5 @@ export const SERVICES_TOURNAMENT_ROUND = {
   getRound,
   getRegularSeasonRounds,
   getKnockoutRounds,
-  createTournamentRound,
-  createMultipleTournamentRounds,
+  createTournamentRounds,
 };

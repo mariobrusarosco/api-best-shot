@@ -78,4 +78,6 @@ export enum DataProviderExecutionOperationType {
   STANDINGS_UPDATE = 'standings_update',
   TEAMS_CREATE = 'teams_create',
   TEAMS_UPDATE = 'teams_update',
+  ROUNDS_CREATE = 'rounds_create',
+  ROUNDS_UPDATE = 'rounds_update',
 }

@@ -13,9 +13,6 @@ router.get('/tournaments/:tournamentId/rounds/:roundSlug', TournamentRoundContro
 router.get('/tournaments/:tournamentId/rounds/knockout', TournamentRoundController.getKnockoutRounds);
 
 // POST /api/v1/tournaments/rounds
-router.post('/tournaments/rounds', TournamentRoundController.createTournamentRound);
-
-// POST /api/v1/tournaments/rounds/bulk
-router.post('/tournaments/rounds/bulk', TournamentRoundController.createMultipleTournamentRounds);
+router.post('/tournaments/rounds', TournamentRoundController.createTournamentRounds);
 
 export default router;

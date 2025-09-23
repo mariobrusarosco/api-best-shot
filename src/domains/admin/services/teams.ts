@@ -12,14 +12,17 @@ class AdminTeamsService {
     let scraper: BaseScraper | null = null;
 
     try {
-      if (!req.body.tournamentId) {
+      // Get tournament ID from URL params
+      const tournamentId = req.params.tournamentId;
+      if (!tournamentId) {
         return res.status(400).json({
           success: false,
           error: 'Tournament ID is required',
         });
       }
 
-      const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
+      // Get tournament data to build payload
+      const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
       if (!tournament) {
         return res.status(404).json({
           success: false,
@@ -27,35 +30,23 @@ class AdminTeamsService {
         });
       }
 
-      Profiling.log({
-        msg: `[ADMIN TEAMS CREATION] Request received`,
-        data: {
-          requestId,
-          tournamentId: req.body.tournamentId,
-          adminUser: req.authenticatedUser?.nickName,
-        },
-        source: 'ADMIN_SERVICE_TEAMS_create',
-      });
-
       scraper = await BaseScraper.createInstance();
       const dataProviderService = new TeamsDataProviderService(scraper, requestId);
-      const teams = await dataProviderService.init(tournament);
 
-      Profiling.log({
-        msg: `[ADMIN TEAMS CREATION] Teams created successfully`,
-        data: {
-          requestId,
-          tournamentId: tournament.id,
-          teamsCount: teams.length,
-          createdBy: req.authenticatedUser?.nickName,
-        },
-        source: 'ADMIN_SERVICE_TEAMS_create',
-      });
+      // Build proper payload for teams service
+      const payload = {
+        tournamentId: tournamentId,
+        baseUrl: tournament.baseUrl,
+        label: tournament.label,
+        provider: tournament.provider,
+      };
+
+      const teams = await dataProviderService.init(payload);
 
       return res.status(201).json({
         success: true,
         data: { teams },
-        message: `${teams.length} teams created successfully for tournament "${tournament.label}"`,
+        message: `Teams created successfully`,
       });
     } catch (error) {
       Profiling.error({
@@ -71,6 +62,11 @@ class AdminTeamsService {
     } finally {
       if (scraper) {
         await scraper.close();
+        Profiling.log({
+          msg: '[CLEANUP] Playwright resources cleaned up successfully',
+          data: { requestId, source: 'admin_service' },
+          source: 'ADMIN_SERVICE_TEAMS_create',
+        });
       }
     }
   }
@@ -80,14 +76,17 @@ class AdminTeamsService {
     let scraper: BaseScraper | null = null;
 
     try {
-      if (!req.body.tournamentId) {
+      // Get tournament ID from URL params
+      const tournamentId = req.params.tournamentId;
+      if (!tournamentId) {
         return res.status(400).json({
           success: false,
           error: 'Tournament ID is required',
         });
       }
 
-      const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
+      // Get tournament data to build payload
+      const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
       if (!tournament) {
         return res.status(404).json({
           success: false,
@@ -95,36 +94,23 @@ class AdminTeamsService {
         });
       }
 
-      Profiling.log({
-        msg: `[ADMIN] Updating teams for tournament ${tournament.label}..........`,
-        data: {
-          requestId,
-          tournamentLabel: tournament.label,
-          tournamentId: tournament.id,
-          updatedBy: req.authenticatedUser?.nickName,
-        },
-        source: 'ADMIN_SERVICE_TEAMS_update',
-      });
-
       scraper = await BaseScraper.createInstance();
       const dataProviderService = new TeamsDataProviderService(scraper, requestId);
-      const teams = await dataProviderService.init(tournament);
 
-      Profiling.log({
-        msg: `[ADMIN] Teams for tournament ${tournament.label} updated successfully!`,
-        data: {
-          requestId,
-          tournamentId: tournament.id,
-          teamsCount: teams.length,
-          updatedBy: req.authenticatedUser?.nickName,
-        },
-        source: 'ADMIN_SERVICE_TEAMS_update',
-      });
+      // Build proper payload for teams service
+      const payload = {
+        tournamentId: tournamentId,
+        baseUrl: tournament.baseUrl,
+        label: tournament.label,
+        provider: tournament.provider,
+      };
+
+      const teams = await dataProviderService.update(payload);
 
       return res.status(200).json({
         success: true,
         data: { teams },
-        message: `${teams.length} teams updated successfully for tournament "${tournament.label}"`,
+        message: `Teams updated successfully`,
       });
     } catch (error) {
       Profiling.error({
@@ -140,6 +126,11 @@ class AdminTeamsService {
     } finally {
       if (scraper) {
         await scraper.close();
+        Profiling.log({
+          msg: '[CLEANUP] Playwright resources cleaned up successfully',
+          data: { requestId, source: 'admin_service' },
+          source: 'ADMIN_SERVICE_TEAMS_update',
+        });
       }
     }
   }

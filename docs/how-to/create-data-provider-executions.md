@@ -1,69 +1,25 @@
-# How to Create Data Provider Executions
+# How to Create Data Provider Services and Executions
 
-This guide explains the patterns and architecture for implementing data provider executions across all domains (tournaments, standings, matches, rounds, etc.).
+This guide explains the patterns and architecture for implementing data provider services across all domains (tournaments, standings, matches, teams, rounds, etc.). Data provider services handle external data fetching, transformation, and database operations with comprehensive tracking and reporting.
 
-## 🏗️ Architecture Overview
+## Overview
 
-The Data Provider execution system follows a consistent pattern across all domains:
+Data provider services follow a consistent architecture pattern that includes:
 
-1. **Execution Service** - Handles database tracking and Slack notifications
-2. **Domain Service** - Implements domain-specific logic (e.g., `TournamentDataProvider`)
-3. **Reporting Service** - Tracks detailed operation logs
-4. **Scraper Integration** - Handles web scraping and asset uploads
+- **Execution Tracking**: Lifecycle management and monitoring
+- **Detailed Reporting**: Operation-level logging and S3 report generation
+- **Error Handling**: Comprehensive error capture and notification
+- **Resource Management**: Proper cleanup of external resources (scrapers, etc.)
+- **Consistency**: Standardized patterns across all data types
 
-## 📋 Required Components
+## Core Architecture Components
 
-### 1. Execution Service (`DataProviderExecution`)
+### 1. Service Class Structure
 
-**Location**: `/src/domains/data-provider/services/execution.ts`
-
-**Purpose**:
-
-- Automatically creates database records for tracking
-- Sends Slack notifications on success/failure
-- Manages execution lifecycle
-
-**Usage Pattern**:
+Every data provider service follows this structure:
 
 ```typescript
-// Create and start execution tracking
-this.execution = new DataProviderExecution({
-  requestId: this.requestId,
-  tournamentId: '00000000-0000-0000-0000-000000000000', // Placeholder
-  operationType: DataProviderExecutionOperationType.TOURNAMENT_CREATE,
-});
-
-// Update with actual entity ID after creation
-await this.execution?.updateTournamentId(tournament.id);
-
-// Complete successfully
-await this.execution?.complete({
-  reportFileKey: reportUpload?.s3Key,
-  reportFileUrl: reportUpload?.s3Url,
-  tournamentLabel: tournament.label,
-  summary: {
-    /* operation stats */
-  },
-  duration,
-});
-
-// Or handle failure
-await this.execution?.failure({
-  tournamentLabel: entity.label,
-  error: errorMessage,
-  summary: {
-    /* error details */
-  },
-  duration,
-});
-```
-
-### 2. Domain Service Pattern
-
-Each domain (standings, matches, rounds) should follow this structure:
-
-```typescript
-export class [Domain]DataProvider {
+export class [Entity]DataProviderService {
   private scraper: BaseScraper;
   private reporter: DataProviderReport;
   private requestId: string;
@@ -75,285 +31,440 @@ export class [Domain]DataProvider {
     this.reporter = new DataProviderReport(requestId);
   }
 
-  public async init(payload: Create[Domain]Input) {
-    const startTime = Date.now();
+  public async init(payload: Create[Entity]Input) { /* creation logic */ }
+  public async update(payload: Create[Entity]Input) { /* update logic */ }
 
-    // 1. Create execution tracking
-    this.execution = new DataProviderExecution({
-      requestId: this.requestId,
-      tournamentId: payload.tournamentId || '00000000-0000-0000-0000-000000000000',
-      operationType: DataProviderExecutionOperationType.[DOMAIN]_CREATE,
-    });
-
-    // 2. Initialize reporting
-    this.reporter
-      .setTournamentInfo({
-        label: payload.label,
-        tournamentId: payload.tournamentId,
-        provider: payload.provider,
-      })
-      .addOperation('initialization', 'validate_input', 'started');
-
-    // 3. Validation
-    if (!payload.requiredField) {
-      const duration = Date.now() - startTime;
-      const summary = this.reporter.getSummary();
-
-      await this.execution?.failure({
-        duration,
-        tournamentLabel: payload.label,
-        error: 'Validation failed',
-        summary: {
-          error: 'Required field missing',
-          operationsCount: summary.totalOperations,
-          failedOperations: summary.failedOperations,
-        },
-      });
-
-      await this.reporter.createFileAndUpload();
-      throw new Error('[Domain]DataProvider - Validation failed');
-    }
-
-    this.reporter.addOperation('initialization', 'validate_input', 'completed');
-
-    try {
-      // 4. Domain-specific operations
-      const data = await this.scrapeData(payload);
-      const entity = await this.createOnDatabase(data);
-
-      // 5. Update execution with actual entity ID
-      await this.execution?.updateTournamentId(entity.id);
-
-      // 6. Generate report
-      const reportUpload = await this.reporter.createFileAndUpload();
-
-      // 7. Complete execution
-      const duration = Date.now() - startTime;
-      const summary = this.reporter.getSummary();
-
-      await this.execution?.complete({
-        reportFileKey: reportUpload?.s3Key,
-        reportFileUrl: reportUpload?.s3Url,
-        tournamentLabel: entity.label,
-        summary: {
-          entityId: entity.id,
-          entityLabel: entity.label,
-          operationsCount: summary.totalOperations,
-          successfulOperations: summary.successfulOperations,
-          failedOperations: summary.failedOperations,
-        },
-        duration,
-      });
-
-      return entity;
-    } catch (error) {
-      const errorMessage = (error as Error).message;
-      this.reporter.addOperation('operation', 'process_data', 'failed', { error: errorMessage });
-
-      const reportResult = await this.reporter.createFileAndUpload();
-      const duration = Date.now() - startTime;
-      const summary = this.reporter.getSummary();
-
-      await this.execution?.failure({
-        reportFileKey: reportResult.s3Key,
-        reportFileUrl: reportResult.s3Url,
-        tournamentLabel: payload.label,
-        error: errorMessage,
-        summary: {
-          error: errorMessage,
-          operationsCount: summary.totalOperations,
-          failedOperations: summary.failedOperations + 1,
-        },
-        duration,
-      });
-
-      throw error;
-    }
-  }
-
-  // Domain-specific methods
-  private async scrapeData(payload: any) { /* Implementation */ }
-  private async createOnDatabase(data: any) { /* Implementation */ }
+  // Private methods for internal operations
+  private validateInput() { /* validation */ }
+  private fetchData() { /* external data fetching */ }
+  private mapData() { /* data transformation */ }
+  private createOnDatabase() { /* database operations */ }
+  private updateOnDatabase() { /* database operations */ }
 }
 ```
 
-### 3. Operation Types
+### 2. Execution Tracking
 
-**Location**: `/src/domains/data-provider/typing.ts`
-
-Add new operation types for each domain:
+The `DataProviderExecution` class tracks the entire operation lifecycle:
 
 ```typescript
+this.execution = new DataProviderExecution({
+  requestId: this.requestId,
+  tournamentId: payload.tournamentId,
+  operationType: DataProviderExecutionOperationType.[ENTITY]_CREATE,
+});
+```
+
+### 3. Operation Reporting
+
+The `DataProviderReport` class logs detailed operation steps:
+
+```typescript
+this.reporter.addOperation(category, operation, status, metadata);
+```
+
+**Categories**: `initialization`, `scraping`, `transformation`, `database`
+**Statuses**: `started`, `completed`, `failed`
+
+## Step-by-Step Implementation Guide
+
+### Step 1: Define Operation Types
+
+First, add your new operation types to the enum:
+
+```typescript
+// src/domains/data-provider/typing.ts
 export enum DataProviderExecutionOperationType {
-  TOURNAMENT_CREATE = 'tournament_create',
-  TOURNAMENT_UPDATE = 'tournament_update',
-  STANDINGS_CREATE = 'standings_create',
-  STANDINGS_UPDATE = 'standings_update',
+  // Existing operations...
   MATCHES_CREATE = 'matches_create',
   MATCHES_UPDATE = 'matches_update',
+  TEAMS_CREATE = 'teams_create',
+  TEAMS_UPDATE = 'teams_update',
   ROUNDS_CREATE = 'rounds_create',
   ROUNDS_UPDATE = 'rounds_update',
 }
 ```
 
-### 4. Reporting Integration
+### Step 2: Create Input Types
 
-Each operation should use the `DataProviderReport` service:
+Define the input interface for your service:
 
 ```typescript
-// Initialize reporter
-this.reporter = new DataProviderReport(requestId);
-this.reporter.setTournamentInfo({
-  label: payload.label,
-  tournamentId: payload.tournamentId,
-  provider: payload.provider,
-});
-
-// Track operations
-this.reporter.addOperation('scraping', 'fetch_data', 'started');
-// ... perform operation ...
-this.reporter.addOperation('scraping', 'fetch_data', 'completed', { recordCount: 50 });
-
-// Generate final report
-const reportUpload = await this.reporter.createFileAndUpload();
+// src/domains/data-provider/services/[entity].ts
+export interface Create[Entity]Input {
+  tournamentId: string;
+  baseUrl: string;
+  label: string;
+  provider: string;
+  // Add entity-specific properties
+}
 ```
 
-## 🔄 Implementation Steps for New Domains
+### Step 3: Implement Service Class
 
-### Step 1: Define Operation Types
-
-Add new operation types to `DataProviderExecutionOperationType` enum.
-
-### Step 2: Create Domain Service
-
-Follow the `[Domain]DataProvider` pattern shown above.
-
-### Step 3: Database Operations
-
-Implement domain-specific database operations:
-
-- `createOnDatabase()`
-- `updateOnDatabase()`
-- Any domain-specific methods
-
-### Step 4: Scraping Operations
-
-Implement data scraping methods:
-
-- Use `BaseScraper` for web scraping
-- Handle asset uploads (images, files)
-- Parse and transform data
-
-### Step 5: Integration
-
-Integrate with the main orchestration in `/src/domains/data-provider/services/index.ts`:
+Create your service following the established pattern:
 
 ```typescript
-export class SofaScoreScraper extends BaseScraper {
-  public async createTournament(payload: CreateTournamentInput) {
-    // ... existing code ...
+import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { DataProviderExecution } from '@/domains/data-provider/services/execution';
+import { DataProviderReport } from '@/domains/data-provider/services/report';
+import { DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 
-    // Add new domain services
-    const standingsService = new StandingsDataProviderService(scraper, requestId);
-    const matchesService = new MatchesDataProviderService(scraper, requestId);
-    const roundsService = new RoundsDataProviderService(scraper, requestId);
+export class [Entity]DataProviderService {
+  private scraper: BaseScraper;
+  private reporter: DataProviderReport;
+  private requestId: string;
+  private execution: DataProviderExecution | null = null;
 
-    // Execute in sequence
-    const standings = await standingsService.init(tournament);
-    const matches = await matchesService.init(tournament);
-    const rounds = await roundsService.init(tournament);
+  constructor(scraper: BaseScraper, requestId: string) {
+    this.scraper = scraper;
+    this.requestId = requestId;
+    this.reporter = new DataProviderReport(requestId);
+  }
 
-    return { tournament, standings, matches, rounds };
+  public async init(payload: Create[Entity]Input) {
+    // Create execution tracking
+    this.execution = new DataProviderExecution({
+      requestId: this.requestId,
+      tournamentId: payload.tournamentId,
+      operationType: DataProviderExecutionOperationType.[ENTITY]_CREATE,
+    });
+
+    this.reporter.setTournamentInfo({
+      label: payload.label,
+      tournamentId: payload.tournamentId,
+      provider: payload.provider,
+    });
+
+    try {
+      // ------ INPUT VALIDATION ------
+      this.validateInput(payload);
+
+      // ------ FETCH DATA ------
+      const fetchedData = await this.fetchData(payload.baseUrl);
+
+      // ------ MAP DATA ------
+      const mappedData = await this.mapData(fetchedData, payload.tournamentId);
+
+      // ------ CREATE IN DATABASE ------
+      const createdData = await this.createOnDatabase(mappedData);
+
+      // ------ UPLOAD REPORT ------
+      const reportUploadResult = await this.reporter.createFileAndUpload();
+
+      // ------ GENERATE REPORT SUMMARY ------
+      const reportSummaryResult = this.reporter.getSummary();
+
+      // ------ MARK EXECUTION AS COMPLETED ------
+      await this.execution?.complete({
+        reportFileKey: reportUploadResult?.s3Key,
+        reportFileUrl: reportUploadResult?.s3Url,
+        tournamentLabel: payload.label,
+        summary: {
+          tournamentId: payload.tournamentId,
+          tournamentLabel: payload.label,
+          provider: payload.provider,
+          [entity]Count: createdData.length,
+          ...reportSummaryResult,
+        },
+      });
+
+      return createdData;
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+
+      // ------ GENERATE REPORT EVEN ON FAILURE ------
+      const reportUploadResult = await this.reporter.createFileAndUpload();
+      const reportSummaryResult = this.reporter.getSummary();
+
+      // ------ MARK EXECUTION AS FAILED ------
+      await this.execution?.failure({
+        reportFileKey: reportUploadResult.s3Key,
+        reportFileUrl: reportUploadResult.s3Url,
+        tournamentLabel: payload.label,
+        error: errorMessage,
+        summary: {
+          error: errorMessage,
+          ...reportSummaryResult,
+        },
+      });
+
+      throw error;
+    }
   }
 }
 ```
 
-## 📊 Database Schema
+### Step 4: Implement Private Methods
 
-The execution tracking uses the `data_provider_executions` table:
+#### Validation Method
 
-```sql
-CREATE TABLE data_provider_executions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  request_id UUID NOT NULL,
-  tournament_id UUID NOT NULL,
-  operation_type TEXT NOT NULL,
-  status TEXT NOT NULL, -- 'in_progress', 'completed', 'failed'
-  started_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  completed_at TIMESTAMP,
-  duration INTEGER, -- milliseconds
-  report_file_url TEXT,
-  report_file_key TEXT,
-  summary JSONB,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
+```typescript
+private validateInput(payload: Create[Entity]Input) {
+  this.reporter.addOperation('initialization', 'validate_input', 'started');
+
+  if (!payload.tournamentId) {
+    this.reporter.addOperation('initialization', 'validate_input', 'failed', {
+      error: 'Tournament ID is null',
+    });
+    throw new Error('Tournament ID is null');
+  }
+
+  // Add other validations specific to your entity
+
+  this.reporter.addOperation('initialization', 'validate_input', 'completed');
+}
 ```
 
-## 🔔 Slack Notifications
+#### Data Fetching Method
 
-Notifications are automatically handled by the `DataProviderExecution` service using Block Kit:
+```typescript
+private async fetchData(baseUrl: string) {
+  this.reporter.addOperation('scraping', 'fetch_[entity]', 'started');
 
-- **Success**: Green message with operation details
-- **Failure**: Red message with error details
-- **Context**: Request ID, timestamp, duration
-- **Configuration**: Uses `SLACK_JOB_EXECUTIONS_WEBHOOK` environment variable
+  const url = `${baseUrl}/[entity-endpoint]`;
+  await this.scraper.goto(url);
+  const rawContent = await this.scraper.getPageContent();
 
-## 🎯 Best Practices
+  if (!rawContent?.[entity] || rawContent?.[entity]?.length === 0) {
+    this.reporter.addOperation('scraping', 'fetch_[entity]', 'completed', {
+      note: 'No [entity] data found',
+    });
+    return [];
+  }
+
+  this.reporter.addOperation('scraping', 'fetch_[entity]', 'completed', {
+    [entity]Count: rawContent.[entity].length,
+  });
+
+  return rawContent;
+}
+```
+
+#### Data Mapping Method
+
+```typescript
+private async mapData(fetchedData: any, tournamentId: string) {
+  this.reporter.addOperation('transformation', 'map_[entity]', 'started');
+
+  const mappedData = fetchedData.[entity].map((item: any) => ({
+    // Map external data structure to internal schema
+    externalId: safeString(item.id),
+    tournamentId: tournamentId,
+    // Add other field mappings
+    provider: 'sofascore',
+  }));
+
+  if (mappedData.length === 0) {
+    this.reporter.addOperation('transformation', 'map_[entity]', 'failed', {
+      error: 'No [entity] data found',
+    });
+    throw new Error('No [entity] data found');
+  }
+
+  this.reporter.addOperation('transformation', 'map_[entity]', 'completed', {
+    [entity]Count: mappedData.length,
+  });
+
+  return mappedData;
+}
+```
+
+#### Database Operations
+
+```typescript
+public async createOnDatabase([entity]: DB_Insert[Entity][]) {
+  this.reporter.addOperation('database', 'create_[entity]', 'started', {
+    [entity]Count: [entity].length,
+  });
+
+  try {
+    const query = await db.insert(T_[Entity]).values([entity]).returning();
+
+    this.reporter.addOperation('database', 'create_[entity]', 'completed', {
+      created[Entity]Count: query.length,
+    });
+
+    return query;
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    this.reporter.addOperation('database', 'create_[entity]', 'failed', {
+      error: errorMessage,
+    });
+    Profiling.error({
+      error: errorMessage,
+      data: { error: errorMessage },
+      source: '[Entity]DataProviderService.createOnDatabase',
+    });
+    throw error;
+  }
+}
+```
+
+### Step 5: Create Admin Service
+
+Create the corresponding admin service to expose the data provider:
+
+```typescript
+// src/domains/admin/services/[entity].ts
+import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { [Entity]DataProviderService } from '@/domains/data-provider/services/[entity]';
+import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import Profiling from '@/services/profiling';
+import { randomUUID } from 'crypto';
+import { Request, Response } from 'express';
+
+class Admin[Entity]Service {
+  static async create[Entity](req: Request, res: Response) {
+    const requestId = randomUUID();
+    let scraper: BaseScraper | null = null;
+
+    try {
+      const tournamentId = req.params.tournamentId;
+      if (!tournamentId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Tournament ID is required',
+        });
+      }
+
+      const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({
+          success: false,
+          error: 'Tournament not found',
+        });
+      }
+
+      scraper = await BaseScraper.createInstance();
+      const dataProviderService = new [Entity]DataProviderService(scraper, requestId);
+
+      const payload = {
+        tournamentId: tournamentId,
+        baseUrl: tournament.baseUrl,
+        label: tournament.label,
+        provider: tournament.provider,
+      };
+
+      const [entity] = await dataProviderService.init(payload);
+
+      return res.status(201).json({
+        success: true,
+        data: { [entity] },
+        message: `[Entity] created successfully`,
+      });
+    } catch (error) {
+      Profiling.error({
+        source: 'ADMIN_SERVICE_[ENTITY]_create',
+        error,
+        data: {
+          requestId,
+          operation: 'admin_[entity]_creation',
+          adminUser: req.authenticatedUser?.nickName,
+        },
+      });
+      return handleInternalServerErrorResponse(res, error);
+    } finally {
+      if (scraper) {
+        await scraper.close();
+        Profiling.log({
+          msg: '[CLEANUP] Playwright resources cleaned up successfully',
+          data: { requestId, source: 'admin_service' },
+          source: 'ADMIN_SERVICE_[ENTITY]_create',
+        });
+      }
+    }
+  }
+}
+
+export { Admin[Entity]Service };
+```
+
+### Step 6: Add Routes
+
+Add routes to expose your admin service:
+
+```typescript
+// src/domains/admin/routes/v2.ts
+import { Admin[Entity]Service } from '../services/[entity]';
+
+// Add to existing routes
+router.post('/tournaments/:tournamentId/[entity]', Admin[Entity]Service.create[Entity]);
+router.put('/tournaments/:tournamentId/[entity]', Admin[Entity]Service.update[Entity]);
+```
+
+## Best Practices
 
 ### 1. Error Handling
 
-- Always wrap operations in try-catch
-- Call `execution.failure()` in catch blocks
-- Include meaningful error messages
-- Generate reports even on failure
+- Always generate reports even on failure
+- Use structured error logging with context
+- Provide meaningful error messages
 
-### 2. Validation
+### 2. Resource Management
 
-- Validate inputs early
-- Fail fast with clear error messages
-- Track validation operations in reports
+- Always clean up scrapers in `finally` blocks
+- Use proper dependency injection patterns
+- Initialize execution tracking early
 
 ### 3. Reporting
 
-- Track all major operations
-- Include relevant data in operation logs
-- Use consistent operation naming
+- Log all major operation steps
+- Include relevant metadata in reports
+- Use consistent operation categories
 
-### 4. Performance
+### 4. Data Validation
 
-- Track operation duration
-- Include performance metrics in summaries
-- Monitor execution times
+- Validate inputs early and fail fast
+- Use `safeString` and other utilities for data sanitization
+- Check for empty results and handle gracefully
 
-### 5. Testing
+### 5. Database Operations
 
-- Test both success and failure paths
-- Verify database records are created
-- Check Slack notifications are sent
-- Validate report generation
+- Use proper transaction handling where needed
+- Implement both create and update operations
+- Handle unique constraint violations appropriately
 
-## 🔧 Environment Variables
+## Examples
 
-Required environment variables:
+### Matches Data Provider Service
 
-```bash
-# Slack webhook for execution notifications
-SLACK_JOB_EXECUTIONS_WEBHOOK=https://hooks.slack.com/services/...
+```typescript
+export interface CreateMatchesInput {
+  tournamentId: string;
+  baseUrl: string;
+  label: string;
+  provider: string;
+  roundId?: string; // Optional for specific round
+}
 
-# AWS S3 for report storage (optional)
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
-AWS_S3_BUCKET=...
-AWS_CLOUDFRONT_URL=...
+export class MatchesDataProviderService {
+  // Follow the standard pattern above
+  // Specific considerations:
+  // - Handle live vs completed matches
+  // - Update scores for existing matches
+  // - Handle fixture data vs result data
+}
 ```
 
-## 📝 Example Implementation
+### Teams Data Provider Service
 
-See the complete tournament implementation:
+```typescript
+export interface CreateTeamsInput {
+  tournamentId: string;
+  baseUrl: string;
+  label: string;
+  provider: string;
+}
 
-- **Service**: `/src/domains/data-provider/services/tournaments.ts`
-- **Execution**: `/src/domains/data-provider/services/execution.ts`
-- **Integration**: `/src/domains/data-provider/services/index.ts`
+export class TeamsDataProviderService {
+  // Follow the standard pattern above
+  // Specific considerations:
+  // - Upload team logos via scraper.uploadAsset()
+  // - Handle team metadata (country, etc.)
+  // - Link teams to existing tournaments
+}
+```
 
-Follow this pattern for standings, matches, rounds, and any future domains.
+This architecture ensures consistency, maintainability, and comprehensive monitoring across all data provider services.

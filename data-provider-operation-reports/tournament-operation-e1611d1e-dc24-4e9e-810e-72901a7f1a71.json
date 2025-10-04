@@ -1,0 +1,514 @@
+{
+  "requestId": "e1611d1e-dc24-4e9e-810e-72901a7f1a71",
+  "tournament": {
+    "label": "Brasileirão Betano",
+    "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+    "provider": "sofascore"
+  },
+  "startTime": "2025-09-26T22:26:23.161Z",
+  "operations": [
+    {
+      "step": "initialization",
+      "operation": "validate_input",
+      "status": "started",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60"
+      },
+      "timestamp": "2025-09-26T22:26:23.161Z"
+    },
+    {
+      "step": "initialization",
+      "operation": "validate_input",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60"
+      },
+      "timestamp": "2025-09-26T22:26:23.161Z"
+    },
+    {
+      "step": "database",
+      "operation": "fetch_rounds",
+      "status": "started",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60"
+      },
+      "timestamp": "2025-09-26T22:26:23.161Z"
+    },
+    {
+      "step": "database",
+      "operation": "fetch_rounds",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundsCount": 38
+      },
+      "timestamp": "2025-09-26T22:26:24.298Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "fetch_matches",
+      "status": "started",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundsCount": 38
+      },
+      "timestamp": "2025-09-26T22:26:24.299Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "1",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:26:25.153Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "10",
+        "matchesCount": 11
+      },
+      "timestamp": "2025-09-26T22:26:28.423Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "11",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:26:31.731Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "12",
+        "matchesCount": 12
+      },
+      "timestamp": "2025-09-26T22:26:35.085Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "13",
+        "matchesCount": 11
+      },
+      "timestamp": "2025-09-26T22:26:38.119Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "14",
+        "matchesCount": 13
+      },
+      "timestamp": "2025-09-26T22:26:41.153Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "15",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:26:44.701Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "16",
+        "matchesCount": 11
+      },
+      "timestamp": "2025-09-26T22:26:48.091Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "17",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:26:51.133Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "18",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:26:54.433Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "19",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:26:57.722Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "2",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:01.088Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "20",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:04.429Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "21",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:07.772Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "22",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:11.154Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "23",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:14.513Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "24",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:17.885Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "25",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:21.161Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "26",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:24.541Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "27",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:27.918Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "28",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:31.408Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "29",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:34.781Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "3",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:38.153Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "30",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:41.640Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "31",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:45.019Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "32",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:48.403Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "33",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:51.783Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "34",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:53.630Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "35",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:27:57.004Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "36",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:28:00.358Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "37",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:28:03.682Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "38",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:28:07.145Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "4",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:28:10.521Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "5",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:28:13.924Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "6",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:28:17.251Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "7",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:28:20.556Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "8",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:28:23.951Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "process_round",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "roundSlug": "9",
+        "matchesCount": 10
+      },
+      "timestamp": "2025-09-26T22:28:27.249Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "fetch_matches",
+      "status": "completed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "totalMatches": 388,
+        "roundsProcessed": 38,
+        "successfulRounds": 38,
+        "failedRounds": 0
+      },
+      "timestamp": "2025-09-26T22:28:29.749Z"
+    },
+    {
+      "step": "database",
+      "operation": "create_matches",
+      "status": "started",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "matchesCount": 388
+      },
+      "timestamp": "2025-09-26T22:28:29.749Z"
+    },
+    {
+      "step": "database",
+      "operation": "create_matches",
+      "status": "failed",
+      "data": {
+        "tournamentId": "45a76def-0d58-4788-b6d4-3c843d110d60",
+        "error": "queries_1.QUERIES_MATCH.createMatches is not a function"
+      },
+      "timestamp": "2025-09-26T22:28:29.750Z"
+    }
+  ],
+  "summary": {
+    "successfulOperations": 41,
+    "failedOperations": 1
+  },
+  "endTime": "2025-09-26T22:28:29.751Z"
+}

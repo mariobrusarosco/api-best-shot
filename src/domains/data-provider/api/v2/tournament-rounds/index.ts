@@ -1,11 +1,11 @@
-import { RoundsDataProviderService } from '@/domains/data-provider/services/rounds';
-import { Response } from 'express';
-import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { TournamentRoundRequest } from './typing';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { RoundsDataProviderService } from '@/domains/data-provider/services/rounds';
+import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import Profiling from '@/services/profiling';
 import { randomUUID } from 'crypto';
+import { Response } from 'express';
+import { TournamentRoundRequest } from './typing';
 
 const create = async (req: TournamentRoundRequest, res: Response) => {
   const requestId = randomUUID();

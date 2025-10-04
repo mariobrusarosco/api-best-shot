@@ -434,7 +434,7 @@ No Dockerfile needed at all:
   source: .
   # Google auto-detects Node.js and optimizes!
 
-🛠️ Step-by-Step Setup Guide
+🛠️ Step-by-Step Setup Guiy
 
 Step 1: Create GCP Service Account
 

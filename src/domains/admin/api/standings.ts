@@ -1,17 +1,17 @@
-import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
+import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { Request, Response } from 'express';
 
 export const API_ADMIN_STANDINGS = {
   async createStandings(req: Request, res: Response) {
-    // #1 Start Reporter
-    const reporter = new DataProviderReport('create_standings');
-    // #2 Start Provider
-    const provider = await StandingsDataProviderService.create(reporter);
-
+    let scraper: BaseScraper | null = null;
     try {
-      // #3 Validate Input
+      // #1 Create scraper and provider
+      scraper = await BaseScraper.createInstance();
+      const provider = new StandingsDataProviderService(scraper, 'admin-create-standings');
+
+      // #2 Validate Input
       if (!req.body.tournamentId) {
         return res.status(400).json({
           success: false,
@@ -19,9 +19,9 @@ export const API_ADMIN_STANDINGS = {
         });
       }
 
-      // #4 Get Tournament
+      // #3 Get Tournament
       const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
-      // #5 Validate Tournament
+      // #4 Validate Tournament
       if (!tournament) {
         return res.status(404).json({
           success: false,
@@ -29,15 +29,18 @@ export const API_ADMIN_STANDINGS = {
         });
       }
 
-      // #6 Set Tournament on Reporter
-      provider.report.setTournament(tournament);
-      // #7 Create Standings
-      const standings = await provider.createStandings(tournament);
-      console.log({ standings, reporter: provider.report.toJSON() });
+      // #5 Create Standings
+      const standings = await provider.init({
+        tournamentId: tournament.id,
+        baseUrl: tournament.baseUrl,
+        label: tournament.label,
+        provider: tournament.provider,
+      });
 
       return res.status(200).json({
         success: true,
         message: 'Standings created successfully',
+        data: { standings },
       });
     } catch (error) {
       return res.status(500).json({
@@ -45,17 +48,21 @@ export const API_ADMIN_STANDINGS = {
         message: 'Failed to create standings',
         error: (error as Error).message,
       });
+    } finally {
+      if (scraper) {
+        await scraper.close();
+      }
     }
   },
 
   async updateStandings(req: Request, res: Response) {
-    // #1 Start Reporter
-    const reporter = new DataProviderReport('update_standings');
-    // #2 Start Provider
-    const provider = await StandingsDataProviderService.create(reporter);
-
+    let scraper: BaseScraper | null = null;
     try {
-      // #3 Validate Input
+      // #1 Create scraper and provider
+      scraper = await BaseScraper.createInstance();
+      const provider = new StandingsDataProviderService(scraper, 'admin-update-standings');
+
+      // #2 Validate Input
       if (!req.body.tournamentId) {
         return res.status(400).json({
           success: false,
@@ -63,9 +70,9 @@ export const API_ADMIN_STANDINGS = {
         });
       }
 
-      // #4 Get Tournament
+      // #3 Get Tournament
       const tournament = await SERVICES_TOURNAMENT.getTournament(req.body.tournamentId);
-      // #5 Validate Tournament
+      // #4 Validate Tournament
       if (!tournament) {
         return res.status(404).json({
           success: false,
@@ -73,21 +80,29 @@ export const API_ADMIN_STANDINGS = {
         });
       }
 
-      // #6 Set Tournament on Reporter
-      provider.report.setTournament(tournament);
-      // #7 Create Standings
-      await provider.updateStandings(tournament);
+      // #5 Update Standings
+      const standings = await provider.update({
+        tournamentId: tournament.id,
+        baseUrl: tournament.baseUrl,
+        label: tournament.label,
+        provider: tournament.provider,
+      });
 
       return res.status(200).json({
         success: true,
-        message: 'Standings created successfully',
+        message: 'Standings updated successfully',
+        data: { standings },
       });
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: 'Failed to create standings',
+        message: 'Failed to update standings',
         error: (error as Error).message,
       });
+    } finally {
+      if (scraper) {
+        await scraper.close();
+      }
     }
   },
 };

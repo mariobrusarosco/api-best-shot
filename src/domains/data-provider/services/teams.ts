@@ -232,9 +232,9 @@ export class TeamsDataProviderService {
           };
         };
         return {
-          externalId: safeString(rowData.team.id),
-          name: safeString(rowData.team.name),
-          shortName: safeString(rowData.team.shortName),
+          externalId: safeString(rowData.team.id) || '',
+          name: safeString(rowData.team.name) || '',
+          shortName: safeString(rowData.team.shortName) || '',
           slug: rowData.team.slug || '',
           nameCode: rowData.team.nameCode || '',
           provider: 'sofascore',

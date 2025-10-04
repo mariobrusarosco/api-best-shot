@@ -67,6 +67,8 @@ export class StandingsDataProviderService {
           ...reportSummaryResult,
         },
       });
+
+      return createdStandings;
     } catch (error) {
       const errorMessage = (error as Error).message;
 
@@ -129,6 +131,8 @@ export class StandingsDataProviderService {
           ...reportSummaryResult,
         },
       });
+
+      return createdStandings;
     } catch (error) {
       const errorMessage = (error as Error).message;
 
@@ -221,7 +225,7 @@ export class StandingsDataProviderService {
           losses: safeString(rowData.losses) || '',
           gf: safeString(rowData.scoresFor) || '',
           ga: safeString(rowData.scoresAgainst) || '',
-          gd: rowData.scoreDiffFormatted,
+          gd: safeString(rowData.scoreDiffFormatted) || '',
           provider: 'sofascore',
         };
       });

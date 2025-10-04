@@ -1,5 +1,4 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { TeamsDataProviderService } from '@/domains/data-provider/services/teams';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { ErrorMapper } from '@/domains/tournament/error-handling/mapper';
@@ -49,10 +48,14 @@ const create = async (req: TeamsRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const report = new DataProviderReport('create_teams', requestId);
-    const teamService = new TeamsDataProviderService(scraper, report);
+    const teamService = new TeamsDataProviderService(scraper, requestId);
 
-    const teams = await teamService.createTeams(tournament);
+    const teams = await teamService.init({
+      tournamentId: tournament.id,
+      baseUrl: tournament.baseUrl,
+      label: tournament.label,
+      provider: tournament.provider,
+    });
 
     if (!teams) {
       Profiling.error({

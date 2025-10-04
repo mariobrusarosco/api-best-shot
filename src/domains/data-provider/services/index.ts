@@ -49,10 +49,7 @@ export class SofaScoreScraper extends BaseScraper {
         provider: tournament.provider,
       });
       //Step 5: Matches Service
-      const matches = await matchesService.init({
-        tournamentId: tournament.id,
-        rounds: rounds,
-      });
+      const matches = await matchesService.init(rounds, tournament);
 
       return {
         tournament,

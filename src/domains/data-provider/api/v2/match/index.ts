@@ -1,6 +1,5 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
-import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { CreateMatchesRequest, UpdateMatchesForRoundRequest } from '@/domains/match/typing';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT_ROUND } from '@/domains/tournament-round/services';
@@ -49,12 +48,11 @@ const create = async (req: CreateMatchesRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const report = new DataProviderReport('create_matches', requestId);
-    const matchesDataProviderService = new MatchesDataProviderService(scraper, report);
+    const matchesDataProviderService = new MatchesDataProviderService(scraper, requestId);
 
     const rounds = await SERVICES_TOURNAMENT_ROUND.getAllRounds(tournament.id);
 
-    const matches = await matchesDataProviderService.createMatches(rounds, tournament);
+    const matches = await matchesDataProviderService.init(rounds, tournament);
 
     if (!matches) {
       Profiling.error({
@@ -163,11 +161,16 @@ const updateMatchesForRound = async (req: UpdateMatchesForRoundRequest, res: Res
     });
 
     scraper = await BaseScraper.createInstance();
-    const report = new DataProviderReport('update_matches', requestId);
-    const matchesDataProviderService = new MatchesDataProviderService(scraper, report);
+    const matchesDataProviderService = new MatchesDataProviderService(scraper, requestId);
 
     const rounds = await SERVICES_TOURNAMENT_ROUND.getAllRounds(tournament.id);
-    const matches = await matchesDataProviderService.updateMatches(rounds, tournament);
+    // Update each round individually as updateRound takes single round
+    const results = [];
+    for (const round of rounds) {
+      const result = await matchesDataProviderService.updateRound(round);
+      results.push(result);
+    }
+    const matches = results;
 
     if (matches === null || matches === undefined) {
       Profiling.error({

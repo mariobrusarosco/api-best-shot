@@ -1,10 +1,11 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { ENDPOINT_ROUNDS } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
 import { DataProviderExecution } from '@/domains/data-provider/services/execution';
-import { DataProviderReport } from './reporter';
 import { DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
 import { Profiling } from '@/services/profiling';
+import { DataProviderReport } from './report';
 
 export interface CreateRoundsInput {
   tournamentId: string;
@@ -199,7 +200,7 @@ export class RoundsDataProviderService {
     }
   }
 
-  private enhanceRounds(baseUrl: string, tournamentId: string, roundsResponse: any) {
+  private enhanceRounds(baseUrl: string, tournamentId: string, roundsResponse: ENDPOINT_ROUNDS) {
     this.reporter.addOperation('transformation', 'enhance_rounds', 'started', {
       baseUrl,
       tournamentId,
@@ -207,37 +208,43 @@ export class RoundsDataProviderService {
     });
 
     try {
-      const enhancedRounds = roundsResponse.rounds.map((round: any, index: number) => {
-        const isSpecialRound = !!round?.prefix;
-        const isKnockoutRound = !isSpecialRound && !!round?.name;
+      const enhancedRounds = roundsResponse.rounds.map((round: unknown, index: number) => {
+        const roundData = round as {
+          prefix?: string;
+          name?: string;
+          round: number;
+          slug?: string;
+        };
+        const isSpecialRound = !!roundData?.prefix;
+        const isKnockoutRound = !isSpecialRound && !!roundData?.name;
         const isRegularRound = !isSpecialRound && !isKnockoutRound;
 
         const order = index + 1;
-        let endpoint = `${baseUrl}/events/round/${round.round}`;
+        let endpoint = `${baseUrl}/events/round/${roundData.round}`;
         let slug = '';
         let label = '';
 
         if (isKnockoutRound) {
-          endpoint += `/slug/${round.slug}`;
-          slug += `${round.slug}`;
-          label = round.name || order.toString();
+          endpoint += `/slug/${roundData.slug}`;
+          slug += `${roundData.slug}`;
+          label = roundData.name || order.toString();
         } else if (isSpecialRound) {
-          endpoint += `/slug/${round.slug}/prefix/${round.prefix}`;
-          slug += `${round.prefix}-${round.slug}`;
-          label = round.prefix!;
+          endpoint += `/slug/${roundData.slug}/prefix/${roundData.prefix}`;
+          slug += `${roundData.prefix}-${roundData.slug}`;
+          label = roundData.prefix!;
         } else if (isRegularRound) {
-          slug += round.round;
-          label = round.round.toString();
+          slug += roundData.round;
+          label = roundData.round.toString();
         }
 
         return {
           providerUrl: endpoint,
-          providerId: String(round.round),
+          providerId: String(roundData.round),
           tournamentId: tournamentId,
           order: order.toString(),
           label: label,
           slug: slug.toLowerCase(),
-          knockoutId: round.prefix,
+          knockoutId: roundData.prefix,
           type: isKnockoutRound || isSpecialRound ? 'knockout' : 'season',
         };
       });

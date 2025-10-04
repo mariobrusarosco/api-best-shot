@@ -1,12 +1,12 @@
+import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import { DataProviderExecution } from '@/domains/data-provider/services/execution';
+import { DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 import { QUERIES_MATCH } from '@/domains/match/queries';
 import { DB_InsertMatch } from '@/domains/match/schema';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { Profiling } from '@/services/profiling';
 import { safeString } from '@/utils';
-import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
-import { DataProviderExecution } from '@/domains/data-provider/services/execution';
-import { DataProviderReport } from './reporter';
+import { DataProviderReport } from './report';
 
 export interface CreateMatchesInput {
   tournamentId: string;
@@ -203,7 +203,7 @@ export class MatchesDataProviderService {
     }
   }
 
-  private async fetchMatches(rounds: any[], baseUrl: string) {
+  private async fetchMatches(rounds: unknown[], _baseUrl: string) {
     this.reporter.addOperation('scraping', 'fetch_matches', 'started', {
       roundsCount: rounds.length,
     });
@@ -221,7 +221,12 @@ export class MatchesDataProviderService {
       let successfulRounds = 0;
       let failedRounds = 0;
 
-      for (const round of rounds) {
+      for (const roundItem of rounds) {
+        const round = roundItem as {
+          providerUrl: string;
+          slug: string;
+          tournamentId: string;
+        };
         try {
           const url = round.providerUrl;
           await this.scraper.goto(url);
@@ -280,42 +285,43 @@ export class MatchesDataProviderService {
     }
   }
 
-  private mapMatches(rawContent: any, tournamentId: string, roundSlug: string): DB_InsertMatch[] {
-    try {
-      const matches = rawContent.events.map((event: any) => {
-        return {
-          externalId: safeString(event.id),
-          provider: 'sofascore',
-          tournamentId,
-          roundSlug,
-          homeTeamId: safeString(event.homeTeam.id),
-          homeScore: safeString(event.homeScore.display, null),
-          homePenaltiesScore: safeString(event.homeScore.penalties, null),
-          awayTeamId: safeString(event.awayTeam.id),
-          awayScore: safeString(event.awayScore.display, null),
-          awayPenaltiesScore: safeString(event.awayScore.penalties, null),
-          date: safeSofaDate(event.startTimestamp! * 1000),
-          status: this.getMatchStatus(event),
-        } as DB_InsertMatch;
-      });
+  private mapMatches(rawContent: unknown, tournamentId: string, roundSlug: string): DB_InsertMatch[] {
+    const matches = (rawContent as { events: unknown[] }).events.map((event: unknown) => {
+      const eventData = event as {
+        id: unknown;
+        homeTeam: { id: unknown };
+        homeScore: { display: unknown; penalties: unknown };
+        awayTeam: { id: unknown };
+        awayScore: { display: unknown; penalties: unknown };
+        startTimestamp: number;
+      };
+      return {
+        externalId: safeString(eventData.id),
+        provider: 'sofascore',
+        tournamentId,
+        roundSlug,
+        homeTeamId: safeString(eventData.homeTeam.id),
+        homeScore: safeString(eventData.homeScore.display, null),
+        homePenaltiesScore: safeString(eventData.homeScore.penalties, null),
+        awayTeamId: safeString(eventData.awayTeam.id),
+        awayScore: safeString(eventData.awayScore.display, null),
+        awayPenaltiesScore: safeString(eventData.awayScore.penalties, null),
+        date: safeSofaDate(eventData.startTimestamp * 1000),
+        status: this.getMatchStatus(eventData),
+      } as DB_InsertMatch;
+    });
 
-      return matches;
-    } catch (error: unknown) {
-      throw error;
-    }
+    return matches;
   }
 
-  private getMatchStatus(match: any) {
-    try {
-      const matchWasPostponed = match.status.type === 'postponed';
-      const matcheEnded = match.status.type === 'finished';
+  private getMatchStatus(match: unknown) {
+    const matchData = match as { status: { type: string } };
+    const matchWasPostponed = matchData.status.type === 'postponed';
+    const matcheEnded = matchData.status.type === 'finished';
 
-      if (matchWasPostponed) return 'not-defined';
-      if (matcheEnded) return 'ended';
-      return 'open';
-    } catch (error: unknown) {
-      throw error;
-    }
+    if (matchWasPostponed) return 'not-defined';
+    if (matcheEnded) return 'ended';
+    return 'open';
   }
 
   public async createOnDatabase(matches: DB_InsertMatch[]) {

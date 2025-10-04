@@ -1,4 +1,4 @@
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
+import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { RoundDataProviderService } from '@/domains/data-provider/services/rounds';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { Request, Response } from 'express';

@@ -1,6 +1,6 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
+import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { CreateMatchesRequest, UpdateMatchesForRoundRequest } from '@/domains/match/typing';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT_ROUND } from '@/domains/tournament-round/services';

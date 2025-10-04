@@ -1,3 +1,4 @@
+import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { QUERIES_TEAMS } from '@/domains/team/queries';
 import { DB_InsertTeam } from '@/domains/team/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
@@ -6,7 +7,6 @@ import { safeString } from '@/utils';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { DataProviderExecutionOperationType } from '../typing';
 import { DataProviderExecution } from './execution';
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
 
 export interface CreateTeamsInput {
   tournamentId: string;
@@ -207,10 +207,11 @@ export class TeamsDataProviderService {
     }
   }
 
-  private async mapTeams(fetchedTeams: any) {
+  private async mapTeams(fetchedTeams: unknown) {
     this.reporter.addOperation('transformation', 'map_teams', 'started');
 
-    if (!fetchedTeams || !fetchedTeams.standings) {
+    const teamsData = fetchedTeams as { standings?: unknown[] };
+    if (!fetchedTeams || !teamsData.standings) {
       this.reporter.addOperation('transformation', 'map_teams', 'completed', {
         teamsCount: 0,
         note: 'No teams to map',
@@ -218,17 +219,29 @@ export class TeamsDataProviderService {
       return [];
     }
 
-    const teams = fetchedTeams.standings.flatMap((group: any) =>
-      group.rows.map((row: any) => ({
-        externalId: safeString(row.team.id),
-        name: safeString(row.team.name),
-        shortName: safeString(row.team.shortName),
-        slug: row.team.slug || '',
-        nameCode: row.team.nameCode || '',
-        provider: 'sofascore',
-        badge: '',
-      }))
-    );
+    const teams = teamsData.standings.flatMap((group: unknown) => {
+      const groupData = group as { rows: unknown[] };
+      return groupData.rows.map((row: unknown) => {
+        const rowData = row as {
+          team: {
+            id: unknown;
+            name: unknown;
+            shortName: unknown;
+            slug?: string;
+            nameCode?: string;
+          };
+        };
+        return {
+          externalId: safeString(rowData.team.id),
+          name: safeString(rowData.team.name),
+          shortName: safeString(rowData.team.shortName),
+          slug: rowData.team.slug || '',
+          nameCode: rowData.team.nameCode || '',
+          provider: 'sofascore',
+          badge: '',
+        };
+      });
+    });
 
     if (teams.length === 0) {
       this.reporter.addOperation('transformation', 'map_teams', 'failed', {

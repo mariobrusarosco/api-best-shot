@@ -3,14 +3,13 @@ import { randomUUID } from 'crypto';
 import { CreateTournamentInput } from '../api/v2/tournament/typing';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { MatchesDataProviderService } from './match';
-import { DataProviderReport } from './reporter';
-import { RoundDataProviderService } from './rounds';
+import { RoundsDataProviderService } from './rounds';
 import { StandingsDataProviderService } from './standings';
 import { TeamsDataProviderService } from './teams';
-import { TournamentDataProviderService } from './tournaments';
+import { TournamentDataProvider } from './tournaments';
 
-// Re-export DataProviderExecutionService from its own file
-export { DataProviderExecutionService } from './execution';
+// Re-export DataProviderExecution from its own file
+export { DataProviderExecution } from './execution';
 
 export class SofaScoreScraper extends BaseScraper {
   public async createTournament(payload: CreateTournamentInput) {
@@ -19,25 +18,41 @@ export class SofaScoreScraper extends BaseScraper {
       const requestId = randomUUID();
       console.log('TOURNAMENT CREATION - [START]', payload);
 
-      const report = new DataProviderReport('create_tournament', requestId);
-      const tournamentService = new TournamentDataProviderService(scraper, report);
-      const standingsService = new StandingsDataProviderService(scraper, report);
-      const roundService = new RoundDataProviderService(scraper, report);
-      const teamsService = new TeamsDataProviderService(scraper, report);
-      const matchesService = new MatchesDataProviderService(scraper, report);
+      const tournamentService = new TournamentDataProvider(scraper, requestId);
+      const standingsService = new StandingsDataProviderService(scraper, requestId);
+      const roundService = new RoundsDataProviderService(scraper, requestId);
+      const teamsService = new TeamsDataProviderService(scraper, requestId);
+      const matchesService = new MatchesDataProviderService(scraper, requestId);
 
       //Step 1: Tournament Service
-      const { id: tournamentId } = await tournamentService.createTournament(payload);
+      const { id: tournamentId } = await tournamentService.init(payload);
       const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
       //Step 2: Round Service
-      const rounds = await roundService.createRounds(tournament);
+      const rounds = await roundService.init({
+        tournamentId: tournament.id,
+        baseUrl: tournament.baseUrl,
+        label: tournament.label,
+        provider: tournament.provider,
+      });
       //Step 3: Standings Service
-      const standings = await standingsService.createStandings(tournament);
+      const standings = await standingsService.init({
+        tournamentId: tournament.id,
+        baseUrl: tournament.baseUrl,
+        label: tournament.label,
+        provider: tournament.provider,
+      });
       //Step 4: Teams Service
-      const tournamentTemp = await SERVICES_TOURNAMENT.getTournament(tournament.id);
-      const teams = await teamsService.createTeams(tournamentTemp);
+      const teams = await teamsService.init({
+        tournamentId: tournament.id,
+        baseUrl: tournament.baseUrl,
+        label: tournament.label,
+        provider: tournament.provider,
+      });
       //Step 5: Matches Service
-      const matches = await matchesService.createMatches(rounds, tournament);
+      const matches = await matchesService.init({
+        tournamentId: tournament.id,
+        rounds: rounds,
+      });
 
       return {
         tournament,

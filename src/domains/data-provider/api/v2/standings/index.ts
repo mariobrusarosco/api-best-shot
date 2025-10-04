@@ -1,6 +1,6 @@
 import { StandingsRequest } from '@/domains/data-provider/api/v2/standings/typing';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
+import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';

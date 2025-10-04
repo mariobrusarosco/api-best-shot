@@ -1,7 +1,7 @@
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { Request, Response } from 'express';
 
 export const API_ADMIN_MATCHES = {

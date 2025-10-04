@@ -1,5 +1,5 @@
 import { AdminTeamsService } from '@/domains/admin/services/teams';
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
+import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { TeamsDataProviderService } from '@/domains/data-provider/services/teams';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { Request, Response } from 'express';

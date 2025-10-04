@@ -1,5 +1,5 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
+import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { TournamentDataProviderService } from '@/domains/data-provider/services/tournaments';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import Profiling from '@/services/profiling';

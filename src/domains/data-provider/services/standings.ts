@@ -1,3 +1,4 @@
+import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import { DB_InsertTournamentStandings, T_TournamentStandings } from '@/domains/tournament/schema';
 import db from '@/services/database';
@@ -7,7 +8,6 @@ import { BaseScraper } from '../providers/playwright/base-scraper';
 import { API_SOFASCORE_STANDINGS } from '../providers/sofascore/standings/typing';
 import { DataProviderExecutionOperationType } from '../typing';
 import { DataProviderExecution } from './execution';
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
 
 export interface CreateStandingsInput {
   tournamentId: string;
@@ -192,25 +192,40 @@ export class StandingsDataProviderService {
   private async mapStandings(fetchedStandings: API_SOFASCORE_STANDINGS, tournamentId: string) {
     this.reporter.addOperation('transformation', 'map_standings', 'started');
 
-    const standings = fetchedStandings.standings.flatMap((group: any) =>
-      group.rows.map((row: any) => ({
-        teamExternalId: safeString(row.team.id),
-        tournamentId: tournamentId,
-        order: safeString(row.position),
-        groupName: group.name,
-        shortName: safeString(row.team.shortName),
-        longName: safeString(row.team.name),
-        points: safeString(row.points),
-        games: safeString(row.matches),
-        wins: safeString(row.wins),
-        draws: safeString(row.draws),
-        losses: safeString(row.losses),
-        gf: safeString(row.scoresFor),
-        ga: safeString(row.scoresAgainst),
-        gd: row.scoreDiffFormatted,
-        provider: 'sofascore',
-      }))
-    );
+    const standings = fetchedStandings.standings.flatMap((group: unknown) => {
+      const groupData = group as { name: string; rows: unknown[] };
+      return groupData.rows.map((row: unknown) => {
+        const rowData = row as {
+          team: { id: unknown; shortName: unknown; name: unknown };
+          position: unknown;
+          points: unknown;
+          matches: unknown;
+          wins: unknown;
+          draws: unknown;
+          losses: unknown;
+          scoresFor: unknown;
+          scoresAgainst: unknown;
+          scoreDiffFormatted: unknown;
+        };
+        return {
+          teamExternalId: safeString(rowData.team.id) || '',
+          tournamentId: tournamentId,
+          order: safeString(rowData.position) || '',
+          groupName: groupData.name,
+          shortName: safeString(rowData.team.shortName) || '',
+          longName: safeString(rowData.team.name) || '',
+          points: safeString(rowData.points) || '',
+          games: safeString(rowData.matches) || '',
+          wins: safeString(rowData.wins) || '',
+          draws: safeString(rowData.draws) || '',
+          losses: safeString(rowData.losses) || '',
+          gf: safeString(rowData.scoresFor) || '',
+          ga: safeString(rowData.scoresAgainst) || '',
+          gd: rowData.scoreDiffFormatted,
+          provider: 'sofascore',
+        };
+      });
+    });
 
     if (standings.length === 0) {
       this.reporter.addOperation('transformation', 'map_standings', 'failed', {

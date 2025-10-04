@@ -1,6 +1,6 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { DataProviderExecution } from '@/domains/data-provider/services/execution';
-import { DataProviderReport } from '@/domains/data-provider/services/report';
+import { DataProviderReport } from './reporter';
 import { DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { DB_InsertTournamentRound } from '@/domains/tournament-round/schema';

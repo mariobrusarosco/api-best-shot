@@ -6,7 +6,7 @@ import { safeString } from '@/utils';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 import { DataProviderExecution } from '@/domains/data-provider/services/execution';
-import { DataProviderReport } from '@/domains/data-provider/services/report';
+import { DataProviderReport } from './reporter';
 
 export interface CreateMatchesInput {
   tournamentId: string;

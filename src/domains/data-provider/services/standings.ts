@@ -7,7 +7,7 @@ import { BaseScraper } from '../providers/playwright/base-scraper';
 import { API_SOFASCORE_STANDINGS } from '../providers/sofascore/standings/typing';
 import { DataProviderExecutionOperationType } from '../typing';
 import { DataProviderExecution } from './execution';
-import { DataProviderReport } from './report';
+import { DataProviderReport } from '@/domains/data-provider/services/reporter';
 
 export interface CreateStandingsInput {
   tournamentId: string;

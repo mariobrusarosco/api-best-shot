@@ -14,12 +14,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 6. **Evidence-Based**: Never guess - provide research and evidence for recommendations
 
 **NEVER:**
+
 - Jump to quick fixes without understanding the full system
-- Make isolated changes without considering broader impacts  
+- Make isolated changes without considering broader impacts
 - Propose solutions based on assumptions
 - Skip research and documentation review
 
 **For CI/CD, Docker, Deployment Issues:**
+
 - Analyze the complete pipeline: build → test → deploy → runtime
 - Check ALL related configuration files (Dockerfile, workflows, package.json, etc.)
 - Understand multi-stage build processes and dependencies
@@ -135,6 +137,10 @@ The project uses Docker for PostgreSQL and local Node.js (managed by Volta) for 
 2. Database runs in container on port 5432 (configurable)
 3. API runs locally on port 9090 with hot reloading
 
+## Import Aliases
+
+- Always use absolute imports with aliases like `@domains`, `@components`, etc.
+
 ### TypeScript Configuration
 
 - Path alias: `@/` maps to `src/`
@@ -202,11 +208,13 @@ The project has GitHub Actions workflows for automated deployment:
   - Includes comprehensive testing and validation
 
 ### Lambda Functions
+
 - `caller-scores-and-standings`: Updates match scores and tournament standings
-- `caller-knockouts-update`: Updates knockout tournament brackets  
+- `caller-knockouts-update`: Updates knockout tournament brackets
 - `caller-daily-routine`: Creates daily schedules for match automation
 
 ### Deployment Scripts
+
 - Lambda deployment scripts in `scripts/` directory
 - Environment-specific validation scripts
 
@@ -235,12 +243,14 @@ Each environment has specific build commands and uses environment-specific `.env
 ## Development Guidelines
 
 ### Project Organization
+
 - Store ADRs in `docs/decisions`
-- Developer guides in `docs/guides`  
+- Developer guides in `docs/guides`
 - Planning phases in `docs/plan`
 - Use checklists to track phase completion
 
 ### Single Test Execution
+
 ```bash
 # Run specific test file
 yarn test path/to/test-file.test.ts
@@ -250,6 +260,7 @@ yarn test:watch --testNamePattern="specific test name"
 ```
 
 ### Database Operations
+
 ```bash
 # Connect to database directly
 yarn db:connect

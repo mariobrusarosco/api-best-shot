@@ -1,5 +1,5 @@
 import { QUERIES_DATA_PROVIDER_REPORTS } from '@/domains/data-provider/queries/reports';
-import { S3FileStorage } from '@/services/file-storage';
+import { S3FileStorage } from '../file-storage';
 import { SlackMessage, SlackNotificationService } from '@/services/notifications/slack';
 import { v4 as uuidv4 } from 'uuid';
 import { Operation } from './operation';

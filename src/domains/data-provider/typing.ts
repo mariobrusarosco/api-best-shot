@@ -1,11 +1,10 @@
-/* eslint-disable */
-/* prettier-ignore-file */
 import { DB_InsertMatch } from '@/domains/match/schema';
 import { DB_InsertTeam } from '@/domains/team/schema';
 import { DB_InsertTournamentRound, DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
 import { TournamentQuery } from '@/domains/tournament/queries';
 import { DB_InsertTournament, DB_InsertTournamentStandings, DB_SelectTournament } from '@/domains/tournament/schema';
 import { FetchAndStoreAssetPayload } from '@/utils';
+import { Request } from 'express';
 import { API_SOFASCORE_STANDINGS } from './providers/sofascore/standings/typing';
 import { API_SOFASCORE_ROUND, API_SOFASCORE_ROUNDS } from './providers/sofascore/tournament-rounds/typing';
 
@@ -83,3 +82,18 @@ export enum DataProviderExecutionOperationType {
   MATCHES_CREATE = 'matches_create',
   MATCHES_UPDATE = 'matches_update',
 }
+
+export type CreateTournamentInput = {
+  tournamentPublicId: string;
+  baseUrl: string;
+  slug: string;
+  provider: string;
+  season: string;
+  mode: 'regular-season-only' | 'regular-season-and-knockout' | 'knockout-only';
+  label: string;
+  standingsMode: string;
+};
+
+export type TournamentRequestIn = Request<null, CreateTournamentInput>;
+
+export type UpdateTournamentInput = CreateTournamentInput;

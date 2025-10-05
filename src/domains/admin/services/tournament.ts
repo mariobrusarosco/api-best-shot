@@ -1,17 +1,18 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import { T_DataProviderExecutions } from '@/domains/data-provider/schema';
+import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
+import type { TournamentRequestIn } from '@/domains/data-provider/typing';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import Profiling from '@/services/profiling';
 import db from '@/services/database';
-import { desc, eq } from 'drizzle-orm';
+import Profiling from '@/services/profiling';
 import { randomUUID } from 'crypto';
+import { desc, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 
 class AdminTournamentService {
   // Create tournament with admin context
-  static async createTournament(req: Request, res: Response) {
+  static async createTournament(req: TournamentRequestIn, res: Response) {
     const requestId = randomUUID();
     let scraper: BaseScraper | null = null;
 

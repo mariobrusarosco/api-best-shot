@@ -8,8 +8,6 @@ import aiV2Router from '@/domains/ai/routes/v2';
 import { v1Router as authV1Router, v2Router as authV2Router } from '@/domains/auth/routes';
 // Dashboard
 import { v1 as dashboardV1Router, v2 as dashboardV2Router } from '@/domains/dashboard/routes';
-// Data Provider
-import { v1 as dataProviderV1Router, v2 as dataProviderV2Router } from '@/domains/data-provider/routes';
 // Guess
 import { v1 as guessV1Router, v2 as guessV2Router } from '@/domains/guess/routes';
 // League
@@ -33,9 +31,6 @@ apiRouter.use('/v2/auth', authV2Router);
 // Dashboard
 apiRouter.use('/v1/dashboard', dashboardV1Router);
 apiRouter.use('/v2/dashboard', dashboardV2Router);
-// Data Provider
-apiRouter.use('/v1/data-provider', dataProviderV1Router);
-apiRouter.use('/v2/data-provider', dataProviderV2Router);
 // Guess
 apiRouter.use('/v1/guess', guessV1Router);
 apiRouter.use('/v2/guess', guessV2Router);

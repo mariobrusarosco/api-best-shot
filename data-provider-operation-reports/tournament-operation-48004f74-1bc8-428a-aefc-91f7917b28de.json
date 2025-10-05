@@ -1,0 +1,92 @@
+{
+  "requestId": "48004f74-1bc8-428a-aefc-91f7917b28de",
+  "tournament": {
+    "label": "Copa Betano do Brasil",
+    "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8",
+    "provider": "sofascore"
+  },
+  "startTime": "2025-10-05T16:03:55.119Z",
+  "operations": [
+    {
+      "step": "initialization",
+      "operation": "validate_input",
+      "status": "started",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8"
+      },
+      "timestamp": "2025-10-05T16:03:55.120Z"
+    },
+    {
+      "step": "initialization",
+      "operation": "validate_input",
+      "status": "completed",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8"
+      },
+      "timestamp": "2025-10-05T16:03:55.120Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "fetch_teams",
+      "status": "started",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8"
+      },
+      "timestamp": "2025-10-05T16:03:55.120Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "fetch_teams",
+      "status": "completed",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8",
+        "groupsCount": 1
+      },
+      "timestamp": "2025-10-05T16:03:58.254Z"
+    },
+    {
+      "step": "transformation",
+      "operation": "map_teams",
+      "status": "started",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8"
+      },
+      "timestamp": "2025-10-05T16:03:58.254Z"
+    },
+    {
+      "step": "transformation",
+      "operation": "map_teams",
+      "status": "completed",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8",
+        "teamsCount": 36
+      },
+      "timestamp": "2025-10-05T16:03:58.254Z"
+    },
+    {
+      "step": "database",
+      "operation": "create_teams",
+      "status": "started",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8",
+        "teamsCount": 36
+      },
+      "timestamp": "2025-10-05T16:03:58.254Z"
+    },
+    {
+      "step": "database",
+      "operation": "create_teams",
+      "status": "completed",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8",
+        "createdTeamsCount": 36
+      },
+      "timestamp": "2025-10-05T16:03:58.682Z"
+    }
+  ],
+  "summary": {
+    "successfulOperations": 4,
+    "failedOperations": 0
+  },
+  "endTime": "2025-10-05T16:03:58.682Z"
+}

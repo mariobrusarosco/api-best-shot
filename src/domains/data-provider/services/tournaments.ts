@@ -1,8 +1,7 @@
-import { CreateTournamentInput } from '@/domains/data-provider/api/v2/tournament/typing';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { DataProviderExecution } from '@/domains/data-provider/services/execution';
 import { DataProviderReport } from '@/domains/data-provider/services/report';
-import { DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
+import { CreateTournamentInput, DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 import { DB_InsertTournament, DB_UpdateTournament, T_Tournament } from '@/domains/tournament/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';

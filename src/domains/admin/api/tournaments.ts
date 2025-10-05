@@ -15,7 +15,7 @@ export const API_ADMIN_TOURNAMENTS = {
   },
 
   async createTournament(req: Request, res: Response) {
-    return await AdminTournamentService.createTournament(req, res);
+    return await AdminTournamentService.createTournament(req.body, res);
   },
 
   async createRounds(req: Request, res: Response) {

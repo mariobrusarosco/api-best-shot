@@ -1,0 +1,98 @@
+{
+  "requestId": "9addb0ce-29fe-4d7c-b9fb-326a224fe965",
+  "tournament": {
+    "label": "Copa Betano do Brasil",
+    "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8",
+    "provider": "sofascore"
+  },
+  "startTime": "2025-10-05T16:03:42.531Z",
+  "operations": [
+    {
+      "step": "initialization",
+      "operation": "validate_input",
+      "status": "started",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8"
+      },
+      "timestamp": "2025-10-05T16:03:42.531Z"
+    },
+    {
+      "step": "initialization",
+      "operation": "validate_input",
+      "status": "completed",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8"
+      },
+      "timestamp": "2025-10-05T16:03:42.531Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "fetch_rounds",
+      "status": "started",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8"
+      },
+      "timestamp": "2025-10-05T16:03:42.531Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "fetch_rounds",
+      "status": "completed",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8",
+        "roundsCount": 12
+      },
+      "timestamp": "2025-10-05T16:03:43.282Z"
+    },
+    {
+      "step": "transformation",
+      "operation": "enhance_rounds",
+      "status": "started",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8",
+        "baseUrl": "https://www.sofascore.com/api/v1/unique-tournament/7/season/76953",
+        "rawRoundsCount": 12
+      },
+      "timestamp": "2025-10-05T16:03:43.282Z"
+    },
+    {
+      "step": "transformation",
+      "operation": "enhance_rounds",
+      "status": "completed",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8",
+        "enhancedRoundsCount": 12,
+        "roundTypes": {
+          "regular": 8,
+          "knockout": 4
+        }
+      },
+      "timestamp": "2025-10-05T16:03:43.283Z"
+    },
+    {
+      "step": "database",
+      "operation": "create_rounds",
+      "status": "started",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8",
+        "roundsCount": 12
+      },
+      "timestamp": "2025-10-05T16:03:43.283Z"
+    },
+    {
+      "step": "database",
+      "operation": "create_rounds",
+      "status": "completed",
+      "data": {
+        "tournamentId": "f57fe8a4-3cd3-4087-896b-151fb4189af8",
+        "createdRoundsCount": 12
+      },
+      "timestamp": "2025-10-05T16:03:49.674Z"
+    }
+  ],
+  "summary": {
+    "successfulOperations": 4,
+    "failedOperations": 0
+  },
+  "endTime": "2025-10-05T16:03:49.675Z"
+}

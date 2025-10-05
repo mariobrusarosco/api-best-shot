@@ -49,4 +49,8 @@ export const API_ADMIN_TOURNAMENTS = {
   async updateStandings(req: Request, res: Response) {
     return await AdminStandingsService.updateStandings(req, res);
   },
+
+  async getTournamentExecutionJobs(req: Request, res: Response) {
+    return await AdminTournamentService.getTournamentExecutionJobs(req, res);
+  },
 };

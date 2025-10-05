@@ -36,4 +36,11 @@ router.patch('/tournaments/:tournamentId/matches', AdminMiddleware, API_ADMIN_TO
 router.post('/tournaments/:tournamentId/standings', AdminMiddleware, API_ADMIN_TOURNAMENTS.createStandings);
 router.patch('/tournaments/:tournamentId/standings', AdminMiddleware, API_ADMIN_TOURNAMENTS.updateStandings);
 
+// Tournament Execution Jobs (admin only)
+router.get(
+  '/tournaments/:tournamentId/execution-jobs',
+  AdminMiddleware,
+  API_ADMIN_TOURNAMENTS.getTournamentExecutionJobs
+);
+
 export default router;

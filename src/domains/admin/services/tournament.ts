@@ -1,6 +1,6 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
-import { T_DataProviderReports } from '@/domains/data-provider/schema';
+import { T_DataProviderExecutions } from '@/domains/data-provider/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import Profiling from '@/services/profiling';
@@ -120,18 +120,18 @@ class AdminTournamentService {
       // Fetch execution jobs for the specific tournament
       const executionJobs = await db
         .select({
-          id: T_DataProviderReports.id,
-          operationType: T_DataProviderReports.operationType,
-          status: T_DataProviderReports.status,
-          summary: T_DataProviderReports.summary,
-          reportUrl: T_DataProviderReports.reportFileUrl,
-          createdAt: T_DataProviderReports.startedAt,
-          endTime: T_DataProviderReports.completedAt,
-          duration: T_DataProviderReports.duration,
+          id: T_DataProviderExecutions.id,
+          operationType: T_DataProviderExecutions.operationType,
+          status: T_DataProviderExecutions.status,
+          summary: T_DataProviderExecutions.summary,
+          reportUrl: T_DataProviderExecutions.reportFileUrl,
+          createdAt: T_DataProviderExecutions.startedAt,
+          endTime: T_DataProviderExecutions.completedAt,
+          duration: T_DataProviderExecutions.duration,
         })
-        .from(T_DataProviderReports)
-        .where(eq(T_DataProviderReports.tournamentId, tournamentId))
-        .orderBy(desc(T_DataProviderReports.startedAt))
+        .from(T_DataProviderExecutions)
+        .where(eq(T_DataProviderExecutions.tournamentId, tournamentId))
+        .orderBy(desc(T_DataProviderExecutions.startedAt))
         .limit(validLimit);
 
       // Transform the data to match the format

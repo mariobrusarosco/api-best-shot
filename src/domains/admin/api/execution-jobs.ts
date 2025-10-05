@@ -1,4 +1,4 @@
-import { T_DataProviderReports } from '@/domains/data-provider/schema';
+import { T_DataProviderExecutions } from '@/domains/data-provider/schema';
 import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { desc, eq } from 'drizzle-orm';
@@ -11,22 +11,22 @@ export const API_ADMIN_EXECUTION_JOBS = {
       const limit = parseInt(req.query.limit as string) || 10;
       const validLimit = Math.min(Math.max(1, limit), 100); // Limit between 1-100
 
-      // Fetch recent data provider reports (execution jobs) with tournament info
+      // Fetch recent data provider executions with tournament info
       const executionJobs = await db
         .select({
-          id: T_DataProviderReports.id,
-          operationType: T_DataProviderReports.operationType,
-          status: T_DataProviderReports.status,
-          tournamentId: T_DataProviderReports.tournamentId,
+          id: T_DataProviderExecutions.id,
+          operationType: T_DataProviderExecutions.operationType,
+          status: T_DataProviderExecutions.status,
+          tournamentId: T_DataProviderExecutions.tournamentId,
           tournamentLabel: T_Tournament.label,
-          summary: T_DataProviderReports.summary,
-          reportUrl: T_DataProviderReports.reportFileUrl,
-          createdAt: T_DataProviderReports.startedAt,
-          endTime: T_DataProviderReports.completedAt,
+          summary: T_DataProviderExecutions.summary,
+          reportUrl: T_DataProviderExecutions.reportFileUrl,
+          createdAt: T_DataProviderExecutions.startedAt,
+          endTime: T_DataProviderExecutions.completedAt,
         })
-        .from(T_DataProviderReports)
-        .leftJoin(T_Tournament, eq(T_DataProviderReports.tournamentId, T_Tournament.id))
-        .orderBy(desc(T_DataProviderReports.startedAt))
+        .from(T_DataProviderExecutions)
+        .leftJoin(T_Tournament, eq(T_DataProviderExecutions.tournamentId, T_Tournament.id))
+        .orderBy(desc(T_DataProviderExecutions.startedAt))
         .limit(validLimit);
 
       // Transform the data to match what the frontend expects

@@ -1,4 +1,4 @@
-import { T_DataProviderReports } from '@/domains/data-provider/schema';
+import { T_DataProviderExecutions } from '@/domains/data-provider/schema';
 import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { desc, eq } from 'drizzle-orm';
@@ -11,27 +11,27 @@ export const API_ADMIN_REPORTS = {
       const limit = parseInt(req.query.limit as string) || 20;
       const validLimit = Math.min(Math.max(1, limit), 100); // Limit between 1-100
 
-      // Fetch recent data provider reports with tournament info
+      // Fetch recent data provider executions with tournament info
       const reports = await db
         .select({
-          id: T_DataProviderReports.id,
-          requestId: T_DataProviderReports.requestId,
-          operationType: T_DataProviderReports.operationType,
-          status: T_DataProviderReports.status,
-          tournamentId: T_DataProviderReports.tournamentId,
+          id: T_DataProviderExecutions.id,
+          requestId: T_DataProviderExecutions.requestId,
+          operationType: T_DataProviderExecutions.operationType,
+          status: T_DataProviderExecutions.status,
+          tournamentId: T_DataProviderExecutions.tournamentId,
           tournamentLabel: T_Tournament.label,
-          summary: T_DataProviderReports.summary,
-          reportUrl: T_DataProviderReports.reportFileUrl,
-          reportKey: T_DataProviderReports.reportFileKey,
-          duration: T_DataProviderReports.duration,
-          startedAt: T_DataProviderReports.startedAt,
-          completedAt: T_DataProviderReports.completedAt,
-          createdAt: T_DataProviderReports.createdAt,
-          updatedAt: T_DataProviderReports.updatedAt,
+          summary: T_DataProviderExecutions.summary,
+          reportUrl: T_DataProviderExecutions.reportFileUrl,
+          reportKey: T_DataProviderExecutions.reportFileKey,
+          duration: T_DataProviderExecutions.duration,
+          startedAt: T_DataProviderExecutions.startedAt,
+          completedAt: T_DataProviderExecutions.completedAt,
+          createdAt: T_DataProviderExecutions.createdAt,
+          updatedAt: T_DataProviderExecutions.updatedAt,
         })
-        .from(T_DataProviderReports)
-        .leftJoin(T_Tournament, eq(T_DataProviderReports.tournamentId, T_Tournament.id))
-        .orderBy(desc(T_DataProviderReports.startedAt))
+        .from(T_DataProviderExecutions)
+        .leftJoin(T_Tournament, eq(T_DataProviderExecutions.tournamentId, T_Tournament.id))
+        .orderBy(desc(T_DataProviderExecutions.startedAt))
         .limit(validLimit);
 
       // Transform the data

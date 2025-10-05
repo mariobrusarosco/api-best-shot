@@ -74,4 +74,12 @@ export enum DataProviderExecutionStatus {
 export enum DataProviderExecutionOperationType {
   TOURNAMENT_CREATE = 'tournament_create',
   TOURNAMENT_UPDATE = 'tournament_update',
+  STANDINGS_CREATE = 'standings_create',
+  STANDINGS_UPDATE = 'standings_update',
+  TEAMS_CREATE = 'teams_create',
+  TEAMS_UPDATE = 'teams_update',
+  ROUNDS_CREATE = 'rounds_create',
+  ROUNDS_UPDATE = 'rounds_update',
+  MATCHES_CREATE = 'matches_create',
+  MATCHES_UPDATE = 'matches_update',
 }

@@ -1,6 +1,5 @@
 import { StandingsRequest } from '@/domains/data-provider/api/v2/standings/typing';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
@@ -68,10 +67,14 @@ const create = async (req: StandingsRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const report = new DataProviderReport('create_standings', requestId);
-    const dataProviderService = new StandingsDataProviderService(scraper, report);
+    const dataProviderService = new StandingsDataProviderService(scraper, requestId);
 
-    const standings = await dataProviderService.createStandings(tournament);
+    const standings = await dataProviderService.init({
+      tournamentId: tournament.id,
+      baseUrl: tournament.baseUrl,
+      label: tournament.label,
+      provider: tournament.provider,
+    });
 
     if (!standings) {
       Profiling.error({
@@ -174,10 +177,14 @@ const update = async (req: StandingsRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const report = new DataProviderReport('update_standings', requestId);
-    const dataProviderService = new StandingsDataProviderService(scraper, report);
+    const dataProviderService = new StandingsDataProviderService(scraper, requestId);
 
-    const standings = await dataProviderService.updateStandings(tournament);
+    const standings = await dataProviderService.update({
+      tournamentId: tournament.id,
+      baseUrl: tournament.baseUrl,
+      label: tournament.label,
+      provider: tournament.provider,
+    });
 
     if (!standings) {
       Profiling.error({

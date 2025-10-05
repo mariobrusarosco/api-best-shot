@@ -10,6 +10,5 @@ export class TournamentRoundController {
   static getAllRounds = API_TOURNAMENT_ROUND.getAllRounds;
   static getRound = API_TOURNAMENT_ROUND.getRound;
   static getKnockoutRounds = API_TOURNAMENT_ROUND.getKnockoutRounds;
-  static createTournamentRound = API_TOURNAMENT_ROUND.createTournamentRound;
-  static createMultipleTournamentRounds = API_TOURNAMENT_ROUND.createMultipleTournamentRounds;
+  static createTournamentRounds = API_TOURNAMENT_ROUND.createTournamentRounds;
 }

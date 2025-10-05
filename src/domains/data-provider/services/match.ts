@@ -5,57 +5,209 @@ import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
 import { Profiling } from '@/services/profiling';
 import { safeString } from '@/utils';
+import { mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { ENDPOINT_ROUND } from '../providers/sofascore_v2/schemas/endpoints';
-import { DataProviderReport } from './reporter';
-import { SlackMessage } from '@/services/notifications/slack';
+import { S3FileStorage } from './file-storage';
 
 const safeSofaDate = (date: unknown): Date | null => {
   return date === null || date === undefined ? null : new Date(date as string | number | Date);
 };
 
+type MatchesOperationData =
+  | {
+      url?: string;
+      roundId?: string;
+      roundSlug?: string;
+      matchesCount?: number;
+      note?: string;
+    }
+  | { error: string; debugMessage?: string; errorMessage?: string }
+  | {
+      tournamentId?: string;
+      totalRoundsProcessed?: number;
+      createdMatchesCount?: number;
+      roundsWithMatches?: number;
+      roundsWithoutMatches?: number;
+    }
+  | {
+      totalMatchesScraped?: number;
+      totalMatchesCreated?: number;
+      roundsProcessed?: number;
+    }
+  | Record<string, unknown>;
+
+interface MatchesOperation {
+  step: string;
+  operation: string;
+  status: 'started' | 'completed' | 'failed';
+  data?: MatchesOperationData;
+  timestamp: string;
+}
+
+interface MatchesOperationReport {
+  requestId: string;
+  tournament: {
+    id: string;
+    label: string;
+  };
+  operationType: 'create' | 'update';
+  startTime: string;
+  endTime?: string;
+  operations: MatchesOperation[];
+  summary: {
+    totalOperations: number;
+    successfulOperations: number;
+    failedOperations: number;
+    matchCounts: {
+      totalRoundsProcessed: number;
+      totalMatchesScraped: number;
+      totalMatchesCreated: number;
+      roundsWithMatches: number;
+      roundsWithoutMatches: number;
+    };
+  };
+}
+
 export class MatchesDataProviderService {
   private scraper: BaseScraper;
-  public report: DataProviderReport;
+  private report: MatchesOperationReport;
 
-  constructor(scraper: BaseScraper, report: DataProviderReport) {
+  constructor(scraper: BaseScraper, requestId: string) {
     this.scraper = scraper;
-    this.report = report;
+    this.report = {
+      requestId,
+      tournament: {
+        id: '',
+        label: '',
+      },
+      operationType: 'create',
+      startTime: new Date().toISOString(),
+      operations: [],
+      summary: {
+        totalOperations: 0,
+        successfulOperations: 0,
+        failedOperations: 0,
+        matchCounts: {
+          totalRoundsProcessed: 0,
+          totalMatchesScraped: 0,
+          totalMatchesCreated: 0,
+          roundsWithMatches: 0,
+          roundsWithoutMatches: 0,
+        },
+      },
+    };
   }
 
-  static async create(report: DataProviderReport) {
-    const scraper = await BaseScraper.createInstance();
-    return new MatchesDataProviderService(scraper, report);
+  private addOperation(
+    step: string,
+    operation: string,
+    status: 'started' | 'completed' | 'failed',
+    data?: MatchesOperationData
+  ): void {
+    this.report.operations.push({
+      step,
+      operation,
+      status,
+      data,
+      timestamp: new Date().toISOString(),
+    });
+
+    this.report.summary.totalOperations++;
+    if (status === 'completed') {
+      this.report.summary.successfulOperations++;
+    } else if (status === 'failed') {
+      this.report.summary.failedOperations++;
+    }
+  }
+
+  private async generateOperationReport(): Promise<void> {
+    this.report.endTime = new Date().toISOString();
+    const filename = `matches-operation-${this.report.requestId}`;
+    const jsonContent = JSON.stringify(this.report, null, 2);
+
+    try {
+      const isLocal = process.env.NODE_ENV === 'development';
+
+      if (isLocal) {
+        // Store locally for development
+        const reportsDir = join(process.cwd(), 'data-provider-operation-reports');
+        const filepath = join(reportsDir, `${filename}.json`);
+
+        mkdirSync(reportsDir, { recursive: true });
+        writeFileSync(filepath, jsonContent);
+
+        Profiling.log({
+          msg: `[REPORT] Matches operation report generated successfully (local)`,
+          data: { filepath, requestId: this.report.requestId },
+          source: 'DATA_PROVIDER_V2_MATCHES_generateOperationReport',
+        });
+      } else {
+        // Store in S3 for demo/production environments
+        const s3Storage = new S3FileStorage();
+        const s3Key = await s3Storage.uploadFile({
+          buffer: Buffer.from(jsonContent, 'utf8'),
+          filename,
+          contentType: 'application/json',
+          directory: 'data-provider-operation-reports',
+          cacheControl: 'max-age=604800, public', // 7 days cache
+        });
+
+        Profiling.log({
+          msg: `[REPORT] Matches operation report generated successfully (S3)`,
+          data: { s3Key, requestId: this.report.requestId },
+          source: 'DATA_PROVIDER_V2_MATCHES_generateOperationReport',
+        });
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      Profiling.error({
+        source: 'DATA_PROVIDER_V2_MATCHES_generateOperationReport',
+        error: error instanceof Error ? error : new Error(errorMessage),
+        data: { requestId: this.report.requestId, filename },
+      });
+      console.error('Failed to write matches operation report file:', errorMessage);
+    }
   }
 
   public async getTournamentMatchesByRound(round: DB_SelectTournamentRound): Promise<ENDPOINT_ROUND | null> {
-    const op = this.report.createOperation('scraping', 'fetch_round_matches');
+    this.addOperation('scraping', 'fetch_round_matches', 'started', {
+      roundSlug: round.slug,
+      providerUrl: round.providerUrl,
+    });
 
     try {
       await this.scraper.goto(round.providerUrl);
       const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
 
       if (!rawContent?.events || rawContent?.events?.length === 0) {
-        op.success({
+        this.addOperation('scraping', 'fetch_round_matches', 'completed', {
           roundSlug: round.slug,
           matchesCount: 0,
           note: 'No matches found',
         });
+        this.report.summary.matchCounts.roundsWithoutMatches++;
         return null;
       }
 
       const matches = this.mapMatches(rawContent, round.tournamentId, round.slug);
 
-      op.success({
+      this.addOperation('scraping', 'fetch_round_matches', 'completed', {
         roundSlug: round.slug,
         matchesCount: matches.length,
         rawEventsCount: rawContent.events.length,
       });
 
+      this.report.summary.matchCounts.roundsWithMatches++;
+      this.report.summary.matchCounts.totalMatchesScraped += matches.length;
+
       return rawContent;
     } catch (error) {
-      const errorMessage = (error as Error).message;
-      op.fail({ error: errorMessage });
+      this.addOperation('scraping', 'fetch_round_matches', 'failed', {
+        roundSlug: round.slug,
+        error: (error as Error).message,
+      });
       Profiling.error({
         source: 'DATA_PROVIDER_MATCHES_getTournamentMatchesByRound',
         error: error as Error,
@@ -68,11 +220,16 @@ export class MatchesDataProviderService {
     rounds: DB_SelectTournamentRound[],
     tournamentId: string
   ): Promise<DB_InsertMatch[]> {
-    const op = this.report.createOperation('scraping', 'fetch_tournament_matches');
+    this.addOperation('scraping', 'fetch_tournament_matches', 'started', {
+      tournamentId,
+      roundsCount: rounds.length,
+    });
 
     try {
       if (rounds.length === 0) {
-        op.fail({ error: 'No rounds provided' });
+        this.addOperation('scraping', 'fetch_tournament_matches', 'failed', {
+          error: 'No rounds provided',
+        });
         Profiling.error({
           source: 'MatchesDataProviderService.getTournamentMatches',
           error: new Error('No rounds provided, returning empty matches array'),
@@ -81,26 +238,28 @@ export class MatchesDataProviderService {
       }
 
       const roundsWithMatches: DB_InsertMatch[][] = [];
+
       let successfulRounds = 0;
       let failedRounds = 0;
-      let roundsWithMatchesCount = 0;
-      let roundsWithoutMatchesCount = 0;
-      let totalMatchesScraped = 0;
 
       for (const round of rounds) {
-        const roundOp = this.report.createOperation('scraping', 'process_round');
+        this.addOperation('scraping', 'process_round', 'started', {
+          roundSlug: round.slug,
+          roundLabel: round.label,
+          providerUrl: round.providerUrl,
+        });
 
         try {
           await this.scraper.goto(round.providerUrl);
           const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
 
           if (!rawContent?.events || rawContent?.events?.length === 0) {
-            roundOp.success({
+            this.addOperation('scraping', 'process_round', 'completed', {
               roundSlug: round.slug,
               matchesCount: 0,
               note: 'No matches found, skipping round',
             });
-            roundsWithoutMatchesCount++;
+            this.report.summary.matchCounts.roundsWithoutMatches++;
             successfulRounds++;
             await this.scraper.sleep(2500);
             continue;
@@ -109,21 +268,22 @@ export class MatchesDataProviderService {
           const matches = this.mapMatches(rawContent, tournamentId, round.slug);
           roundsWithMatches.push(matches);
 
-          roundOp.success({
+          this.addOperation('scraping', 'process_round', 'completed', {
             roundSlug: round.slug,
             matchesCount: matches.length,
             rawEventsCount: rawContent.events.length,
           });
 
-          roundsWithMatchesCount++;
-          totalMatchesScraped += matches.length;
+          this.report.summary.matchCounts.roundsWithMatches++;
+          this.report.summary.matchCounts.totalMatchesScraped += matches.length;
           successfulRounds++;
           await this.scraper.sleep(2500);
         } catch (roundError) {
           const errorMessage = (roundError as Error).message;
           failedRounds++;
 
-          roundOp.fail({
+          // Log individual round failure but continue with other rounds
+          this.addOperation('scraping', 'process_round', 'failed', {
             roundSlug: round.slug,
             roundLabel: round.label,
             providerUrl: round.providerUrl,
@@ -132,28 +292,30 @@ export class MatchesDataProviderService {
           });
 
           console.log(`[DEBUG] Match round ${round.slug} failed: ${errorMessage}`);
-          roundsWithoutMatchesCount++;
+          this.report.summary.matchCounts.roundsWithoutMatches++;
           await this.scraper.sleep(2500);
           continue;
         }
       }
 
+      this.report.summary.matchCounts.totalRoundsProcessed = rounds.length;
+
       const allMatches = roundsWithMatches.flat();
-      op.success({
+      this.addOperation('scraping', 'fetch_tournament_matches', 'completed', {
         totalMatches: allMatches.length,
         roundsProcessed: rounds.length,
         successfulRounds,
         failedRounds,
-        roundsWithMatches: roundsWithMatchesCount,
-        roundsWithoutMatches: roundsWithoutMatchesCount,
-        totalMatchesScraped,
+        roundsWithMatches: this.report.summary.matchCounts.roundsWithMatches,
+        roundsWithoutMatches: this.report.summary.matchCounts.roundsWithoutMatches,
         note: `Processed ${successfulRounds}/${rounds.length} rounds successfully. ${failedRounds > 0 ? `${failedRounds} rounds failed but were skipped.` : ''}`,
       });
 
       return allMatches;
     } catch (error) {
-      const errorMessage = (error as Error).message;
-      op.fail({ error: errorMessage });
+      this.addOperation('scraping', 'fetch_tournament_matches', 'failed', {
+        error: (error as Error).message,
+      });
       Profiling.error({
         source: 'DATA_PROVIDER_MATCHES_getTournamentMatches',
         error: error as Error,
@@ -202,12 +364,14 @@ export class MatchesDataProviderService {
     }
   }
 
-  public async createOnDatabase(matches: DB_InsertMatch[]) {
-    const op = this.report.createOperation('database', 'create_matches');
+  async createOnDatabase(matches: DB_InsertMatch[]) {
+    this.addOperation('database', 'create_matches', 'started', {
+      matchesCount: matches.length,
+    });
 
     // Handle empty matches array gracefully
     if (matches.length === 0) {
-      op.success({
+      this.addOperation('database', 'create_matches', 'completed', {
         createdMatchesCount: 0,
         note: 'No matches to create - tournament rounds not available yet',
         matchIds: [],
@@ -216,317 +380,146 @@ export class MatchesDataProviderService {
     }
 
     try {
-      const query = await db.insert(T_Match).values(matches).returning();
+      const query = await db.insert(T_Match).values(matches);
 
-      op.success({
-        createdMatchesCount: query.length,
-        matchIds: query.map(m => m.id),
-        tournamentId: matches[0]?.tournamentId,
+      this.addOperation('database', 'create_matches', 'completed', {
+        createdMatchesCount: matches.length,
       });
+
+      this.report.summary.matchCounts.totalMatchesCreated = matches.length;
 
       return query;
     } catch (error) {
-      const errorMessage = (error as Error).message;
-      op.fail({ error: errorMessage });
+      this.addOperation('database', 'create_matches', 'failed', {
+        error: (error as Error).message,
+      });
       Profiling.error({
-        error: errorMessage,
-        data: { error: errorMessage },
-        source: 'DATA_PROVIDER_V2_MATCHES_database_create',
+        error,
+        source: 'MatchesDataProviderService.createOnDatabase',
       });
       throw error;
     }
   }
 
-  public async updateOnDatabase(matches: DB_InsertMatch[]): Promise<unknown> {
-    const op = this.report.createOperation('database', 'update_matches');
+  async updateOnDatabase(matches: DB_InsertMatch[]) {
+    this.addOperation('database', 'update_matches', 'started', {
+      matchesCount: matches.length,
+    });
 
     if (matches.length === 0) {
-      op.fail({ error: 'No matches to update' });
+      this.addOperation('database', 'update_matches', 'failed', {
+        error: 'No matches to update',
+      });
       Profiling.error({
         error: new Error('No matches to update in the database'),
         source: 'MatchesDataProviderService.updateOnDatabase',
       });
-      return [];
+      return 0;
     }
 
     try {
       const query = await QUERIES_MATCH.upsertMatches(matches);
 
-      op.success({
+      this.addOperation('database', 'update_matches', 'completed', {
         updatedMatchesCount: query.length,
-        tournamentId: matches[0]?.tournamentId,
       });
+
+      return query.length;
+    } catch (error) {
+      this.addOperation('database', 'update_matches', 'failed', {
+        error: (error as Error).message,
+      });
+      Profiling.error({
+        error,
+        source: 'MatchesDataProviderService.updateOnDatabase',
+      });
+      throw error;
+    }
+  }
+
+  public async init(
+    rounds: DB_SelectTournamentRound[],
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
+  ) {
+    // Initialize report tournament data
+    this.report.tournament = {
+      id: tournament.id,
+      label: tournament.label,
+    };
+    this.report.operationType = 'create';
+
+    this.addOperation('initialization', 'validate_input', 'started', {
+      tournamentId: tournament.id,
+      tournamentLabel: tournament.label,
+      roundsCount: rounds.length,
+    });
+
+    try {
+      this.addOperation('initialization', 'validate_input', 'completed', {
+        tournamentId: tournament.id,
+      });
+
+      const rawMatches = await this.getTournamentMatches(rounds, tournament.id);
+      const query = await this.createOnDatabase(rawMatches);
+
+      // Generate invoice file at the very end
+      await this.generateOperationReport();
 
       return query;
     } catch (error) {
-      const errorMessage = (error as Error).message;
-      op.fail({ error: errorMessage });
+      this.addOperation('initialization', 'process_matches', 'failed', {
+        error: (error as Error).message,
+      });
+      await this.generateOperationReport();
       Profiling.error({
-        error: errorMessage,
-        data: { error: errorMessage },
-        source: 'DATA_PROVIDER_V2_MATCHES_database_update',
+        error,
+        source: 'MatchesDataProviderService.init',
       });
       throw error;
     }
   }
 
-  public async createMatches(
-    rounds: DB_SelectTournamentRound[],
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ) {
+  public async updateRound(round: DB_SelectTournamentRound) {
+    // Initialize report for update operation
+    this.report.tournament = {
+      id: round.tournamentId,
+      label: 'Tournament (Update Round)',
+    };
+    this.report.operationType = 'update';
+
+    this.addOperation('initialization', 'validate_input', 'started', {
+      roundId: round.id,
+      roundSlug: round.slug,
+      tournamentId: round.tournamentId,
+    });
+
     try {
-      // Fetch and enhance matches
-      const rawMatches = await this.getTournamentMatches(rounds, tournament.id);
-
-      // Create matches in database
-      const result = await this.createOnDatabase(rawMatches);
-
-      // Update reporter with tournament info
-      this.report.setTournament({
-        label: tournament.label,
-        id: tournament.id,
-        provider: 'sofascore',
+      this.addOperation('initialization', 'validate_input', 'completed', {
+        roundSlug: round.slug,
       });
 
-      // Upload report and save to database
-      await this.report.uploadToS3();
-      await this.report.saveOnDatabase();
-
-      // Send notification
-      const slackMessage = this.createSuccessMessage(result, tournament, rawMatches);
-      await this.report.sendNotification(slackMessage);
-
-      // Close scraper
-      await this.scraper.close();
-
-      return result;
-    } catch (error) {
-      // Ensure we still save the report and send notification on failure
-      await this.scraper.close();
-
-      // Set tournament info for report if not set
-      if (!this.report.tournament) {
-        this.report.setTournament({
-          label: tournament.label,
-          id: tournament.id || '00000000-0000-0000-0000-000000000000',
-          provider: 'sofascore',
-        });
+      const rawMatches = await this.getTournamentMatchesByRound(round);
+      if (!rawMatches) {
+        await this.generateOperationReport();
+        return [];
       }
+      const matches = this.mapMatches(rawMatches, round.tournamentId, round.slug);
+      const query = await this.updateOnDatabase(matches);
 
-      // Upload report and save to database even on failure
-      await this.report.uploadToS3();
-      await this.report.saveOnDatabase();
+      // Generate invoice file at the very end
+      await this.generateOperationReport();
 
-      // Send error notification
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const slackMessage = this.createErrorMessage(tournament, errorMessage);
-      await this.report.sendNotification(slackMessage);
-
-      Profiling.error({
-        source: 'DATA_PROVIDER_V2_MATCHES_createMatches',
-        error: error instanceof Error ? error : new Error(errorMessage),
+      return query;
+    } catch (error) {
+      this.addOperation('update', 'process_round_matches', 'failed', {
+        error: (error as Error).message,
       });
-
+      await this.generateOperationReport();
+      Profiling.error({
+        error,
+        source: 'MatchesDataProviderService.updateRound',
+      });
       throw error;
     }
-  }
-
-  public async updateMatches(
-    rounds: DB_SelectTournamentRound[],
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ) {
-    try {
-      // Fetch and enhance matches
-      const rawMatches = await this.getTournamentMatches(rounds, tournament.id);
-
-      // Update matches in database
-      const result = await this.updateOnDatabase(rawMatches);
-
-      // Update reporter with tournament info
-      this.report.setTournament({
-        label: tournament.label,
-        id: tournament.id,
-        provider: 'sofascore',
-      });
-
-      // Upload report and save to database
-      await this.report.uploadToS3();
-      await this.report.saveOnDatabase();
-
-      // Send notification
-      const slackMessage = this.createUpdateSuccessMessage(result, tournament, rawMatches);
-      await this.report.sendNotification(slackMessage);
-
-      // Close scraper
-      await this.scraper.close();
-
-      return result;
-    } catch (error) {
-      // Ensure we still save the report and send notification on failure
-      await this.scraper.close();
-
-      // Set tournament info for report if not set
-      if (!this.report.tournament) {
-        this.report.setTournament({
-          label: tournament.label,
-          id: tournament.id || '00000000-0000-0000-0000-000000000000',
-          provider: 'sofascore',
-        });
-      }
-
-      // Upload report and save to database even on failure
-      await this.report.uploadToS3();
-      await this.report.saveOnDatabase();
-
-      // Send error notification
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const slackMessage = this.createErrorMessage(tournament, errorMessage);
-      await this.report.sendNotification(slackMessage);
-
-      Profiling.error({
-        source: 'DATA_PROVIDER_V2_MATCHES_updateMatches',
-        error: error instanceof Error ? error : new Error(errorMessage),
-      });
-
-      throw error;
-    }
-  }
-
-  private createSuccessMessage(
-    matches: DB_InsertMatch[],
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>,
-    rawMatches: DB_InsertMatch[]
-  ): SlackMessage {
-    return {
-      text: `⚽ Matches Created`,
-      blocks: [
-        {
-          type: 'header',
-          text: {
-            type: 'plain_text',
-            text: '⚽ TOURNAMENT MATCHES CREATED',
-          },
-        },
-        {
-          type: 'section',
-          fields: [
-            {
-              type: 'mrkdwn',
-              text: `*Tournament:* ${tournament.label}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Total Matches:* ${rawMatches.length}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Created Matches:* ${matches.length}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Operations:* ${this.report.summary.successfulOperations}/${this.report.summary.totalOperations} successful`,
-            },
-          ],
-        },
-        {
-          type: 'context',
-          elements: [
-            {
-              type: 'mrkdwn',
-              text: `Report: <${this.report.reportUrl}|View Full Report>`,
-            },
-          ],
-        },
-      ],
-    };
-  }
-
-  private createUpdateSuccessMessage(
-    result: unknown,
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>,
-    matches: DB_InsertMatch[]
-  ): SlackMessage {
-    return {
-      text: `🔄 Matches Updated`,
-      blocks: [
-        {
-          type: 'header',
-          text: {
-            type: 'plain_text',
-            text: '🔄 TOURNAMENT MATCHES UPDATED',
-          },
-        },
-        {
-          type: 'section',
-          fields: [
-            {
-              type: 'mrkdwn',
-              text: `*Tournament:* ${tournament.label}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Matches Updated:* ${matches.length}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Operations:* ${this.report.summary.successfulOperations}/${this.report.summary.totalOperations} successful`,
-            },
-          ],
-        },
-        {
-          type: 'context',
-          elements: [
-            {
-              type: 'mrkdwn',
-              text: `Report: <${this.report.reportUrl}|View Full Report>`,
-            },
-          ],
-        },
-      ],
-    };
-  }
-
-  private createErrorMessage(
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>,
-    errorMessage: string
-  ): SlackMessage {
-    return {
-      text: `❌ Match Processing Failed`,
-      blocks: [
-        {
-          type: 'header',
-          text: {
-            type: 'plain_text',
-            text: '❌ MATCH PROCESSING FAILED',
-          },
-        },
-        {
-          type: 'section',
-          fields: [
-            {
-              type: 'mrkdwn',
-              text: `*Tournament:* ${tournament.label}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Error:* ${errorMessage}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Operations:* ${this.report.summary.failedOperations} failed, ${this.report.summary.successfulOperations} successful`,
-            },
-          ],
-        },
-        {
-          type: 'context',
-          elements: [
-            {
-              type: 'mrkdwn',
-              text: `Report: <${this.report.reportUrl}|View Full Report>`,
-            },
-          ],
-        },
-      ],
-    };
   }
 }

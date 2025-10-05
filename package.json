@@ -10,8 +10,6 @@
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register ./src/index.ts 2>&1 | tee dev.log",
     "dev:no-logs": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register ./src/index.ts",
     "dev:full": "docker compose up -d postgres && concurrently --names \"API,DATABASE,FRONTEND\" --prefix-colors \"cyan,green,magenta\" --kill-others \"yarn dev\" \"yarn db:studio\" \"cd ../best-shot && yarn dev\"",
-    "dev:stop": "docker compose down",
-    "dev:clean": "docker compose down -v && rm -rf node_modules && yarn install",
     "dev:status": "docker compose ps && volta list",
     "dev:logs": "tail -f ./logs/api-dev.log",
     "db:connect": "docker compose exec postgres psql -U ${DB_USER} -d ${DB_NAME}",

@@ -71,19 +71,7 @@ const getAllRounds = async (tournamentId: string) => {
   }
 };
 
-const createTournamentRound = async (input: DB_InsertTournamentRound) => {
-  try {
-    const [round] = await db.insert(T_TournamentRound).values(input).returning();
-
-    return round;
-  } catch (error: unknown) {
-    const dbError = error as DatabaseError;
-    console.error('[QUERIES_TOURNAMENT_ROUND] - [createTournamentRound]', dbError);
-    throw error;
-  }
-};
-
-const createMultipleTournamentRounds = async (inputs: DB_InsertTournamentRound[]) => {
+const createTournamentRounds = async (inputs: DB_InsertTournamentRound[]) => {
   try {
     const rounds = await db.insert(T_TournamentRound).values(inputs).returning();
 
@@ -91,7 +79,7 @@ const createMultipleTournamentRounds = async (inputs: DB_InsertTournamentRound[]
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
     Profiling.error({
-      source: 'QUERIES_TOURNAMENT_ROUND_createMultipleTournamentRounds',
+      source: 'QUERIES_TOURNAMENT_ROUND_createTournamentRounds',
       error: dbError,
     });
     throw error;
@@ -106,8 +94,9 @@ const upsertTournamentRounds = async (rounds: DB_UpdateTournamentRound[]) => {
   try {
     const query = await db.transaction(async (tx: unknown) => {
       const transaction = tx as typeof db;
+      const results = [];
       for (const round of rounds) {
-        await transaction
+        const result = await transaction
           .insert(T_TournamentRound)
           .values(round)
           .onConflictDoUpdate({
@@ -115,8 +104,11 @@ const upsertTournamentRounds = async (rounds: DB_UpdateTournamentRound[]) => {
             set: {
               ...round,
             },
-          });
+          })
+          .returning();
+        results.push(result[0]);
       }
+      return results;
     });
 
     return query;
@@ -132,7 +124,6 @@ export const QUERIES_TOURNAMENT_ROUND = {
   getRegularSeasonRounds,
   getKnockoutRounds,
   getAllRounds,
-  createTournamentRound,
-  createMultipleTournamentRounds,
+  createTournamentRounds,
   upsertTournamentRounds,
 };

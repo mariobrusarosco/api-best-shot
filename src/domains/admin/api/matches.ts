@@ -1,17 +1,16 @@
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { Request, Response } from 'express';
 
 export const API_ADMIN_MATCHES = {
   async createMatches(req: Request, res: Response) {
-    // #1 Start Reporter
-    const reporter = new DataProviderReport('create_matches');
-    // #2 Start Provider
-    const provider = await MatchesDataProviderService.create(reporter);
-
+    let scraper: BaseScraper | null = null;
     try {
+      // #1 Create scraper and provider
+      scraper = await BaseScraper.createInstance();
+      const provider = new MatchesDataProviderService(scraper, 'admin-create-matches');
       // #3 Validate Input
       if (!req.body.tournamentId) {
         return res.status(400).json({
@@ -40,14 +39,13 @@ export const API_ADMIN_MATCHES = {
       }
 
       // #7 Create Matches
-      const matches = await provider.createMatches(rounds, tournament);
+      const matches = await provider.init(rounds, tournament);
 
       return res.status(201).json({
         success: true,
         message: 'Tournament matches created successfully',
         data: {
           matches,
-          reportUrl: reporter.reportUrl,
         },
       });
     } catch (error) {
@@ -56,16 +54,19 @@ export const API_ADMIN_MATCHES = {
         message: 'Failed to create tournament matches',
         error: (error as Error).message,
       });
+    } finally {
+      if (scraper) {
+        await scraper.close();
+      }
     }
   },
 
   async updateMatches(req: Request, res: Response) {
-    // #1 Start Reporter
-    const reporter = new DataProviderReport('update_matches');
-    // #2 Start Provider
-    const provider = await MatchesDataProviderService.create(reporter);
-
+    let scraper: BaseScraper | null = null;
     try {
+      // #1 Create scraper and provider
+      scraper = await BaseScraper.createInstance();
+      const provider = new MatchesDataProviderService(scraper, 'admin-update-matches');
       // #3 Validate Input
       if (!req.body.tournamentId) {
         return res.status(400).json({
@@ -94,14 +95,13 @@ export const API_ADMIN_MATCHES = {
       }
 
       // #7 Update Matches
-      const result = await provider.updateMatches(rounds, tournament);
+      const result = await provider.updateRound(rounds[0]); // Note: updateRound takes single round
 
       return res.status(200).json({
         success: true,
         message: 'Tournament matches updated successfully',
         data: {
           result,
-          reportUrl: reporter.reportUrl,
         },
       });
     } catch (error) {
@@ -110,6 +110,10 @@ export const API_ADMIN_MATCHES = {
         message: 'Failed to update tournament matches',
         error: (error as Error).message,
       });
+    } finally {
+      if (scraper) {
+        await scraper.close();
+      }
     }
   },
 };

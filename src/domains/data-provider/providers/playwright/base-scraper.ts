@@ -2,7 +2,7 @@ import Profiling from '@/services/profiling';
 import mime from 'mime-types';
 import type { Browser, BrowserContext, Page, Response } from 'playwright';
 import { chromium } from 'playwright';
-import { S3FileStorage } from '../../../../services/file-storage';
+import { S3FileStorage } from '../../services/file-storage';
 
 export type FetchAndStoreAssetPayload = {
   logoUrl: string;
@@ -111,11 +111,6 @@ export class BaseScraper {
       this.page = null;
       this.context = null;
       this.browser = null;
-
-      Profiling.log({
-        msg: 'Playwright browser closed',
-        source: 'BaseScraper.close',
-      });
     } catch (error) {
       Profiling.error({
         source: 'BaseScraper.close',

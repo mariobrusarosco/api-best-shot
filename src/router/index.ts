@@ -1,7 +1,7 @@
 import express from 'express';
 
 // Admin
-import { v2 as adminV2Router } from '@/domains/admin/routes';
+import { adminV2Router } from '@/domains/admin/routes';
 // AI
 import aiV2Router from '@/domains/ai/routes/v2';
 // Auth

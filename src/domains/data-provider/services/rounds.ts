@@ -1,461 +1,334 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import type { ENDPOINT_ROUNDS } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
+import { ENDPOINT_ROUNDS } from '@/domains/data-provider/providers/sofascore_v2/schemas/endpoints';
+import { DataProviderExecution } from '@/domains/data-provider/services/execution';
+import { DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
-import {
-  DB_InsertTournamentRound,
-  DB_UpdateTournamentRound,
-  T_TournamentRound,
-} from '@/domains/tournament-round/schema';
-import db from '@/services/database';
+import { DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
 import { Profiling } from '@/services/profiling';
-import { SlackMessage } from '@/services/notifications/slack';
-import { DataProviderReport } from './reporter';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import { DataProviderReport } from './report';
 
-export class RoundDataProviderService {
+export interface CreateRoundsInput {
+  tournamentId: string;
+  baseUrl: string;
+  label: string;
+  provider: string;
+}
+
+export class RoundsDataProviderService {
   private scraper: BaseScraper;
-  public report: DataProviderReport;
+  private reporter: DataProviderReport;
+  private requestId: string;
+  private execution: DataProviderExecution | null = null;
 
-  constructor(scraper: BaseScraper, report: DataProviderReport) {
+  constructor(scraper: BaseScraper, requestId: string) {
     this.scraper = scraper;
-    this.report = report;
+    this.requestId = requestId;
+    this.reporter = new DataProviderReport(requestId);
   }
 
-  static async create(report: DataProviderReport) {
-    const scraper = await BaseScraper.createInstance();
-    return new RoundDataProviderService(scraper, report);
-  }
-
-  public async getTournamentRounds(baseUrl: string): Promise<ENDPOINT_ROUNDS> {
-    const op = this.report.createOperation('scraping', 'fetch_rounds');
+  public async init(payload: CreateRoundsInput) {
+    // Create execution tracking
+    this.execution = new DataProviderExecution({
+      requestId: this.requestId,
+      tournamentId: payload.tournamentId,
+      operationType: DataProviderExecutionOperationType.ROUNDS_CREATE,
+    });
+    this.reporter.setTournamentInfo({
+      label: payload.label,
+      tournamentId: payload.tournamentId,
+      provider: payload.provider,
+    });
 
     try {
-      const url = `${baseUrl}/rounds`;
-
-      await this.scraper.goto(url);
-      const content = await this.scraper.getPageContent();
-
-      op.success({
-        url,
-        roundsCount: content.rounds?.length || 0,
+      // ------ INPUT VALIDATION ------
+      this.validateTournament(payload);
+      // ------ FETCH ROUNDS ------
+      const fetchedRounds = await this.fetchRounds(payload.baseUrl);
+      // ------ ENHANCE ROUNDS ------
+      const enhancedRounds = this.enhanceRounds(payload.baseUrl, payload.tournamentId, fetchedRounds);
+      // ------ CREATE ROUNDS ------
+      const createdRounds = await this.createOnDatabase(enhancedRounds);
+      // ------ UPLOAD REPORT ------
+      const reportUploadResult = await this.reporter.createFileAndUpload();
+      // ------ GENERATE REPORT SUMMARY ------
+      const reportSummaryResult = this.reporter.getSummary();
+      // ------ MARK EXECUTION AS COMPLETED ------
+      await this.execution?.complete({
+        reportFileKey: reportUploadResult?.s3Key,
+        reportFileUrl: reportUploadResult?.s3Url,
+        tournamentLabel: payload.label,
+        summary: {
+          tournamentId: payload.tournamentId,
+          tournamentLabel: payload.label,
+          provider: payload.provider,
+          roundsCount: createdRounds.length,
+          ...reportSummaryResult,
+        },
       });
 
-      return content as ENDPOINT_ROUNDS;
+      return createdRounds;
     } catch (error) {
       const errorMessage = (error as Error).message;
-      op.fail({ error: errorMessage });
-      Profiling.error({
-        source: 'DATA_PROVIDER_ROUNDS_getTournamentRounds',
-        error: error as Error,
+
+      // ------ GENERATE REPORT EVEN ON FAILURE ------
+      const reportUploadResult = await this.reporter.createFileAndUpload();
+      // ------ MARK EXECUTION AS FAILED ------
+      const reportSummaryResult = this.reporter.getSummary();
+      // ------ MARK EXECUTION AS FAILED ------
+      await this.execution?.failure({
+        reportFileKey: reportUploadResult.s3Key,
+        reportFileUrl: reportUploadResult.s3Url,
+        tournamentLabel: payload.label,
+        error: errorMessage,
+        summary: {
+          error: errorMessage,
+          ...reportSummaryResult,
+        },
+      });
+
+      throw error;
+    }
+  }
+
+  public async update(payload: CreateRoundsInput) {
+    // Create execution tracking
+    this.execution = new DataProviderExecution({
+      requestId: this.requestId,
+      tournamentId: payload.tournamentId,
+      operationType: DataProviderExecutionOperationType.ROUNDS_UPDATE,
+    });
+    this.reporter.setTournamentInfo({
+      label: payload.label,
+      tournamentId: payload.tournamentId,
+      provider: payload.provider,
+    });
+
+    try {
+      // ------ INPUT VALIDATION ------
+      this.validateTournament(payload);
+      // ------ FETCH ROUNDS ------
+      const fetchedRounds = await this.fetchRounds(payload.baseUrl);
+      // ------ ENHANCE ROUNDS ------
+      const enhancedRounds = this.enhanceRounds(payload.baseUrl, payload.tournamentId, fetchedRounds);
+      // ------ UPDATE ROUNDS ------
+      const updatedRounds = await this.updateOnDatabase(enhancedRounds);
+      // ------ UPLOAD REPORT ------
+      const reportUploadResult = await this.reporter.createFileAndUpload();
+      // ------ GENERATE REPORT SUMMARY ------
+      const reportSummaryResult = this.reporter.getSummary();
+      // ------ MARK EXECUTION AS COMPLETED ------
+      await this.execution?.complete({
+        reportFileKey: reportUploadResult?.s3Key,
+        reportFileUrl: reportUploadResult?.s3Url,
+        tournamentLabel: payload.label,
+        summary: {
+          tournamentId: payload.tournamentId,
+          tournamentLabel: payload.label,
+          provider: payload.provider,
+          roundsCount: updatedRounds.length,
+          ...reportSummaryResult,
+        },
+      });
+
+      return updatedRounds;
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+
+      // ------ GENERATE REPORT EVEN ON FAILURE ------
+      const reportUploadResult = await this.reporter.createFileAndUpload();
+      // ------ MARK EXECUTION AS FAILED ------
+      const reportSummaryResult = this.reporter.getSummary();
+      // ------ MARK EXECUTION AS FAILED ------
+      await this.execution?.failure({
+        reportFileKey: reportUploadResult.s3Key,
+        reportFileUrl: reportUploadResult.s3Url,
+        tournamentLabel: payload.label,
+        error: errorMessage,
+        summary: {
+          error: errorMessage,
+          ...reportSummaryResult,
+        },
+      });
+
+      throw error;
+    }
+  }
+
+  private validateTournament(payload: CreateRoundsInput) {
+    // ------ INPUT VALIDATION ------
+    this.reporter.addOperation('initialization', 'validate_input', 'started');
+
+    // Validate input
+    if (!payload.tournamentId) {
+      this.reporter.addOperation('initialization', 'validate_input', 'failed', {
+        error: 'Tournament ID is null',
+      });
+
+      throw new Error('Tournament ID is null');
+    }
+
+    this.reporter.addOperation('initialization', 'validate_input', 'completed');
+  }
+
+  private async fetchRounds(baseUrl: string) {
+    this.reporter.addOperation('scraping', 'fetch_rounds', 'started');
+
+    try {
+      // Fetch rounds from tournament
+      const url = `${baseUrl}/rounds`;
+      await this.scraper.goto(url);
+      const rawContent = await this.scraper.getPageContent();
+
+      if (!rawContent?.rounds || rawContent?.rounds?.length === 0) {
+        this.reporter.addOperation('scraping', 'fetch_rounds', 'completed', {
+          note: 'No rounds data found',
+        });
+        return [];
+      }
+
+      this.reporter.addOperation('scraping', 'fetch_rounds', 'completed', {
+        roundsCount: rawContent.rounds.length,
+      });
+
+      return rawContent;
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+      this.reporter.addOperation('scraping', 'fetch_rounds', 'failed', {
+        error: errorMessage,
       });
       throw error;
     }
   }
 
-  public enhanceRounds(
-    baseUrl: string,
-    tournamentId: string,
-    roundsResponse: ENDPOINT_ROUNDS
-  ): DB_InsertTournamentRound[] {
-    const op = this.report.createOperation('transformation', 'enhance_rounds');
+  private enhanceRounds(baseUrl: string, tournamentId: string, roundsResponse: ENDPOINT_ROUNDS) {
+    this.reporter.addOperation('transformation', 'enhance_rounds', 'started', {
+      baseUrl,
+      tournamentId,
+      rawRoundsCount: roundsResponse.rounds.length,
+    });
 
     try {
-      const enhancedRounds = roundsResponse.rounds.map((round, index) => {
-        const isSpecialRound = !!round?.prefix;
-        const isKnockoutRound = !isSpecialRound && !!round?.name;
+      const enhancedRounds = roundsResponse.rounds.map((round: unknown, index: number) => {
+        const roundData = round as {
+          prefix?: string;
+          name?: string;
+          round: number;
+          slug?: string;
+        };
+        const isSpecialRound = !!roundData?.prefix;
+        const isKnockoutRound = !isSpecialRound && !!roundData?.name;
         const isRegularRound = !isSpecialRound && !isKnockoutRound;
 
         const order = index + 1;
-        let endpoint = `${baseUrl}/events/round/${round.round}`;
+        let endpoint = `${baseUrl}/events/round/${roundData.round}`;
         let slug = '';
         let label = '';
 
         if (isKnockoutRound) {
-          endpoint += `/slug/${round.slug}`;
-          slug += `${round.slug}`;
-          label = round.name || order.toString();
+          endpoint += `/slug/${roundData.slug}`;
+          slug += `${roundData.slug}`;
+          label = roundData.name || order.toString();
         } else if (isSpecialRound) {
-          endpoint += `/slug/${round.slug}/prefix/${round.prefix}`;
-          slug += `${round.prefix}-${round.slug}`;
-          label = round.prefix!;
+          endpoint += `/slug/${roundData.slug}/prefix/${roundData.prefix}`;
+          slug += `${roundData.prefix}-${roundData.slug}`;
+          label = roundData.prefix!;
         } else if (isRegularRound) {
-          slug += round.round;
-          label = round.round.toString();
+          slug += roundData.round;
+          label = roundData.round.toString();
         }
 
         return {
           providerUrl: endpoint,
-          providerId: String(round.round),
+          providerId: String(roundData.round),
           tournamentId: tournamentId,
           order: order.toString(),
           label: label,
           slug: slug.toLowerCase(),
-          knockoutId: round.prefix,
+          knockoutId: roundData.prefix,
           type: isKnockoutRound || isSpecialRound ? 'knockout' : 'season',
-          name: round.name,
-        } as DB_InsertTournamentRound;
+        };
       });
 
-      const roundTypes = {
-        regular: enhancedRounds.filter(r => r.type === 'season').length,
-        knockout: enhancedRounds.filter(r => r.type === 'knockout').length,
-      };
-
-      op.success({
+      this.reporter.addOperation('transformation', 'enhance_rounds', 'completed', {
         enhancedRoundsCount: enhancedRounds.length,
-        roundTypes,
-        baseUrl,
-        tournamentId,
+        roundTypes: {
+          regular: enhancedRounds.filter(r => r.type === 'season').length,
+          knockout: enhancedRounds.filter(r => r.type === 'knockout').length,
+        },
       });
 
       return enhancedRounds;
     } catch (error) {
       const errorMessage = (error as Error).message;
-      op.fail({ error: errorMessage });
-      Profiling.error({
-        source: 'DATA_PROVIDER_ROUNDS_enhanceRounds',
-        error: error as Error,
-      });
-      throw error;
-    }
-  }
-
-  public async createOnDatabase(roundsToInsert: DB_InsertTournamentRound[]) {
-    const op = this.report.createOperation('database', 'create_rounds');
-
-    try {
-      const rounds = await db.insert(T_TournamentRound).values(roundsToInsert).returning();
-
-      op.success({
-        createdRoundsCount: rounds.length,
-        roundIds: rounds.map(r => r.id),
-        tournamentId: roundsToInsert[0]?.tournamentId,
-      });
-
-      return rounds;
-    } catch (error) {
-      const errorMessage = (error as Error).message;
-      op.fail({ error: errorMessage });
-
-      Profiling.error({
+      this.reporter.addOperation('transformation', 'enhance_rounds', 'failed', {
         error: errorMessage,
-        data: { error: errorMessage },
-        source: 'DATA_PROVIDER_V2_ROUNDS_database_create',
       });
-
       throw error;
     }
   }
 
-  public async updateOnDatabase(roundsToUpdate: DB_UpdateTournamentRound[]): Promise<unknown> {
-    const op = this.report.createOperation('database', 'update_rounds');
-
-    if (roundsToUpdate.length === 0) {
-      op.fail({ error: 'No rounds to update' });
-      Profiling.error({
-        error: new Error('No rounds to update in the database'),
-        source: 'RoundDataProviderService.updateOnDatabase',
-      });
-      return [];
-    }
+  public async createOnDatabase(rounds: DB_InsertTournamentRound[]) {
+    this.reporter.addOperation('database', 'create_rounds', 'started', {
+      roundsCount: rounds.length,
+    });
 
     try {
-      const query = await QUERIES_TOURNAMENT_ROUND.upsertTournamentRounds(roundsToUpdate);
+      const query = await QUERIES_TOURNAMENT_ROUND.upsertTournamentRounds(rounds);
 
-      op.success({
-        updatedRoundsCount: roundsToUpdate.length,
-        tournamentId: roundsToUpdate[0]?.tournamentId,
+      this.reporter.addOperation('database', 'create_rounds', 'completed', {
+        createdRoundsCount: query.length,
       });
 
       return query;
-    } catch (error) {
-      const errorMessage = (error as Error).message;
-      op.fail({ error: errorMessage });
-
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.reporter.addOperation('database', 'create_rounds', 'failed', {
+        error: errorMessage,
+      });
       Profiling.error({
         error: errorMessage,
         data: { error: errorMessage },
-        source: 'DATA_PROVIDER_V2_ROUNDS_database_update',
+        source: 'RoundsDataProviderService.createOnDatabase',
       });
-
       throw error;
     }
   }
 
-  public async createRounds(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
-    try {
-      // Fetch and enhance rounds
-      const rawRounds = await this.getTournamentRounds(tournament.baseUrl);
-      const enhancedRounds = this.enhanceRounds(tournament.baseUrl, tournament.id, rawRounds);
+  public async updateOnDatabase(rounds: DB_InsertTournamentRound[]): Promise<DB_InsertTournamentRound[]> {
+    this.reporter.addOperation('database', 'update_rounds', 'started', {
+      roundsCount: rounds.length,
+    });
 
-      // Create rounds in database
-      const result = await this.createOnDatabase(enhancedRounds);
-
-      // Update reporter with tournament info
-      this.report.setTournament({
-        label: tournament.label,
-        id: tournament.id,
-        provider: 'sofascore',
+    if (rounds.length === 0) {
+      this.reporter.addOperation('database', 'update_rounds', 'failed', {
+        error: 'No rounds to update',
       });
-
-      // Upload report and save to database
-      await this.report.uploadToS3();
-      await this.report.saveOnDatabase();
-
-      // Send notification
-      const slackMessage = this.createSuccessMessage(result, tournament);
-      await this.report.sendNotification(slackMessage);
-
-      // Close scraper
-      await this.scraper.close();
-
-      return result;
-    } catch (error) {
-      // Ensure we still save the report and send notification on failure
-      await this.scraper.close();
-
-      // Set tournament info for report if not set
-      if (!this.report.tournament) {
-        this.report.setTournament({
-          label: tournament.label,
-          id: tournament.id || '00000000-0000-0000-0000-000000000000',
-          provider: 'sofascore',
-        });
-      }
-
-      // Upload report and save to database even on failure
-      await this.report.uploadToS3();
-      await this.report.saveOnDatabase();
-
-      // Send error notification
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const slackMessage = this.createErrorMessage(tournament, errorMessage);
-      await this.report.sendNotification(slackMessage);
-
+      const error = new Error('No rounds to update in the database');
       Profiling.error({
-        source: 'DATA_PROVIDER_V2_ROUNDS_createRounds',
-        error: error instanceof Error ? error : new Error(errorMessage),
+        error,
+        source: 'RoundsDataProviderService.updateOnDatabase',
       });
-
       throw error;
     }
-  }
 
-  public async updateRounds(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
     try {
-      // Fetch and enhance rounds
-      const rawRounds = await this.getTournamentRounds(tournament.baseUrl);
-      const enhancedRounds = this.enhanceRounds(tournament.baseUrl, tournament.id, rawRounds);
+      const query = await QUERIES_TOURNAMENT_ROUND.upsertTournamentRounds(rounds);
 
-      // Update rounds in database
-      const result = await this.updateOnDatabase(enhancedRounds);
-
-      // Update reporter with tournament info
-      this.report.setTournament({
-        label: tournament.label,
-        id: tournament.id,
-        provider: 'sofascore',
+      this.reporter.addOperation('database', 'update_rounds', 'completed', {
+        updatedRoundsCount: Array.isArray(query) ? query.length : 0,
       });
 
-      // Upload report and save to database
-      await this.report.uploadToS3();
-      await this.report.saveOnDatabase();
-
-      // Send notification
-      const slackMessage = this.createUpdateSuccessMessage(result, tournament, enhancedRounds);
-      await this.report.sendNotification(slackMessage);
-
-      // Close scraper
-      await this.scraper.close();
-
-      return result;
-    } catch (error) {
-      // Ensure we still save the report and send notification on failure
-      await this.scraper.close();
-
-      // Set tournament info for report if not set
-      if (!this.report.tournament) {
-        this.report.setTournament({
-          label: tournament.label,
-          id: tournament.id || '00000000-0000-0000-0000-000000000000',
-          provider: 'sofascore',
-        });
-      }
-
-      // Upload report and save to database even on failure
-      await this.report.uploadToS3();
-      await this.report.saveOnDatabase();
-
-      // Send error notification
+      return query;
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      const slackMessage = this.createErrorMessage(tournament, errorMessage);
-      await this.report.sendNotification(slackMessage);
-
-      Profiling.error({
-        source: 'DATA_PROVIDER_V2_ROUNDS_updateRounds',
-        error: error instanceof Error ? error : new Error(errorMessage),
+      this.reporter.addOperation('database', 'update_rounds', 'failed', {
+        error: errorMessage,
       });
-
+      Profiling.error({
+        error: error instanceof Error ? error : new Error(errorMessage),
+        source: 'RoundsDataProviderService.updateOnDatabase',
+      });
       throw error;
     }
-  }
-
-  private createSuccessMessage(
-    rounds: DB_InsertTournamentRound[],
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
-  ): SlackMessage {
-    const roundTypes = {
-      regular: rounds.filter(r => r.type === 'season').length,
-      knockout: rounds.filter(r => r.type === 'knockout').length,
-    };
-
-    return {
-      text: `🗓️ Rounds Created`,
-      blocks: [
-        {
-          type: 'header',
-          text: {
-            type: 'plain_text',
-            text: '🗓️ TOURNAMENT ROUNDS CREATED',
-          },
-        },
-        {
-          type: 'section',
-          fields: [
-            {
-              type: 'mrkdwn',
-              text: `*Tournament:* ${tournament.label}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Total Rounds:* ${rounds.length}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Regular Season:* ${roundTypes.regular}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Knockout:* ${roundTypes.knockout}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Operations:* ${this.report.summary.successfulOperations}/${this.report.summary.totalOperations} successful`,
-            },
-          ],
-        },
-        {
-          type: 'context',
-          elements: [
-            {
-              type: 'mrkdwn',
-              text: `Report: <${this.report.reportUrl}|View Full Report>`,
-            },
-          ],
-        },
-      ],
-    };
-  }
-
-  private createUpdateSuccessMessage(
-    result: unknown,
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>,
-    rounds: DB_UpdateTournamentRound[]
-  ): SlackMessage {
-    const roundTypes = {
-      regular: rounds.filter(r => r.type === 'season').length,
-      knockout: rounds.filter(r => r.type === 'knockout').length,
-    };
-
-    return {
-      text: `🔄 Rounds Updated`,
-      blocks: [
-        {
-          type: 'header',
-          text: {
-            type: 'plain_text',
-            text: '🔄 TOURNAMENT ROUNDS UPDATED',
-          },
-        },
-        {
-          type: 'section',
-          fields: [
-            {
-              type: 'mrkdwn',
-              text: `*Tournament:* ${tournament.label}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Rounds Updated:* ${rounds.length}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Regular Season:* ${roundTypes.regular}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Knockout:* ${roundTypes.knockout}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Operations:* ${this.report.summary.successfulOperations}/${this.report.summary.totalOperations} successful`,
-            },
-          ],
-        },
-        {
-          type: 'context',
-          elements: [
-            {
-              type: 'mrkdwn',
-              text: `Report: <${this.report.reportUrl}|View Full Report>`,
-            },
-          ],
-        },
-      ],
-    };
-  }
-
-  private createErrorMessage(
-    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>,
-    errorMessage: string
-  ): SlackMessage {
-    return {
-      text: `❌ Round Processing Failed`,
-      blocks: [
-        {
-          type: 'header',
-          text: {
-            type: 'plain_text',
-            text: '❌ ROUND PROCESSING FAILED',
-          },
-        },
-        {
-          type: 'section',
-          fields: [
-            {
-              type: 'mrkdwn',
-              text: `*Tournament:* ${tournament.label}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Error:* ${errorMessage}`,
-            },
-            {
-              type: 'mrkdwn',
-              text: `*Operations:* ${this.report.summary.failedOperations} failed, ${this.report.summary.successfulOperations} successful`,
-            },
-          ],
-        },
-        {
-          type: 'context',
-          elements: [
-            {
-              type: 'mrkdwn',
-              text: `Report: <${this.report.reportUrl}|View Full Report>`,
-            },
-          ],
-        },
-      ],
-    };
   }
 }

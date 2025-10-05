@@ -1,6 +1,5 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
-import { TournamentDataProviderService } from '@/domains/data-provider/services/tournaments';
+import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import Profiling from '@/services/profiling';
 import { randomUUID } from 'crypto';
@@ -30,9 +29,8 @@ const create = async (req: TournamentRequest, res: Response) => {
       source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
     });
 
-    const report = new DataProviderReport('create_tournament', requestId);
-    const dataProviderService = new TournamentDataProviderService(scraper, report);
-    const tournament = await dataProviderService.createTournament(req.body);
+    const dataProviderService = new TournamentDataProvider(scraper, requestId);
+    const tournament = await dataProviderService.init(req.body);
 
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament creation completed successfully`,

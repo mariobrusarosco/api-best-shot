@@ -138,16 +138,31 @@ const getMatchesByTournament = async (tournamentId: string, roundId: string) => 
   }
 };
 
+const createMatches = async (matches: DB_InsertMatch[]) => {
+  if (matches.length === 0) {
+    return [];
+  }
+
+  try {
+    const result = await db.insert(T_Match).values(matches).returning();
+    return result;
+  } catch (error: unknown) {
+    console.error('[MATCH QUERIES] - [createMatches]', error);
+    throw error;
+  }
+};
+
 const upsertMatches = async (matches: DB_InsertMatch[]) => {
   if (matches.length === 0) {
     return [];
   }
 
   try {
-    await db.transaction(async (tx: unknown) => {
+    const result = await db.transaction(async (tx: unknown) => {
       const transaction = tx as typeof db;
+      const results = [];
       for (const match of matches) {
-        await transaction
+        const result = await transaction
           .insert(T_Match)
           .values(match)
           .onConflictDoUpdate({
@@ -155,11 +170,14 @@ const upsertMatches = async (matches: DB_InsertMatch[]) => {
             set: {
               ...match,
             },
-          });
+          })
+          .returning();
+        results.push(result[0]);
       }
+      return results;
     });
 
-    return matches;
+    return result;
   } catch (error: unknown) {
     console.error('[MATCH QUERIES] - [upsertMatches]', error);
     throw error;
@@ -175,5 +193,6 @@ export const QUERIES_MATCH = {
   currentDayMatches,
   nearestMatch,
   getMatchesByTournament,
+  createMatches,
   upsertMatches,
 };

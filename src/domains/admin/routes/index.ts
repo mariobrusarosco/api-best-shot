@@ -1,5 +1,4 @@
 // Admin domain now uses v2 only - all functionality consolidated
-import v2Router from './v2';
+import adminV2Router from './v2';
 
-export { v2Router as v2 };
-export default v2Router;
+export { adminV2Router };

@@ -1,6 +1,6 @@
+import { Profiling } from '@/services/profiling';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
-import { Profiling } from '../profiling';
 
 export interface UploadFileOptions {
   buffer: Buffer;
@@ -38,6 +38,7 @@ export class S3FileStorage {
   }
 
   public async uploadFile(options: UploadFileOptions): Promise<string> {
+    // Early validation - throw error if credentials invalid
     if (!this.credentialsValid || !this.s3Client) {
       throw new Error('AWS credentials not properly configured for S3 upload');
     }
@@ -65,14 +66,30 @@ export class S3FileStorage {
           Expires: expires,
         })
       );
-      return key;
-    } catch (error) {
-      Profiling.error({
-        data: '[S3FileStorage] Error uploading file:',
-        error,
+
+      Profiling.log({
+        msg: `[S3FileStorage] File uploaded successfully: ${key}`,
         source: 'DATA_PROVIDER_FILE_STORAGE',
       });
+      return key;
+    } catch (error) {
+      console.error('[S3FileStorage] Error uploading file:', error);
       throw error; // Re-throw to let caller handle fallback
     }
+  }
+
+  public async uploadBase64Image(base64Data: string, filename: string, directory = 'uploads'): Promise<string> {
+    const buffer = Buffer.from(base64Data, 'base64');
+    return this.uploadFile({
+      buffer,
+      filename,
+      contentType: 'image/png',
+      directory,
+    });
+  }
+
+  public getCloudFrontUrl(s3Key: string): string {
+    const cloudFrontDomain = process.env['CLOUDFRONT_DOMAIN'] || 'YOUR_CLOUDFRONT_DOMAIN';
+    return `https://${cloudFrontDomain}/${s3Key}`;
   }
 }

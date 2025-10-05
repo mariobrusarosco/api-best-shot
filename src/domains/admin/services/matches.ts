@@ -1,13 +1,13 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { TeamsDataProviderService } from '@/domains/data-provider/services/teams';
+import { MatchesDataProviderService } from '@/domains/data-provider/services/matches';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import Profiling from '@/services/profiling';
 import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
 
-class AdminTeamsService {
-  static async createTeams(req: Request, res: Response) {
+class AdminMatchesService {
+  static async createMatches(req: Request, res: Response) {
     const requestId = randomUUID();
     let scraper: BaseScraper | null = null;
 
@@ -31,9 +31,9 @@ class AdminTeamsService {
       }
 
       scraper = await BaseScraper.createInstance();
-      const dataProviderService = new TeamsDataProviderService(scraper, requestId);
+      const dataProviderService = new MatchesDataProviderService(scraper, requestId);
 
-      // Build proper payload for teams service
+      // Build proper payload for matches service
       const payload = {
         tournamentId: tournamentId,
         baseUrl: tournament.baseUrl,
@@ -41,20 +41,20 @@ class AdminTeamsService {
         provider: tournament.provider,
       };
 
-      const teams = await dataProviderService.init(payload);
+      const matches = await dataProviderService.init(payload);
 
       return res.status(201).json({
         success: true,
-        data: { teams },
-        message: `Teams created successfully`,
+        data: { matches },
+        message: `Matches created successfully`,
       });
     } catch (error) {
       Profiling.error({
-        source: 'ADMIN_SERVICE_TEAMS_create',
+        source: 'ADMIN_SERVICE_MATCHES_create',
         error,
         data: {
           requestId,
-          operation: 'admin_teams_creation',
+          operation: 'admin_matches_creation',
           adminUser: req.authenticatedUser?.nickName,
         },
       });
@@ -65,13 +65,13 @@ class AdminTeamsService {
         Profiling.log({
           msg: '[CLEANUP] Playwright resources cleaned up successfully',
           data: { requestId, source: 'admin_service' },
-          source: 'ADMIN_SERVICE_TEAMS_create',
+          source: 'ADMIN_SERVICE_MATCHES_create',
         });
       }
     }
   }
 
-  static async updateTeams(req: Request, res: Response) {
+  static async updateMatches(req: Request, res: Response) {
     const requestId = randomUUID();
     let scraper: BaseScraper | null = null;
 
@@ -95,9 +95,9 @@ class AdminTeamsService {
       }
 
       scraper = await BaseScraper.createInstance();
-      const dataProviderService = new TeamsDataProviderService(scraper, requestId);
+      const dataProviderService = new MatchesDataProviderService(scraper, requestId);
 
-      // Build proper payload for teams service
+      // Build proper payload for matches service
       const payload = {
         tournamentId: tournamentId,
         baseUrl: tournament.baseUrl,
@@ -105,20 +105,20 @@ class AdminTeamsService {
         provider: tournament.provider,
       };
 
-      const teams = await dataProviderService.update(payload);
+      const matches = await dataProviderService.update(payload);
 
       return res.status(200).json({
         success: true,
-        data: { teams },
-        message: `Teams updated successfully`,
+        data: { matches },
+        message: `Matches updated successfully`,
       });
     } catch (error) {
       Profiling.error({
-        source: 'ADMIN_SERVICE_TEAMS_update',
+        source: 'ADMIN_SERVICE_MATCHES_update',
         error,
         data: {
           requestId,
-          operation: 'admin_teams_update',
+          operation: 'admin_matches_update',
           adminUser: req.authenticatedUser?.nickName,
         },
       });
@@ -129,11 +129,11 @@ class AdminTeamsService {
         Profiling.log({
           msg: '[CLEANUP] Playwright resources cleaned up successfully',
           data: { requestId, source: 'admin_service' },
-          source: 'ADMIN_SERVICE_TEAMS_update',
+          source: 'ADMIN_SERVICE_MATCHES_update',
         });
       }
     }
   }
 }
 
-export { AdminTeamsService };
+export { AdminMatchesService };

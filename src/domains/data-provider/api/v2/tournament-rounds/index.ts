@@ -1,6 +1,5 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { DataProviderReport } from '@/domains/data-provider/services/reporter';
-import { RoundDataProviderService } from '@/domains/data-provider/services/rounds';
+import { RoundsDataProviderService } from '@/domains/data-provider/services/rounds';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import Profiling from '@/services/profiling';
@@ -39,10 +38,14 @@ const create = async (req: TournamentRoundRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const report = new DataProviderReport('create_rounds', requestId);
-    const dataProviderService = new RoundDataProviderService(scraper, report);
+    const dataProviderService = new RoundsDataProviderService(scraper, requestId);
 
-    const rounds = await dataProviderService.createRounds(tournament);
+    const rounds = await dataProviderService.init({
+      tournamentId: tournament.id,
+      baseUrl: tournament.baseUrl,
+      label: tournament.label,
+      provider: tournament.provider,
+    });
 
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament rounds creation completed successfully`,
@@ -102,10 +105,14 @@ const update = async (req: TournamentRoundRequest, res: Response) => {
     });
 
     scraper = await BaseScraper.createInstance();
-    const report = new DataProviderReport('update_rounds', requestId);
-    const dataProviderService = new RoundDataProviderService(scraper, report);
+    const dataProviderService = new RoundsDataProviderService(scraper, requestId);
 
-    const rounds = await dataProviderService.updateRounds(tournament);
+    const rounds = await dataProviderService.update({
+      tournamentId: tournament.id,
+      baseUrl: tournament.baseUrl,
+      label: tournament.label,
+      provider: tournament.provider,
+    });
 
     Profiling.log({
       msg: `[SCRAPER STOP] Tournament rounds update completed successfully`,

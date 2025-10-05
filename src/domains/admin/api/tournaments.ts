@@ -10,6 +10,10 @@ export const API_ADMIN_TOURNAMENTS = {
     return await AdminTournamentService.getAllTournaments(req, res);
   },
 
+  async getTournamentById(req: Request, res: Response) {
+    return await AdminTournamentService.getTournamentById(req, res);
+  },
+
   async createTournament(req: Request, res: Response) {
     return await AdminTournamentService.createTournament(req, res);
   },

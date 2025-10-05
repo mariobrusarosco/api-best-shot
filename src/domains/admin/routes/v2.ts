@@ -17,6 +17,7 @@ router.get('/executions', AdminMiddleware, API_ADMIN_EXECUTION_JOBS.getExecution
 
 // Tournament Management Routes (admin only)
 router.get('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.getAllTournaments);
+router.get('/tournaments/:tournamentId', AdminMiddleware, API_ADMIN_TOURNAMENTS.getTournamentById);
 router.post('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.createTournament);
 
 // Tournament Rounds Management (admin only)

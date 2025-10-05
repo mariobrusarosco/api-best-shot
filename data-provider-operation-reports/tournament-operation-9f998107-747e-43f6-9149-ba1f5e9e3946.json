@@ -1,0 +1,92 @@
+{
+  "requestId": "9f998107-747e-43f6-9149-ba1f5e9e3946",
+  "tournament": {
+    "label": "Champions League 25/26",
+    "tournamentId": "41a1210f-46d2-4bea-83b1-451c8b8e191f",
+    "provider": "sofascore"
+  },
+  "startTime": "2025-10-05T01:04:29.173Z",
+  "operations": [
+    {
+      "step": "initialization",
+      "operation": "validate_input",
+      "status": "started",
+      "data": {
+        "tournamentId": "41a1210f-46d2-4bea-83b1-451c8b8e191f"
+      },
+      "timestamp": "2025-10-05T01:04:29.173Z"
+    },
+    {
+      "step": "initialization",
+      "operation": "validate_input",
+      "status": "completed",
+      "data": {
+        "tournamentId": "41a1210f-46d2-4bea-83b1-451c8b8e191f"
+      },
+      "timestamp": "2025-10-05T01:04:29.173Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "fetch_standings",
+      "status": "started",
+      "data": {
+        "tournamentId": "41a1210f-46d2-4bea-83b1-451c8b8e191f"
+      },
+      "timestamp": "2025-10-05T01:04:29.173Z"
+    },
+    {
+      "step": "scraping",
+      "operation": "fetch_standings",
+      "status": "completed",
+      "data": {
+        "tournamentId": "41a1210f-46d2-4bea-83b1-451c8b8e191f",
+        "groupsCount": 1
+      },
+      "timestamp": "2025-10-05T01:04:29.782Z"
+    },
+    {
+      "step": "transformation",
+      "operation": "map_standings",
+      "status": "started",
+      "data": {
+        "tournamentId": "41a1210f-46d2-4bea-83b1-451c8b8e191f"
+      },
+      "timestamp": "2025-10-05T01:04:29.782Z"
+    },
+    {
+      "step": "transformation",
+      "operation": "map_standings",
+      "status": "completed",
+      "data": {
+        "tournamentId": "41a1210f-46d2-4bea-83b1-451c8b8e191f",
+        "standingsCount": 36
+      },
+      "timestamp": "2025-10-05T01:04:29.783Z"
+    },
+    {
+      "step": "database",
+      "operation": "create_standings",
+      "status": "started",
+      "data": {
+        "tournamentId": "41a1210f-46d2-4bea-83b1-451c8b8e191f",
+        "standingsCount": 36
+      },
+      "timestamp": "2025-10-05T01:04:29.783Z"
+    },
+    {
+      "step": "database",
+      "operation": "create_standings",
+      "status": "completed",
+      "data": {
+        "tournamentId": "41a1210f-46d2-4bea-83b1-451c8b8e191f",
+        "createdStandingsCount": 36
+      },
+      "timestamp": "2025-10-05T01:04:30.332Z"
+    }
+  ],
+  "summary": {
+    "successfulOperations": 4,
+    "failedOperations": 0
+  },
+  "endTime": "2025-10-05T01:04:30.332Z"
+}

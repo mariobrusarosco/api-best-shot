@@ -129,7 +129,12 @@ export class DataProviderExecution {
     summary?: Record<string, unknown>,
     reportFileUrl?: string
   ): Promise<void> {
-    if (!this.webhookUrl) return;
+    console.log('[DEBUG] notifySuccess called:', { webhookUrl: this.webhookUrl, tournamentLabel });
+
+    if (!this.webhookUrl) {
+      console.log('[DEBUG] No webhook URL, skipping notification');
+      return;
+    }
 
     try {
       const payload = this.buildSlackPayload('success', {
@@ -138,8 +143,11 @@ export class DataProviderExecution {
         summary,
         reportFileUrl,
       });
+      console.log('[DEBUG] Sending Slack notification:', payload.text);
       await slackService.sendNotification(this.webhookUrl, payload);
+      console.log('[DEBUG] Slack notification sent successfully');
     } catch (error) {
+      console.error('[DEBUG] Slack notification error:', error);
       Profiling.error({
         error: error instanceof Error ? error : new Error(String(error)),
         data: { requestId: this.requestId },

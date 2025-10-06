@@ -3,6 +3,7 @@ import { AdminRoundsService } from '@/domains/admin/services/rounds';
 import { AdminStandingsService } from '@/domains/admin/services/standings';
 import { AdminTeamsService } from '@/domains/admin/services/teams';
 import { AdminTournamentService } from '@/domains/admin/services/tournament';
+import type { TournamentRequestIn } from '@/domains/data-provider/typing';
 import { Request, Response } from 'express';
 
 export const API_ADMIN_TOURNAMENTS = {
@@ -14,8 +15,8 @@ export const API_ADMIN_TOURNAMENTS = {
     return await AdminTournamentService.getTournamentById(req, res);
   },
 
-  async createTournament(req: Request, res: Response) {
-    return await AdminTournamentService.createTournament(req.body, res);
+  async createTournament(req: TournamentRequestIn, res: Response) {
+    return await AdminTournamentService.createTournament(req, res);
   },
 
   async createRounds(req: Request, res: Response) {

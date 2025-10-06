@@ -5,14 +5,11 @@ import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import { Profiling } from '@/services/profiling';
 import { safeString } from '@/utils';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { DataProviderExecutionOperationType } from '../typing';
+import { API_SOFASCORE_ROUND, API_SOFASCORE_STANDINGS, DataProviderExecutionOperationType } from '../typing';
 import { DataProviderExecution } from './execution';
 
 export interface CreateTeamsInput {
   tournamentId: string;
-  baseUrl: string;
-  label: string;
-  provider: string;
 }
 
 export class TeamsDataProviderService {
@@ -27,28 +24,26 @@ export class TeamsDataProviderService {
     this.reporter = new DataProviderReport(requestId);
   }
 
-  public async init(payload: CreateTeamsInput) {
-    // Create execution tracking
-    this.execution = new DataProviderExecution({
-      requestId: this.requestId,
-      tournamentId: payload.tournamentId,
-      operationType: DataProviderExecutionOperationType.TEAMS_CREATE,
-    });
-    this.reporter.setTournamentInfo({
-      label: payload.label,
-      tournamentId: payload.tournamentId,
-      provider: payload.provider,
-    });
+  public async init(input: CreateTeamsInput) {
+    // ------ INPUT VALIDATION ------
+    this.validateTournament(input);
+    // ------ FETCH TOURNAMENT ------
+    const tournament = await SERVICES_TOURNAMENT.getTournament(input.tournamentId);
+    if (!tournament) throw new Error(`[TeamsDataProviderService] - [ERROR] - [INIT] - [TOURNAMENT NOT FOUND]`);
 
     try {
-      // ------ INPUT VALIDATION ------
-      this.validateTournament(payload);
+      // ------ CREATE EXECUTION TRACKING ------
+      this.execution = new DataProviderExecution({
+        requestId: this.requestId,
+        tournamentId: tournament.id,
+        operationType: DataProviderExecutionOperationType.TEAMS_CREATE,
+      });
       // ------ FETCH TEAMS ------
-      const fetchedTeams = await this.fetchTeams(payload.tournamentId);
+      const fetchedTeams = await this.fetchTeams(tournament);
       // ------ MAP TEAMS ------
-      const mappedTeams = await this.mapTeams(fetchedTeams);
+      // const mappedTeams = await this.mapTeams(fetchedTeams, tournament.mode);
       // ------ CREATE TEAMS ------
-      const createdTeams = await this.createOnDatabase(mappedTeams);
+      // const createdTeams = await this.createOnDatabase(mappedTeams, tournament.mode);
       // ------ UPLOAD REPORT ------
       const reportUploadResult = await this.reporter.createFileAndUpload();
       // ------ GENERATE REPORT SUMMARY ------
@@ -57,20 +52,20 @@ export class TeamsDataProviderService {
       await this.execution?.complete({
         reportFileKey: reportUploadResult?.s3Key,
         reportFileUrl: reportUploadResult?.s3Url,
-        tournamentLabel: payload.label,
+        tournamentLabel: tournament.label,
         summary: {
-          tournamentId: payload.tournamentId,
-          tournamentLabel: payload.label,
-          provider: payload.provider,
-          teamsCount: createdTeams.length,
+          tournamentId: tournament.id,
+          tournamentLabel: tournament.label,
+          provider: tournament.provider,
+          fetchedTeams: fetchedTeams,
+          // teamsCount: createdTeams.length,
           ...reportSummaryResult,
         },
       });
 
-      return createdTeams;
+      return fetchedTeams;
     } catch (error) {
       const errorMessage = (error as Error).message;
-
       // ------ GENERATE REPORT EVEN ON FAILURE ------
       const reportUploadResult = await this.reporter.createFileAndUpload();
       // ------ MARK EXECUTION AS FAILED ------
@@ -79,7 +74,7 @@ export class TeamsDataProviderService {
       await this.execution?.failure({
         reportFileKey: reportUploadResult.s3Key,
         reportFileUrl: reportUploadResult.s3Url,
-        tournamentLabel: payload.label,
+        tournamentLabel: tournament.label,
         error: errorMessage,
         summary: {
           error: errorMessage,
@@ -92,23 +87,21 @@ export class TeamsDataProviderService {
   }
 
   public async update(payload: CreateTeamsInput) {
-    // Create execution tracking
-    this.execution = new DataProviderExecution({
-      requestId: this.requestId,
-      tournamentId: payload.tournamentId,
-      operationType: DataProviderExecutionOperationType.TEAMS_UPDATE,
-    });
-    this.reporter.setTournamentInfo({
-      label: payload.label,
-      tournamentId: payload.tournamentId,
-      provider: payload.provider,
-    });
+    // ------ INPUT VALIDATION ------
+    this.validateTournament(payload);
+    // ------ FETCH TOURNAMENT ------
+    const tournament = await SERVICES_TOURNAMENT.getTournament(payload.tournamentId);
+    if (!tournament) throw new Error(`[TeamsDataProviderService] - [ERROR] - [UPDATE] - [TOURNAMENT NOT FOUND]`);
 
     try {
-      // ------ INPUT VALIDATION ------
-      this.validateTournament(payload);
+      // Create execution tracking
+      this.execution = new DataProviderExecution({
+        requestId: this.requestId,
+        tournamentId: tournament.id,
+        operationType: DataProviderExecutionOperationType.TEAMS_UPDATE,
+      });
       // ------ FETCH TEAMS ------
-      const fetchedTeams = await this.fetchTeams(payload.tournamentId);
+      const fetchedTeams = await this.fetchTeams(tournament);
       // ------ MAP TEAMS ------
       const mappedTeams = await this.mapTeams(fetchedTeams);
       // ------ UPDATE TEAMS ------
@@ -121,11 +114,11 @@ export class TeamsDataProviderService {
       await this.execution?.complete({
         reportFileKey: reportUploadResult?.s3Key,
         reportFileUrl: reportUploadResult?.s3Url,
-        tournamentLabel: payload.label,
+        tournamentLabel: tournament.label,
         summary: {
-          tournamentId: payload.tournamentId,
-          tournamentLabel: payload.label,
-          provider: payload.provider,
+          tournamentId: tournament.id,
+          tournamentLabel: tournament.label,
+          provider: tournament.provider,
           teamsCount: Array.isArray(updatedTeams) ? updatedTeams.length : 0,
           ...reportSummaryResult,
         },
@@ -143,7 +136,7 @@ export class TeamsDataProviderService {
       await this.execution?.failure({
         reportFileKey: reportUploadResult.s3Key,
         reportFileUrl: reportUploadResult.s3Url,
-        tournamentLabel: payload.label,
+        tournamentLabel: tournament.label,
         error: errorMessage,
         summary: {
           error: errorMessage,
@@ -171,8 +164,22 @@ export class TeamsDataProviderService {
     this.reporter.addOperation('initialization', 'validate_input', 'completed');
   }
 
-  private async fetchTeams(tournamentId: string) {
-    this.reporter.addOperation('scraping', 'fetch_teams', 'started');
+  private async fetchTeams(tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>) {
+    if (tournament.mode === 'regular-season-and-knockout') {
+      const teamsFromStandings = await this.fetchTeamsFromStandings(tournament.id);
+      const teamsFromKnockout = await this.fetchTeamsFromKnockoutRounds(tournament.id);
+
+      return { fromStandings: teamsFromStandings, fromKnockout: teamsFromKnockout };
+    } else if (tournament.mode === 'regular-season-only') {
+      return { fromStandings: await this.fetchTeamsFromStandings(tournament.id) };
+    } else if (tournament.mode === 'knockout-only') {
+      return { fromKnockout: await this.fetchTeamsFromKnockoutRounds(tournament.id) };
+    }
+    throw new Error(`Invalid standing mode: ${tournament.mode}`);
+  }
+
+  private async fetchTeamsFromStandings(tournamentId: string) {
+    this.reporter.addOperation('scraping', 'fetch_teams_from_standings', 'started');
 
     try {
       // Get tournament details
@@ -187,39 +194,83 @@ export class TeamsDataProviderService {
       const rawContent = await this.scraper.getPageContent();
 
       if (!rawContent?.standings || rawContent?.standings?.length === 0) {
-        this.reporter.addOperation('scraping', 'fetch_teams', 'completed', {
-          note: 'No teams data found in standings',
-        });
-        return [];
+        throw new Error('No teams data found in standings');
       }
 
-      this.reporter.addOperation('scraping', 'fetch_teams', 'completed', {
+      this.reporter.addOperation('scraping', 'fetch_teams_from_standings', 'completed', {
         groupsCount: rawContent.standings.length,
+        teams: rawContent.standings.flatMap((group: unknown) => {
+          const groupData = group as { rows: unknown[] };
+          return groupData.rows.map((row: unknown) => {
+            const rowData = row as { team: { id: unknown; name: unknown; shortName: unknown } };
+            return rowData.team.name;
+          });
+        }),
       });
 
-      return rawContent;
+      return rawContent as API_SOFASCORE_STANDINGS;
     } catch (error) {
       const errorMessage = (error as Error).message;
-      this.reporter.addOperation('scraping', 'fetch_teams', 'failed', {
+      this.reporter.addOperation('scraping', 'fetch_teams_from_standings', 'failed', {
         error: errorMessage,
       });
       throw error;
     }
   }
 
-  private async mapTeams(fetchedTeams: unknown) {
-    this.reporter.addOperation('transformation', 'map_teams', 'started');
+  private async fetchTeamsFromKnockoutRounds(tournamentId: string) {
+    this.reporter.addOperation('scraping', 'fetch_teams_from_knockout_rounds', 'started');
 
-    const teamsData = fetchedTeams as { standings?: unknown[] };
-    if (!fetchedTeams || !teamsData.standings) {
-      this.reporter.addOperation('transformation', 'map_teams', 'completed', {
-        teamsCount: 0,
-        note: 'No teams to map',
+    try {
+      const knockoutRounds = await SERVICES_TOURNAMENT.getKnockoutRounds(tournamentId);
+      const knockoutData = [];
+
+      if (!knockoutRounds || knockoutRounds.length === 0) {
+        throw new Error('No knockout rounds found');
+      }
+
+      for (const round of knockoutRounds) {
+        await this.scraper.goto(round.providerUrl);
+
+        const rawContent: API_SOFASCORE_ROUND = await this.scraper.getPageContent();
+        knockoutData.push(rawContent);
+      }
+
+      this.reporter.addOperation('scraping', 'fetch_teams_from_knockout_rounds', 'completed', {
+        knockoutRoundsCount: knockoutData.length,
+        teams: knockoutData
+          .flatMap((round: unknown) => {
+            const roundData = round as { events?: unknown[] };
+            if (roundData && roundData.events && Array.isArray(roundData.events)) {
+              return roundData.events.map((event: unknown) => {
+                const eventData = event as {
+                  homeTeam: { name: unknown; shortName: unknown };
+                  awayTeam: { name: unknown; shortName: unknown };
+                };
+                return [eventData.homeTeam.name, eventData.awayTeam.name];
+              });
+            }
+            return [];
+          })
+          .flat(),
       });
-      return [];
-    }
 
-    const teams = teamsData.standings.flatMap((group: unknown) => {
+      return knockoutData;
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+      this.reporter.addOperation('scraping', 'fetch_teams_from_knockout_rounds', 'failed', {
+        error: errorMessage,
+      });
+      throw error;
+    }
+  }
+
+  private async mapTeamsFromKnockoutRounds(_fetchedTeams: unknown) {}
+
+  private async mapTeamsFromStandings(standings: API_SOFASCORE_STANDINGS) {
+    this.reporter.addOperation('transformation', 'map_teams_from_standings', 'started');
+
+    const teams = standings.standings.flatMap((group: unknown) => {
       const groupData = group as { rows: unknown[] };
       return groupData.rows.map((row: unknown) => {
         const rowData = row as {
@@ -244,17 +295,38 @@ export class TeamsDataProviderService {
     });
 
     if (teams.length === 0) {
-      this.reporter.addOperation('transformation', 'map_teams', 'failed', {
+      this.reporter.addOperation('transformation', 'map_teams_from_standings', 'failed', {
         error: 'No teams data found',
       });
       throw new Error('No teams data found');
     }
 
-    this.reporter.addOperation('transformation', 'map_teams', 'completed', {
+    this.reporter.addOperation('transformation', 'map_teams_from_standings', 'completed', {
       teamsCount: teams.length,
     });
 
     return teams;
+  }
+
+  private async mapTeams(
+    fetchedTeams: { fromStandings?: unknown; fromKnockout?: unknown } | unknown,
+    tournamentMode: 'regular-season-and-knockout' | 'regular-season-only' | 'knockout-only'
+  ) {
+    this.reporter.addOperation('transformation', 'map_teams', 'started');
+
+    if (tournamentMode === 'regular-season-and-knockout') {
+      const teamsFromStandings = await this.mapTeamsFromStandings(
+        fetchedTeams.fromStandings as API_SOFASCORE_STANDINGS
+      );
+      const teamsFromKnockout = await this.mapTeamsFromKnockoutRounds(fetchedTeams.fromKnockout);
+      return [...teamsFromStandings, ...teamsFromKnockout];
+    } else if (tournamentMode === 'regular-season-only') {
+      return await this.mapTeamsFromStandings(fetchedTeams.fromStandings as API_SOFASCORE_STANDINGS);
+    } else if (tournamentMode === 'knockout-only') {
+      return await this.mapTeamsFromKnockoutRounds(fetchedTeams);
+    }
+
+    throw new Error(`Invalid tournament mode: ${tournamentMode}`);
   }
 
   public async createOnDatabase(teams: DB_InsertTeam[]) {

@@ -18,6 +18,7 @@ export class TournamentDataProvider {
     this.scraper = scraper;
     this.requestId = requestId;
     this.reporter = new DataProviderReport(requestId);
+    this.execution = null;
   }
 
   public async createOnDatabase(input: DB_InsertTournament) {
@@ -84,51 +85,58 @@ export class TournamentDataProvider {
     return `https://api.sofascore.app/api/v1/unique-tournament/${tournamentId}/image/dark`;
   }
 
-  public async init(payload: CreateTournamentInput) {
-    const startTime = Date.now();
+  private async uploadTournamentLogo(tournamentId: string) {
+    this.reporter.addOperation('scraping', 'tournament_logo', 'started');
+    const logoUrl = this.getTournamentLogoUrl(tournamentId);
+    const s3Key = await this.scraper.uploadAsset({
+      logoUrl,
+      filename: `tournament-${tournamentId}`,
+    });
+    const logo = this.scraper.getCloudFrontUrl(s3Key);
 
-    // Create execution tracking record at the start (implicitly starts execution)
-    this.execution = new DataProviderExecution({
-      requestId: this.requestId,
-      tournamentId: '00000000-0000-0000-0000-000000000000', // Temporary UUID, will be updated after tournament creation
-      operationType: DataProviderExecutionOperationType.TOURNAMENT_CREATE,
+    this.reporter.addOperation('scraping', 'tournament_logo', 'completed', {
+      logoUrl: logo,
+      s3Key,
     });
 
-    // Initialize report tournament data and start validation
-    this.reporter
-      .setTournamentInfo({
-        label: payload.label,
-        tournamentId: payload.tournamentPublicId,
-        provider: payload.provider,
-      })
-      .addOperation('initialization', 'validate_input', 'started');
+    return logo;
+  }
 
+  private validateTournament(payload: CreateTournamentInput) {
+    // ------ INPUT VALIDATION ------
+    this.reporter.addOperation('initialization', 'validate_input', 'started');
+    // Validate input
     if (!payload.tournamentPublicId) {
       this.reporter.addOperation('initialization', 'validate_input', 'failed', {
-        error: 'Tournament public ID is null',
+        error: 'Tournament ID is null',
       });
 
-      // Complete execution as failed for validation error
-      const duration = Date.now() - startTime;
-      const summary = this.reporter.getSummary();
-
-      await this.execution?.failure({
-        duration,
-        tournamentLabel: payload.label,
-        error: 'Tournament public ID is null',
-        summary: {
-          error: 'Tournament public ID is null',
-          ...summary,
-        },
-      });
-
-      await this.reporter.createFileAndUpload();
-      throw new Error(`[TournamentDataProviderService] - [ERROR] - [INIT] - [TOURNAMENT PUBLIC ID IS NULL]`);
+      throw new Error('Tournament ID is null');
     }
 
     this.reporter.addOperation('initialization', 'validate_input', 'completed');
+  }
+
+  public async init(payload: CreateTournamentInput) {
+    const startTime = Date.now();
 
     try {
+      // ------ CREATE EXECUTION TRACKING RECORD AT THE START (IMPLICITLY STARTS EXECUTION) ------
+      this.execution = new DataProviderExecution({
+        requestId: this.requestId,
+        tournamentId: '00000000-0000-0000-0000-000000000000', // Temporary UUID, will be updated after tournament creation
+        operationType: DataProviderExecutionOperationType.TOURNAMENT_CREATE,
+      });
+
+      // ------ INITIALIZE REPORT TOURNAMENT DATA ------
+      this.reporter.setTournamentInfo({
+        label: payload.label,
+        tournamentId: payload.tournamentPublicId,
+        provider: payload.provider,
+      });
+      // ------ INPUT VALIDATION ------
+      this.validateTournament(payload);
+
       const logo = await this.uploadTournamentLogo(payload.tournamentPublicId);
       const tournament = await this.createOnDatabase({
         externalId: payload.tournamentPublicId,
@@ -167,13 +175,14 @@ export class TournamentDataProvider {
 
       return tournament;
     } catch (error) {
+      console.log('------error payload:', payload);
+      console.log('------payload type:', typeof payload);
+      console.log('------payload keys:', payload ? Object.keys(payload) : 'no keys');
       const errorMessage = (error as Error).message;
-      this.reporter.addOperation('scraping', 'fetch_logo', 'failed', { error: errorMessage });
-
-      // Generate report file even on failure
+      // ------ GENERATE REPORT FILE EVEN ON FAILURE ------
       const reportResult = await this.reporter.createFileAndUpload();
 
-      // Complete execution tracking as failed
+      // ------ COMPLETE EXECUTION TRACKING AS FAILED ------
       const duration = Date.now() - startTime;
       const summary = this.reporter.getSummary();
 
@@ -191,22 +200,5 @@ export class TournamentDataProvider {
 
       throw error;
     }
-  }
-
-  private async uploadTournamentLogo(tournamentId: string) {
-    this.reporter.addOperation('scraping', 'tournament_logo', 'started');
-    const logoUrl = this.getTournamentLogoUrl(tournamentId);
-    const s3Key = await this.scraper.uploadAsset({
-      logoUrl,
-      filename: `tournament-${tournamentId}`,
-    });
-    const logo = this.scraper.getCloudFrontUrl(s3Key);
-
-    this.reporter.addOperation('scraping', 'tournament_logo', 'completed', {
-      logoUrl: logo,
-      s3Key,
-    });
-
-    return logo;
   }
 }

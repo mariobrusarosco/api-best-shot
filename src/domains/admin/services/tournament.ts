@@ -19,6 +19,7 @@ class AdminTournamentService {
     try {
       scraper = await BaseScraper.createInstance();
       const dataProviderService = new TournamentDataProvider(scraper, requestId);
+
       const tournament = await dataProviderService.init(req.body);
 
       return res.status(201).json({

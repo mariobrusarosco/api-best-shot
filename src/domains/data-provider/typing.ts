@@ -5,8 +5,6 @@ import { TournamentQuery } from '@/domains/tournament/queries';
 import { DB_InsertTournament, DB_InsertTournamentStandings, DB_SelectTournament } from '@/domains/tournament/schema';
 import { FetchAndStoreAssetPayload } from '@/utils';
 import { Request } from 'express';
-import { API_SOFASCORE_STANDINGS } from './providers/sofascore/standings/typing';
-import { API_SOFASCORE_ROUND, API_SOFASCORE_ROUNDS } from './providers/sofascore/tournament-rounds/typing';
 
 export type IApiProvider = {
   tournament: {
@@ -94,6 +92,186 @@ export type CreateTournamentInput = {
   standingsMode: string;
 };
 
-export type TournamentRequestIn = Request<null, CreateTournamentInput>;
+export type TournamentRequestIn = Request<{ tournamentId?: string }, CreateTournamentInput>;
 
 export type UpdateTournamentInput = CreateTournamentInput;
+
+export interface API_SOFASCORE_STANDINGS {
+  standings: {
+    tournament: {
+      name: string;
+      slug: string;
+      category: {
+        name: string;
+        slug: string;
+        sport: {
+          name: string;
+          slug: string;
+          id: number;
+        };
+        id: number;
+        flag: string;
+        alpha2: string;
+      };
+      uniqueTournament: {
+        name: string;
+        slug: string;
+        primaryColorHex: string;
+        secondaryColorHex: string;
+        category: {
+          name: string;
+          slug: string;
+          sport: {
+            name: string;
+            slug: string;
+            id: number;
+          };
+          id: number;
+          flag: string;
+          alpha2: string;
+        };
+        userCount: number;
+        hasPerformanceGraphFeature: boolean;
+        id: number;
+        displayInverseHomeAwayTeams: boolean;
+      };
+      priority: number;
+      isGroup: boolean;
+      isLive: boolean;
+      id: number;
+    };
+    type: string;
+    name: string;
+    descriptions: never[];
+    tieBreakingRule: {
+      text: string;
+      id: number;
+    };
+    rows: API_SOFASCORE_STANDING_TEAM[];
+    id: number;
+    updatedAtTimestamp: number;
+  }[];
+}
+
+export interface API_SOFASCORE_STANDING_TEAM {
+  team: {
+    name: string;
+    slug: string;
+    shortName: string;
+    gender: string;
+    sport: {
+      name: string;
+      slug: string;
+      id: number;
+    };
+    userCount: number;
+    nameCode: string;
+    disabled: boolean;
+    national: boolean;
+    type: number;
+    id: number;
+    teamColors: {
+      primary: string;
+      secondary: string;
+      text: string;
+    };
+    fieldTranslations: {
+      nameTranslation: {
+        ru: string;
+      };
+      shortNameTranslation: Record<string, never>;
+    };
+  };
+  descriptions: [];
+  promotion: {
+    text: string;
+    id: number;
+  };
+  position: number;
+  matches: number;
+  wins: number;
+  scoresFor: number;
+  scoresAgainst: number;
+  id: number;
+  losses: number;
+  draws: number;
+  points: number;
+  scoreDiffFormatted: string;
+}
+
+export interface API_SOFASCORE_ROUND {
+  events: API_SOFASCORE_MATCH[];
+  hasPreviousPage: boolean;
+}
+
+export interface API_SOFASCORE_ROUNDS {
+  currentRound: {
+    round: number;
+  };
+  rounds: {
+    round: number;
+    name?: string;
+    slug?: string;
+    prefix?: string;
+  }[];
+}
+
+export interface API_SOFASCORE_MATCH {
+  id: number;
+  slug: string;
+  roundInfo: {
+    round: number;
+  };
+  startTimestamp: number | null;
+  tournament: {
+    uniqueTournament: {
+      id: number;
+    };
+  };
+  status: {
+    description: string;
+    type: string;
+    code: number;
+  };
+  winnerCode: number | null;
+  homeTeam: {
+    id: number;
+    name: string;
+    shortName: string;
+    slug: string;
+    nameCode: string;
+    teamColors: {
+      primary: string;
+      secondary: string;
+      text: string;
+    };
+  };
+  awayTeam: {
+    id: number;
+    name: string;
+    shortName: string;
+    slug: string;
+    nameCode: string;
+    teamColors: {
+      primary: string;
+      secondary: string;
+      text: string;
+    };
+  };
+  homeScore: {
+    current: number;
+    display: number;
+    period1: number;
+    period2: number;
+    normaltime: number;
+    penalties: number;
+  };
+  awayScore: {
+    current: number;
+    display: number;
+    period1: number;
+    period2: number;
+    normaltime: number;
+    penalties: number;
+  };
+}

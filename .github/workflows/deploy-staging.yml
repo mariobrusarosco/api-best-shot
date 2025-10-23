@@ -87,7 +87,7 @@ jobs:
       #     fi
 
       - name: Notify Slack
-        if: always()
+        if: always() && secrets.SLACK_DEPLOYMENTS_WEBHOOK != ''
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
@@ -99,4 +99,4 @@ jobs:
             Branch: staging
             Environment: Staging
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_STAGING }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEPLOYMENTS_WEBHOOK }}

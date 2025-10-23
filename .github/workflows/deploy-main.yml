@@ -87,7 +87,7 @@ jobs:
       #     fi
 
       - name: Notify Slack (Demo)
-        if: always()
+        if: always() && secrets.SLACK_DEPLOYMENTS_WEBHOOK != ''
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
@@ -99,7 +99,7 @@ jobs:
             Branch: main → demo
             Environment: Demo
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_DEMO }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEPLOYMENTS_WEBHOOK }}
 
   # deploy-production:
   #   name: Deploy to Railway Production
@@ -165,7 +165,7 @@ jobs:
   #         done
 
   #     - name: Notify Slack (Production)
-  #       if: always()
+  #       if: always() && secrets.SLACK_DEPLOYMENTS_WEBHOOK != ''
   #       uses: 8398a7/action-slack@v3
   #       with:
   #         status: ${{ job.status }}
@@ -178,7 +178,7 @@ jobs:
   #           Environment: Production
   #           🎉 ${{ job.status == 'success' && 'Live for users!' || 'Deployment failed!' }}
   #       env:
-  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
+  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEPLOYMENTS_WEBHOOK }}
 
   deployment-summary:
     name: Deployment Summary

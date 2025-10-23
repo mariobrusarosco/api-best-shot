@@ -107,7 +107,8 @@
       "WebFetch(domain:blog.railway.com)",
       "WebFetch(domain:productionresultssa10.blob.core.windows.net)",
       "Bash(yarn:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(gh run list:*)"
     ],
     "deny": []
   }

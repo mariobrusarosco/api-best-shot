@@ -6,7 +6,7 @@
 # ================================
 # Dependencies Stage (Cached Layer)
 # ================================
-FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS dependencies
+FROM mcr.microsoft.com/playwright:v1.55.0-jammy AS dependencies
 
 WORKDIR /app
 
@@ -37,7 +37,7 @@ RUN yarn build
 # ================================
 # Production Runtime Stage
 # ================================
-FROM mcr.microsoft.com/playwright:v1.54.1-jammy AS production
+FROM mcr.microsoft.com/playwright:v1.55.0-jammy AS production
 
 WORKDIR /app
 

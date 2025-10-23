@@ -87,7 +87,7 @@ jobs:
       #     fi
 
       - name: Notify Slack
-        if: always() && secrets.SLACK_DEPLOYMENTS_WEBHOOK != ''
+        if: always()
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}

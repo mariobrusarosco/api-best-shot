@@ -1,17 +1,18 @@
-import db from '@/services/database';
-import { and, eq, sql } from 'drizzle-orm';
+import { T_Guess } from '@/domains/guess/schema';
+import { T_Match } from '@/domains/match/schema';
+import { T_TournamentPerformance } from '@/domains/performance/schema';
+import { DatabaseError } from '@/domains/shared/error-handling/database';
+import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import {
   DB_InsertTournament,
   DB_InsertTournamentStandings,
   T_Tournament,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
-import { T_TournamentPerformance } from '@/domains/performance/schema';
-import { T_Match } from '@/domains/match/schema';
-import { T_Guess } from '@/domains/guess/schema';
+import db from '@/services/database';
 import Profiling from '@/services/profiling';
-import { DatabaseError } from '@/domains/shared/error-handling/database';
-import { T_TournamentRound } from '@/domains/tournament-round/schema';
+import { and, eq, sql } from 'drizzle-orm';
+import { TournamentWithTypedMode } from '../typing';
 
 const allTournaments = async () => {
   try {
@@ -20,6 +21,11 @@ const allTournaments = async () => {
         id: T_Tournament.id,
         label: T_Tournament.label,
         logo: T_Tournament.logo,
+        baseUrl: T_Tournament.baseUrl,
+        provider: T_Tournament.provider,
+        mode: T_Tournament.mode,
+        standingsMode: T_Tournament.standingsMode,
+        season: T_Tournament.season,
       })
       .from(T_Tournament);
   } catch (error: unknown) {
@@ -40,6 +46,7 @@ const tournament = async (tournamentId: string) => {
         provider: T_Tournament.provider,
         mode: T_Tournament.mode,
         standingsMode: T_Tournament.standingsMode,
+        season: T_Tournament.season,
       })
       .from(T_Tournament)
       .where(eq(T_Tournament.id, tournamentId));
@@ -57,7 +64,7 @@ const tournament = async (tournamentId: string) => {
       .where(eq(T_TournamentRound.tournamentId, tournamentId))
       .orderBy(sql`cast(${T_TournamentRound.order} as integer)`);
 
-    return { ...tournament, rounds };
+    return { ...(tournament as TournamentWithTypedMode), rounds };
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
     console.error('[Query_Tournament] - [queryTournament]', dbError);

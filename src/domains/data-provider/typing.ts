@@ -207,12 +207,13 @@ export interface API_SOFASCORE_ROUND {
 export interface API_SOFASCORE_ROUNDS {
   currentRound: {
     round: number;
+    name: string;
+    slug: string;
   };
   rounds: {
     round: number;
-    name?: string;
-    slug?: string;
-    prefix?: string;
+    name: string;
+    slug: string;
   }[];
 }
 

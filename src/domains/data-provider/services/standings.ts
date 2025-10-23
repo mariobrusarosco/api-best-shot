@@ -5,7 +5,7 @@ import db from '@/services/database';
 import { Profiling } from '@/services/profiling';
 import { safeString } from '@/utils';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { API_SOFASCORE_STANDINGS } from '../providers/sofascore/standings/typing';
+import { API_SOFASCORE_STANDINGS } from '../typing';
 import { DataProviderExecutionOperationType } from '../typing';
 import { DataProviderExecution } from './execution';
 

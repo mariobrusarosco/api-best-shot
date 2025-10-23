@@ -33,9 +33,6 @@ export const API_ADMIN_TEAMS = {
       // #5 Create Teams
       const teams = await provider.init({
         tournamentId: tournament.id,
-        baseUrl: tournament.baseUrl,
-        label: tournament.label,
-        provider: tournament.provider,
       });
 
       return res.status(201).json({

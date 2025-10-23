@@ -8,7 +8,7 @@ import { safeString } from '@/utils';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { ENDPOINT_ROUND } from '../providers/sofascore_v2/schemas/endpoints';
+import { API_SOFASCORE_ROUND } from '../typing';
 import { S3FileStorage } from './file-storage';
 
 const safeSofaDate = (date: unknown): Date | null => {
@@ -171,7 +171,7 @@ export class MatchesDataProviderService {
     }
   }
 
-  public async getTournamentMatchesByRound(round: DB_SelectTournamentRound): Promise<ENDPOINT_ROUND | null> {
+  public async getTournamentMatchesByRound(round: DB_SelectTournamentRound): Promise<API_SOFASCORE_ROUND | null> {
     this.addOperation('scraping', 'fetch_round_matches', 'started', {
       roundSlug: round.slug,
       providerUrl: round.providerUrl,
@@ -179,7 +179,7 @@ export class MatchesDataProviderService {
 
     try {
       await this.scraper.goto(round.providerUrl);
-      const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
+      const rawContent = (await this.scraper.getPageContent()) as API_SOFASCORE_ROUND;
 
       if (!rawContent?.events || rawContent?.events?.length === 0) {
         this.addOperation('scraping', 'fetch_round_matches', 'completed', {
@@ -251,7 +251,7 @@ export class MatchesDataProviderService {
 
         try {
           await this.scraper.goto(round.providerUrl);
-          const rawContent = (await this.scraper.getPageContent()) as ENDPOINT_ROUND;
+          const rawContent = (await this.scraper.getPageContent()) as API_SOFASCORE_ROUND;
 
           if (!rawContent?.events || rawContent?.events?.length === 0) {
             this.addOperation('scraping', 'process_round', 'completed', {
@@ -324,9 +324,9 @@ export class MatchesDataProviderService {
     }
   }
 
-  public mapMatches(rawContent: ENDPOINT_ROUND, tournamentId: string, roundSlug: string) {
+  public mapMatches(rawContent: API_SOFASCORE_ROUND, tournamentId: string, roundSlug: string) {
     try {
-      const matches = rawContent.events.map(event => {
+      const matches = rawContent.events.map((event: API_SOFASCORE_ROUND['events'][number]) => {
         return {
           externalId: safeString(event.id),
           provider: 'sofa',
@@ -350,7 +350,7 @@ export class MatchesDataProviderService {
     }
   }
 
-  public getMatchStatus(match: ENDPOINT_ROUND['events'][number]) {
+  public getMatchStatus(match: API_SOFASCORE_ROUND['events'][number]) {
     try {
       const matchWasPostponed = match.status.type === 'postponed';
       const matcheEnded = match.status.type === 'finished';

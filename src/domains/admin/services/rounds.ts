@@ -84,7 +84,6 @@ class AdminRoundsService {
           error: 'Tournament ID is required',
         });
       }
-
       // Get tournament data to build payload
       const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
       if (!tournament) {
@@ -132,6 +131,47 @@ class AdminRoundsService {
           source: 'ADMIN_SERVICE_ROUNDS_update',
         });
       }
+    }
+  }
+
+  static async updateKnockoutRounds(req: Request, res: Response) {
+    const requestId = randomUUID();
+    let scraper: BaseScraper | null = null;
+
+    try {
+      // Get tournament ID from URL params
+      const tournamentId = req.params.tournamentId;
+      if (!tournamentId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Tournament ID is required',
+        });
+      }
+      // Get tournament data to build payload
+      const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({
+          success: false,
+          error: 'Tournament not found',
+        });
+      }
+
+      scraper = await BaseScraper.createInstance();
+      const dataProviderService = new RoundsDataProviderService(scraper, requestId);
+
+      const temp = await dataProviderService.updateKnockoutRounds(tournament);
+
+      return res.status(200).json({
+        success: true,
+        data: { temp },
+        message: `Knockout rounds updated successfully`,
+      });
+    } catch (error) {
+      Profiling.error({
+        source: 'ADMIN_SERVICE_ROUNDS_updateKnockoutRounds',
+        error,
+        data: { requestId, source: 'admin_service' },
+      });
     }
   }
 }

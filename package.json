@@ -96,7 +96,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^30.0.0",
-    "@playwright/test": "^1.54.1",
+    "@playwright/test": "1.55.0",
     "@types/bcryptjs": "^2.4.2",
     "@types/cookie-parser": "^1.4.3",
     "@types/cors": "^2.8.19",

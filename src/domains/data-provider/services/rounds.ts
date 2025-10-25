@@ -70,21 +70,40 @@ export class RoundsDataProviderService {
     } catch (error) {
       const errorMessage = (error as Error).message;
 
-      // ------ GENERATE REPORT EVEN ON FAILURE ------
-      const reportUploadResult = await this.reporter.createFileAndUpload();
-      // ------ MARK EXECUTION AS FAILED ------
+      // ------ GENERATE REPORT EVEN ON FAILURE (with fallback) ------
+      let reportUploadResult: { s3Key?: string; s3Url?: string } = {};
+      try {
+        reportUploadResult = await this.reporter.createFileAndUpload();
+      } catch (reportError) {
+        console.error('Failed to upload report file:', reportError);
+        Profiling.error({
+          error: reportError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'ROUNDS_DATA_PROVIDER_INIT_report_upload_failed',
+        });
+      }
+
+      // ------ MARK EXECUTION AS FAILED (always notify) ------
       const reportSummaryResult = this.reporter.getSummary();
-      // ------ MARK EXECUTION AS FAILED ------
-      await this.execution?.failure({
-        reportFileKey: reportUploadResult.s3Key,
-        reportFileUrl: reportUploadResult.s3Url,
-        tournamentLabel: payload.label,
-        error: errorMessage,
-        summary: {
+      try {
+        await this.execution?.failure({
+          reportFileKey: reportUploadResult.s3Key,
+          reportFileUrl: reportUploadResult.s3Url,
+          tournamentLabel: payload.label,
           error: errorMessage,
-          ...reportSummaryResult,
-        },
-      });
+          summary: {
+            error: errorMessage,
+            ...reportSummaryResult,
+          },
+        });
+      } catch (notificationError) {
+        console.error('Failed to send failure notification:', notificationError);
+        Profiling.error({
+          error: notificationError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'ROUNDS_DATA_PROVIDER_INIT_notification_failed',
+        });
+      }
 
       throw error;
     }
@@ -134,21 +153,40 @@ export class RoundsDataProviderService {
     } catch (error) {
       const errorMessage = (error as Error).message;
 
-      // ------ GENERATE REPORT EVEN ON FAILURE ------
-      const reportUploadResult = await this.reporter.createFileAndUpload();
-      // ------ MARK EXECUTION AS FAILED ------
+      // ------ GENERATE REPORT EVEN ON FAILURE (with fallback) ------
+      let reportUploadResult: { s3Key?: string; s3Url?: string } = {};
+      try {
+        reportUploadResult = await this.reporter.createFileAndUpload();
+      } catch (reportError) {
+        console.error('Failed to upload report file:', reportError);
+        Profiling.error({
+          error: reportError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'ROUNDS_DATA_PROVIDER_UPDATE_report_upload_failed',
+        });
+      }
+
+      // ------ MARK EXECUTION AS FAILED (always notify) ------
       const reportSummaryResult = this.reporter.getSummary();
-      // ------ MARK EXECUTION AS FAILED ------
-      await this.execution?.failure({
-        reportFileKey: reportUploadResult.s3Key,
-        reportFileUrl: reportUploadResult.s3Url,
-        tournamentLabel: payload.label,
-        error: errorMessage,
-        summary: {
+      try {
+        await this.execution?.failure({
+          reportFileKey: reportUploadResult.s3Key,
+          reportFileUrl: reportUploadResult.s3Url,
+          tournamentLabel: payload.label,
           error: errorMessage,
-          ...reportSummaryResult,
-        },
-      });
+          summary: {
+            error: errorMessage,
+            ...reportSummaryResult,
+          },
+        });
+      } catch (notificationError) {
+        console.error('Failed to send failure notification:', notificationError);
+        Profiling.error({
+          error: notificationError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'ROUNDS_DATA_PROVIDER_UPDATE_notification_failed',
+        });
+      }
 
       throw error;
     }
@@ -387,21 +425,40 @@ export class RoundsDataProviderService {
     } catch (error) {
       const errorMessage = (error as Error).message;
 
-      // ------ GENERATE REPORT EVEN ON FAILURE ------
-      const reportUploadResult = await this.reporter.createFileAndUpload();
-      // ------ MARK EXECUTION AS FAILED ------
+      // ------ GENERATE REPORT EVEN ON FAILURE (with fallback) ------
+      let reportUploadResult: { s3Key?: string; s3Url?: string } = {};
+      try {
+        reportUploadResult = await this.reporter.createFileAndUpload();
+      } catch (reportError) {
+        console.error('Failed to upload report file:', reportError);
+        Profiling.error({
+          error: reportError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'ROUNDS_DATA_PROVIDER_UPDATE_KNOCKOUT_report_upload_failed',
+        });
+      }
+
+      // ------ MARK EXECUTION AS FAILED (always notify) ------
       const reportSummaryResult = this.reporter.getSummary();
-      // ------ MARK EXECUTION AS FAILED ------
-      await this.execution?.failure({
-        reportFileKey: reportUploadResult.s3Key,
-        reportFileUrl: reportUploadResult.s3Url,
-        tournamentLabel: tournament.label,
-        error: errorMessage,
-        summary: {
+      try {
+        await this.execution?.failure({
+          reportFileKey: reportUploadResult.s3Key,
+          reportFileUrl: reportUploadResult.s3Url,
+          tournamentLabel: tournament.label,
           error: errorMessage,
-          ...reportSummaryResult,
-        },
-      });
+          summary: {
+            error: errorMessage,
+            ...reportSummaryResult,
+          },
+        });
+      } catch (notificationError) {
+        console.error('Failed to send failure notification:', notificationError);
+        Profiling.error({
+          error: notificationError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'ROUNDS_DATA_PROVIDER_UPDATE_KNOCKOUT_notification_failed',
+        });
+      }
 
       throw error;
     }

@@ -1,11 +1,14 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "../best-shot"
-		}
-	],
-	"settings": {}
+  "folders": [
+    {
+      "path": ".",
+    },
+    {
+      "path": "../best-shot",
+    },
+    {
+      "path": "../garden",
+    },
+  ],
+  "settings": {},
 }

@@ -179,24 +179,44 @@ export class TournamentDataProvider {
       console.log('------payload type:', typeof payload);
       console.log('------payload keys:', payload ? Object.keys(payload) : 'no keys');
       const errorMessage = (error as Error).message;
-      // ------ GENERATE REPORT FILE EVEN ON FAILURE ------
-      const reportResult = await this.reporter.createFileAndUpload();
 
-      // ------ COMPLETE EXECUTION TRACKING AS FAILED ------
+      // ------ GENERATE REPORT FILE EVEN ON FAILURE (with fallback) ------
+      let reportResult: { s3Key?: string; s3Url?: string } = {};
+      try {
+        reportResult = await this.reporter.createFileAndUpload();
+      } catch (reportError) {
+        console.error('Failed to upload report file:', reportError);
+        Profiling.error({
+          error: reportError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'DATA_PROVIDER_V2_TOURNAMENT_report_upload_failed',
+        });
+      }
+
+      // ------ COMPLETE EXECUTION TRACKING AS FAILED (always notify) ------
       const duration = Date.now() - startTime;
       const summary = this.reporter.getSummary();
 
-      await this.execution?.failure({
-        reportFileKey: reportResult.s3Key,
-        reportFileUrl: reportResult.s3Url,
-        tournamentLabel: payload.label,
-        error: errorMessage,
-        summary: {
+      try {
+        await this.execution?.failure({
+          reportFileKey: reportResult.s3Key,
+          reportFileUrl: reportResult.s3Url,
+          tournamentLabel: payload.label,
           error: errorMessage,
-          ...summary,
-        },
-        duration,
-      });
+          summary: {
+            error: errorMessage,
+            ...summary,
+          },
+          duration,
+        });
+      } catch (notificationError) {
+        console.error('Failed to send failure notification:', notificationError);
+        Profiling.error({
+          error: notificationError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'DATA_PROVIDER_V2_TOURNAMENT_notification_failed',
+        });
+      }
 
       throw error;
     }

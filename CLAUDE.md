@@ -19,6 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Make isolated changes without considering broader impacts
 - Propose solutions based on assumptions
 - Skip research and documentation review
+- Run GIT 'push', 'stash', 'add' or 'commit' commands
 
 **For CI/CD, Docker, Deployment Issues:**
 

@@ -128,6 +128,8 @@ export class TeamsDataProviderService {
       const fetchedTeams = await this.fetchTeams(tournament);
       // ------ MAP TEAMS ------
       const mappedTeams = await this.mapTeams(fetchedTeams, tournament.mode);
+      // --- ENHANCE TEAMS BY ADDING LOGO URL ------
+      await this.enhanceTeams(mappedTeams);
       // ------ UPDATE TEAMS ------
       const updatedTeams = await this.updateOnDatabase(mappedTeams);
       // ------ UPLOAD REPORT ------

@@ -95,7 +95,7 @@ aws configure
 # Default output format: json
 
 # OR set environment variables:
-export AWS_ACCESS_KEY_ID="your-key"
+export AWS_ACCESS_KEY_ID="<your-aws-access-key>"
 export AWS_SECRET_ACCESS_KEY="your-secret"
 export AWS_REGION="us-east-1"
 ```
@@ -361,7 +361,7 @@ aws lambda update-function-configuration \
         "INTERNAL_SERVICE_TOKEN":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MjUxNjIzOTAyMn0.dSUMFqVYh9uIZ-XiBcMFi9iyMms7cyYpwlLa9MjhHNw",
         "DATA_PROVIDER_COOKIE_PRODUCTION":"your-production-cookie",
         "DATA_PROVIDER_COOKIE_DEMO":"your-demo-cookie",
-        "SENTRY_DSN":"https://99725970cd0e2e7f72a680239f535935@o4506356341276672.ingest.us.sentry.io/4508562415157248"
+        "SENTRY_DSN":"<your-sentry-dsn>"
     }' \
     --region us-east-1
 ```

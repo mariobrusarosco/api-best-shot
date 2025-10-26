@@ -35,7 +35,7 @@ graph TB
 | `AWS_REGION`                  | **Optional** | AWS region                 | `us-east-1`                                    |
 | `MEMBER_PUBLIC_ID_COOKIE`     | **Required** | Cookie name for member IDs | `member_public_id`                             |
 | `ACCESS_CONTROL_ALLOW_ORIGIN` | **Required** | CORS allowed origins       | `https://bestshot.com`                         |
-| `AWS_ACCOUNT_ID`              | **Required** | AWS account identifier     | `415034926128`                                 |
+| `AWS_ACCOUNT_ID`              | **Required** | AWS account identifier     | `<your-aws-account-id>`                        |
 | `AWS_BUCKET_NAME`             | **Required** | S3 bucket for assets       | `bestshot-assets-staging`                      |
 | `AWS_CLOUDFRONT_URL`          | **Required** | CDN URL for assets         | `https://bestshot-cdn.cloudfront.net`          |
 
@@ -106,18 +106,20 @@ API_DOMAIN=localhost:9090
 AWS_REGION=us-east-1
 MEMBER_PUBLIC_ID_COOKIE=member_public_id
 ACCESS_CONTROL_ALLOW_ORIGIN=http://localhost:3000
-AWS_ACCOUNT_ID=415034926128
-AWS_BUCKET_NAME=bestshot-assets-dev
-AWS_CLOUDFRONT_URL=https://bestshot-cdn.cloudfront.net
+AWS_ACCOUNT_ID=<your-aws-account-id>
+AWS_BUCKET_NAME=<your-s3-bucket-name>
+AWS_CLOUDFRONT_URL=<your-cloudfront-url>
 
-# Secrets (get from team lead)
-JWT_SECRET=your-super-secret-jwt-key-here
+# Secrets (get from team lead or use .env.example as template)
+JWT_SECRET=<your-jwt-secret>
 DB_STRING_CONNECTION=postgresql://user:pass@localhost:5432/dbname
-AWS_ACCESS_KEY_ID=your-aws-access-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-SENTRY_DSN=https://your-sentry-dsn@sentry.io/project
-INTERNAL_SERVICE_TOKEN=your-internal-service-token
+AWS_ACCESS_KEY_ID=<your-aws-access-key>
+AWS_SECRET_ACCESS_KEY=<your-aws-secret-key>
+SENTRY_DSN=<your-sentry-dsn>
+INTERNAL_SERVICE_TOKEN=<your-internal-service-token>
 ```
+
+**Note:** See `.env.example` for a complete template with placeholder values.
 
 #### **Step 3: Verify configuration**
 

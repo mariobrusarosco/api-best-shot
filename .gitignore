@@ -5,7 +5,13 @@ node_modules/
 
 # Environment
 .env
-.env.*
+.env.local
+.env.demo
+.env.staging
+.env.production
+
+# Allow example env files to be committed
+!.env*.example
 
 # Build
 dist/

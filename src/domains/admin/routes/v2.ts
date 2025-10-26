@@ -31,6 +31,11 @@ router.patch('/tournaments/:tournamentId/teams', AdminMiddleware, API_ADMIN_TOUR
 // Tournament Matches Management (admin only)
 router.post('/tournaments/:tournamentId/matches', AdminMiddleware, API_ADMIN_TOURNAMENTS.createMatches);
 router.patch('/tournaments/:tournamentId/matches', AdminMiddleware, API_ADMIN_TOURNAMENTS.updateMatches);
+router.patch(
+  '/tournaments/:tournamentId/rounds/:roundSlug/matches',
+  AdminMiddleware,
+  API_ADMIN_TOURNAMENTS.updateMatchesByRound
+);
 
 // Tournament Standings Management (admin only)
 router.post('/tournaments/:tournamentId/standings', AdminMiddleware, API_ADMIN_TOURNAMENTS.createStandings);

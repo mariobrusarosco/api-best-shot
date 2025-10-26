@@ -15,6 +15,14 @@ export interface CreateMatchesInput {
   provider: string;
 }
 
+export interface UpdateRoundMatchesInput {
+  tournamentId: string;
+  roundSlug: string;
+  baseUrl: string;
+  label: string;
+  provider: string;
+}
+
 const safeSofaDate = (date: unknown): Date | null => {
   return date === null || date === undefined ? null : new Date(date as string | number | Date);
 };
@@ -273,6 +281,7 @@ export class MatchesDataProviderService {
           if (!rawContent?.events || rawContent?.events?.length === 0) {
             this.reporter.addOperation('scraping', 'process_round', 'completed', {
               roundSlug: round.slug,
+              providerUrl: url,
               matchesCount: 0,
               note: 'No matches found in round',
             });
@@ -286,6 +295,7 @@ export class MatchesDataProviderService {
 
           this.reporter.addOperation('scraping', 'process_round', 'completed', {
             roundSlug: round.slug,
+            providerUrl: url,
             matchesCount: matches.length,
           });
 
@@ -297,6 +307,7 @@ export class MatchesDataProviderService {
 
           this.reporter.addOperation('scraping', 'process_round', 'failed', {
             roundSlug: round.slug,
+            providerUrl: round.providerUrl,
             error: errorMessage,
             note: 'Round failed but continuing with other rounds',
           });
@@ -430,6 +441,140 @@ export class MatchesDataProviderService {
       Profiling.error({
         error: error instanceof Error ? error : new Error(errorMessage),
         source: 'MatchesDataProviderService.updateOnDatabase',
+      });
+      throw error;
+    }
+  }
+
+  public async updateRound(payload: UpdateRoundMatchesInput) {
+    // Create execution tracking
+    this.execution = new DataProviderExecution({
+      requestId: this.requestId,
+      tournamentId: payload.tournamentId,
+      operationType: DataProviderExecutionOperationType.MATCHES_UPDATE,
+    });
+    this.reporter.setTournamentInfo({
+      label: payload.label,
+      tournamentId: payload.tournamentId,
+      provider: payload.provider,
+    });
+
+    try {
+      // ------ INPUT VALIDATION ------
+      this.validateTournament(payload);
+      this.validateRoundSlug(payload.roundSlug);
+      // ------ FETCH SPECIFIC ROUND ------
+      const round = await this.getRoundFromDatabase(payload.tournamentId, payload.roundSlug);
+      // ------ FETCH MATCHES FOR ROUND ------
+      const fetchedMatches = await this.fetchMatches([round], payload.baseUrl);
+      // ------ UPDATE MATCHES ------
+      const updatedMatches = await this.updateOnDatabase(fetchedMatches);
+      // ------ UPLOAD REPORT ------
+      const reportUploadResult = await this.reporter.createFileAndUpload();
+      // ------ GENERATE REPORT SUMMARY ------
+      const reportSummaryResult = this.reporter.getSummary();
+      // ------ MARK EXECUTION AS COMPLETED ------
+      await this.execution?.complete({
+        reportFileKey: reportUploadResult?.s3Key,
+        reportFileUrl: reportUploadResult?.s3Url,
+        tournamentLabel: payload.label,
+        summary: {
+          tournamentId: payload.tournamentId,
+          tournamentLabel: payload.label,
+          provider: payload.provider,
+          roundSlug: payload.roundSlug,
+          matchesCount: updatedMatches.length,
+          ...reportSummaryResult,
+        },
+      });
+
+      return updatedMatches;
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+
+      // ------ GENERATE REPORT EVEN ON FAILURE (with fallback) ------
+      let reportUploadResult: { s3Key?: string; s3Url?: string } = {};
+      try {
+        reportUploadResult = await this.reporter.createFileAndUpload();
+      } catch (reportError) {
+        console.error('Failed to upload report file:', reportError);
+        Profiling.error({
+          error: reportError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'MATCHES_DATA_PROVIDER_UPDATE_ROUND_report_upload_failed',
+        });
+      }
+
+      // ------ MARK EXECUTION AS FAILED (always notify) ------
+      const reportSummaryResult = this.reporter.getSummary();
+      try {
+        await this.execution?.failure({
+          reportFileKey: reportUploadResult.s3Key,
+          reportFileUrl: reportUploadResult.s3Url,
+          tournamentLabel: payload.label,
+          error: errorMessage,
+          summary: {
+            error: errorMessage,
+            roundSlug: payload.roundSlug,
+            ...reportSummaryResult,
+          },
+        });
+      } catch (notificationError) {
+        console.error('Failed to send failure notification:', notificationError);
+        Profiling.error({
+          error: notificationError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'MATCHES_DATA_PROVIDER_UPDATE_ROUND_notification_failed',
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  private validateRoundSlug(roundSlug: string) {
+    this.reporter.addOperation('initialization', 'validate_round_slug', 'started');
+
+    if (!roundSlug) {
+      this.reporter.addOperation('initialization', 'validate_round_slug', 'failed', {
+        error: 'Round slug is null',
+      });
+      throw new Error('Round slug is null');
+    }
+
+    this.reporter.addOperation('initialization', 'validate_round_slug', 'completed', {
+      roundSlug,
+    });
+  }
+
+  private async getRoundFromDatabase(tournamentId: string, roundSlug: string) {
+    this.reporter.addOperation('database', 'fetch_round', 'started', {
+      tournamentId,
+      roundSlug,
+    });
+
+    try {
+      const round = await QUERIES_TOURNAMENT_ROUND.getRound(tournamentId, roundSlug);
+
+      if (!round) {
+        this.reporter.addOperation('database', 'fetch_round', 'failed', {
+          error: 'Round not found',
+          tournamentId,
+          roundSlug,
+        });
+        throw new Error(`Round "${roundSlug}" not found for tournament "${tournamentId}"`);
+      }
+
+      this.reporter.addOperation('database', 'fetch_round', 'completed', {
+        roundId: round.id,
+        roundSlug: round.slug,
+      });
+
+      return round;
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+      this.reporter.addOperation('database', 'fetch_round', 'failed', {
+        error: errorMessage,
       });
       throw error;
     }

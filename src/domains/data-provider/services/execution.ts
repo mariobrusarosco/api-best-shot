@@ -289,6 +289,11 @@ export class DataProviderExecution {
   private formatSummary(summary: Record<string, unknown>): string {
     const parts: string[] = [];
 
+    // Add round information if present (for round-specific updates)
+    if (typeof summary.roundSlug === 'string') {
+      parts.push(`Round: *${summary.roundSlug}*`);
+    }
+
     if (typeof summary.operationsCount === 'number') {
       parts.push(`${summary.operationsCount} operations`);
     }
@@ -299,6 +304,11 @@ export class DataProviderExecution {
 
     if (typeof summary.failedOperations === 'number' && summary.failedOperations > 0) {
       parts.push(`${summary.failedOperations} failed`);
+    }
+
+    // Add matches count if present
+    if (typeof summary.matchesCount === 'number') {
+      parts.push(`${summary.matchesCount} matches`);
     }
 
     return parts.join(', ');

@@ -1,0 +1,91 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+
+env:
+  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+jobs:
+  deploy-production:
+    name: Deploy to Railway Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.17.0'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install Yarn
+        run: corepack prepare yarn@3.8.7 --activate
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run quality gates
+        run: |
+          yarn lint
+          yarn compile
+          yarn test
+
+      - name: Build application for production
+        run: yarn build-prod
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Install Railway CLI
+        run: yarn dlx @railway/cli --version
+
+      - name: Deploy to Railway Production
+        run: yarn dlx @railway/cli up --service api-best-shot
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PROD }}
+
+      - name: Run database migrations (Production)
+        run: yarn db:migrate
+        env:
+          DB_STRING_CONNECTION: postgresql://postgres.pppzfkndwrtekdyfknym:${{ secrets.PROD_DB_PASSWORD }}@aws-0-us-east-1.pooler.supabase.com:6543/postgres
+
+      # Temporarily disabled for first deployment - re-enable after service is running
+      # - name: Health check (Production)
+      #   run: |
+      #     # Wait for deployment
+      #     sleep 30
+      #
+      #     # Get the production URL (you'll need to replace this with your actual production URL)
+      #     PROD_URL="https://your-production-service.railway.app"
+      #
+      #     # Health check with retry
+      #     for i in {1..5}; do
+      #       echo "Production health check attempt $i..."
+      #       if curl -f "$PROD_URL/api/v1/admin/health"; then
+      #         echo "✅ Production deployment healthy!"
+      #         break
+      #       else
+      #         echo "❌ Production health check failed, retrying in 10s..."
+      #         sleep 10
+      #       fi
+      #     done
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          fields: repo,message,commit,author
+          text: |
+            🚀 **Production Deployment**
+            Status: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
+            Environment: Production
+            🎉 ${{ job.status == 'success' && 'Live for users!' || 'Deployment failed!' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEPLOYMENTS_WEBHOOK }}

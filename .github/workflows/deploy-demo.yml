@@ -1,19 +1,19 @@
-name: Deploy to Staging
+name: Deploy to Demo
 
 on:
   workflow_dispatch:
   push:
-    branches: [ staging ]
+    branches: [main]
 
 env:
   RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
 jobs:
-  deploy-staging:
-    name: Deploy to Railway Staging
+  deploy-demo:
+    name: Deploy to Railway Demo
     runs-on: ubuntu-latest
-    environment: staging
-    
+    environment: demo
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,10 +22,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.17.0'
-      
+
       - name: Enable Corepack
         run: corepack enable
-      
+
       - name: Install Yarn
         run: corepack prepare yarn@3.8.7 --activate
 
@@ -38,49 +38,49 @@ jobs:
           yarn compile
           yarn test
 
-      - name: Build application for staging
-        run: yarn build-staging
+      - name: Build application for demo
+        run: yarn build-demo
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Install Railway CLI
         run: yarn dlx @railway/cli --version
 
-      - name: Deploy to Railway Staging
+      - name: Deploy to Railway Demo
         run: yarn dlx @railway/cli up --service api-best-shot
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEMO }}
 
-      - name: Run database migrations on Supabase
+      - name: Run database migrations (Demo)
         run: yarn db:migrate
         env:
-          DB_STRING_CONNECTION: postgresql://postgres.mxevncnpdmrlnwksrazx:${{ secrets.STAGING_DB_PASSWORD }}@aws-1-us-east-2.pooler.supabase.com:6543/postgres
+          DB_STRING_CONNECTION: postgresql://postgres.pppzfkndwrtekdyfknym:${{ secrets.DEMO_DB_PASSWORD }}@aws-0-us-east-1.pooler.supabase.com:6543/postgres
 
       # Temporarily disabled for first deployment - re-enable after service is running
-      # - name: Health check
+      # - name: Health check (Demo)
       #   run: |
       #     # Wait for deployment
       #     sleep 30
-      #     
-      #     # Get the staging URL (you'll need to replace this with your actual staging URL)
-      #     STAGING_URL="https://your-staging-service.railway.app"
-      #     
+      #
+      #     # Get the demo URL (you'll need to replace this with your actual demo URL)
+      #     DEMO_URL="https://api-best-shot-demo.mariobrusarosco.com"
+      #
       #     # Health check with retry and proper exit handling
       #     SUCCESS=false
       #     for i in {1..5}; do
-      #       echo "Staging health check attempt $i..."
-      #       if curl -f "$STAGING_URL/api/v1/admin/health"; then
-      #         echo "✅ Staging deployment healthy!"
+      #       echo "Demo health check attempt $i..."
+      #       if curl -f "$DEMO_URL/api/v1/admin/health"; then
+      #         echo "✅ Demo deployment healthy!"
       #         SUCCESS=true
       #         break
       #       else
-      #         echo "❌ Staging health check failed, retrying in 10s..."
+      #         echo "❌ Demo health check failed, retrying in 10s..."
       #         if [ $i -lt 5 ]; then
       #           sleep 10
       #         fi
       #       fi
       #     done
-      #     
+      #
       #     # Fail the job if health check never succeeded
       #     if [ "$SUCCESS" != "true" ]; then
       #       echo "❌ Health check failed after 5 attempts. Deployment failed!"
@@ -95,9 +95,9 @@ jobs:
           channel: '#deployments'
           fields: repo,message,commit,author
           text: |
-            🚀 **Staging Deployment**
+            🚀 **Demo Deployment**
             Status: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
-            Branch: staging
-            Environment: Staging
+            Branch: main
+            Environment: Demo
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEPLOYMENTS_WEBHOOK }}

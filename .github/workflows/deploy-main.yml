@@ -40,7 +40,7 @@ jobs:
       - name: Build application for demo
         run: yarn build-demo
         env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_DEMO }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Install Railway CLI
         run: yarn dlx @railway/cli --version
@@ -129,7 +129,7 @@ jobs:
   #     - name: Build application for production
   #       run: yarn build-prod
   #       env:
-  #         SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_PROD }}
+  #         SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
   #     - name: Install Railway CLI
   #       run: yarn dlx @railway/cli --version

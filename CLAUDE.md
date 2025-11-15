@@ -2,6 +2,31 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+_IMPORTANT_
+
+Custom Commands you need to watch:
+
+- "Brace for Compact" - Refer to section "Pre and Post Auto-Compact"
+- "Write a Topic" - Refer to section "Create a Garden Topic"
+
+## Pre and Post Auto-Compact
+
+Claude Code CLI auto-compacts conversations due context limitations, it generates a summary that's not the same.
+We kind of lose the most crucial converation parts.
+
+Your job is to:
+
+1. Summarize the WHOLE conversation
+2. Add the summary as a new entry on the `CLAUDE_COMPACTED_HISTORY.md`
+
+## Create a Garden Topic
+
+To create a Garnde Topic, you need to access the project named `garden`.
+You should have context to it because the engineer must have already added the project via Claude's `/add-dir` command.
+Your job is to understand how to create a new topic via .mdx file over there.
+Ask me which part of our work should you focus with. I'll tell you what the name of the topic.
+No need to do anything else on that project.
+
 ## MANDATORY: Systematic Engineering Analysis
 
 **BEFORE making ANY changes or proposing solutions, Claude MUST:**
@@ -14,12 +39,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 6. **Evidence-Based**: Never guess - provide research and evidence for recommendations
 
 **NEVER:**
+
 - Jump to quick fixes without understanding the full system
-- Make isolated changes without considering broader impacts  
+- Make isolated changes without considering broader impacts
 - Propose solutions based on assumptions
 - Skip research and documentation review
 
 **For CI/CD, Docker, Deployment Issues:**
+
 - Analyze the complete pipeline: build → test → deploy → runtime
 - Check ALL related configuration files (Dockerfile, workflows, package.json, etc.)
 - Understand multi-stage build processes and dependencies
@@ -202,11 +229,13 @@ The project has GitHub Actions workflows for automated deployment:
   - Includes comprehensive testing and validation
 
 ### Lambda Functions
+
 - `caller-scores-and-standings`: Updates match scores and tournament standings
-- `caller-knockouts-update`: Updates knockout tournament brackets  
+- `caller-knockouts-update`: Updates knockout tournament brackets
 - `caller-daily-routine`: Creates daily schedules for match automation
 
 ### Deployment Scripts
+
 - Lambda deployment scripts in `scripts/` directory
 - Environment-specific validation scripts
 
@@ -235,12 +264,14 @@ Each environment has specific build commands and uses environment-specific `.env
 ## Development Guidelines
 
 ### Project Organization
+
 - Store ADRs in `docs/decisions`
-- Developer guides in `docs/guides`  
+- Developer guides in `docs/guides`
 - Planning phases in `docs/plan`
 - Use checklists to track phase completion
 
 ### Single Test Execution
+
 ```bash
 # Run specific test file
 yarn test path/to/test-file.test.ts
@@ -250,6 +281,7 @@ yarn test:watch --testNamePattern="specific test name"
 ```
 
 ### Database Operations
+
 ```bash
 # Connect to database directly
 yarn db:connect

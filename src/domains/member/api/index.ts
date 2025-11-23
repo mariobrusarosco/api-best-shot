@@ -1,10 +1,11 @@
+import { ErrorMapper } from '@/domains/auth/error-handling/mapper';
 import { Utils } from '@/domains/auth/utils';
-import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { Request, Response } from 'express';
 import { SERVICES_PERFORMANCE_V2 } from '@/domains/performance/services';
+import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import Profiling from '@/services/profiling';
+import { Request, Response } from 'express';
 import { MemberService } from '../services';
-import { CreateMemberInput } from './typing';
+import { createMemberSchema } from './schemas';
 
 const getMember = async (req: Request, res: Response) => {
   try {
@@ -43,8 +44,25 @@ const getMemberV2 = async (req: Request, res: Response) => {
 
 const createMember = async (req: Request, res: Response) => {
   try {
-    const input: CreateMemberInput = req.body;
-    const member = await MemberService.createMember(input);
+    // Validate request body
+    const validationResult = createMemberSchema.safeParse(req.body);
+    const hasValidationError = !validationResult.success;
+
+    if (hasValidationError) {
+      const errors = validationResult.error.format();
+
+      Profiling.error({
+        source: 'MEMBER_API_createMember',
+        error: errors,
+      });
+
+      return res.status(ErrorMapper.VALIDATION_ERROR.status).send({
+        message: ErrorMapper.VALIDATION_ERROR.user,
+        errors,
+      });
+    }
+
+    const member = await MemberService.createMember(validationResult.data);
 
     if (!member) {
       return res.status(400).send({ message: 'Failed to create member' });
@@ -52,7 +70,10 @@ const createMember = async (req: Request, res: Response) => {
 
     return res.status(201).send(member);
   } catch (error: unknown) {
-    console.error('[ERROR] [createMember]', error);
+    Profiling.error({
+      source: 'MEMBER_API_createMember',
+      error,
+    });
     return handleInternalServerErrorResponse(res, error);
   }
 };

@@ -4,7 +4,7 @@ import { LogTags, LogExtra, migrateSourceToTags, createLogTags, createLogExtra }
 import { STATUSES } from './constants';
 
 const ENV = process.env.NODE_ENV;
-const enableProfiling = ENV === 'production' || ENV === 'demo';
+const enableProfiling = ENV === 'production' || ENV === 'demo' || ENV === 'staging';
 
 // Enhanced logging interfaces
 export interface EnhancedLogOptions {

@@ -4,15 +4,6 @@ import { logger } from '../services/logger';
 const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
 
-  // Log incoming request
-  logger.info('Incoming request', {
-    method: req.method,
-    url: req.url,
-    userAgent: req.get('User-Agent'),
-    ip: req.ip,
-    requestId: req.get('X-Request-ID') || 'unknown',
-  });
-
   // Log response when finished
   res.on('finish', () => {
     const duration = Date.now() - start;

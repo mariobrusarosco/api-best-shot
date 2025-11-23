@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 const ENV = process.env.NODE_ENV;
-const enableProfiling = ENV === 'production' || ENV === 'demo';
+const enableProfiling = ENV === 'production' || ENV === 'demo' || ENV === 'staging';
 
 if (enableProfiling) {
   Sentry.init({

@@ -22,6 +22,20 @@
       "when": 1756560309772,
       "tag": "0002_bent_thanos",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763847000000,
+      "tag": "0003_drop_data_provider_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1763846906176,
+      "tag": "0004_make_first_last_name_optional",
+      "breakpoints": true
     }
   ]
 }

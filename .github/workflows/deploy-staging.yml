@@ -54,7 +54,7 @@ jobs:
       - name: Run database migrations on Supabase
         run: yarn db:migrate
         env:
-          DB_STRING_CONNECTION: postgresql://postgres.mxevncnpdmrlnwksrazx:${{ secrets.STAGING_DB_PASSWORD }}@aws-1-us-east-2.pooler.supabase.com:6543/postgres
+          DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION_STAGING }}
 
       # Temporarily disabled for first deployment - re-enable after service is running
       # - name: Health check

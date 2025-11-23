@@ -54,7 +54,7 @@ jobs:
       - name: Run database migrations (Demo)
         run: yarn db:migrate
         env:
-          DB_STRING_CONNECTION: postgresql://postgres.pppzfkndwrtekdyfknym:${{ secrets.DEMO_DB_PASSWORD }}@aws-0-us-east-1.pooler.supabase.com:6543/postgres
+          DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION_DEMO }}
 
       # Temporarily disabled for first deployment - re-enable after service is running
       # - name: Health check (Demo)

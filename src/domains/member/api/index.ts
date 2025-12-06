@@ -44,6 +44,18 @@ const getMemberV2 = async (req: Request, res: Response) => {
 
 const createMember = async (req: Request, res: Response) => {
   try {
+    // Log incoming request for debugging
+    Profiling.log({
+      msg: 'Create member request received',
+      source: 'MEMBER_API_createMember_request',
+      data: {
+        contentType: req.get('content-type'),
+        bodyKeys: req.body ? Object.keys(req.body) : [],
+        bodyPresent: !!req.body,
+        bodyType: typeof req.body,
+      },
+    });
+
     // Validate request body
     const validationResult = createMemberSchema.safeParse(req.body);
     const hasValidationError = !validationResult.success;
@@ -54,11 +66,17 @@ const createMember = async (req: Request, res: Response) => {
       Profiling.error({
         source: 'MEMBER_API_createMember',
         error: errors,
+        data: {
+          receivedBody: req.body,
+          contentType: req.get('content-type'),
+        },
       });
 
       return res.status(ErrorMapper.VALIDATION_ERROR.status).send({
         message: ErrorMapper.VALIDATION_ERROR.user,
         errors,
+        hint: 'Required fields: publicId (string), email (valid email string), nickName (string). Optional: firstName, lastName, password.',
+        receivedBody: req.body || null,
       });
     }
 

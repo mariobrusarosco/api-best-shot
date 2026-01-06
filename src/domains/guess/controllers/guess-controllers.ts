@@ -26,49 +26,15 @@ async function getMemberGuesses({
   round: string;
 }) {
   try {
-    let guesses: typeof guessesResult | null = null;
-
-    const guessesResult = await db
+    const guesses = await db
       .select()
       .from(T_Guess)
       .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
       .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round), eq(T_Guess.memberId, memberId)));
 
-    guesses = guessesResult;
-
-    if (guesses.length === 0) {
-      const roundMatches = await db
-        .select()
-        .from(T_Match)
-        .where(and(eq(T_Match.roundSlug, round), eq(T_Match.tournamentId, tournamentId)));
-
-      const promises = roundMatches.map(async (match: (typeof roundMatches)[number]) =>
-        db
-          .insert(T_Guess)
-          .values({
-            awayScore: null,
-            homeScore: null,
-            matchId: match.id,
-            memberId,
-          })
-          .onConflictDoNothing()
-          .returning()
-      );
-
-      await Promise.all(promises);
-      const finalGuessesResult = await db
-        .select()
-        .from(T_Guess)
-        .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
-        .where(
-          and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round), eq(T_Guess.memberId, memberId))
-        );
-      guesses = finalGuessesResult;
-    }
-
-    const parsedGuesses =
-      guesses?.map((row: { guess: DB_SelectGuess; match: DB_SelectMatch }) => runGuessAnalysis(row.guess, row.match)) ||
-      [];
+    const parsedGuesses = guesses.map((row: { guess: DB_SelectGuess; match: DB_SelectMatch }) =>
+      runGuessAnalysis(row.guess, row.match)
+    );
 
     return parsedGuesses;
   } catch (error: unknown) {

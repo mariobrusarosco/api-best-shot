@@ -10,28 +10,33 @@ import { QUERIES_GUESS } from '../queries';
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
 
+/**
+ * Analyzes a single guess against its match to determine status and points
+ */
+export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
+  const hasNullGuesses = guess.homeScore === null || guess.awayScore === null;
+  const hasLostTimewindowToGuess = dayjs().utc().isSameOrAfter(dayjs.utc(match.date).toDate());
+
+  const guessPaused = match.status === 'not-defined';
+  const guessExpired = hasNullGuesses && hasLostTimewindowToGuess;
+  const notStartedGuess = match.status === 'open' && hasNullGuesses;
+  const waitingForGame = match.status === 'open' && !hasNullGuesses;
+
+  if (guessPaused) return generatePausedGuess(guess, match, { hasLostTimewindowToGuess });
+  if (guessExpired) return generateExpiredGuess(guess, match, { hasLostTimewindowToGuess });
+  if (notStartedGuess) return generateNotStartedGuess(guess, match, { hasLostTimewindowToGuess });
+  if (waitingForGame) return generateWaitingForGameGuess(guess, match, { hasLostTimewindowToGuess });
+
+  return generateFinalizedGuess(guess, match, { hasLostTimewindowToGuess });
+};
+
+/**
+ * Analyzes an array of guesses - convenience wrapper around runGuessAnalysis
+ */
 export const runGuessAnalysis_V2 = (
   guesses: Awaited<ReturnType<typeof QUERIES_GUESS.selectMemberGuessesForTournament>>
 ) => {
-  return guesses.map((row: (typeof guesses)[number]) => {
-    const hasNullGuesses = row.guess.homeScore === null || row.guess.awayScore === null;
-    const hasLostTimewindowToGuess = dayjs().utc().isSameOrAfter(dayjs.utc(row.match.date).toDate());
-
-    const guessPaused = row.match.status === 'not-defined';
-    const guessExpired = hasNullGuesses && hasLostTimewindowToGuess;
-    const notStartedGuess = row.match.status === 'open' && hasNullGuesses;
-    const waitingForGame = row.match.status === 'open' && !hasNullGuesses;
-
-    if (guessPaused) return generatePausedGuess(row.guess, row.match, { hasLostTimewindowToGuess });
-    if (guessExpired) return generateExpiredGuess(row.guess, row.match, { hasLostTimewindowToGuess });
-    if (notStartedGuess) return generateNotStartedGuess(row.guess, row.match, { hasLostTimewindowToGuess });
-    if (waitingForGame)
-      return generateWaitingForGameGuess(row.guess, row.match, {
-        hasLostTimewindowToGuess,
-      });
-
-    return generateFinalizedGuess(row.guess, row.match, { hasLostTimewindowToGuess });
-  });
+  return guesses.map((row: (typeof guesses)[number]) => runGuessAnalysis(row.guess, row.match));
 };
 
 const generateExpiredGuess = (

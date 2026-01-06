@@ -1,3 +1,4 @@
+import { env } from '@/config/env';
 import { Profiling } from '@/services/profiling';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
@@ -17,22 +18,21 @@ export class S3FileStorage {
   private readonly credentialsValid: boolean;
 
   constructor() {
-    this.bucketName = (process.env['AWS_BUCKET_NAME'] || '').trim();
+    this.bucketName = env.AWS_BUCKET_NAME;
 
     // Validate credentials before creating client
-    const accessKeyId = process.env['AWS_ACCESS_KEY_ID'];
-    const secretAccessKey = process.env['AWS_SECRET_ACCESS_KEY'];
+    const accessKeyId = env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = env.AWS_SECRET_ACCESS_KEY;
 
     this.credentialsValid = !!(accessKeyId && secretAccessKey && this.bucketName);
 
     if (this.credentialsValid) {
       this.s3Client = new S3Client({
-        region: 'us-east-1',
+        region: env.AWS_REGION,
         credentials: {
-          accessKeyId: accessKeyId!,
-          secretAccessKey: secretAccessKey!,
+          accessKeyId,
+          secretAccessKey,
         },
-        endpoint: 'https://s3.amazonaws.com',
       });
     }
   }
@@ -89,7 +89,6 @@ export class S3FileStorage {
   }
 
   public getCloudFrontUrl(s3Key: string): string {
-    const cloudFrontDomain = process.env['CLOUDFRONT_DOMAIN'] || 'YOUR_CLOUDFRONT_DOMAIN';
-    return `https://${cloudFrontDomain}/${s3Key}`;
+    return `https://${env.AWS_CLOUDFRONT_URL}/${s3Key}`;
   }
 }

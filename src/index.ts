@@ -16,6 +16,7 @@ logInfo('Starting API Best Shot...', {
   environment: env.NODE_ENV,
   port: env.PORT,
   version: env.API_VERSION,
+  CORS: env.ACCESS_CONTROL_ALLOW_ORIGIN,
 });
 
 const app = express();

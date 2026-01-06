@@ -308,10 +308,6 @@ export class TeamsDataProviderService {
       const knockoutRounds = await SERVICES_TOURNAMENT.getKnockoutRounds(tournamentId);
       const knockoutData = [];
 
-      if (!knockoutRounds || knockoutRounds.length === 0) {
-        throw new Error('No knockout rounds found');
-      }
-
       for (const round of knockoutRounds) {
         await this.scraper.goto(round.providerUrl);
 

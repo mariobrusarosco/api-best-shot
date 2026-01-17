@@ -12,6 +12,15 @@
     {
       "path": "../best-shot-app",
     },
+    {
+      "path": "../infrastructure",
+    },
+    {
+      "path": "../bazinga",
+    },
+    {
+      "path": "../financial-app",
+    },
   ],
   "settings": {},
 }

@@ -9,18 +9,7 @@ We follow a hybrid development approach:
 - Infrastructure (PostgreSQL, AWS, Monitoring) runs in Docker
 - Development tools (Node.js, Yarn) run locally via Volta
 
-👉 See our [Service Implementation Roadmap](docs/service-implementation-roadmap.md) for upcoming features and infrastructure additions.
 
-## Documentation
-
-### Architecture Decision Records
-
-- [Playwright Production Deployment](docs/decisions/playwright-production-deployment.md)
-
-### Developer Guides
-
-- [Playwright Production Guide](docs/guides/playwright-production.md)
-- [Google Container Registry Guide](docs/guides/google-container-registry.md)
 
 ## Tech Stack
 
@@ -34,13 +23,17 @@ We follow a hybrid development approach:
 - **Monitoring**: Sentry
 - **Web Scraping**: Playwright for automated data collection
 
-## Key Features
 
-- RESTful API endpoints
-- Database migrations and schema management
-- AWS integration for file storage and scheduling
-- Error tracking and performance monitoring
-- TypeScript for enhanced type safety and developer experience
+## Documentation
+
+### Architecture Decision Records
+
+- [Playwright Production Deployment](docs/decisions/playwright-production-deployment.md)
+
+### Developer Guides
+
+- [Playwright Production Guide](docs/guides/playwright-production.md)
+- [Google Container Registry Guide](docs/guides/google-container-registry.md)
 
 ## Development
 

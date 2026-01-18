@@ -16,21 +16,21 @@ Set up the core infrastructure needed for the polling system.
 ### Tasks
 
 #### 1.1 Database Migrations
-- [ ] Create migration: Add `last_checked_at` column to `match` table
-- [ ] Add database index for efficient polling queries:
+- [x] Create migration: Add `last_checked_at` column to `match` table
+- [x] Add database index for efficient polling queries:
   ```sql
   CREATE INDEX idx_match_polling
   ON match(status, date, last_checked_at)
   WHERE status = 'open';
   ```
-- [ ] Test migrations locally
-- [ ] Document rollback procedures
+- [x] Test migrations locally
+- [x] Document rollback procedures
 
 #### 1.2 Install pg-boss (Optional - Can Add Later)
-- [ ] Add pg-boss to package.json
-- [ ] Configure pg-boss connection (use existing PostgreSQL)
-- [ ] Verify pg-boss creates its required tables
-- [ ] Test basic job creation and processing
+- [x] Add pg-boss to package.json
+- [x] Configure pg-boss connection (use existing PostgreSQL)
+- [x] Verify pg-boss creates its required tables
+- [x] Test basic job creation and processing
 
 **Note**: pg-boss might not be needed for simple cron jobs. Evaluate during Phase 2 if it's actually required.
 

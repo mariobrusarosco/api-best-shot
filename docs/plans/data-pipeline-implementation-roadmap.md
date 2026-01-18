@@ -35,11 +35,11 @@ Set up the core infrastructure needed for the polling system.
 **Note**: pg-boss might not be needed for simple cron jobs. Evaluate during Phase 2 if it's actually required.
 
 #### 1.3 Queue Abstraction Layer (Optional - Only if Using pg-boss)
-- [ ] Create `src/services/queues/queue.interface.ts` (interface)
-- [ ] Create `src/services/queues/pg-boss-adapter.ts` (implementation)
-- [ ] Create `src/services/queues/index.ts` (export)
-- [ ] Write unit tests for adapter
-- [ ] Document the abstraction pattern
+- [x] Create `src/services/queues/queue.interface.ts` (interface)
+- [x] Create `src/services/queues/pg-boss-adapter.ts` (implementation)
+- [x] Create `src/services/queues/index.ts` (export)
+- [x] Write unit tests for adapter
+- [x] Document the abstraction pattern
 
 **Note**: If using simple Railway cron jobs, this abstraction might be overkill for now.
 

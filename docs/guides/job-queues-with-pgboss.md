@@ -1115,6 +1115,292 @@ AFTER (Asynchronous, Queue-based):
 
 ---
 
+## Queue Abstraction Layer (Advanced)
+
+### Why Abstract the Queue?
+
+While pg-boss works great now, you might want to switch to Redis-based queues (Bull/BullMQ) later for:
+- Higher performance
+- More advanced features
+- Different infrastructure requirements
+
+**The Problem:**
+If you use pg-boss directly everywhere, switching would require changing code in dozens of files!
+
+**The Solution:**
+Create an abstraction layer that hides the queue implementation details.
+
+### Architecture
+
+```
+┌───────────────────────────────────────────────────────┐
+│           APPLICATION CODE                            │
+│  (Match polling service, cron jobs, etc.)             │
+└───────────────────┬───────────────────────────────────┘
+                    │
+                    │ Uses IQueue interface
+                    ↓
+┌───────────────────────────────────────────────────────┐
+│  src/services/queue/index.ts                          │
+│  (Main entry point - returns IQueue instance)         │
+└───────────────────┬───────────────────────────────────┘
+                    │
+                    │ Creates adapter
+                    ↓
+┌───────────────────────────────────────────────────────┐
+│  queue.interface.ts                                   │
+│  ┌─────────────────────────────────────────────┐     │
+│  │  interface IQueue {                         │     │
+│  │    start(): Promise<void>                   │     │
+│  │    send(...): Promise<string>               │     │
+│  │    work(...): Promise<string>               │     │
+│  │    stop(): Promise<void>                    │     │
+│  │  }                                          │     │
+│  └─────────────────────────────────────────────┘     │
+└───────────────────┬──────────────────┬────────────────┘
+                    │                  │
+        ┌───────────┘                  └───────────┐
+        ↓                                          ↓
+┌──────────────────┐                    ┌──────────────────┐
+│  PgBossAdapter   │                    │  BullAdapter     │
+│  (Current)       │                    │  (Future)        │
+├──────────────────┤                    ├──────────────────┤
+│ Uses pg-boss     │                    │ Uses Bull/BullMQ │
+│ Implements       │                    │ Implements       │
+│ IQueue           │                    │ IQueue           │
+└──────────────────┘                    └──────────────────┘
+```
+
+### Implementation
+
+#### 1. Interface (`queue.interface.ts`)
+
+Defines what operations any queue must support:
+
+```typescript
+export interface IQueue {
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  createQueue(name: string): Promise<void>;
+  send<TData>(queueName: string, data: TData, options?: JobOptions): Promise<string | null>;
+  work<TData>(queueName: string, handler: JobHandler<TData>): Promise<string>;
+  getJobById<TData>(queueName: string, jobId: string): Promise<QueueJob<TData> | null>;
+  // ... more methods
+}
+```
+
+#### 2. Adapter (`pg-boss-adapter.ts`)
+
+Wraps pg-boss to match the interface:
+
+```typescript
+export class PgBossAdapter implements IQueue {
+  private boss: PgBoss;
+
+  constructor(connectionString: string) {
+    this.boss = new PgBoss({
+      connectionString,
+      schema: 'pgboss',
+      max: 2,
+    });
+  }
+
+  async start(): Promise<void> {
+    await this.boss.start();
+  }
+
+  async send<TData>(queueName: string, data: TData, options?: JobOptions): Promise<string | null> {
+    // Convert our options to pg-boss format
+    return this.boss.send(queueName, data as object, {
+      startAfter: options?.startAfter,
+      retryLimit: options?.retryLimit,
+      // ... etc
+    });
+  }
+
+  // ... implement all IQueue methods
+}
+```
+
+#### 3. Main Entry Point (`index.ts`)
+
+Returns the abstracted queue:
+
+```typescript
+import { PgBossAdapter } from './pg-boss-adapter';
+import type { IQueue } from './queue.interface';
+
+let queue: IQueue | null = null;
+
+async function initializeQueue(): Promise<IQueue | null> {
+  // Create the adapter
+  queue = new PgBossAdapter(env.DB_STRING_CONNECTION);
+  await queue.start();
+  return queue;
+}
+
+export async function getQueue(): Promise<IQueue | null> {
+  await queuePromise;
+  return queue; // Returns IQueue, not PgBoss!
+}
+```
+
+### Using the Abstraction
+
+```typescript
+// ✅ GOOD: Use the interface
+import { getQueue } from '@/services/queue';
+import type { IQueue } from '@/services/queue';
+
+const queue: IQueue | null = await getQueue();
+await queue.send('my-job', { data: 'test' });
+
+// ❌ BAD: Use pg-boss directly
+import { PgBoss } from 'pg-boss';
+const boss = new PgBoss(...);
+await boss.send(...);
+```
+
+### Migrating to a Different Queue (Future)
+
+When you're ready to switch from pg-boss to Bull:
+
+**Step 1:** Create `bull-adapter.ts`
+
+```typescript
+import Bull from 'bull';
+import type { IQueue, JobHandler } from './queue.interface';
+
+export class BullAdapter implements IQueue {
+  private queues: Map<string, Bull.Queue> = new Map();
+
+  constructor(private redisUrl: string) {}
+
+  async start(): Promise<void> {
+    // Bull doesn't need explicit start
+  }
+
+  async createQueue(name: string): Promise<void> {
+    const queue = new Bull(name, this.redisUrl);
+    this.queues.set(name, queue);
+  }
+
+  async send<TData>(queueName: string, data: TData): Promise<string | null> {
+    const queue = this.queues.get(queueName);
+    const job = await queue?.add(data);
+    return job?.id.toString() || null;
+  }
+
+  async work<TData>(queueName: string, handler: JobHandler<TData>): Promise<string> {
+    const queue = this.queues.get(queueName);
+    queue?.process(async (job) => {
+      // Bull gives single job, our interface expects array
+      await handler([{
+        id: job.id.toString(),
+        data: job.data,
+        state: 'active',
+        createdOn: new Date(job.timestamp),
+      }]);
+    });
+    return queueName;
+  }
+
+  // ... implement remaining methods
+}
+```
+
+**Step 2:** Update `index.ts` (ONE LINE CHANGE!)
+
+```typescript
+// Before:
+import { PgBossAdapter } from './pg-boss-adapter';
+queue = new PgBossAdapter(env.DB_STRING_CONNECTION);
+
+// After:
+import { BullAdapter } from './bull-adapter';
+queue = new BullAdapter(env.REDIS_URL);
+```
+
+**That's it!** No changes needed anywhere else in your application! 🎉
+
+### Benefits
+
+```
+WITHOUT Abstraction:
+├─ 20 files directly import PgBoss
+├─ Switching queues = edit 20 files
+├─ Risk of bugs and inconsistencies
+└─ Time: 4-6 hours
+
+WITH Abstraction:
+├─ 20 files use IQueue interface
+├─ Switching queues = edit 1 file
+├─ Type-safe, consistent API
+└─ Time: 30 minutes
+```
+
+### Performance Impact
+
+**Question:** "Does the abstraction layer slow things down?"
+
+**Answer:** No! The overhead is negligible:
+
+```
+Direct pg-boss call:     100ms
+Through adapter:         100.001ms  (0.001ms overhead)
+Difference:             Unmeasurable in real-world use
+```
+
+The adapter is just a thin wrapper with method forwarding. No performance impact!
+
+### Testing Benefits
+
+Mock the interface for easy testing:
+
+```typescript
+class MockQueue implements IQueue {
+  private jobs: Map<string, any[]> = new Map();
+
+  async start(): Promise<void> {}
+  async stop(): Promise<void> {}
+
+  async send<TData>(queueName: string, data: TData): Promise<string> {
+    if (!this.jobs.has(queueName)) {
+      this.jobs.set(queueName, []);
+    }
+    this.jobs.get(queueName)!.push(data);
+    return 'mock-job-id';
+  }
+
+  // ... implement other methods
+}
+
+// In tests:
+const mockQueue = new MockQueue();
+await myService.queueJob(mockQueue); // Inject mock
+```
+
+### Decision Tree: Do You Need This?
+
+```
+Should you use the abstraction layer?
+
+Are you 100% sure you'll never switch from pg-boss?
+│
+├─ YES → Skip abstraction (YAGNI principle)
+│         Just use pg-boss directly
+│         You can always add it later!
+│
+└─ NO → Use abstraction
+          - You plan to scale
+          - You want Redis later
+          - You value flexibility
+```
+
+**For Your Project:** We implemented it because your roadmap mentioned potential Redis migration. But it's okay to skip if you're confident pg-boss will work long-term!
+
+---
+
 ## Summary & Key Takeaways
 
 ### What You Learned

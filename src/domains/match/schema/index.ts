@@ -1,4 +1,4 @@
-import { numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { index, numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Match = pgTable(
   'match',
@@ -19,21 +19,20 @@ export const T_Match = pgTable(
     stadium: text('stadium'),
     status: text('status').notNull(),
     tournamentMatch: text('tournament_match'),
+    lastCheckedAt: timestamp('last_checked_at'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  table => {
-    return {
-      pk: primaryKey({ columns: [table.externalId, table.provider] }),
-      indexes: {
-        statusIndex: ['status'],
-        tournamentRounds: ['tournamentId', 'roundSlug'],
-      },
-    };
-  }
+  table => ({
+    pk: primaryKey({ columns: [table.externalId, table.provider] }),
+    // Indexes for query performance
+    statusIdx: index('match_status_idx').on(table.status),
+    tournamentRoundsIdx: index('match_tournament_rounds_idx').on(table.tournamentId, table.roundSlug),
+    pollingIdx: index('match_polling_idx').on(table.status, table.date, table.lastCheckedAt),
+  })
 );
 
 export type DB_InsertMatch = typeof T_Match.$inferInsert;

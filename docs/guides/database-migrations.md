@@ -1,5 +1,7 @@
 # Database Migrations Guide
 
+NEVER ALTER ANY DATABASE FILE WITHOUT ASKING ME
+
 ## Overview
 
 This project uses Drizzle ORM for database migrations with full automation for production deployments. Migrations are automatically applied during CI/CD to ensure database and application code stay in sync.
@@ -127,6 +129,11 @@ yarn db:generate --name "descriptive_name"
 # Apply pending migrations
 yarn db:migrate
 
+# Drop a generated migration (BEFORE applying it)
+yarn db:drop
+# Use this to remove migrations from the journal if you generated one by mistake
+# or need to regenerate it. Only use on migrations that haven't been applied yet!
+
 # Reset database (development only)
 yarn db:reset
 
@@ -231,6 +238,17 @@ If a migration causes issues:
 - **Don't skip local testing**: Always test migrations locally
 - **Avoid large schema changes**: Break them into smaller migrations
 - **Don't bypass CI**: Let automated migrations run in CI/CD
+- **Don't apply and then drop**: Only use `yarn db:drop` on migrations that haven't been applied yet
+
+### 🔧 Fixing Mistakes
+
+**If you generated a migration with errors (BEFORE applying it):**
+1. Use `yarn db:drop` to remove it from the journal
+2. Fix your schema
+3. Regenerate with `yarn db:generate --name "correct_name"`
+
+**If you already applied a migration:**
+- Don't drop it! Create a new migration to fix the issue
 
 ## Troubleshooting
 

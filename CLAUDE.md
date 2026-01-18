@@ -37,6 +37,35 @@ current codebase
 - Understand multi-stage build processes and dependencies
 - Research tool-specific best practices and breaking changes
 
+## Task-Specific Guidelines (READ FIRST!)
+
+**Before starting ANY task, check this table for required reading:**
+
+| Task Type | Required Reading | Key Workflows | Commands |
+|-----------|------------------|---------------|----------|
+| **Database Migrations** | `/docs/guides/database-migrations.md` | Modify schema → Generate → Apply → Test | `yarn db:generate --name "description"`, `yarn db:migrate` |
+| **Database Multi-Step Operations** | `/docs/guides/database-transactions-guide.md` | Always use transactions for related operations | Use `db.transaction(async tx => {...})` |
+| **CI/CD & Deployment** | (Check GitHub Actions workflows) | Understand automated deployment flow | Review `.github/workflows/` |
+
+**Checklist When Starting a Task:**
+1. ✅ Check table above - does this task type have required reading?
+2. ✅ If YES → READ THE GUIDE FIRST, then ask user if ready to proceed
+3. ✅ If NO → Ask user: "Should I review any guides before proceeding?"
+4. ✅ Follow documented workflows exactly (don't improvise)
+5. ✅ Ask user to review your work before proceeding to next step
+
+**Example Flow:**
+```
+User: "Let's start with Phase 1, Task 1.1 - Database Migration"
+
+You (AI):
+1. "I see this is a database migration task."
+2. "Let me read /docs/guides/database-migrations.md first..."
+3. [Reads guide]
+4. "According to the guide, the workflow is: Modify Schema → Generate Migration → Apply Locally → Test"
+5. "Ready to proceed with this workflow?"
+```
+
 ## Planner Mode
 
 - Breakdown the feature into Phases and provide a clear plan of action.

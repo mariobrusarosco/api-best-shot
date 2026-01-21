@@ -8,8 +8,10 @@
  * 4. Tracking execution and updating lastCheckedAt timestamps
  */
 
+import { randomUUID } from 'crypto';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/matches';
+import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { retryMatchOperation } from '@/domains/data-provider/utils/retry';
 import { DB_SelectMatch } from '@/domains/match/schema';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
@@ -120,8 +122,8 @@ export class MatchUpdateOrchestratorService {
       throw new Error(`Tournament ${match.tournamentId} not found`);
     }
 
-    // Create unique request ID for tracking
-    const requestId = `scheduler-${Date.now()}-${match.externalId}`;
+    // Create unique request ID for tracking (must be valid UUID)
+    const requestId = randomUUID();
 
     // Execute update with retry logic
     const updatedMatch = await retryMatchOperation(async () => {
@@ -148,14 +150,47 @@ export class MatchUpdateOrchestratorService {
 
   /**
    * Update tournament standings
-   * TODO: Implement standings update service call
+   * Called when matches finish to ensure standings reflect latest results
    */
   private async updateTournamentStandings(tournamentId: string): Promise<void> {
     console.log(`[MatchUpdateOrchestrator] Updating standings for tournament: ${tournamentId}`);
 
-    // TODO: Call standings service here
-    // For now, just log that it should happen
-    console.log(`[MatchUpdateOrchestrator] Standings update for ${tournamentId} - TO BE IMPLEMENTED`);
+    // Fetch tournament data
+    const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
+
+    if (!tournament) {
+      console.error(`[MatchUpdateOrchestrator] Tournament ${tournamentId} not found, skipping standings update`);
+      return;
+    }
+
+    // Skip standings update for knockout-only tournaments (they don't have standings)
+    if (tournament.mode === 'knockout-only') {
+      console.log(
+        `[MatchUpdateOrchestrator] Skipping standings update for knockout-only tournament: ${tournament.label}`
+      );
+      return;
+    }
+
+    // Create unique request ID for tracking (must be valid UUID)
+    const requestId = randomUUID();
+
+    try {
+      // Execute standings update with retry logic
+      await retryMatchOperation(async () => {
+        const standingsService = new StandingsDataProviderService(this.scraper, requestId);
+        return await standingsService.update({
+          tournamentId,
+          baseUrl: tournament.baseUrl,
+          label: tournament.label,
+          provider: tournament.provider,
+        });
+      }, `Standings update: ${tournament.label}`);
+
+      console.log(`[MatchUpdateOrchestrator] Successfully updated standings for tournament: ${tournamentId}`);
+    } catch (error) {
+      // Don't throw - we don't want standings failures to break the match update process
+      console.error(`[MatchUpdateOrchestrator] Failed to update standings for tournament ${tournamentId}:`, error);
+    }
   }
 
   /**

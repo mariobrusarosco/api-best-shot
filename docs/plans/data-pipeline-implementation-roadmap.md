@@ -84,6 +84,7 @@ Automated match data updates via polling cron job.
 - [x] Create `updateSingleMatch()` method in `MatchesDataProviderService`
 - [x] Remove round-grouping logic from orchestrator (no longer needed!)
 - [x] Add standings update trigger when match status = "ended"
+- [x] Integrate `StandingsDataProviderService` into orchestrator with retry logic
 - [ ] Test with real match IDs
 
 **Why this task?** SofaScore now has match-specific endpoints! This eliminates ~90% of unnecessary scraping by updating individual matches instead of entire rounds.
@@ -92,15 +93,17 @@ Automated match data updates via polling cron job.
 - Added `getMatchData()` method to `BaseScraper` for direct API access
 - Created `updateSingleMatch()` method that fetches and updates individual matches
 - Orchestrator now processes matches one-by-one (not by round)
-- Standings updates trigger automatically when matches end
+- Standings updates trigger automatically when matches end (wrapped in retry logic)
+- Integrated `StandingsDataProviderService` for automatic standings refresh
 - ~90% reduction in unnecessary API calls!
 
 #### 2.3 Integration with Existing Services
-- [ ] Connect polling service to new `updateSingleMatch()` method
-- [ ] Update orchestrator to process matches individually (not by round)
-- [ ] Ensure execution jobs are created correctly
-- [ ] Verify S3 reports still upload
-- [ ] Test Slack notifications still work
+- [x] Connect polling service to new `updateSingleMatch()` method
+- [x] Update orchestrator to process matches individually (not by round)
+- [x] Ensure execution jobs are created correctly
+- [x] Verify S3 reports still upload
+- [x] Test Slack notifications still work
+- [x] BONUS: Add smart skip for knockout-only tournaments (prevents wasted retries)
 
 #### 2.4 Cron Job Setup (Railway)
 - [ ] Create `src/scheduler/cron-jobs.ts` entry point

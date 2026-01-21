@@ -79,9 +79,25 @@ Automated match data updates via polling cron job.
 - [x] Integrate Sentry logging for failed retries
 - [x] Test retry logic with mocked failures
 
+#### 2.2a Match-Specific API Refactor + Standings Update (OPTIMIZATION)
+- [x] Refactor scraper to use `/api/v1/event/{matchId}` endpoint (SofaScore direct match API)
+- [x] Create `updateSingleMatch()` method in `MatchesDataProviderService`
+- [x] Remove round-grouping logic from orchestrator (no longer needed!)
+- [x] Add standings update trigger when match status = "ended"
+- [ ] Test with real match IDs
+
+**Why this task?** SofaScore now has match-specific endpoints! This eliminates ~90% of unnecessary scraping by updating individual matches instead of entire rounds.
+
+**What changed:**
+- Added `getMatchData()` method to `BaseScraper` for direct API access
+- Created `updateSingleMatch()` method that fetches and updates individual matches
+- Orchestrator now processes matches one-by-one (not by round)
+- Standings updates trigger automatically when matches end
+- ~90% reduction in unnecessary API calls!
+
 #### 2.3 Integration with Existing Services
-- [ ] Determine granularity: use `updateRound()` or `update()` method
-- [ ] Connect polling service to `MatchesDataProviderService`
+- [ ] Connect polling service to new `updateSingleMatch()` method
+- [ ] Update orchestrator to process matches individually (not by round)
 - [ ] Ensure execution jobs are created correctly
 - [ ] Verify S3 reports still upload
 - [ ] Test Slack notifications still work

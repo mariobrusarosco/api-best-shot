@@ -106,11 +106,15 @@ Automated match data updates via polling cron job.
 - [x] BONUS: Add smart skip for knockout-only tournaments (prevents wasted retries)
 
 #### 2.4 Cron Job Setup (Railway)
-- [ ] Create `src/scheduler/cron-jobs.ts` entry point
-- [ ] Set up match polling cron (every 10 minutes)
-- [ ] Add environment variable: `MATCH_POLLING_ENABLED=true`
-- [ ] Configure Railway Procfile for scheduler process
-- [ ] Test cron execution locally with `node-cron`
+- [x] Install node-cron dependency
+- [x] Create `src/scheduler/cron-jobs.ts` entry point
+- [x] Set up match polling cron (every 10 minutes)
+- [x] Add environment variable: `MATCH_POLLING_ENABLED=true`
+- [x] Add `yarn scheduler` and `yarn scheduler:prod` commands
+- [x] Create Railway deployment guide (separate service approach)
+- [x] Implement graceful shutdown handlers
+- [x] Add multiple kill switch options (env var, manual stop, scale to zero)
+- [ ] Deploy to Railway as separate service (ready to deploy - see `/docs/guides/railway-scheduler-deployment.md`)
 
 ### Deliverable
 ✅ **Matches automatically update every 10 minutes** (THE BIG WIN!)

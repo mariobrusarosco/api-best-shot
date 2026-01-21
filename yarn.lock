@@ -3843,6 +3843,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node-cron@npm:^3.0.11":
+  version: 3.0.11
+  resolution: "@types/node-cron@npm:3.0.11"
+  checksum: a73f69bcca52a5f3b1671cfb00a8e4a1d150d0aef36a611564a2f94e66b6981bade577e267ceeeca6fcee241768902d55eb8cf3a81f9ef4ed767a23112fdb16d
+  languageName: node
+  linkType: hard
+
 "@types/node-fetch@npm:^2.6.4":
   version: 2.6.13
   resolution: "@types/node-fetch@npm:2.6.13"
@@ -4356,6 +4363,7 @@ __metadata:
     "@types/lodash": ^4.17.13
     "@types/mime-types": ^2.1.4
     "@types/node": ^20.12.8
+    "@types/node-cron": ^3.0.11
     "@types/supertest": ^6.0.3
     "@typescript-eslint/eslint-plugin": 6.21.0
     "@typescript-eslint/parser": 6.21.0
@@ -4381,6 +4389,7 @@ __metadata:
     lint-staged: 15.2.0
     lodash: ^4.17.21
     mime-types: ^2.1.35
+    node-cron: ^4.2.1
     nodemon: ^2.0.19
     openai: ^4.89.0
     pg-boss: ^12.5.4
@@ -8458,6 +8467,13 @@ __metadata:
   dependencies:
     semver: ^7.3.5
   checksum: b86021c748b316b31efda4f1f4a74db9fd411b0ae63fa50be5b0247546285ae7e31c737e92013478877eaf39a3fd0a06072d48b1cace21ad629862373410416f
+  languageName: node
+  linkType: hard
+
+"node-cron@npm:^4.2.1":
+  version: 4.2.1
+  resolution: "node-cron@npm:4.2.1"
+  checksum: 961e18a452f2d0cd12cde1dfa5897d788ebbba259861ceca6b717ab80a0962f916be10584381647d6e20415620c17bbdc9238b3d601c7675afcb6c157fed9d97
   languageName: node
   linkType: hard
 

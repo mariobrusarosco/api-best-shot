@@ -60,9 +60,9 @@ Automated match data updates via polling cron job.
 ### Tasks
 
 #### 2.1 Match Polling Service
-- [ ] Create `src/domains/scheduler/` domain
-- [ ] Create `src/domains/scheduler/services/match-polling.service.ts`
-- [ ] Implement polling query:
+- [x] Create `src/domains/scheduler/` domain
+- [x] Create `src/domains/scheduler/services/match-polling.service.ts`
+- [x] Implement polling query:
   ```sql
   SELECT * FROM match
   WHERE status = 'open'
@@ -71,13 +71,13 @@ Automated match data updates via polling cron job.
   ORDER BY date ASC
   LIMIT 50;
   ```
-- [ ] Add logic to update `last_checked_at` after scraping
+- [x] Add logic to update `last_checked_at` after scraping
 
 #### 2.2 Retry Logic with Backoff
-- [ ] Create `src/utils/retry-with-backoff.ts` helper
-- [ ] Add retry wrapper around scraping calls (3 attempts: 30s, 60s, 120s)
-- [ ] Integrate Sentry logging for failed retries
-- [ ] Test retry logic with mocked failures
+- [x] Create `src/utils/retry-with-backoff.ts` helper
+- [x] Add retry wrapper around scraping calls (3 attempts: 30s, 60s, 120s)
+- [x] Integrate Sentry logging for failed retries
+- [x] Test retry logic with mocked failures
 
 #### 2.3 Integration with Existing Services
 - [ ] Determine granularity: use `updateRound()` or `update()` method

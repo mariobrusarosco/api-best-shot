@@ -135,10 +135,13 @@ Ensure system reliability before production rollout.
 
 ### Tasks
 
-#### 4.1 Manual Trigger for Testing
-- [ ] Create POST `/api/v2/admin/scheduler/trigger-match-polling` (for testing/debugging)
-- [ ] Add admin middleware protection
-- [ ] Test manual trigger works correctly
+#### 3.1 Manual Trigger for Testing
+- [x] Create POST `/api/v2/admin/scheduler/trigger-match-polling` (for testing/debugging)
+- [x] Create GET `/api/v2/admin/scheduler/stats` (for monitoring)
+- [x] Add admin middleware protection
+- [x] Create test script for easy testing (`test-scheduler-api.ts`)
+- [x] Document API endpoints (see `/docs/guides/scheduler-admin-api.md`)
+- [ ] Test manual trigger works correctly (ready to test - run `npx ts-node test-scheduler-api.ts`)
 
 #### 3.2 Testing
 - [ ] Unit tests for polling queries

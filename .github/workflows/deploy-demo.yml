@@ -46,8 +46,13 @@ jobs:
       - name: Install Railway CLI
         run: yarn dlx @railway/cli --version
 
-      - name: Deploy to Railway Demo
+      - name: Deploy API to Railway Demo
         run: yarn dlx @railway/cli up --service api-best-shot
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEMO }}
+
+      - name: Deploy Scheduler to Railway Demo
+        run: yarn dlx @railway/cli up --service api-best-shot-scheduler
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEMO }}
 

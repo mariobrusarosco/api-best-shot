@@ -579,4 +579,150 @@ export class MatchesDataProviderService {
       throw error;
     }
   }
+
+  /**
+   * Update a single match using SofaScore's match-specific API
+   * Much more efficient than updating entire rounds
+   */
+  public async updateSingleMatch(payload: {
+    matchExternalId: string;
+    tournamentId: string;
+    roundSlug: string;
+    label: string;
+    provider: string;
+  }) {
+    // Create execution tracking
+    this.execution = new DataProviderExecution({
+      requestId: this.requestId,
+      tournamentId: payload.tournamentId,
+      operationType: DataProviderExecutionOperationType.MATCHES_UPDATE,
+    });
+    this.reporter.setTournamentInfo({
+      label: payload.label,
+      tournamentId: payload.tournamentId,
+      provider: payload.provider,
+    });
+
+    try {
+      // ------ FETCH SINGLE MATCH FROM API ------
+      this.reporter.addOperation('scraping', 'fetch_single_match', 'started', {
+        matchExternalId: payload.matchExternalId,
+      });
+
+      const rawMatchData = await this.scraper.getMatchData(payload.matchExternalId);
+
+      if (!rawMatchData?.event) {
+        this.reporter.addOperation('scraping', 'fetch_single_match', 'failed', {
+          error: 'No event data returned from API',
+          matchExternalId: payload.matchExternalId,
+        });
+        throw new Error(`No event data for match ${payload.matchExternalId}`);
+      }
+
+      this.reporter.addOperation('scraping', 'fetch_single_match', 'completed', {
+        matchExternalId: payload.matchExternalId,
+      });
+
+      // ------ MAP TO DB SCHEMA ------
+      const match = this.mapSingleMatch(rawMatchData.event, payload.tournamentId, payload.roundSlug);
+
+      // ------ UPDATE IN DATABASE ------
+      const updatedMatches = await this.updateOnDatabase([match]);
+
+      // ------ UPLOAD REPORT ------
+      const reportUploadResult = await this.reporter.createFileAndUpload();
+
+      // ------ GENERATE REPORT SUMMARY ------
+      const reportSummaryResult = this.reporter.getSummary();
+
+      // ------ MARK EXECUTION AS COMPLETED ------
+      await this.execution?.complete({
+        reportFileKey: reportUploadResult?.s3Key,
+        reportFileUrl: reportUploadResult?.s3Url,
+        tournamentLabel: payload.label,
+        summary: {
+          tournamentId: payload.tournamentId,
+          tournamentLabel: payload.label,
+          provider: payload.provider,
+          matchExternalId: payload.matchExternalId,
+          matchesCount: 1,
+          ...reportSummaryResult,
+        },
+      });
+
+      return updatedMatches[0];
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+
+      // ------ GENERATE REPORT EVEN ON FAILURE ------
+      let reportUploadResult: { s3Key?: string; s3Url?: string } = {};
+      try {
+        reportUploadResult = await this.reporter.createFileAndUpload();
+      } catch (reportError) {
+        console.error('Failed to upload report file:', reportError);
+        Profiling.error({
+          error: reportError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'MATCHES_DATA_PROVIDER_UPDATE_SINGLE_MATCH_report_upload_failed',
+        });
+      }
+
+      // ------ MARK EXECUTION AS FAILED ------
+      const reportSummaryResult = this.reporter.getSummary();
+      try {
+        await this.execution?.failure({
+          reportFileKey: reportUploadResult.s3Key,
+          reportFileUrl: reportUploadResult.s3Url,
+          tournamentLabel: payload.label,
+          error: errorMessage,
+          summary: {
+            error: errorMessage,
+            matchExternalId: payload.matchExternalId,
+            ...reportSummaryResult,
+          },
+        });
+      } catch (notificationError) {
+        console.error('Failed to send failure notification:', notificationError);
+        Profiling.error({
+          error: notificationError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'MATCHES_DATA_PROVIDER_UPDATE_SINGLE_MATCH_notification_failed',
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Map a single match from SofaScore API response to DB schema
+   */
+  private mapSingleMatch(
+    eventData: {
+      id: unknown;
+      homeTeam: { id: unknown };
+      homeScore?: { display: unknown; penalties: unknown };
+      awayTeam: { id: unknown };
+      awayScore?: { display: unknown; penalties: unknown };
+      startTimestamp: number;
+      status: { type: string };
+    },
+    tournamentId: string,
+    roundSlug: string
+  ): DB_InsertMatch {
+    return {
+      externalId: safeString(eventData.id),
+      provider: 'sofascore',
+      tournamentId,
+      roundSlug,
+      homeTeamId: safeString(eventData.homeTeam.id),
+      homeScore: safeString(eventData.homeScore?.display, null),
+      homePenaltiesScore: safeString(eventData.homeScore?.penalties, null),
+      awayTeamId: safeString(eventData.awayTeam.id),
+      awayScore: safeString(eventData.awayScore?.display, null),
+      awayPenaltiesScore: safeString(eventData.awayScore?.penalties, null),
+      date: safeSofaDate(eventData.startTimestamp * 1000),
+      status: this.getMatchStatus(eventData),
+    } as DB_InsertMatch;
+  }
 }

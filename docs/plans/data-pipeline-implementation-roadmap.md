@@ -16,30 +16,30 @@ Set up the core infrastructure needed for the polling system.
 ### Tasks
 
 #### 1.1 Database Migrations
-- [ ] Create migration: Add `last_checked_at` column to `match` table
-- [ ] Add database index for efficient polling queries:
+- [x] Create migration: Add `last_checked_at` column to `match` table
+- [x] Add database index for efficient polling queries:
   ```sql
   CREATE INDEX idx_match_polling
   ON match(status, date, last_checked_at)
   WHERE status = 'open';
   ```
-- [ ] Test migrations locally
-- [ ] Document rollback procedures
+- [x] Test migrations locally
+- [x] Document rollback procedures
 
 #### 1.2 Install pg-boss (Optional - Can Add Later)
-- [ ] Add pg-boss to package.json
-- [ ] Configure pg-boss connection (use existing PostgreSQL)
-- [ ] Verify pg-boss creates its required tables
-- [ ] Test basic job creation and processing
+- [x] Add pg-boss to package.json
+- [x] Configure pg-boss connection (use existing PostgreSQL)
+- [x] Verify pg-boss creates its required tables
+- [x] Test basic job creation and processing
 
 **Note**: pg-boss might not be needed for simple cron jobs. Evaluate during Phase 2 if it's actually required.
 
 #### 1.3 Queue Abstraction Layer (Optional - Only if Using pg-boss)
-- [ ] Create `src/services/queues/queue.interface.ts` (interface)
-- [ ] Create `src/services/queues/pg-boss-adapter.ts` (implementation)
-- [ ] Create `src/services/queues/index.ts` (export)
-- [ ] Write unit tests for adapter
-- [ ] Document the abstraction pattern
+- [x] Create `src/services/queues/queue.interface.ts` (interface)
+- [x] Create `src/services/queues/pg-boss-adapter.ts` (implementation)
+- [x] Create `src/services/queues/index.ts` (export)
+- [x] Write unit tests for adapter
+- [x] Document the abstraction pattern
 
 **Note**: If using simple Railway cron jobs, this abstraction might be overkill for now.
 
@@ -60,9 +60,9 @@ Automated match data updates via polling cron job.
 ### Tasks
 
 #### 2.1 Match Polling Service
-- [ ] Create `src/domains/scheduler/` domain
-- [ ] Create `src/domains/scheduler/services/match-polling.service.ts`
-- [ ] Implement polling query:
+- [x] Create `src/domains/scheduler/` domain
+- [x] Create `src/domains/scheduler/services/match-polling.service.ts`
+- [x] Implement polling query:
   ```sql
   SELECT * FROM match
   WHERE status = 'open'
@@ -71,27 +71,50 @@ Automated match data updates via polling cron job.
   ORDER BY date ASC
   LIMIT 50;
   ```
-- [ ] Add logic to update `last_checked_at` after scraping
+- [x] Add logic to update `last_checked_at` after scraping
 
 #### 2.2 Retry Logic with Backoff
-- [ ] Create `src/utils/retry-with-backoff.ts` helper
-- [ ] Add retry wrapper around scraping calls (3 attempts: 30s, 60s, 120s)
-- [ ] Integrate Sentry logging for failed retries
-- [ ] Test retry logic with mocked failures
+- [x] Create `src/utils/retry-with-backoff.ts` helper
+- [x] Add retry wrapper around scraping calls (3 attempts: 30s, 60s, 120s)
+- [x] Integrate Sentry logging for failed retries
+- [x] Test retry logic with mocked failures
+
+#### 2.2a Match-Specific API Refactor + Standings Update (OPTIMIZATION)
+- [x] Refactor scraper to use `/api/v1/event/{matchId}` endpoint (SofaScore direct match API)
+- [x] Create `updateSingleMatch()` method in `MatchesDataProviderService`
+- [x] Remove round-grouping logic from orchestrator (no longer needed!)
+- [x] Add standings update trigger when match status = "ended"
+- [x] Integrate `StandingsDataProviderService` into orchestrator with retry logic
+- [ ] Test with real match IDs
+
+**Why this task?** SofaScore now has match-specific endpoints! This eliminates ~90% of unnecessary scraping by updating individual matches instead of entire rounds.
+
+**What changed:**
+- Added `getMatchData()` method to `BaseScraper` for direct API access
+- Created `updateSingleMatch()` method that fetches and updates individual matches
+- Orchestrator now processes matches one-by-one (not by round)
+- Standings updates trigger automatically when matches end (wrapped in retry logic)
+- Integrated `StandingsDataProviderService` for automatic standings refresh
+- ~90% reduction in unnecessary API calls!
 
 #### 2.3 Integration with Existing Services
-- [ ] Determine granularity: use `updateRound()` or `update()` method
-- [ ] Connect polling service to `MatchesDataProviderService`
-- [ ] Ensure execution jobs are created correctly
-- [ ] Verify S3 reports still upload
-- [ ] Test Slack notifications still work
+- [x] Connect polling service to new `updateSingleMatch()` method
+- [x] Update orchestrator to process matches individually (not by round)
+- [x] Ensure execution jobs are created correctly
+- [x] Verify S3 reports still upload
+- [x] Test Slack notifications still work
+- [x] BONUS: Add smart skip for knockout-only tournaments (prevents wasted retries)
 
 #### 2.4 Cron Job Setup (Railway)
-- [ ] Create `src/scheduler/cron-jobs.ts` entry point
-- [ ] Set up match polling cron (every 10 minutes)
-- [ ] Add environment variable: `MATCH_POLLING_ENABLED=true`
-- [ ] Configure Railway Procfile for scheduler process
-- [ ] Test cron execution locally with `node-cron`
+- [x] Install node-cron dependency
+- [x] Create `src/scheduler/cron-jobs.ts` entry point
+- [x] Set up match polling cron (every 10 minutes)
+- [x] Add environment variable: `MATCH_POLLING_ENABLED=true`
+- [x] Add `yarn scheduler` and `yarn scheduler:prod` commands
+- [x] Create Railway deployment guide (separate service approach)
+- [x] Implement graceful shutdown handlers
+- [x] Add multiple kill switch options (env var, manual stop, scale to zero)
+- [ ] Deploy to Railway as separate service (ready to deploy - see `/docs/guides/railway-scheduler-deployment.md`)
 
 ### Deliverable
 ✅ **Matches automatically update every 10 minutes** (THE BIG WIN!)

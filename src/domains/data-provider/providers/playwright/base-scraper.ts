@@ -206,6 +206,39 @@ export class BaseScraper {
     return JSON.parse(jsonText as string);
   }
 
+  /**
+   * Fetch match data directly from SofaScore API
+   * Uses the match-specific endpoint: /api/v1/event/{matchId}
+   * @param matchExternalId The SofaScore match ID (external ID)
+   * @returns Match data from the API
+   */
+  public async getMatchData(matchExternalId: string) {
+    if (!this.page) {
+      throw new Error('Page not initialized');
+    }
+
+    const apiUrl = `https://www.sofascore.com/api/v1/event/${matchExternalId}`;
+
+    try {
+      const data = await this.page.evaluate(async url => {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`API returned status ${response.status}`);
+        }
+        return await response.json();
+      }, apiUrl);
+
+      return data;
+    } catch (error) {
+      Profiling.error({
+        source: 'BaseScraper.getMatchData',
+        error,
+        data: { matchExternalId, apiUrl },
+      });
+      throw error;
+    }
+  }
+
   public async fetchAsset(payload: FetchAndStoreAssetPayload) {
     const { logoUrl, filename } = payload;
 

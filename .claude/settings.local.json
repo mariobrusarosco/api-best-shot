@@ -108,7 +108,9 @@
       "WebFetch(domain:productionresultssa10.blob.core.windows.net)",
       "Bash(yarn:*)",
       "Bash(git config:*)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "mcp__playwright__browser_network_requests",
+      "mcp__playwright__browser_evaluate"
     ],
     "deny": []
   }

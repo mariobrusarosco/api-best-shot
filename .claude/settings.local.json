@@ -110,7 +110,12 @@
       "Bash(git config:*)",
       "Bash(gh run list:*)",
       "mcp__playwright__browser_network_requests",
-      "mcp__playwright__browser_evaluate"
+      "mcp__playwright__browser_evaluate",
+      "Bash(railway status:*)",
+      "Bash(railway link:*)",
+      "Bash(railway list:*)",
+      "Bash(railway service:*)",
+      "Bash(railway add:*)"
     ],
     "deny": []
   }

@@ -1,29 +1,10 @@
 import { Request, Response } from 'express';
 import { SERVICES_LEAGUE } from '../services';
-import { SERVICES_PERFORMANCE_V2 } from '@/domains/performance/services';
+
 import { Utils } from '@/domains/auth/utils';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
-import { isLeagueParticipant } from '../utils';
 import { ErrorMapper } from '../error-handling/mapper';
-
-type GetLeagueStandingsParams = {
-  leagueId: string;
-};
-
-const getLeagueStandings = async (req: Request<GetLeagueStandingsParams>, res: Response) => {
-  const { leagueId } = req.params;
-  const standings = await SERVICES_LEAGUE.getLeagueStandings(leagueId);
-  const lastUpdated = await SERVICES_LEAGUE.getLeaguePerformanceLastUpdated(leagueId);
-
-  return res.status(200).send({ standings, lastUpdated });
-};
-
-const updateLeaguePerformance = async (req: Request, res: Response) => {
-  const { leagueId } = req.params;
-  const performance = await SERVICES_PERFORMANCE_V2.league.updateLeaguePerformance(leagueId);
-
-  return res.status(200).send(performance);
-};
+import { isLeagueParticipant } from '../utils';
 
 const getLeagues = async (req: Request, res: Response) => {
   try {
@@ -118,8 +99,6 @@ const updateLeagueTournaments = async (req: Request, res: Response) => {
 };
 
 export const API_LEAGUE = {
-  getLeagueStandings,
-  updateLeaguePerformance,
   getLeagues,
   createLeague,
   inviteToLeague,

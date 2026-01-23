@@ -1,8 +1,8 @@
 import { Utils } from '@/domains/auth/utils';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
+import { ApiError } from '@/domains/shared/error-handling/types';
 import { Request, Response } from 'express';
 import { SERVICES_TOURNAMENT } from '../services';
-import { ApiError } from '@/domains/shared/error-handling/types';
 
 const getAllTournaments = async (_: Request, res: Response) => {
   try {
@@ -41,21 +41,6 @@ const setupTournament = async (req: Request, res: Response) => {
   } catch (error: unknown) {
     const apiError = error as ApiError;
     console.error('[TOURNAMENT - setupTournament]', apiError);
-    return res
-      .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
-      .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
-  }
-};
-
-const getTournamentPerformanceForMember = async (req: Request, res: Response) => {
-  try {
-    const memberId = Utils.getAuthenticatedUserId(req, res);
-    const { tournamentId } = req.params;
-    const performance = await SERVICES_TOURNAMENT.getTournamentPerformanceForMember(memberId, tournamentId);
-    return res.status(200).send(performance);
-  } catch (error: unknown) {
-    const apiError = error as ApiError;
-    console.error('[TOURNAMENT - getTournamentPerformanceForMember]', apiError);
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
@@ -145,7 +130,7 @@ export const API_TOURNAMENT = {
   getAllTournaments,
   getTournamentScore,
   setupTournament,
-  getTournamentPerformanceForMember,
+
   getMatchesWithNullGuess,
   getTournamentDetails,
   getTournamentRounds,

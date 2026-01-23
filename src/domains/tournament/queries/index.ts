@@ -1,6 +1,6 @@
 import { T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
-import { T_TournamentPerformance } from '@/domains/performance/schema';
+
 import { DatabaseError } from '@/domains/shared/error-handling/database';
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import {
@@ -10,7 +10,6 @@ import {
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
 import db from '@/services/database';
-import Profiling from '@/services/profiling';
 import { and, eq, sql } from 'drizzle-orm';
 import { TournamentWithTypedMode } from '../typing';
 
@@ -85,26 +84,6 @@ const knockoutRounds = async (tournamentId: string) => {
   }
 };
 
-const checkOnboardingStatus = async (memberId: string, tournamentId: string) => {
-  try {
-    const [tournamentPerformance] = await db
-      .select()
-      .from(T_TournamentPerformance)
-      .where(
-        and(eq(T_TournamentPerformance.tournamentId, tournamentId), eq(T_TournamentPerformance.memberId, memberId))
-      );
-
-    return !!tournamentPerformance;
-  } catch (error: unknown) {
-    const dbError = error as DatabaseError;
-    Profiling.error({
-      source: 'TOURNAMENT_QUERIES_checkOnboardingStatus',
-      error: dbError,
-    });
-    return false;
-  }
-};
-
 const getTournamentMatches = async (tournamentId: string) => {
   try {
     return db.select().from(T_Match).where(eq(T_Match.tournamentId, tournamentId));
@@ -141,25 +120,6 @@ const getMatchesWithNullGuess = async (memberId: string, tournamentId: string, r
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
     console.error('[TournamentQueries] - [getMatchesWithNullGuess]', dbError);
-    throw error;
-  }
-};
-
-const createTournamentPerformance = async (memberId: string, tournamentId: string) => {
-  try {
-    const [performance] = await db
-      .insert(T_TournamentPerformance)
-      .values({
-        memberId,
-        tournamentId,
-        points: String(0),
-      })
-      .returning();
-
-    return performance;
-  } catch (error: unknown) {
-    const dbError = error as DatabaseError;
-    console.error('[TournamentQueries] - [createTournamentPerformance]', dbError);
     throw error;
   }
 };
@@ -241,11 +201,11 @@ export const QUERIES_TOURNAMENT = {
   allTournaments,
   tournament,
   knockoutRounds,
-  checkOnboardingStatus,
+
   getTournamentMatches,
   getTournamentGuesses,
   getMatchesWithNullGuess,
-  createTournamentPerformance,
+
   getTournamentStandings,
   createTournament,
   upsertTournamentStandings,

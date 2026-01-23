@@ -1,6 +1,6 @@
 import { T_Guess } from '@/domains/guess/schema';
 import { T_League, T_LeagueRole, T_LeagueTournament } from '@/domains/league/schema';
-import { T_LeaguePerformance, T_TournamentPerformance } from '@/domains/performance/schema';
+
 import db from '@/services/database';
 
 /**
@@ -16,9 +16,6 @@ export const MaintenanceService = {
   resetUserActivity: async (): Promise<void> => {
     await db.transaction(async tx => {
       // 1. Delete Performances (Leaf nodes, depend on members/leagues/tournaments)
-      // Note: T_TournamentPerformance might be defined in multiple places, check import
-      await tx.delete(T_TournamentPerformance);
-      await tx.delete(T_LeaguePerformance);
 
       // 2. Delete Guesses (Depends on matches/members)
       await tx.delete(T_Guess);

@@ -43,6 +43,13 @@
       "when": 1768750036219,
       "tag": "0005_add_last_checked_at_and_polling_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1769127375692,
+      "tag": "0006_lyrical_tinkerer",
+      "breakpoints": true
     }
   ]
 }

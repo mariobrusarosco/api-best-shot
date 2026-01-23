@@ -1,43 +1,5 @@
-import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
-import { QUERIES_LEAGUE } from '../queries';
 import { ErrorMapper } from '../error-handling/mapper';
-
-const getLeagueStandings = async (leagueId: string) => {
-  const query = await QUERIES_PERFORMANCE.league.getPerformance(leagueId);
-
-  const standings = query.reduce(
-    (
-      acc: Record<string, { id: string; logo: string; members: { member: string; points: string }[] }>,
-      tournament: (typeof query)[number]
-    ) => {
-      const id = tournament.id || '';
-      const logo = tournament.logo || '';
-      const points = tournament.points || '';
-      const member = tournament.member || '';
-
-      if (id && !acc[id]) {
-        acc[id] = {
-          id,
-          logo: logo,
-          members: [],
-        };
-      }
-
-      if (tournament.member && tournament.points) {
-        acc[id].members.push({ member: member as string, points: points as string });
-      }
-      return acc;
-    },
-    {}
-  );
-
-  return standings;
-};
-
-const getLeaguePerformanceLastUpdated = async (leagueId: string) => {
-  const query = await QUERIES_PERFORMANCE.league.getPerformanceLastUpdated(leagueId);
-  return query?.updatedAt;
-};
+import { QUERIES_LEAGUE } from '../queries';
 
 const getMemberLeagues = async (memberId: string) => {
   return QUERIES_LEAGUE.getMemberLeagues(memberId);
@@ -56,12 +18,6 @@ const createLeague = async (data: { label: string; description: string; founderI
     role: 'ADMIN',
   });
 
-  await QUERIES_LEAGUE.createLeaguePerformance({
-    leagueId: league.id,
-    memberId: data.founderId,
-    points: '0',
-  });
-
   return league;
 };
 
@@ -76,12 +32,6 @@ const inviteToLeague = async (data: { leagueId: string; guestId: string }) => {
     leagueId: data.leagueId,
     memberId: data.guestId,
     role: 'GUEST',
-  });
-
-  await QUERIES_LEAGUE.createLeaguePerformance({
-    leagueId: data.leagueId,
-    memberId: data.guestId,
-    points: '0',
   });
 
   return true;
@@ -124,8 +74,6 @@ const updateLeagueTournaments = async (updateInput: { leagueId: string; tourname
 };
 
 export const SERVICES_LEAGUE = {
-  getLeagueStandings,
-  getLeaguePerformanceLastUpdated,
   getMemberLeagues,
   createLeague,
   inviteToLeague,

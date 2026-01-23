@@ -26,12 +26,11 @@
  * - No other exports allowed from this file
  */
 
-import { QUERIES_TOURNAMENT } from '../queries';
-import { DB_InsertGuess } from '@/domains/guess/schema';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
+import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
 import db from '@/services/database';
-import { T_Guess } from '@/domains/guess/schema';
-import { QUERIES_PERFORMANCE } from '@/domains/performance/queries';
+import { QUERIES_TOURNAMENT } from '../queries';
+
 import { DB_InsertTournament } from '../schema';
 
 const getAllTournaments = async () => {
@@ -67,23 +66,8 @@ const setupTournament = async (memberId: string, tournamentId: string) => {
   );
 
   await db.insert(T_Guess).values(guessesToInsert);
-  await QUERIES_TOURNAMENT.createTournamentPerformance(memberId, tournamentId);
 
   return true;
-};
-
-const getTournamentPerformanceForMember = async (memberId: string, tournamentId: string) => {
-  const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
-  if (!tournament) {
-    throw new Error('Tournament not found');
-  }
-
-  const performance = await QUERIES_PERFORMANCE.tournament.getPerformance(memberId, tournamentId);
-  if (!performance) {
-    throw new Error('Performance not found');
-  }
-
-  return performance;
 };
 
 const getMatchesWithNullGuess = async (memberId: string, tournamentId: string, round: string) => {
@@ -99,7 +83,8 @@ const getKnockoutRounds = async (tournamentId: string) => {
 };
 
 const checkOnboardingStatus = async (memberId: string, tournamentId: string) => {
-  return QUERIES_TOURNAMENT.checkOnboardingStatus(memberId, tournamentId);
+  const guesses = await QUERIES_TOURNAMENT.getTournamentGuesses(memberId, tournamentId);
+  return guesses.length > 0;
 };
 
 const getTournamentStandings = async (tournamentId: string) => {
@@ -143,7 +128,7 @@ export const SERVICES_TOURNAMENT = {
   getAllTournaments,
   getTournamentScore,
   setupTournament,
-  getTournamentPerformanceForMember,
+
   getMatchesWithNullGuess,
   getTournamentDetails,
   getKnockoutRounds,

@@ -1,6 +1,6 @@
 import { T_League, T_LeagueRole, T_LeagueTournament } from '@/domains/league/schema';
 import { T_Member } from '@/domains/member/schema';
-import { T_LeaguePerformance } from '@/domains/performance/schema';
+
 import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { and, eq, sql } from 'drizzle-orm';
@@ -43,12 +43,6 @@ const createLeagueRole = async (data: { leagueId: string; memberId: string; role
   const [role] = await db.insert(T_LeagueRole).values(data).returning();
 
   return role;
-};
-
-const createLeaguePerformance = async (data: { leagueId: string; memberId: string; points: string }) => {
-  const [performance] = await db.insert(T_LeaguePerformance).values(data).returning();
-
-  return performance;
 };
 
 const getMemberById = async (memberId: string) => {
@@ -98,7 +92,7 @@ export const QUERIES_LEAGUE = {
   getMemberLeagues,
   createLeague,
   createLeagueRole,
-  createLeaguePerformance,
+
   getMemberById,
   getLeagueDetails,
   getLeagueTournaments,

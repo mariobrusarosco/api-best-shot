@@ -23,7 +23,7 @@ current codebase.
 - Breakdown Phases into small tasks and provide a clear plan of action.
 - Consider break tasks into subtasks.
 - Create a `.md` file for the plan. Store in the `/docs/plans` folder.
-- Fprmat
+- Format:
 
 ```
 # Phase 1

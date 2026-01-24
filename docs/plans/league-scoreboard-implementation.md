@@ -92,7 +92,7 @@ Implement the "Virtual League" views and the "Tick-Tock" rank movement logic.
 
 ### Tasks
 
-#### Task 4.1 - League Processor (The Filter) []
+#### Task 4.1 - League Processor (The Filter) [x]
 
 - [ ] Implement `refreshLeagueRanking(leagueId, tournamentId)`:
   - **Snapshot:** `RENAME league:{id}:leaderboard` -> `league:{id}:leaderboard:prev`.

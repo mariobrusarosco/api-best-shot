@@ -50,4 +50,27 @@ export const ScoreboardService = {
       await pipeline.exec();
     }
   },
+
+  /**
+   * Generates the "Virtual League" view by intersecting Master Scores with League Members.
+   * Snapshots the previous state to allow Rank Movement calculation.
+   */
+  async refreshLeagueRanking(leagueId: string, tournamentId: string): Promise<void> {
+    const currentKey = `league:${leagueId}:leaderboard`;
+    const prevKey = `league:${leagueId}:leaderboard:prev`;
+    const masterKey = `tournament:${tournamentId}:master_scores`;
+    const membersKey = `league:${leagueId}:members`;
+
+    // 1. Snapshot: Move current -> prev
+    // We only rename if it exists, otherwise it's the first run (no history).
+    const exists = await redis.exists(currentKey);
+    if (exists) {
+      await redis.rename(currentKey, prevKey);
+    }
+
+    // 2. Intersection: Create new current
+    // ZINTERSTORE destination numkeys key1 key2 ...
+    // This efficiently filters the Master Scoreboard to show ONLY members of this league.
+    await redis.zinterstore(currentKey, 2, masterKey, membersKey);
+  },
 };

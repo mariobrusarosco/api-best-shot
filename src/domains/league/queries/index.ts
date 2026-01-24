@@ -87,6 +87,14 @@ const updateLeagueTournaments = async (updateInput: { leagueId: string; tourname
   return result;
 };
 
+const getMemberLeagueRole = async (memberId: string, leagueId: string) => {
+  const [role] = await db
+    .select()
+    .from(T_LeagueRole)
+    .where(and(eq(T_LeagueRole.memberId, memberId), eq(T_LeagueRole.leagueId, leagueId)));
+  return role;
+};
+
 export const QUERIES_LEAGUE = {
   selectLeague,
   getMemberLeagues,
@@ -97,4 +105,5 @@ export const QUERIES_LEAGUE = {
   getLeagueDetails,
   getLeagueTournaments,
   updateLeagueTournaments,
+  getMemberLeagueRole,
 };

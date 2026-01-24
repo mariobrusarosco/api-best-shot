@@ -2,6 +2,7 @@ import { QUERIES_GUESS } from '@/domains/guess/queries';
 import { runGuessAnalysis } from '@/domains/guess/services/guess-analysis-v2';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import { redis } from '@/services/redis/client';
+import { chunk } from 'lodash';
 
 export const ScoreboardService = {
   /**
@@ -72,5 +73,71 @@ export const ScoreboardService = {
     // ZINTERSTORE destination numkeys key1 key2 ...
     // This efficiently filters the Master Scoreboard to show ONLY members of this league.
     await redis.zinterstore(currentKey, 2, masterKey, membersKey);
+  },
+
+  /**
+   * Retrieves the leaderboard for a specific league with pagination.
+   * Optionally returns the requesting user's specific rank and movement.
+   */
+  async getLeagueLeaderboard(leagueId: string, page: number = 1, limit: number = 25, memberId?: string) {
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+    const currentKey = `league:${leagueId}:leaderboard`;
+    const prevKey = `league:${leagueId}:leaderboard:prev`;
+
+    // 1. Fetch Page Data
+    // Returns: ["memberId1", "score1", "memberId2", "score2", ...]
+    const rawData = await redis.zrevrange(currentKey, start, end, 'WITHSCORES');
+
+    // Parse using lodash chunk for cleaner reading
+    const leaderboard = chunk(rawData, 2).map(([id, score], index) => ({
+      memberId: id,
+      points: Number(score),
+      rank: start + index + 1,
+    }));
+
+    // 2. Fetch "My Rank" & Movement
+    let myStats = null;
+    if (memberId) {
+      const [currentRank, prevRank, points] = await Promise.all([
+        redis.zrevrank(currentKey, memberId),
+        redis.zrevrank(prevKey, memberId),
+        redis.zscore(currentKey, memberId),
+      ]);
+
+      if (currentRank !== null) {
+        // Redis ranks are 0-indexed
+        const displayRank = currentRank + 1;
+        let movement = 0;
+
+        if (prevRank !== null) {
+          // Lower rank number is better (1 is better than 5)
+          // Movement = Old - New. (Old: 5, New: 1) => +4 spots
+          movement = prevRank - currentRank;
+        } else {
+          // New entry to the board
+          movement = 0; // Or indicate 'NEW' in UI
+        }
+
+        myStats = {
+          rank: displayRank,
+          points: Number(points),
+          movement,
+        };
+      }
+    }
+
+    // 3. Get Total Count (for pagination metadata if needed)
+    const totalMembers = await redis.zcard(currentKey);
+
+    return {
+      data: leaderboard,
+      meta: {
+        page,
+        limit,
+        total: totalMembers,
+      },
+      myStats,
+    };
   },
 };

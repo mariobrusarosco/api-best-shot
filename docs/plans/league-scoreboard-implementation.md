@@ -52,9 +52,11 @@ Implement the business logic that updates the "Source of Truth" (Postgres) first
   - Returns `Map<MemberId, PointsDelta>`.
 
 #### Task 2.2 - The "Dual-Write" Transaction [x]
+
 - [x] **Verification:** Write a test case that updates a user and checks BOTH Postgres and Redis.
 
 #### Task 2.3 - Integration [x]
+
 - [x] Hook into `MatchUpdateOrchestrator`: Call `applyScoreUpdates` immediately after a match status changes to 'ended'.
 
 ---
@@ -103,8 +105,8 @@ Implement the "Virtual League" views and the "Tick-Tock" rank movement logic.
 
 - [ ] **Route:** `GET /api/v2/leagues/:id/scoreboard`.
 - [ ] **Pagination:** Use `ZREVRANGE` (Top N).
-- [ ] **My Rank:** Use `ZREVRANK` on Current and Previous keys.
-- [ ] **Movement:** Calculate `PrevRank - CurrentRank`.
+- [x] **My Rank:** Use `ZREVRANK` on Current and Previous keys.
+- [x] **Movement:** Calculate `PrevRank - CurrentRank`.
 
 ---
 
@@ -114,7 +116,7 @@ Implement the "Virtual League" views and the "Tick-Tock" rank movement logic.
 
 Final safety checks before shipping.
 
-### Tasks
+### TasksSolid
 
 #### Task 5.1 - Local Simulation []
 

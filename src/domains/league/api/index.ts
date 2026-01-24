@@ -3,8 +3,8 @@ import { SERVICES_LEAGUE } from '../services';
 
 import { Utils } from '@/domains/auth/utils';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
+import { ScoreboardService } from '@/domains/score/services/scoreboard.service';
 import { ErrorMapper } from '../error-handling/mapper';
-import { isLeagueParticipant } from '../utils';
 
 const getLeagues = async (req: Request, res: Response) => {
   try {
@@ -61,7 +61,7 @@ const getLeague = async (req: Request, res: Response) => {
     const { leagueId } = req.params;
 
     try {
-      const isParticipant = await isLeagueParticipant(req, res, leagueId);
+      const isParticipant = await SERVICES_LEAGUE.checkMembership(memberId, leagueId);
       if (!isParticipant) {
         return res.status(ErrorMapper.NOT_LEAGUE_MEMBER.status).send(ErrorMapper.NOT_LEAGUE_MEMBER.user);
       }
@@ -98,10 +98,33 @@ const updateLeagueTournaments = async (req: Request, res: Response) => {
   }
 };
 
+const getScoreboard = async (req: Request, res: Response) => {
+  try {
+    const memberId = Utils.getAuthenticatedUserId(req, res);
+    const { leagueId } = req.params;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 25;
+
+    const isParticipant = await SERVICES_LEAGUE.checkMembership(memberId, leagueId);
+    if (!isParticipant) {
+      return res.status(ErrorMapper.NOT_LEAGUE_MEMBER.status).send(ErrorMapper.NOT_LEAGUE_MEMBER.user);
+    }
+
+    const scoreboard = await ScoreboardService.getLeagueLeaderboard(leagueId, page, limit, memberId);
+    return res.status(200).send(scoreboard);
+  } catch (error: unknown) {
+    console.error(`[LEAGUE - getScoreboard] ${error}`);
+    return res
+      .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
+      .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
+  }
+};
+
 export const API_LEAGUE = {
   getLeagues,
   createLeague,
   inviteToLeague,
   getLeague,
   updateLeagueTournaments,
+  getScoreboard,
 };

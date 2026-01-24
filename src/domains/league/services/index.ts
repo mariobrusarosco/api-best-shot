@@ -73,10 +73,16 @@ const updateLeagueTournaments = async (updateInput: { leagueId: string; tourname
   return QUERIES_LEAGUE.updateLeagueTournaments(updateInput);
 };
 
+const checkMembership = async (memberId: string, leagueId: string): Promise<boolean> => {
+  const role = await QUERIES_LEAGUE.getMemberLeagueRole(memberId, leagueId);
+  return !!role;
+};
+
 export const SERVICES_LEAGUE = {
   getMemberLeagues,
   createLeague,
   inviteToLeague,
   getLeagueDetails,
   updateLeagueTournaments,
+  checkMembership,
 };

@@ -164,3 +164,16 @@ If Redis data is lost (e.g., memory flush), the system must self-heal.
 2.  **Stage 2: Write Path:** Implement `ScoreboardUpdateOrchestrator` to update Postgres & Redis on match end.
 3.  **Stage 3: Read Path:** Implement the API endpoint to read from Redis.
 4.  **Stage 4: Migration:** Script to calculate initial points for existing tournaments and populate Redis.
+
+## 7. Scalability & Performance Analysis
+
+### 7.1 Write Path (Delta Calculation)
+-   **Fetch Step (Postgres):** Retrieving ~5,000 guesses (IDs + scores) for a match is a lightweight, indexed SQL query. Expected execution time: **< 50ms**.
+-   **Calculation Step (Node.js):** Iterating 5,000 objects in memory to run simple arithmetic (`runGuessAnalysis`) is trivial for the V8 engine. Expected execution time: **< 20ms**.
+-   **Throughput:** This architecture handles high-volume updates efficiently without blocking the event loop or overwhelming the database.
+
+### 7.2 Read Path (Redis)
+-   **Update Time:** `ZINCRBY` is $O(\log(N))$. Updating 10,000 users takes milliseconds.
+-   **Ranking Time:** `ZINTERSTORE` is $O(N \log(N))$. For a 10,000 member league, this is extremely fast in Redis memory.
+-   **Read Time:** `ZREVRANK` and `ZREVRANGE` are $O(\log(N))$ and $O(\log(N) + M)$, making the API incredibly responsive regardless of league size.
+-   **Storage:** 10,000 members in a ZSET consume ~1MB of memory. 1,000 leagues = 1GB RAM. Very efficient.

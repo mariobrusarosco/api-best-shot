@@ -9,6 +9,7 @@ dotenv.config({ path: envPath });
 const envSchema = z.object({
   // Database - optional for Cloud Run testing
   DB_STRING_CONNECTION: z.string().optional(),
+  REDIS_URL: z.string(),
   // App
   NODE_ENV: z.enum(['development', 'demo', 'staging', 'production']).default('development'),
   PORT: z

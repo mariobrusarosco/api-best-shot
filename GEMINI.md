@@ -4,18 +4,20 @@
 
 **Best Shot API** is the backend service for the _Football App_ project. It is a RESTful API built with **Node.js**, **Express**, and **TypeScript**, using **PostgreSQL** as the database with **Drizzle ORM**. The project follows a strict **Domain-Driven Design (DDD)** with a three-layer architecture.
 
-### Core Mandates
+## Core Mandates
 
-1 - **Strict Scope Adherence:** Do not fix unrelated bugs, refactor code, or change naming conventions outside the explicit scope of the user's request, even if you find errors. If you
-discover critical issues that block the requested task, report them to the user and ask for permission before proceeding
-2 - **Strict Scope Adherence:** Focus exclusively on the user's request. Do not fix unrelated bugs, refactor code, or change naming conventions unless explicitly asked. If a deviation
-adds significant value or is critical, ask for permission first.
-3 - **Think Before You Act:** DO NOT RUSH. Analyze the request, reason through the solution, and plan your steps. If a request is vague, ask for clarification. Only proceed with
-implementation when the path is clear and agreed upon.
-4 - **Verify Assumptions:** Never guess APIs or library functionality. Always read documentation or search for examples before writing code. "Sloppy solutions" based on assumptions are
-strictly forbidden.
-5 - **Context Awareness:** Understand the project's existing architecture and conventions before making changes. Your goal is to provide high-quality, integrated code that respects the
-current codebase.
+1. NEVER ASSUME ANYTHING. NEVER. IF YOU'RE NOT SURE, JUST ASK ME. SIMPLE AS THAT.
+2. NEVER GO FOR "speed" OVER "correctness". DON'T RUSH. YOU DON'T PREFER WORKAROUNDS. YOU PREFER SOLID, CLEAN CODE. (UNLESS I SPECIFICALLY ASK YOU TO DO SO OR IT'S CRITICALLY NEEDED)
+3. **Strict Scope Adherence:** Do not fix unrelated bugs, refactor code, or change naming conventions outside the explicit scope of the user's request, even if you find errors. If you
+   discover critical issues that block the requested task, report them to the user and ask for permission before proceeding
+4. **Strict Scope Adherence:** Focus exclusively on the user's request. Do not fix unrelated bugs, refactor code, or change naming conventions unless explicitly asked. If a deviation
+   adds significant value or is critical, ask for permission first.
+5. **Think Before You Act:** DO NOT RUSH. Analyze the request, reason through the solution, and plan your steps. If a request is vague, ask for clarification. Only proceed with
+   implementation when the path is clear and agreed upon.
+6. **Verify Assumptions:** Never guess APIs or library functionality. Always read documentation or search for examples before writing code. "Sloppy solutions" based on assumptions are
+   strictly forbidden.
+7. **Context Awareness:** Understand the project's existing architecture and conventions before making changes. Your goal is to provide high-quality, integrated code that respects the
+   current codebase.
 
 #### Planner Mode
 
@@ -47,8 +49,8 @@ current codebase.
 
 ```
 
-- Once you finish a task, ask user to review your work.
-- Wait for user's confirmation before proceeding to the next task.
+- Once you finish a task or subtask, ask user to review your work.
+- Wait for user's confirmation before proceeding to the next task or subtask.
 - Be patient and don't rush into fixes and implementations.
 - Be ready to do fixes.
 - Once confirmed by the user, mark the current sub-task or task as done.

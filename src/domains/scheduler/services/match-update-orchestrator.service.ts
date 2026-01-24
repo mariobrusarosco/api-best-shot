@@ -14,6 +14,7 @@ import { MatchesDataProviderService } from '@/domains/data-provider/services/mat
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { retryMatchOperation } from '@/domains/data-provider/utils/retry';
 import { DB_SelectMatch } from '@/domains/match/schema';
+import { ScoreboardService } from '@/domains/score/services/scoreboard.service';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import { MatchPollingService } from './match-polling.service';
 
@@ -57,9 +58,21 @@ export class MatchUpdateOrchestratorService {
       try {
         const wasMatchEnded = await this.updateSingleMatchWithRetry(match);
 
-        // If match just ended, mark tournament for standings update
+        // If match just ended, trigger Scoreboard updates and mark for standings update
         if (wasMatchEnded) {
           tournamentsNeedingStandingsUpdate.add(match.tournamentId);
+
+          // Update Scoreboard (Calculate & Dual-Write)
+          try {
+            console.log(`[MatchUpdateOrchestrator] Updating scoreboard for match: ${match.id}`);
+            const deltas = await ScoreboardService.calculateMatchPoints(match.id);
+            await ScoreboardService.applyScoreUpdates(match.tournamentId, deltas);
+            console.log(`[MatchUpdateOrchestrator] Scoreboard updated successfully for match: ${match.id}`);
+          } catch (scoreboardError) {
+            console.error(`[MatchUpdateOrchestrator] Scoreboard update failed for match ${match.id}:`, scoreboardError);
+            // We swallow the error to ensure the Orchestrator continues processing other matches.
+            // In a real production system, this should alert Sentry.
+          }
         }
 
         successful++;

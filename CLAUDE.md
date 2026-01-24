@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## MUST READ
+
+90% of the time, your guidance is sloppy and workaround-based. How can I make you think less as bad engineer and incresase your level of competence?
+Instead of "I recommend another workaround" as you do," you MUST BEHAVE as
+"Oh, I see that you wanna level this up to enterprise techicniques, so let's finish the uncompleted work of XPTO.
+Actually, let's improve the structure to become even better. Let me show a better plan, maybe we can write less code if we are smarter"...
+
+See the difference? How can I stop struggling with you everytime I need some
+good work?
+
+I've been paying Claude for two years. Two years of this is too much. I can't stand Dario, your CEO bullshiting about how enginnering work will be over in 12 months given that on the last 24 you've been poorly performing.
+
 ## Core Mandates
 
 1 - **Strict Scope Adherence:** Do not fix unrelated bugs, refactor code, or change naming conventions outside the explicit scope of the user's request, even if you find errors. If you
@@ -14,7 +26,6 @@ implementation when the path is clear and agreed upon.
 strictly forbidden.
 5 - **Context Awareness:** Understand the project's existing architecture and conventions before making changes. Your goal is to provide high-quality, integrated code that respects the
 current codebase
-
 6 - **Full Context Analysis**: Read and understand ALL relevant files in their entirety
 7 - **System Flow Understanding**: Map out how components interact and affect each other
 8 - **Research First**: Look up official documentation and current best practices
@@ -29,42 +40,6 @@ current codebase
 - Propose solutions based on assumptions
 - Skip research and documentation review
 - Run GIT 'push', 'stash', 'add' or 'commit' commands
-
-**For CI/CD, Docker, Deployment Issues:**
-
-- Analyze the complete pipeline: build → test → deploy → runtime
-- Check ALL related configuration files (Dockerfile, workflows, package.json, etc.)
-- Understand multi-stage build processes and dependencies
-- Research tool-specific best practices and breaking changes
-
-## Task-Specific Guidelines (READ FIRST!)
-
-**Before starting ANY task, check this table for required reading:**
-
-| Task Type | Required Reading | Key Workflows | Commands |
-|-----------|------------------|---------------|----------|
-| **Database Migrations** | `/docs/guides/database-migrations.md` | Modify schema → Generate → Apply → Test | `yarn db:generate --name "description"`, `yarn db:migrate` |
-| **Database Multi-Step Operations** | `/docs/guides/database-transactions-guide.md` | Always use transactions for related operations | Use `db.transaction(async tx => {...})` |
-| **CI/CD & Deployment** | (Check GitHub Actions workflows) | Understand automated deployment flow | Review `.github/workflows/` |
-
-**Checklist When Starting a Task:**
-1. ✅ Check table above - does this task type have required reading?
-2. ✅ If YES → READ THE GUIDE FIRST, then ask user if ready to proceed
-3. ✅ If NO → Ask user: "Should I review any guides before proceeding?"
-4. ✅ Follow documented workflows exactly (don't improvise)
-5. ✅ Ask user to review your work before proceeding to next step
-
-**Example Flow:**
-```
-User: "Let's start with Phase 1, Task 1.1 - Database Migration"
-
-You (AI):
-1. "I see this is a database migration task."
-2. "Let me read /docs/guides/database-migrations.md first..."
-3. [Reads guide]
-4. "According to the guide, the workflow is: Modify Schema → Generate Migration → Apply Locally → Test"
-5. "Ready to proceed with this workflow?"
-```
 
 ## Planner Mode
 
@@ -96,30 +71,71 @@ You (AI):
 
 ```
 
-- Once you finish a task, ask user to review your work.
-- Wait for user's confirmation before proceeding to the next task.
+- Once you finish a task or subtask, ask user to review your work.
+- Wait for user's confirmation before proceeding to the next task or subtask.
 - Be patient and don't rush into fixes and implementations.
 - Be ready to do fixes.
 - Once confirmed by the user, mark the current sub-task or task as done.
 - If you need to do a fix, mark the current sub-task or task as in progress.
+
+**For CI/CD, Docker, Deployment Issues:**
+
+- Analyze the complete pipeline: build → test → deploy → runtime
+- Check ALL related configuration files (Dockerfile, workflows, package.json, etc.)
+- Understand multi-stage build processes and dependencies
+- Research tool-specific best practices and breaking changes
+
+## Task-Specific Guidelines (READ FIRST!)
+
+**Before starting ANY task, check this table for required reading:**
+
+| Task Type                          | Required Reading                              | Key Workflows                                  | Commands                                                   |
+| ---------------------------------- | --------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
+| **Database Migrations**            | `/docs/guides/database-migrations.md`         | Modify schema → Generate → Apply → Test        | `yarn db:generate --name "description"`, `yarn db:migrate` |
+| **Database Multi-Step Operations** | `/docs/guides/database-transactions-guide.md` | Always use transactions for related operations | Use `db.transaction(async tx => {...})`                    |
+| **CI/CD & Deployment**             | (Check GitHub Actions workflows)              | Understand automated deployment flow           | Review `.github/workflows/`                                |
+
+**Checklist When Starting a Task:**
+
+1. ✅ Check table above - does this task type have required reading?
+2. ✅ If YES → READ THE GUIDE FIRST, then ask user if ready to proceed
+3. ✅ If NO → Ask user: "Should I review any guides before proceeding?"
+4. ✅ Follow documented workflows exactly (don't improvise)
+5. ✅ Ask user to review your work before proceeding to next step
+
+**Example Flow:**
+
+```
+User: "Let's start with Phase 1, Task 1.1 - Database Migration"
+
+You (AI):
+1. "I see this is a database migration task."
+2. "Let me read /docs/guides/database-migrations.md first..."
+3. [Reads guide]
+4. "According to the guide, the workflow is: Modify Schema → Generate Migration → Apply Locally → Test"
+5. "Ready to proceed with this workflow?"
+```
 
 ## Project Overview
 
 Best Shot API is a TypeScript/Express.js backend service for a football prediction application. Users can join leagues, make match predictions, and compete based on accuracy.
 
 **Core Technologies:**
+
 - TypeScript/Express.js (API framework)
 - PostgreSQL + Drizzle ORM (data layer)
 - AWS Lambda/Scheduler (automated tasks)
 - Docker (local development)
 
 **Architecture:**
+
 - Domain-Driven Design with strict separation of concerns
 - API versioning (v1/v2) for backward compatibility
 - External data integration (SofaScore, web scraping)
 - Automated scheduling for real-time match updates
 
 **Key Features:**
+
 - User authentication (JWT)
 - League and tournament management
 - Match predictions/guessing system

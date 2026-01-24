@@ -1,140 +1,142 @@
-# Scoreboard Implementation Plan
+# Scoreboard Implementation Plan (Revised)
 
-## Phase 1: Infrastructure & Data Setup
+## Phase 1: Foundation & Infrastructure (The Setup)
 
 ### Goal
-Establish the Redis infrastructure and ensure the Postgres schema supports the "Source of Truth" requirement.
+
+Prepare the local and production environments to support Redis, and ensure the Postgres schema is ready to act as the durable "Source of Truth."
 
 ### Tasks
 
-### Task 1.1 - Redis Infrastructure Setup []
-#### Task 1.1.1 - Install Dependencies []
-- [ ] Add `ioredis` to package.json.
-- [ ] Add `@types/ioredis` (if needed) to devDependencies.
+#### Task 1.1 - Redis Infrastructure (Local) [x]
 
-#### Task 1.1.2 - Redis Client Module []
-- [ ] Create `src/services/redis/client.ts`.
-- [ ] Implement Singleton pattern for the Redis client.
-- [ ] Implement error handling (connection failures).
+- [x] **Dependencies:** Install `ioredis` (remove `@types/ioredis` if installed).
+- [x] **Docker:** Update `docker-compose.yml` to include a `redis` service (Alpine image, exposed port 6379).
+- [x] **Config:** Add `REDIS_URL` to `.env` (e.g., `redis://localhost:6379`).
+- [x] **Verification:** Run `docker compose up -d` and connect via CLI to ping.
 
-#### Task 1.1.3 - Configuration & Environment []
-- [ ] Add `REDIS_URL` to `.env.example`.
-- [ ] Add `REDIS_URL` to `src/config/env.ts` (with validation).
-- [ ] Add `REDIS_URL` to `docker-compose.yml`.
+#### Task 1.2 - Redis Client & Resiliency [x]
 
-#### Task 1.1.4 - Application Integration []
-- [ ] Import and initialize Redis in `src/index.ts`.
-- [ ] Add a simple startup log indicating Redis connection status.
+- [x] **Client:** Create `src/services/redis/client.ts` as a robust Singleton.
+- [x] **Error Handling:** Implement `retryStrategy` in the Redis client to handle temporary connection blips (crucial for Railway restarts).
+- [x] **Health Check:** Integrate Redis ping into the app's startup sequence in `src/index.ts`.
 
-### Task 1.2 - Postgres Schema Readiness []
-#### Task 1.2.1 - Schema Analysis []
-- [ ] Check `src/domains/tournament/schema/index.ts` (or `member/schema`).
-- [ ] Verify if a table links Members to Tournaments (e.g., `T_LeagueTournament` or similar concept).
+#### Task 1.3 - Production Readiness (Railway) [x]
 
-#### Task 1.2.2 - Schema Migration (if needed) []
-- [ ] If `points` column is missing, create a Drizzle migration.
-- [ ] Add `points` (integer, default 0, indexed) to the relevant linking table.
-- [ ] Run `yarn db:generate` and `yarn db:migrate`.
+- [x] **Documentation:** Create `docs/guides/railway-redis-setup.md` documenting how to provision Redis in Railway.
+- [x] **Env Validation:** Update `src/config/env.ts` to strictly validate `REDIS_URL` in production mode.
 
-#### Task 1.2.3 - Query Helpers []
-- [ ] Create `DB_SelectMemberScore` and `DB_UpdateMemberScore` types.
-- [ ] Add helper function `updateMemberPoints` in `queries/scoreboard.ts`.
+#### Task 1.4 - Postgres Source of Truth [x]
 
-## Phase 2: The "Write" Path (Score Calculation)
+- [x] **Audit:** Inspect `src/domains/tournament/schema/index.ts` (specifically `T_LeagueTournament` or equivalent linking table).
+- [x] **Migration:** If a direct `points` column is missing or insufficient, create a Drizzle migration to add it.
+  - _Requirement:_ This column is the hard backup. If Redis dies, this saves us.
+- [x] **Helpers:** Create `DB_AtomicUpdatePoints` type/query to ensure thread-safe increments (`points = points + delta`).
+
+---
+
+## Phase 2: The Core Services (Write Path)
 
 ### Goal
-Implement the logic to calculate scores after a match and update both Postgres (Persist) and Redis (Cache).
+
+Implement the business logic that updates the "Source of Truth" (Postgres) first, and the "Hot Cache" (Redis) second.
 
 ### Tasks
 
-### Task 2.1 - Core Score Calculation Logic []
-#### Task 2.1.1 - Service Shell []
-- [ ] Create `src/domains/score/services/scoreboard.service.ts`.
-- [ ] Define the interface for the `calculateMatchPoints` method.
+#### Task 2.1 - Scoreboard Service (Delta Calculation) [x]
 
-#### Task 2.1.2 - Point Calculation Implementation []
-- [ ] Implement logic to fetch all guesses for a specific `matchId`.
-- [ ] Iterate through guesses and run `runGuessAnalysis` (existing logic).
-- [ ] Aggregate results into a map: `Map<MemberId, PointsDelta>`.
+- [x] Create `src/domains/score/services/scoreboard.service.ts`.
+- [x] Implement `calculateMatchPoints(matchId)`:
+  - Fetches all guesses for the match.
+  - Runs `runGuessAnalysis`.
+  - Returns `Map<MemberId, PointsDelta>`.
 
-### Task 2.2 - Redis "Master Score" Update []
-#### Task 2.2.1 - Redis Helper Methods []
-- [ ] Add `zIncrBy` wrapper in `src/services/redis/client.ts`.
-- [ ] Add `pipeline` support.
+#### Task 2.2 - The "Dual-Write" Transaction [x]
 
-#### Task 2.2.2 - Master Score Service Logic []
-- [ ] Implement `updateMasterScores(tournamentId, deltas)` in `ScoreboardService`.
-- [ ] Use Redis pipeline to batch `ZINCRBY` commands for the `tournament:{id}:master_scores` key.
+- [x] Implement `applyScoreUpdates(tournamentId, deltas)`:
+  - **Step 1 (Durability):** Loop through deltas and execute atomic SQL updates on Postgres.
+  - **Step 2 (Cache):** Pipeline `ZINCRBY` commands to `tournament:{id}:master_scores` in Redis.
+- [x] **Verification:** Write a test case that updates a user and checks BOTH Postgres and Redis.
 
-### Task 2.3 - Postgres Persistence []
-#### Task 2.3.1 - Database Update Logic []
-- [ ] Implement `persistScoreDeltas(deltas)` in `ScoreboardService`.
-- [ ] Loop through the map and execute `QUERIES.updateMemberPoints`.
+#### Task 2.3 - Integration [x]
 
-### Task 2.4 - Orchestration Wiring []
-#### Task 2.4.1 - Integration with Match Orchestrator []
-- [ ] Open `MatchUpdateOrchestrator`.
-- [ ] Locate the "Match Ended" event/block.
-- [ ] Inject `ScoreboardService`.
-- [ ] Call `calculateMatchPoints` -> `persist` -> `updateRedis` sequence.
+- [x] Hook into `MatchUpdateOrchestrator`: Call `applyScoreUpdates` immediately after a match status changes to 'ended'.
 
-## Phase 3: The "Read" Path (League Views)
+---
+
+## Phase 3: The Recovery Engine (Hydration)
 
 ### Goal
-Implement the logic to generate League-specific views and serve them via the API.
+
+Build the "Self-Healing" capability _before_ we build the Read API. We must assume Redis is empty on every deploy.
 
 ### Tasks
 
-### Task 3.1 - League Processor (Ranking) []
-#### Task 3.1.1 - Snapshot Logic []
-- [ ] Implement `snapshotCurrentLeaderboard(leagueId)`: `RENAME key -> key:prev`.
+#### Task 3.1 - Hydration Service [x]
 
-#### Task 3.1.2 - Intersection Logic []
-- [ ] Implement `generateLeaderboard(leagueId, tournamentId)`: `ZINTERSTORE`.
+- [x] Create `src/services/scoreboard/hydration.service.ts`.
+- [x] Implement `hydrateTournament(tournamentId)`:
+  - **Step 1:** Fetch ALL member point totals from Postgres (`T_TournamentMember`).
+  - **Step 2:** Pipeline `ZADD` to overwrite `tournament:{id}:master_scores`.
+  - **Step 3:** Fetch ALL league memberships.
+  - **Step 4:** Pipeline `SADD` to overwrite `league:{id}:members`.
 
-#### Task 3.1.3 - Trigger Integration []
-- [ ] Determine where to call this. (Likely immediately after the Orchestrator finishes the "Master Score" update).
+#### Task 3.2 - The "Reset" Switch [x]
 
-### Task 3.2 - API Endpoint []
-#### Task 3.2.1 - Route Definition []
-- [ ] Add `GET /api/v2/leagues/:id/scoreboard` to `src/domains/league/routes`.
+- [x] Implement a logic check: `isRedisHealthy(tournamentId)`.
+- [x] Create a CLI script `scripts/hydrate-redis.ts` that invokes the service.
+- [x] **Verification:** Manually flush Redis, run the script, and verify keys are back.
 
-#### Task 3.2.2 - Controller Implementation []
-- [ ] Create `getScoreboard` controller.
-- [ ] Parse `page` and `limit` query params.
+---
 
-#### Task 3.2.3 - Service Implementation (Read) []
-- [ ] Implement `getLeagueLeaderboard(leagueId, page, limit)`.
-- [ ] Call Redis `ZREVRANGE`.
-- [ ] Call Redis `ZREVRANK` for the requesting user.
-- [ ] Calculate Rank Movement.
-
-## Phase 4: Migration & Backfill
+## Phase 4: The Read Path (League Processor)
 
 ### Goal
-Populate the new system with existing data.
+
+Implement the "Virtual League" views and the "Tick-Tock" rank movement logic.
 
 ### Tasks
 
-### Task 4.1 - Backfill Script []
-#### Task 4.1.1 - Script Shell []
-- [ ] Create `scripts/hydrate-scoreboard.ts`.
+#### Task 4.1 - League Processor (The Filter) [x]
 
-#### Task 4.1.2 - Calculation Logic []
-- [ ] Implement logic to iterate ALL past matches in the DB.
-- [ ] Calculate total points from scratch for every user.
+- [x] Implement `refreshLeagueRanking(leagueId, tournamentId)`:
+  - **Snapshot:** `RENAME league:{id}:leaderboard` -> `league:{id}:leaderboard:prev`.
+  - **Generate:** `ZINTERSTORE league:{id}:leaderboard 2 tournament:{id}:master_scores league:{id}:members`.
+  - _Note:_ Handle the case where the key doesn't exist (first run).
 
-#### Task 4.1.3 - Execution []
-- [ ] Run the script locally to verify.
-- [ ] Verify Redis keys are populated.
+#### Task 4.2 - API Implementation [x]
+
+- [x] **Route:** `GET /api/v2/leagues/:id/scoreboard`.
+- [x] **Pagination:** Use `ZREVRANGE` (Top N).
+- [x] **My Rank:** Use `ZREVRANK` on Current and Previous keys.
+- [x] **Movement:** Calculate `PrevRank - CurrentRank`.
+
+---
+
+## Phase 5: Verification & Deployment
+
+### Goal
+
+Final safety checks before shipping.
+
+### Tasks
+
+#### Task 5.1 - Local Simulation [x]
+
+- [x] Simulate a "Match End" event locally.
+- [x] Verify: Postgres Updated? Redis Master Updated? League View Refreshed? Rank Moved?
+
+#### Task 5.2 - Deployment Config [x]
+
+- [x] Ensure Railway `Redis` service is provisioned.
+- [x] Set `REDIS_URL` in Railway variables.
+- [x] (Optional) Add a `post-deploy` command to run the Hydration script if needed.
 
 ## Dependencies
-- Redis Server (local & production).
-- Existing `runGuessAnalysis` logic.
+
+- Redis Instance.
+- Postgres Database.
 
 ## Expected Result
-A fully functional, high-performance scoreboard API that updates automatically after matches.
 
-## Next Steps
-- Await user approval of this plan.
-- Begin Phase 1.
+A resilient, high-performance scoreboard that prioritizes data safety (Postgres) while delivering speed (Redis).

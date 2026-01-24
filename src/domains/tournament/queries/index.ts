@@ -7,11 +7,52 @@ import {
   DB_InsertTournament,
   DB_InsertTournamentStandings,
   T_Tournament,
+  T_TournamentMember,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { and, eq, sql } from 'drizzle-orm';
 import { TournamentWithTypedMode } from '../typing';
+
+const updateMemberPoints = async (memberId: string, tournamentId: string, delta: number) => {
+  try {
+    await db
+      .update(T_TournamentMember)
+      .set({
+        points: sql`${T_TournamentMember.points} + ${delta}`,
+      })
+      .where(and(eq(T_TournamentMember.memberId, memberId), eq(T_TournamentMember.tournamentId, tournamentId)));
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    console.error('[TournamentQueries] - [updateMemberPoints]', dbError);
+    throw error;
+  }
+};
+
+const bulkUpdateMemberPoints = async (tournamentId: string, updates: Map<string, number>) => {
+  if (updates.size === 0) return;
+
+  try {
+    const memberIds = Array.from(updates.keys());
+    const deltas = Array.from(updates.values());
+
+    await db.execute(sql`
+      UPDATE ${T_TournamentMember} AS tm
+      SET points = tm.points + data.delta
+      FROM (
+        SELECT 
+          unnest(${memberIds}::uuid[]) AS member_id, 
+          unnest(${deltas}::integer[]) AS delta
+      ) AS data
+      WHERE tm.member_id = data.member_id 
+        AND tm.tournament_id = ${tournamentId}
+    `);
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    console.error('[TournamentQueries] - [bulkUpdateMemberPoints]', dbError);
+    throw error;
+  }
+};
 
 const allTournaments = async () => {
   try {
@@ -209,4 +250,6 @@ export const QUERIES_TOURNAMENT = {
   getTournamentStandings,
   createTournament,
   upsertTournamentStandings,
+  updateMemberPoints,
+  bulkUpdateMemberPoints,
 };

@@ -4,8 +4,8 @@ import { toNumberOrNull, toNumberOrZero } from '@/utils';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import utc from 'dayjs/plugin/utc';
-import { GUESS_STATUS, GUESS_STATUSES } from '../typing';
 import { QUERIES_GUESS } from '../queries';
+import { GUESS_STATUS, GUESS_STATUSES } from '../typing';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
@@ -224,11 +224,6 @@ const getMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   if (homeMatch > awayMatch) matchOutcome = { label: `HOME_WIN` };
   else if (homeMatch < awayMatch) matchOutcome = { label: 'AWAY_WIN' };
   else matchOutcome = { label: 'DRAW' };
-
-  console.log(
-    { homeGuess, homeMatch, awayGuess, awayMatch, matchOutcome, guessPrediction },
-    guessPrediction.label === matchOutcome.label ? GUESS_STATUSES.CORRECT : GUESS_STATUSES.INCORRECT
-  );
 
   return {
     label: matchOutcome.label,

@@ -1,5 +1,6 @@
 import { config } from 'dotenv';
 import './services/profiling/sentry-instrument';
+import { redis } from './services/redis/client';
 config({ path: process.env.ENV_PATH || '.env' });
 
 import cookieParser from 'cookie-parser';
@@ -92,6 +93,12 @@ logInfo('Registered logger and access control');
 // Mount the central API router at /api
 app.use('/api', apiRouter);
 logInfo('Registered /api router');
+
+// Redis Health Check
+redis
+  .ping()
+  .then(() => logInfo('✅ Redis PING successful'))
+  .catch(err => logError('❌ Redis PING failed', err));
 
 app.listen(port, '0.0.0.0', () => {
   logInfo(`Server running on port ${port} in ${env.NODE_ENV} mode`, {

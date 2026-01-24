@@ -36,6 +36,7 @@
     "db:drop": "drizzle-kit drop",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "hydrate:scoreboard": "ts-node -r tsconfig-paths/register scripts/hydrate-redis.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

@@ -76,11 +76,11 @@ Build the "Self-Healing" capability _before_ we build the Read API. We must assu
   - **Step 3:** Fetch ALL league memberships.
   - **Step 4:** Pipeline `SADD` to overwrite `league:{id}:members`.
 
-#### Task 3.2 - The "Reset" Switch []
+#### Task 3.2 - The "Reset" Switch [x]
 
-- [ ] Implement a logic check: `isRedisHealthy(tournamentId)`.
-- [ ] Create a CLI script `scripts/hydrate-redis.ts` that invokes the service.
-- [ ] **Verification:** Manually flush Redis, run the script, and verify keys are back.
+- [x] Implement a logic check: `isRedisHealthy(tournamentId)`.
+- [x] Create a CLI script `scripts/hydrate-redis.ts` that invokes the service.
+- [x] **Verification:** Manually flush Redis, run the script, and verify keys are back.
 
 ---
 

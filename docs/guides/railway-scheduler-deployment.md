@@ -67,11 +67,16 @@ Just set the start command override to: `yarn scheduler:prod`
 The scheduler service needs access to the same environment variables as the API:
 
 **Database:**
-- `DB_STRING_CONNECTION` - PostgreSQL connection string
+- `DB_STRING_CONNECTION` - PostgreSQL connection string (also used by pg-boss queue)
+
+**Redis (for Scoreboard):**
+- `REDIS_URL` - Redis connection string for scoreboard cache
 
 **Scheduler-Specific:**
 - `MATCH_POLLING_ENABLED=true` - Enable the cron job
 - `MATCH_POLLING_CRON=*/10 * * * *` - Schedule (every 10 minutes)
+
+**Note:** Queue uses the same PostgreSQL database (pg-boss schema), no additional queue-specific config needed
 
 **AWS (for S3 reports):**
 - `AWS_REGION`
@@ -133,29 +138,60 @@ NODE_ENV=production
 
 In Railway dashboard → Scheduler service → Logs:
 
-**On startup, you should see:**
+**On startup (Queue Available):**
 ```
+🚀 Best Shot Scheduler Starting...
+Configuration:
+  Match Polling Enabled: true
+  Match Polling Schedule: */10 * * * * (Every 10 minutes)
+
+[Scheduler] Initializing queue and workers...
+[Scheduler] ✅ Queue service available
 [Scheduler] Initializing browser...
 [Scheduler] Browser initialized successfully
-[Scheduler] Scheduling match update cron job...
+[MatchUpdateOrchestrator] Registering queue workers...
+[MatchUpdateOrchestrator] ✅ Queue workers registered successfully
+
+[Scheduler] Queue Configuration:
+  Queue Name: update-match
+  Workers: 10 concurrent workers
+  Concurrency: 1 job per worker
+  Retry Policy: 3 attempts with exponential backoff (30s → 60s → 120s)
+  Job Expiration: 2 hours
+  Processing Mode: Concurrent (background workers)
+
 ✅ Match update cron job scheduled successfully
+
 [Scheduler] Running initial match update...
-[MatchUpdateOrchestrator] Starting match update process...
 ```
 
-**Every 10 minutes:**
+**Every 10 minutes (Concurrent Mode):**
 ```
 === [MatchUpdateCron] Starting scheduled execution ===
-[MatchUpdateCron] Time: 2026-01-21T15:30:00.000Z
-[MatchUpdateCron] Matches needing update: 4
-[MatchUpdateOrchestrator] Found 4 matches needing updates
-...
+[MatchUpdateCron] Time: 2026-01-24T15:30:00.000Z
+[MatchUpdateCron] Matches needing update: 15
+[MatchUpdateOrchestrator] Starting queue-based match update process...
+[MatchUpdateOrchestrator] Found 15 matches needing updates
+[MatchUpdateOrchestrator] Queued 15/15 matches for processing
+
 [MatchUpdateCron] Results:
-  ✅ Processed: 4
-  ✅ Successful: 4
-  ❌ Failed: 0
-  📊 Standings Updated: 2
+  ✅ Processed: 15
+  📋 Queued: 15
+  ⚡ Processing: Concurrent (workers will process jobs in background)
 === [MatchUpdateCron] Completed ===
+
+[Background workers processing jobs...]
+[MatchUpdateOrchestrator] [Job] Processing match: 12345678
+[MatchUpdateOrchestrator] [Job] Successfully updated match: 12345678
+[MatchUpdateOrchestrator] [Job] Match ended, updating scoreboard for match: match-789
+[MatchUpdateOrchestrator] [Job] Scoreboard updated successfully for match: match-789
+```
+
+**On startup (Queue Unavailable - Fallback):**
+```
+[Scheduler] Initializing queue and workers...
+[Scheduler] ⚠️  Queue service unavailable
+[Scheduler] Mode: Sequential processing (fallback)
 ```
 
 ### Check Database
@@ -181,6 +217,57 @@ You should see executions every 10 minutes!
 ### Check Slack
 
 If `SLACK_JOB_EXECUTIONS_WEBHOOK` is configured, you'll get notifications for each execution.
+
+### Check Queue Status (via Admin API)
+
+Use the admin API endpoints to monitor queue health:
+
+```bash
+# Check queue stats
+curl -X GET https://your-api.railway.app/api/v2/admin/scheduler/queue-stats \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+
+# Expected response (healthy queue):
+{
+  "success": true,
+  "data": {
+    "available": true,
+    "mode": "concurrent",
+    "queue": {
+      "name": "update-match",
+      "pendingJobs": 2
+    },
+    "workers": {
+      "count": 10,
+      "concurrency": 1
+    }
+  }
+}
+```
+
+### Check Redis Scoreboard
+
+Monitor scoreboard updates in Redis:
+
+```bash
+# Connect to Railway Redis
+railway connect Redis
+
+# Check tournament scores
+redis-cli
+> ZRANGE tournament:{tournamentId}:master_scores 0 -1 WITHSCORES
+
+# Check memory usage
+> INFO memory
+
+# Check key count
+> DBSIZE
+```
+
+**Healthy indicators:**
+- Tournament score keys exist for active tournaments
+- Memory usage is stable (< 100MB typically)
+- Scores match PostgreSQL `T_TournamentMember.points`
 
 ---
 
@@ -274,17 +361,41 @@ Railway's Nixpacks should auto-detect Playwright and install dependencies.
 
 ### Key Metrics to Watch
 
-1. **Execution Success Rate**
+1. **Queue Health**
+   - Use admin API: `GET /api/v2/admin/scheduler/queue-stats`
+   - Check pending jobs count (should be low, < 10)
+   - Verify workers = 10 and mode = concurrent
+
+2. **Execution Success Rate**
    - Query `data_provider_executions` table
    - Look for `status='failed'` entries
 
-2. **Memory Usage**
+3. **Memory Usage**
    - Railway dashboard → Scheduler service → Metrics
-   - Playwright typically uses 300-500MB per execution
+   - Playwright: ~300-500MB per execution
+   - pg-boss queue: ~50-100MB overhead
+   - Total expected: 400-600MB
 
-3. **Execution Duration**
-   - Check `duration` field in executions table
-   - Should be < 2 minutes for typical updates
+4. **Execution Duration** (with Queue)
+   - **Concurrent mode:** 200 matches in ~2 minutes
+   - **Sequential mode:** 200 matches in ~17 minutes
+   - Check if mode switched unexpectedly (indicates queue issue)
+
+5. **Redis Scoreboard Health**
+   - Memory usage should be stable (< 100MB)
+   - Tournament score keys should exist
+   - Scores should match PostgreSQL
+
+6. **pg-boss Queue Tables**
+   ```sql
+   -- Check queue health
+   SELECT state, count(*)
+   FROM pgboss.job
+   WHERE name = 'update-match'
+   GROUP BY state;
+
+   -- Should see mostly 'completed', few 'active', minimal 'failed'
+   ```
 
 ### Alerts
 
@@ -292,6 +403,8 @@ Set up Railway monitoring alerts for:
 - Service crashes (automatic email)
 - High memory usage (>80%)
 - Failed deployments
+- **Queue pending jobs > 50** (indicates workers not processing)
+- **Redis memory > 200MB** (indicates potential memory leak)
 
 ---
 
@@ -317,12 +430,20 @@ Railway charges based on:
 - [ ] Set build command: `yarn install && yarn build-prod`
 - [ ] Set start command: `yarn scheduler:prod`
 - [ ] Copy environment variables from API service
+- [ ] Set `DB_STRING_CONNECTION` (for queue + database)
+- [ ] Set `REDIS_URL` (for scoreboard cache)
 - [ ] Set `MATCH_POLLING_ENABLED=true`
 - [ ] Set `MATCH_POLLING_CRON=*/10 * * * *`
 - [ ] Deploy and watch logs
-- [ ] Verify executions in database
+- [ ] **Verify queue initialized:** Logs show "Queue workers initialized successfully"
+- [ ] **Verify queue mode:** Logs show "Processing Mode: Concurrent"
+- [ ] **Check queue stats:** `GET /api/v2/admin/scheduler/queue-stats` returns `available: true`
+- [ ] **Verify executions in database:** `data_provider_executions` table has new entries
+- [ ] **Verify pg-boss schema:** `pgboss.job` table exists
+- [ ] **Check Redis scoreboard:** Tournament score keys exist
 - [ ] Test kill switch (`MATCH_POLLING_ENABLED=false`)
 - [ ] Monitor for 24 hours to ensure stability
+- [ ] **Verify 200-match performance:** Should complete in ~2 minutes (concurrent mode)
 
 ---
 
@@ -350,6 +471,10 @@ Once the scheduler is running smoothly:
 
 ---
 
-**Document Version:** 1.0
+**Document Version:** 2.0
 **Created:** January 21, 2026
-**Last Updated:** January 21, 2026
+**Last Updated:** January 24, 2026
+
+**Changelog:**
+- **v2.0 (Jan 24, 2026):** Added queue-based processing, Redis scoreboard monitoring, updated log examples, enhanced deployment checklist
+- **v1.0 (Jan 21, 2026):** Initial Railway deployment guide

@@ -6,6 +6,8 @@
 
 **Performance Target**: Process 200 matches in ~2 minutes (vs current 17 minutes sequential)
 
+**Critical Integration**: Scoreboard System (Dual-Write to PostgreSQL + Redis) must be preserved in queue-based processing. Atomic operations ensure concurrent worker safety.
+
 ---
 
 ## Phase 1: Core Queue Integration
@@ -28,8 +30,14 @@ Integrate pg-boss queue into the scheduler by adding worker registration and job
 
 **Key Design Decision**:
 - ✅ No separate job handler classes needed
-- ✅ Orchestrator already has all processing logic
+- ✅ Orchestrator already has all processing logic (including scoreboard updates)
 - ✅ Just wrap existing methods in queue worker handlers
+- ✅ Scoreboard flow preserved: Match update → Scoreboard update (when match ends) → Standings update
+
+**Scoreboard Integration**:
+- `ScoreboardService.calculateMatchPoints()` and `applyScoreUpdates()` stay in match processing
+- Atomic operations (PostgreSQL bulk increment + Redis ZINCRBY) are safe for concurrent workers
+- Errors swallowed (logged but don't break flow) - preserved from current implementation
 
 #### Task 1.2 - Refactor processMatchUpdates() to Queue Jobs []
 **File**: `src/domains/scheduler/services/match-update-orchestrator.service.ts`
@@ -53,6 +61,21 @@ Integrate pg-boss queue into the scheduler by adding worker registration and job
 - Use for type-safe job queueing and processing
 
 **Estimated Lines**: +15 lines
+
+#### Task 1.4 - Verify Scoreboard Integration with Concurrent Processing []
+**File**: `src/domains/scheduler/services/match-update-orchestrator.service.ts`
+
+**Verification**:
+- Review scoreboard update flow in `updateSingleMatchWithRetry()` (lines 62-76)
+- Confirm atomic operations:
+  - PostgreSQL: `QUERIES_TOURNAMENT.bulkUpdateMemberPoints()` uses atomic increment
+  - Redis: `ZINCRBY` command is atomic
+- Ensure scoreboard errors don't break job (already implemented with try-catch)
+- Document that concurrent workers updating same tournament is safe due to atomic ops
+
+**Estimated Time**: 15 minutes review/documentation
+
+**No code changes needed** - current implementation already safe for concurrency
 
 ### Dependencies
 - Existing pg-boss adapter (`src/services/queue/pg-boss-adapter.ts`)
@@ -198,23 +221,33 @@ Verify queue integration works correctly with comprehensive testing.
 
 **Changes**:
 - Test end-to-end: queue job → worker processes → match updated
-- Use test database
+- Use test database + Redis (for scoreboard)
 - Verify concurrent processing with multiple jobs
 - Test retry logic on failures
+- **Scoreboard Integration Tests**:
+  - Verify scoreboard updates when match ends
+  - Verify PostgreSQL points incremented correctly
+  - Verify Redis master_scores updated correctly
+  - Test concurrent updates to same tournament (atomic operations)
 
-**Estimated Lines**: +80 lines
+**Estimated Lines**: +100 lines (added scoreboard tests)
 
 #### Task 4.3 - Load Test with 200 Matches []
 **File**: `test/load/scheduler-200-matches.test.ts` (new)
 
 **Changes**:
-- Create 200 test matches in database
+- Create 200 test matches in database with guesses
 - Queue all matches
 - Measure processing time (target: < 3 minutes)
 - Verify all matches processed successfully
 - Check standings updated for affected tournaments
+- **Scoreboard Load Testing**:
+  - Verify scoreboard points calculated for all guesses
+  - Verify PostgreSQL tournament_member points correct after load
+  - Verify Redis master_scores consistent with database
+  - Check for race conditions with concurrent tournament updates
 
-**Estimated Lines**: +60 lines
+**Estimated Lines**: +80 lines (added scoreboard verification)
 
 #### Task 4.4 - Manual Testing Checklist []
 **Manual steps**:
@@ -227,6 +260,11 @@ Verify queue integration works correctly with comprehensive testing.
 - ✅ Test admin endpoints (stats, manual trigger, job status)
 - ✅ Test failure scenarios (SofaScore down, invalid data)
 - ✅ Verify retry logic activates
+- **Scoreboard Manual Verification**:
+  - ✅ Monitor match ending → scoreboard calculation logs
+  - ✅ Verify PostgreSQL points updated (check T_TournamentMember)
+  - ✅ Verify Redis scores updated (check tournament:*:master_scores keys)
+  - ✅ Test scoreboard error handling (doesn't break match processing)
 
 ### Dependencies
 - Phases 1, 2, and 3 completion
@@ -235,8 +273,9 @@ Verify queue integration works correctly with comprehensive testing.
 ### Expected Result
 - All tests pass
 - 200 matches processed in < 3 minutes
+- Scoreboard updates verified in concurrent processing
 - No regressions in existing functionality
-- Total test code: ~180 lines across 3 files
+- Total test code: ~220 lines across 3 files (includes scoreboard tests)
 
 ### Next Steps
 - Phase 5: Documentation and deployment
@@ -258,8 +297,13 @@ Document the queue integration and deploy to production environments.
 - Document worker configuration
 - Explain job lifecycle and retry logic
 - Add troubleshooting guide for queue issues
+- **Scoreboard Flow Documentation**:
+  - Document match end → scoreboard calculation flow
+  - Explain PostgreSQL + Redis dual-write pattern
+  - Note atomic operations ensure concurrent worker safety
+  - Document error handling (scoreboard errors don't break match processing)
 
-**Estimated Lines**: +100 lines
+**Estimated Lines**: +130 lines (includes scoreboard flow)
 
 #### Task 5.2 - Update Environment Configuration Guide []
 **File**: `docs/guides/railway-scheduler-deployment.md`
@@ -268,8 +312,12 @@ Document the queue integration and deploy to production environments.
 - Add queue-specific environment variables
 - Document worker count configuration
 - Add monitoring and health check examples
+- **Redis Monitoring for Scoreboard**:
+  - Document Redis health checks
+  - Add examples to monitor tournament:*:master_scores keys
+  - Document memory usage patterns
 
-**Estimated Lines**: +50 lines
+**Estimated Lines**: +65 lines (includes Redis monitoring)
 
 #### Task 5.3 - Create Migration Guide []
 **File**: `docs/guides/scheduler-queue-migration.md` (new)
@@ -320,9 +368,9 @@ Document the queue integration and deploy to production environments.
 | Phase 1 - Orchestrator | ~90 lines | ~10 lines | 1 file |
 | Phase 2 - Cron Jobs | ~15 lines | ~20 lines | 1 file |
 | Phase 3 - Admin API | ~65 lines | ~20 lines | 1 file |
-| Phase 4 - Tests | ~180 lines | 0 lines | 3 files |
-| Phase 5 - Docs | ~230 lines | 0 lines | 3 files |
-| **TOTAL** | **~580 lines** | **~50 lines** | **9 files** |
+| Phase 4 - Tests (includes scoreboard) | ~220 lines | 0 lines | 3 files |
+| Phase 5 - Docs (includes scoreboard) | ~275 lines | 0 lines | 3 files |
+| **TOTAL** | **~665 lines** | **~50 lines** | **9 files** |
 
 ### Key Design Wins
 1. **No separate job handler classes** - Reuse orchestrator methods
@@ -330,6 +378,7 @@ Document the queue integration and deploy to production environments.
 3. **Backward compatible** - Falls back to direct processing if queue fails
 4. **Leverages existing infrastructure** - pg-boss adapter already built
 5. **Smart code reuse** - ~90 lines of integration vs 300+ for separate handlers
+6. **Scoreboard integration preserved** - Atomic operations (PostgreSQL + Redis) ensure concurrent worker safety without code changes
 
 ### Performance Improvement
 - **Before**: 200 matches × 5 seconds = 1,000 seconds (~17 minutes) SEQUENTIAL

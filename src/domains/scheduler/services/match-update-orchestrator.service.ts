@@ -6,9 +6,11 @@
  * 2. Updating each match individually using SofaScore's match-specific API
  * 3. Triggering standings updates when matches end
  * 4. Tracking execution and updating lastCheckedAt timestamps
+ * 5. Queue-based processing for concurrent match updates (when enabled)
  */
 
 import { randomUUID } from 'crypto';
+import type { Job } from 'pg-boss';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/matches';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
@@ -16,7 +18,20 @@ import { retryMatchOperation } from '@/domains/data-provider/utils/retry';
 import { DB_SelectMatch } from '@/domains/match/schema';
 import { ScoreboardService } from '@/domains/score/services/scoreboard.service';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
+import type { IQueue } from '@/services/queue';
 import { MatchPollingService } from './match-polling.service';
+
+/**
+ * Job data structure for match update jobs
+ */
+type MatchUpdateJobData = {
+  matchId: string;
+  matchExternalId: string;
+  tournamentId: string;
+  roundSlug: string;
+  provider: string;
+  previousStatus: string;
+};
 
 export class MatchUpdateOrchestratorService {
   private pollingService: MatchPollingService;
@@ -25,6 +40,130 @@ export class MatchUpdateOrchestratorService {
   constructor(scraper: BaseScraper) {
     this.pollingService = new MatchPollingService();
     this.scraper = scraper;
+  }
+
+  /**
+   * Register queue workers for concurrent match processing
+   *
+   * Sets up pg-boss workers that will process match update jobs in parallel.
+   * Workers reuse the existing updateSingleMatchWithRetry logic, ensuring
+   * scoreboard updates and standings updates are handled correctly.
+   *
+   * @param queue - Queue instance for job processing
+   */
+  async registerWorkers(queue: IQueue): Promise<void> {
+    const QUEUE_NAME = 'update-match';
+
+    console.log('[MatchUpdateOrchestrator] Registering queue workers...');
+
+    // Create the queue
+    await queue.createQueue(QUEUE_NAME);
+
+    // Register worker with concurrency settings
+    await queue.work<MatchUpdateJobData>(
+      QUEUE_NAME,
+      {
+        teamSize: 10, // 10 concurrent workers
+        teamConcurrency: 1, // Each worker processes 1 job at a time
+      },
+      async (jobs: Job<MatchUpdateJobData>[]) => {
+        // Process each job in the batch
+        for (const job of jobs) {
+          await this.processMatchJob(job.data);
+        }
+      }
+    );
+
+    console.log('[MatchUpdateOrchestrator] ✅ Queue workers registered successfully');
+    console.log('[MatchUpdateOrchestrator] Configuration: 10 workers, 3 retry attempts with exponential backoff');
+  }
+
+  /**
+   * Process a single match update job
+   *
+   * This method is called by queue workers and reuses the existing
+   * updateSingleMatchWithRetry logic to ensure consistent behavior
+   * between direct and queue-based processing.
+   *
+   * Includes scoreboard updates when matches end.
+   *
+   * @param jobData - Match update job data
+   */
+  private async processMatchJob(jobData: MatchUpdateJobData): Promise<void> {
+    console.log(`[MatchUpdateOrchestrator] [Job] Processing match: ${jobData.matchExternalId}`);
+
+    try {
+      // Fetch tournament data
+      const tournament = await QUERIES_TOURNAMENT.tournament(jobData.tournamentId);
+
+      if (!tournament) {
+        throw new Error(`Tournament ${jobData.tournamentId} not found`);
+      }
+
+      // Create unique request ID for tracking
+      const requestId = randomUUID();
+
+      // Execute update with retry logic
+      const updatedMatch = await retryMatchOperation(async () => {
+        const matchesService = new MatchesDataProviderService(this.scraper, requestId);
+        return await matchesService.updateSingleMatch({
+          matchExternalId: jobData.matchExternalId,
+          tournamentId: jobData.tournamentId,
+          roundSlug: jobData.roundSlug,
+          label: tournament.label,
+          provider: jobData.provider,
+        });
+      }, `Match update: ${tournament.label} - ${jobData.matchExternalId}`);
+
+      // Mark match as checked
+      await this.pollingService.markMatchAsChecked(jobData.matchId);
+
+      console.log(`[MatchUpdateOrchestrator] [Job] Successfully updated match: ${jobData.matchExternalId}`);
+
+      // Check if match transitioned to "ended" status
+      const matchJustEnded = jobData.previousStatus !== 'ended' && updatedMatch.status === 'ended';
+
+      // If match just ended, trigger scoreboard updates and queue standings update
+      if (matchJustEnded) {
+        console.log(`[MatchUpdateOrchestrator] [Job] Match ended, updating scoreboard for match: ${jobData.matchId}`);
+
+        // Update Scoreboard (Calculate & Dual-Write to PostgreSQL + Redis)
+        try {
+          const deltas = await ScoreboardService.calculateMatchPoints(jobData.matchId);
+          await ScoreboardService.applyScoreUpdates(jobData.tournamentId, deltas);
+          console.log(`[MatchUpdateOrchestrator] [Job] Scoreboard updated successfully for match: ${jobData.matchId}`);
+        } catch (scoreboardError) {
+          console.error(
+            `[MatchUpdateOrchestrator] [Job] Scoreboard update failed for match ${jobData.matchId}:`,
+            scoreboardError
+          );
+          // Swallow error - scoreboard failures don't break match processing
+        }
+
+        // Update tournament standings
+        try {
+          await this.updateTournamentStandings(jobData.tournamentId);
+        } catch (standingsError) {
+          console.error(
+            `[MatchUpdateOrchestrator] [Job] Standings update failed for tournament ${jobData.tournamentId}:`,
+            standingsError
+          );
+          // Swallow error - standings failures don't break match processing
+        }
+      }
+    } catch (error) {
+      console.error(`[MatchUpdateOrchestrator] [Job] Failed to process match ${jobData.matchExternalId}:`, error);
+
+      // Mark match as checked even on failure to avoid retrying too soon
+      try {
+        await this.pollingService.markMatchAsChecked(jobData.matchId);
+      } catch (markError) {
+        console.error(`[MatchUpdateOrchestrator] [Job] Failed to mark match ${jobData.matchId} as checked:`, markError);
+      }
+
+      // Re-throw to trigger pg-boss retry logic
+      throw error;
+    }
   }
 
   /**

@@ -6,17 +6,16 @@
 
 ## Core Mandates
 
-1. NEVER ASSUME ANYTHING. NEVER. IF YOU'RE NOT SURE, JUST ASK ME. SIMPLE AS THAT.
-2. NEVER GO FOR "speed" OVER "correctness". DON'T RUSH. YOU DON'T PREFER WORKAROUNDS. YOU PREFER SOLID, CLEAN CODE. (UNLESS I SPECIFICALLY ASK YOU TO DO SO OR IT'S CRITICALLY NEEDED)
-3. **Strict Scope Adherence:** Do not fix unrelated bugs, refactor code, or change naming conventions outside the explicit scope of the user's request, even if you find errors. If you
+1. NEVER GO FOR "speed" OVER "correctness". DON'T RUSH. YOU DON'T PREFER WORKAROUNDS. YOU PREFER SOLID, CLEAN CODE. (UNLESS I SPECIFICALLY ASK YOU TO DO SO OR IT'S CRITICALLY NEEDED)
+2. **Strict Scope Adherence:** Do not fix unrelated bugs, refactor code, or change naming conventions outside the explicit scope of the user's request, even if you find errors. If you
    discover critical issues that block the requested task, report them to the user and ask for permission before proceeding
-4. **Strict Scope Adherence:** Focus exclusively on the user's request. Do not fix unrelated bugs, refactor code, or change naming conventions unless explicitly asked. If a deviation
+3. **Strict Scope Adherence:** Focus exclusively on the user's request. Do not fix unrelated bugs, refactor code, or change naming conventions unless explicitly asked. If a deviation
    adds significant value or is critical, ask for permission first.
-5. **Think Before You Act:** DO NOT RUSH. Analyze the request, reason through the solution, and plan your steps. If a request is vague, ask for clarification. Only proceed with
+4. **Think Before You Act:** DO NOT RUSH. Analyze the request, reason through the solution, and plan your steps. If a request is vague, ask for clarification. Only proceed with
    implementation when the path is clear and agreed upon.
-6. **Verify Assumptions:** Never guess APIs or library functionality. Always read documentation or search for examples before writing code. "Sloppy solutions" based on assumptions are
+5. **Verify Assumptions:** Never guess APIs or library functionality. Always read documentation or search for examples before writing code. "Sloppy solutions" based on assumptions are
    strictly forbidden.
-7. **Context Awareness:** Understand the project's existing architecture and conventions before making changes. Your goal is to provide high-quality, integrated code that respects the
+6. **Context Awareness:** Understand the project's existing architecture and conventions before making changes. Your goal is to provide high-quality, integrated code that respects the
    current codebase.
 
 #### Planner Mode

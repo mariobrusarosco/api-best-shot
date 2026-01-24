@@ -19,6 +19,8 @@ router.get('/executions', AdminMiddleware, API_ADMIN_EXECUTION_JOBS.getExecution
 // Scheduler Management Routes (admin only)
 router.post('/scheduler/trigger-match-polling', AdminMiddleware, API_ADMIN_SCHEDULER.triggerMatchPolling);
 router.get('/scheduler/stats', AdminMiddleware, API_ADMIN_SCHEDULER.getPollingStats);
+router.get('/scheduler/queue-stats', AdminMiddleware, API_ADMIN_SCHEDULER.getQueueStats);
+router.get('/scheduler/jobs/:jobId', AdminMiddleware, API_ADMIN_SCHEDULER.getJobStatus);
 
 // Tournament Management Routes (admin only)
 router.get('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.getAllTournaments);

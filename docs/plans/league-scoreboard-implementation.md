@@ -67,10 +67,10 @@ Build the "Self-Healing" capability _before_ we build the Read API. We must assu
 
 ### Tasks
 
-#### Task 3.1 - Hydration Service []
+#### Task 3.1 - Hydration Service [x]
 
-- [ ] Create `src/services/scoreboard/hydration.service.ts`.
-- [ ] Implement `hydrateTournament(tournamentId)`:
+- [x] Create `src/services/scoreboard/hydration.service.ts`.
+- [x] Implement `hydrateTournament(tournamentId)`:
   - **Step 1:** Fetch ALL member point totals from Postgres (`T_TournamentMember`).
   - **Step 2:** Pipeline `ZADD` to overwrite `tournament:{id}:master_scores`.
   - **Step 3:** Fetch ALL league memberships.

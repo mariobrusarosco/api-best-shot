@@ -4,6 +4,8 @@
 
 **Best Shot API** is the backend service for the _Football App_ project. It is a RESTful API built with **Node.js**, **Express**, and **TypeScript**, using **PostgreSQL** as the database with **Drizzle ORM**. The project follows a strict **Domain-Driven Design (DDD)** with a three-layer architecture.
 
+### NEVER ASSUME ANYTHING. NEVER. IF YOU'RE NOT SURE, JUST ASK ME. SIMPLE AS THAT.
+
 ### Core Mandates
 
 1 - **Strict Scope Adherence:** Do not fix unrelated bugs, refactor code, or change naming conventions outside the explicit scope of the user's request, even if you find errors. If you
@@ -47,8 +49,8 @@ current codebase.
 
 ```
 
-- Once you finish a task, ask user to review your work.
-- Wait for user's confirmation before proceeding to the next task.
+- Once you finish a task or subtask, ask user to review your work.
+- Wait for user's confirmation before proceeding to the next task or subtask.
 - Be patient and don't rush into fixes and implementations.
 - Be ready to do fixes.
 - Once confirmed by the user, mark the current sub-task or task as done.

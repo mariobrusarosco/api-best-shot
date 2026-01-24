@@ -2,6 +2,7 @@ import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-s
 import { DataProviderExecution } from '@/domains/data-provider/services/execution';
 import { API_SOFASCORE_ROUNDS, DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
+import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import { DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
 import { ITournament } from '@/domains/tournament/typing';
 import { Profiling } from '@/services/profiling';
@@ -185,6 +186,96 @@ export class RoundsDataProviderService {
           error: notificationError,
           data: { requestId: this.requestId, originalError: errorMessage },
           source: 'ROUNDS_DATA_PROVIDER_UPDATE_notification_failed',
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  public async updateCurrentRound(payload: CreateRoundsInput) {
+    // Create execution tracking
+    this.execution = new DataProviderExecution({
+      requestId: this.requestId,
+      tournamentId: payload.tournamentId,
+      operationType: DataProviderExecutionOperationType.TOURNAMENT_CURRENT_ROUND_UPDATE,
+    });
+    this.reporter.setTournamentInfo({
+      label: payload.label,
+      tournamentId: payload.tournamentId,
+      provider: payload.provider,
+    });
+
+    try {
+      // ------ INPUT VALIDATION ------
+      this.validateTournament(payload);
+      // ------ FETCH ROUNDS ------
+      const fetchedRounds = await this.fetchRounds(payload.baseUrl);
+
+      let updated = false;
+      let currentRound = 0;
+
+      if (fetchedRounds.currentRound && fetchedRounds.currentRound.round) {
+        currentRound = fetchedRounds.currentRound.round;
+        await QUERIES_TOURNAMENT.updateCurrentRound(payload.tournamentId, currentRound);
+        updated = true;
+      }
+
+      // ------ UPLOAD REPORT ------
+      const reportUploadResult = await this.reporter.createFileAndUpload();
+      // ------ GENERATE REPORT SUMMARY ------
+      const reportSummaryResult = this.reporter.getSummary();
+      // ------ MARK EXECUTION AS COMPLETED ------
+      await this.execution?.complete({
+        reportFileKey: reportUploadResult?.s3Key,
+        reportFileUrl: reportUploadResult?.s3Url,
+        tournamentLabel: payload.label,
+        summary: {
+          tournamentId: payload.tournamentId,
+          tournamentLabel: payload.label,
+          provider: payload.provider,
+          updated,
+          currentRound,
+          ...reportSummaryResult,
+        },
+      });
+
+      return currentRound;
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+
+      // ------ GENERATE REPORT EVEN ON FAILURE (with fallback) ------
+      let reportUploadResult: { s3Key?: string; s3Url?: string } = {};
+      try {
+        reportUploadResult = await this.reporter.createFileAndUpload();
+      } catch (reportError) {
+        console.error('Failed to upload report file:', reportError);
+        Profiling.error({
+          error: reportError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'ROUNDS_DATA_PROVIDER_UPDATE_CURRENT_ROUND_report_upload_failed',
+        });
+      }
+
+      // ------ MARK EXECUTION AS FAILED (always notify) ------
+      const reportSummaryResult = this.reporter.getSummary();
+      try {
+        await this.execution?.failure({
+          reportFileKey: reportUploadResult.s3Key,
+          reportFileUrl: reportUploadResult.s3Url,
+          tournamentLabel: payload.label,
+          error: errorMessage,
+          summary: {
+            error: errorMessage,
+            ...reportSummaryResult,
+          },
+        });
+      } catch (notificationError) {
+        console.error('Failed to send failure notification:', notificationError);
+        Profiling.error({
+          error: notificationError,
+          data: { requestId: this.requestId, originalError: errorMessage },
+          source: 'ROUNDS_DATA_PROVIDER_UPDATE_CURRENT_ROUND_notification_failed',
         });
       }
 

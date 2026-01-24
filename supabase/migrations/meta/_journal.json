@@ -64,6 +64,13 @@
       "when": 1769279387075,
       "tag": "0008_cool_thing",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1769296048451,
+      "tag": "0009_tense_hitman",
+      "breakpoints": true
     }
   ]
 }

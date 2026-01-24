@@ -13,6 +13,7 @@ import { randomUUID } from 'crypto';
 import type { Job } from 'pg-boss';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/matches';
+import { RoundsDataProviderService } from '@/domains/data-provider/services/rounds';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { retryMatchOperation } from '@/domains/data-provider/utils/retry';
 import { DB_SelectMatch } from '@/domains/match/schema';
@@ -150,6 +151,17 @@ export class MatchUpdateOrchestratorService {
             standingsError
           );
           // Swallow error - standings failures don't break match processing
+        }
+
+        // Update tournament current round
+        try {
+          await this.updateTournamentCurrentRound(jobData.tournamentId);
+        } catch (currentRoundError) {
+          console.error(
+            `[MatchUpdateOrchestrator] [Job] Current round update failed for tournament ${jobData.tournamentId}:`,
+            currentRoundError
+          );
+          // Swallow error
         }
       }
     } catch (error) {
@@ -333,6 +345,15 @@ export class MatchUpdateOrchestratorService {
         } catch (error) {
           console.error(`[MatchUpdateOrchestrator] Failed to update standings for tournament ${tournamentId}:`, error);
         }
+
+        try {
+          await this.updateTournamentCurrentRound(tournamentId);
+        } catch (error) {
+          console.error(
+            `[MatchUpdateOrchestrator] Failed to update current round for tournament ${tournamentId}:`,
+            error
+          );
+        }
       }
     }
 
@@ -389,6 +410,43 @@ export class MatchUpdateOrchestratorService {
     const matchJustEnded = previousStatus !== 'ended' && updatedMatch.status === 'ended';
 
     return matchJustEnded;
+  }
+
+  /**
+   * Update tournament current round
+   * Called when matches finish
+   */
+  private async updateTournamentCurrentRound(tournamentId: string): Promise<void> {
+    console.log(`[MatchUpdateOrchestrator] Updating current round for tournament: ${tournamentId}`);
+
+    // Fetch tournament data
+    const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
+
+    if (!tournament) {
+      console.error(`[MatchUpdateOrchestrator] Tournament ${tournamentId} not found, skipping current round update`);
+      return;
+    }
+
+    // Create unique request ID for tracking (must be valid UUID)
+    const requestId = randomUUID();
+
+    try {
+      // Execute update with retry logic
+      await retryMatchOperation(async () => {
+        const roundsService = new RoundsDataProviderService(this.scraper, requestId);
+        return await roundsService.updateCurrentRound({
+          tournamentId,
+          baseUrl: tournament.baseUrl,
+          label: tournament.label,
+          provider: tournament.provider,
+        });
+      }, `Current Round update: ${tournament.label}`);
+
+      console.log(`[MatchUpdateOrchestrator] Successfully updated current round for tournament: ${tournamentId}`);
+    } catch (error) {
+      // Don't throw - we don't want failures to break the match update process
+      console.error(`[MatchUpdateOrchestrator] Failed to update current round for tournament ${tournamentId}:`, error);
+    }
   }
 
   /**

@@ -9,6 +9,7 @@ export const T_Tournament = pgTable(
     slug: text('slug').notNull().default(''),
     provider: text('provider').notNull(),
     season: text('season').notNull(),
+    currentRound: integer('current_round').default(0),
     mode: text('mode').notNull(),
     standingsMode: text('standings_mode').notNull().default(''),
     label: text('label').notNull(),

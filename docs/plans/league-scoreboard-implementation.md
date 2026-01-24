@@ -18,15 +18,15 @@ Prepare the local and production environments to support Redis, and ensure the P
 - [x] **Error Handling:** Implement `retryStrategy` in the Redis client to handle temporary connection blips (crucial for Railway restarts).
 - [x] **Health Check:** Integrate Redis ping into the app's startup sequence in `src/index.ts`.
 
-#### Task 1.3 - Production Readiness (Railway) []
-- [ ] **Documentation:** Create `docs/guides/railway-redis-setup.md` documenting how to provision Redis in Railway.
-- [ ] **Env Validation:** Update `src/config/env.ts` to strictly validate `REDIS_URL` in production mode.
+#### Task 1.3 - Production Readiness (Railway) [x]
+- [x] **Documentation:** Create `docs/guides/railway-redis-setup.md` documenting how to provision Redis in Railway.
+- [x] **Env Validation:** Update `src/config/env.ts` to strictly validate `REDIS_URL` in production mode.
 
-#### Task 1.4 - Postgres Source of Truth []
-- [ ] **Audit:** Inspect `src/domains/tournament/schema/index.ts` (specifically `T_LeagueTournament` or equivalent linking table).
-- [ ] **Migration:** If a direct `points` column is missing or insufficient, create a Drizzle migration to add it.
+#### Task 1.4 - Postgres Source of Truth [x]
+- [x] **Audit:** Inspect `src/domains/tournament/schema/index.ts` (specifically `T_LeagueTournament` or equivalent linking table).
+- [x] **Migration:** If a direct `points` column is missing or insufficient, create a Drizzle migration to add it.
     -   *Requirement:* This column is the hard backup. If Redis dies, this saves us.
-- [ ] **Helpers:** Create `DB_AtomicUpdatePoints` type/query to ensure thread-safe increments (`points = points + delta`).
+- [x] **Helpers:** Create `DB_AtomicUpdatePoints` type/query to ensure thread-safe increments (`points = points + delta`).
 
 ---
 

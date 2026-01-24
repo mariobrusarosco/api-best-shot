@@ -1,4 +1,4 @@
-import { numeric, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { integer, numeric, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Tournament = pgTable(
   'tournament',
@@ -67,3 +67,27 @@ export const T_TournamentStandings = pgTable(
 export type DB_InsertTournamentStandings = typeof T_TournamentStandings.$inferInsert;
 export type DB_UpdateTournamentStandings = typeof T_TournamentStandings.$inferInsert;
 export type DB_SelectTournamentStandings = typeof T_TournamentStandings.$inferSelect;
+
+export const T_TournamentMember = pgTable(
+  'tournament_member',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    tournamentId: uuid('tournament_id').notNull(),
+    memberId: uuid('member_id').notNull(),
+    points: integer('points').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  table => {
+    return {
+      uniqueMemberTournament: uniqueIndex('unique_member_tournament').on(table.memberId, table.tournamentId),
+    };
+  }
+);
+
+export type DB_InsertTournamentMember = typeof T_TournamentMember.$inferInsert;
+export type DB_UpdateTournamentMember = typeof T_TournamentMember.$inferInsert;
+export type DB_SelectTournamentMember = typeof T_TournamentMember.$inferSelect;

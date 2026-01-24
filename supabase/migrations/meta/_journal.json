@@ -50,6 +50,13 @@
       "when": 1769127375692,
       "tag": "0006_lyrical_tinkerer",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1769268792809,
+      "tag": "0007_nervous_dagger",
+      "breakpoints": true
     }
   ]
 }

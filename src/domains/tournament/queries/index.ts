@@ -7,11 +7,27 @@ import {
   DB_InsertTournament,
   DB_InsertTournamentStandings,
   T_Tournament,
+  T_TournamentMember,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import { and, eq, sql } from 'drizzle-orm';
 import { TournamentWithTypedMode } from '../typing';
+
+const updateMemberPoints = async (memberId: string, tournamentId: string, delta: number) => {
+  try {
+    await db
+      .update(T_TournamentMember)
+      .set({
+        points: sql`${T_TournamentMember.points} + ${delta}`,
+      })
+      .where(and(eq(T_TournamentMember.memberId, memberId), eq(T_TournamentMember.tournamentId, tournamentId)));
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    console.error('[TournamentQueries] - [updateMemberPoints]', dbError);
+    throw error;
+  }
+};
 
 const allTournaments = async () => {
   try {
@@ -209,4 +225,5 @@ export const QUERIES_TOURNAMENT = {
   getTournamentStandings,
   createTournament,
   upsertTournamentStandings,
+  updateMemberPoints,
 };

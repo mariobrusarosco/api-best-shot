@@ -13,6 +13,7 @@
 import cron from 'node-cron';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { MatchUpdateOrchestratorService } from '@/domains/scheduler/services/match-update-orchestrator.service';
+import { getQueue, stopQueue } from '@/services/queue';
 
 // Environment configuration
 const MATCH_POLLING_ENABLED = process.env.MATCH_POLLING_ENABLED === 'true';
@@ -60,9 +61,20 @@ async function runMatchUpdateJob() {
 
     console.log('[MatchUpdateCron] Results:');
     console.log(`  ✅ Processed: ${result.processed}`);
-    console.log(`  ✅ Successful: ${result.successful}`);
-    console.log(`  ❌ Failed: ${result.failed}`);
-    console.log(`  📊 Standings Updated: ${result.standingsUpdated}`);
+
+    // Queue-based results
+    if (result.queued !== undefined) {
+      console.log(`  📋 Queued: ${result.queued}`);
+      console.log(`  ⚡ Processing: Concurrent (workers will process jobs in background)`);
+    }
+
+    // Direct processing results
+    if (result.successful !== undefined) {
+      console.log(`  ✅ Successful: ${result.successful}`);
+      console.log(`  ❌ Failed: ${result.failed}`);
+      console.log(`  📊 Standings Updated: ${result.standingsUpdated}`);
+    }
+
     console.log('=== [MatchUpdateCron] Completed ===\n');
   } catch (error) {
     console.error('[MatchUpdateCron] Job failed:', error);
@@ -71,6 +83,10 @@ async function runMatchUpdateJob() {
 
 /**
  * Graceful shutdown handler
+ *
+ * Ensures clean shutdown of:
+ * 1. Queue workers (allows current jobs to complete)
+ * 2. Browser instance
  */
 async function shutdown(signal: string) {
   if (isShuttingDown) {
@@ -82,16 +98,23 @@ async function shutdown(signal: string) {
   console.log(`\n[Scheduler] Received ${signal}, shutting down gracefully...`);
 
   try {
+    // Stop queue workers first (allows current jobs to finish)
+    console.log('[Scheduler] Stopping queue workers...');
+    await stopQueue();
+    console.log('[Scheduler] ✅ Queue workers stopped');
+
+    // Close browser
     if (scraper) {
       console.log('[Scheduler] Closing browser...');
       await scraper.close();
       scraper = null;
+      console.log('[Scheduler] ✅ Browser closed');
     }
 
-    console.log('[Scheduler] Shutdown complete');
+    console.log('[Scheduler] 🎉 Shutdown complete');
     process.exit(0);
   } catch (error) {
-    console.error('[Scheduler] Error during shutdown:', error);
+    console.error('[Scheduler] ❌ Error during shutdown:', error);
     process.exit(1);
   }
 }
@@ -115,6 +138,42 @@ async function startCronJobs() {
     console.log('   Set MATCH_POLLING_ENABLED=true to enable\n');
     return;
   }
+
+  // Initialize queue and workers for concurrent processing
+  console.log('[Scheduler] Initializing queue and workers...');
+  try {
+    const queue = await getQueue();
+
+    if (queue) {
+      // Queue available - initialize workers for concurrent processing
+      console.log('[Scheduler] ✅ Queue service available');
+
+      // Initialize browser for workers
+      const scraperInstance = await initializeScraper();
+      const orchestrator = new MatchUpdateOrchestratorService(scraperInstance);
+
+      // Register workers
+      await orchestrator.registerWorkers(queue);
+      console.log('[Scheduler] ✅ Queue workers initialized successfully');
+      console.log('');
+      console.log('[Scheduler] Queue Configuration:');
+      console.log('  Queue Name: update-match');
+      console.log('  Workers: 10 concurrent workers');
+      console.log('  Concurrency: 1 job per worker');
+      console.log('  Retry Policy: 3 attempts with exponential backoff (30s → 60s → 120s)');
+      console.log('  Job Expiration: 2 hours');
+      console.log('  Processing Mode: Concurrent (background workers)');
+    } else {
+      // Queue unavailable - will fall back to direct processing
+      console.log('[Scheduler] ⚠️  Queue service unavailable');
+      console.log('[Scheduler] Mode: Sequential processing (fallback)');
+    }
+  } catch (error) {
+    // Queue initialization failed - graceful degradation
+    console.error('[Scheduler] ⚠️  Failed to initialize queue:', error);
+    console.log('[Scheduler] Mode: Sequential processing (fallback)');
+  }
+  console.log('');
 
   // Schedule match update job
   console.log('[Scheduler] Scheduling match update cron job...');

@@ -13,6 +13,7 @@ export const T_Tournament = pgTable(
     standingsMode: text('standings_mode').notNull().default(''),
     label: text('label').notNull(),
     logo: text('logo').notNull().default(''),
+    status: text('status').notNull().default('active'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .notNull()

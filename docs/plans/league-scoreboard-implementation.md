@@ -43,7 +43,7 @@ Implement the business logic that updates the "Source of Truth" (Postgres) first
 
 ### Tasks
 
-#### Task 2.1 - Scoreboard Service (Delta Calculation) []
+#### Task 2.1 - Scoreboard Service (Delta Calculation) [x]
 
 - [x] Create `src/domains/score/services/scoreboard.service.ts`.
 - [x] Implement `calculateMatchPoints(matchId)`:
@@ -53,6 +53,9 @@ Implement the business logic that updates the "Source of Truth" (Postgres) first
 
 #### Task 2.2 - The "Dual-Write" Transaction [x]
 
+- [x] Implement `applyScoreUpdates(tournamentId, deltas)`:
+  - **Step 1 (Durability):** Loop through deltas and execute atomic SQL updates on Postgres.
+  - **Step 2 (Cache):** Pipeline `ZINCRBY` commands to `tournament:{id}:master_scores` in Redis.
 - [x] **Verification:** Write a test case that updates a user and checks BOTH Postgres and Redis.
 
 #### Task 2.3 - Integration [x]
@@ -96,15 +99,15 @@ Implement the "Virtual League" views and the "Tick-Tock" rank movement logic.
 
 #### Task 4.1 - League Processor (The Filter) [x]
 
-- [ ] Implement `refreshLeagueRanking(leagueId, tournamentId)`:
+- [x] Implement `refreshLeagueRanking(leagueId, tournamentId)`:
   - **Snapshot:** `RENAME league:{id}:leaderboard` -> `league:{id}:leaderboard:prev`.
   - **Generate:** `ZINTERSTORE league:{id}:leaderboard 2 tournament:{id}:master_scores league:{id}:members`.
   - _Note:_ Handle the case where the key doesn't exist (first run).
 
-#### Task 4.2 - API Implementation []
+#### Task 4.2 - API Implementation [x]
 
-- [ ] **Route:** `GET /api/v2/leagues/:id/scoreboard`.
-- [ ] **Pagination:** Use `ZREVRANGE` (Top N).
+- [x] **Route:** `GET /api/v2/leagues/:id/scoreboard`.
+- [x] **Pagination:** Use `ZREVRANGE` (Top N).
 - [x] **My Rank:** Use `ZREVRANK` on Current and Previous keys.
 - [x] **Movement:** Calculate `PrevRank - CurrentRank`.
 
@@ -116,18 +119,18 @@ Implement the "Virtual League" views and the "Tick-Tock" rank movement logic.
 
 Final safety checks before shipping.
 
-### TasksSolid
+### Tasks
 
-#### Task 5.1 - Local Simulation []
+#### Task 5.1 - Local Simulation [x]
 
-- [ ] Simulate a "Match End" event locally.
-- [ ] Verify: Postgres Updated? Redis Master Updated? League View Refreshed? Rank Moved?
+- [x] Simulate a "Match End" event locally.
+- [x] Verify: Postgres Updated? Redis Master Updated? League View Refreshed? Rank Moved?
 
-#### Task 5.2 - Deployment Config []
+#### Task 5.2 - Deployment Config [x]
 
-- [ ] Ensure Railway `Redis` service is provisioned.
-- [ ] Set `REDIS_URL` in Railway variables.
-- [ ] (Optional) Add a `post-deploy` command to run the Hydration script if needed.
+- [x] Ensure Railway `Redis` service is provisioned.
+- [x] Set `REDIS_URL` in Railway variables.
+- [x] (Optional) Add a `post-deploy` command to run the Hydration script if needed.
 
 ## Dependencies
 

@@ -44,11 +44,11 @@ Implement the business logic that updates the "Source of Truth" (Postgres) first
     -   Runs `runGuessAnalysis`.
     -   Returns `Map<MemberId, PointsDelta>`.
 
-#### Task 2.2 - The "Dual-Write" Transaction []
-- [ ] Implement `applyScoreUpdates(tournamentId, deltas)`:
+#### Task 2.2 - The "Dual-Write" Transaction [x]
+- [x] Implement `applyScoreUpdates(tournamentId, deltas)`:
     -   **Step 1 (Durability):** Loop through deltas and execute atomic SQL updates on Postgres.
     -   **Step 2 (Cache):** Pipeline `ZINCRBY` commands to `tournament:{id}:master_scores` in Redis.
-- [ ] **Verification:** Write a test case that updates a user and checks BOTH Postgres and Redis.
+- [x] **Verification:** Write a test case that updates a user and checks BOTH Postgres and Redis.
 
 #### Task 2.3 - Integration []
 - [ ] Hook into `MatchUpdateOrchestrator`: Call `applyScoreUpdates` immediately after a match status changes to 'ended'.

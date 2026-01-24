@@ -29,6 +29,31 @@ const updateMemberPoints = async (memberId: string, tournamentId: string, delta:
   }
 };
 
+const bulkUpdateMemberPoints = async (tournamentId: string, updates: Map<string, number>) => {
+  if (updates.size === 0) return;
+
+  try {
+    const memberIds = Array.from(updates.keys());
+    const deltas = Array.from(updates.values());
+
+    await db.execute(sql`
+      UPDATE ${T_TournamentMember} AS tm
+      SET points = tm.points + data.delta
+      FROM (
+        SELECT 
+          unnest(${memberIds}::uuid[]) AS member_id, 
+          unnest(${deltas}::integer[]) AS delta
+      ) AS data
+      WHERE tm.member_id = data.member_id 
+        AND tm.tournament_id = ${tournamentId}
+    `);
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    console.error('[TournamentQueries] - [bulkUpdateMemberPoints]', dbError);
+    throw error;
+  }
+};
+
 const allTournaments = async () => {
   try {
     return db
@@ -226,4 +251,5 @@ export const QUERIES_TOURNAMENT = {
   createTournament,
   upsertTournamentStandings,
   updateMemberPoints,
+  bulkUpdateMemberPoints,
 };

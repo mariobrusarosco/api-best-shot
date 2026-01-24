@@ -24,7 +24,16 @@ const getAllMemberGuesses = async (memberId: string) => {
     .where(eq(T_Guess.memberId, memberId));
 };
 
+const getGuessesByMatchId = async (matchId: string) => {
+  return db
+    .select()
+    .from(T_Guess)
+    .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
+    .where(eq(T_Guess.matchId, matchId));
+};
+
 export const QUERIES_GUESS = {
   selectMemberGuessesForTournament,
   getAllMemberGuesses,
+  getGuessesByMatchId,
 };

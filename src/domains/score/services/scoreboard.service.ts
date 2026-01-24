@@ -1,0 +1,53 @@
+import { QUERIES_GUESS } from '@/domains/guess/queries';
+import { runGuessAnalysis } from '@/domains/guess/services/guess-analysis-v2';
+import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
+import { redis } from '@/services/redis/client';
+
+export const ScoreboardService = {
+  /**
+   * Calculates the points gained from a single match for all members who made a guess.
+   * Returns a Map of memberId -> pointsDelta
+   */
+  async calculateMatchPoints(matchId: string): Promise<Map<string, number>> {
+    const guessesAndMatches = await QUERIES_GUESS.getGuessesByMatchId(matchId);
+    const deltas = new Map<string, number>();
+
+    for (const row of guessesAndMatches) {
+      const analysis = runGuessAnalysis(row.guess, row.match);
+      const points = analysis.total || 0;
+
+      // We only care about members who actually earned points to optimize updates,
+      // but we could include 0 if needed for some logic.
+      // For now, let's include everyone who made a guess to be safe,
+      // or just those with points > 0 to optimize.
+      // The plan says "Identify all affected Members (those who guessed)".
+      deltas.set(row.guess.memberId, points);
+    }
+
+    return deltas;
+  },
+
+  /**
+   * Updates the "Source of Truth" (Postgres) and the "Hot Cache" (Redis).
+   * 1. Updates T_TournamentMember.points (Atomic Increment)
+   * 2. Updates tournament:{id}:master_scores (ZINCRBY)
+   */
+  async applyScoreUpdates(tournamentId: string, deltas: Map<string, number>): Promise<void> {
+    await QUERIES_TOURNAMENT.bulkUpdateMemberPoints(tournamentId, deltas);
+
+    // 2. Redis Update (Speed)
+    const pipeline = redis.pipeline();
+    let hasUpdates = false;
+
+    for (const [memberId, points] of deltas) {
+      if (points !== 0) {
+        pipeline.zincrby(`tournament:${tournamentId}:master_scores`, points, memberId);
+        hasUpdates = true;
+      }
+    }
+
+    if (hasUpdates) {
+      await pipeline.exec();
+    }
+  },
+};

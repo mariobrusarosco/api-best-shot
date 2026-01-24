@@ -17,7 +17,7 @@ Integrate pg-boss queue into the scheduler by adding worker registration and job
 
 ### Tasks
 
-#### Task 1.1 - Add Worker Registration Method to Orchestrator []
+#### Task 1.1 - Add Worker Registration Method to Orchestrator [✅]
 **File**: `src/domains/scheduler/services/match-update-orchestrator.service.ts`
 
 **Changes**:
@@ -39,7 +39,7 @@ Integrate pg-boss queue into the scheduler by adding worker registration and job
 - Atomic operations (PostgreSQL bulk increment + Redis ZINCRBY) are safe for concurrent workers
 - Errors swallowed (logged but don't break flow) - preserved from current implementation
 
-#### Task 1.2 - Refactor processMatchUpdates() to Queue Jobs []
+#### Task 1.2 - Refactor processMatchUpdates() to Queue Jobs [✅]
 **File**: `src/domains/scheduler/services/match-update-orchestrator.service.ts`
 
 **Changes**:
@@ -52,7 +52,7 @@ Integrate pg-boss queue into the scheduler by adding worker registration and job
 
 **Backward Compatibility**: Keep direct processing method as fallback if queue unavailable
 
-#### Task 1.3 - Add TypeScript Types for Job Data []
+#### Task 1.3 - Add TypeScript Types for Job Data [✅]
 **File**: `src/domains/scheduler/services/match-update-orchestrator.service.ts`
 
 **Changes**:

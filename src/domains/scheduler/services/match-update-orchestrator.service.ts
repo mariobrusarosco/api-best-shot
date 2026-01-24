@@ -19,6 +19,7 @@ import { DB_SelectMatch } from '@/domains/match/schema';
 import { ScoreboardService } from '@/domains/score/services/scoreboard.service';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import type { IQueue } from '@/services/queue';
+import { getQueue } from '@/services/queue';
 import { MatchPollingService } from './match-polling.service';
 
 /**
@@ -168,9 +169,99 @@ export class MatchUpdateOrchestratorService {
 
   /**
    * Main orchestration method: Find and update all matches needing updates
-   * Now processes each match individually using SofaScore's match-specific API
+   *
+   * This method intelligently routes to either queue-based or direct processing:
+   * - If queue is available: Queues jobs for concurrent processing
+   * - If queue is unavailable: Falls back to direct sequential processing
    */
   async processMatchUpdates(): Promise<{
+    processed: number;
+    successful?: number;
+    failed?: number;
+    standingsUpdated?: number;
+    queued?: number;
+  }> {
+    const queue = await getQueue();
+
+    if (queue) {
+      // Queue-based processing (concurrent)
+      return this.processMatchUpdatesQueued(queue);
+    } else {
+      // Direct processing (sequential fallback)
+      console.warn('[MatchUpdateOrchestrator] Queue unavailable, falling back to direct processing');
+      return this.processMatchUpdatesDirect();
+    }
+  }
+
+  /**
+   * Queue-based match processing (concurrent)
+   *
+   * Queues individual jobs for each match needing updates.
+   * Workers process jobs concurrently (10 workers by default).
+   *
+   * @param queue - Queue instance for job queueing
+   */
+  private async processMatchUpdatesQueued(queue: IQueue): Promise<{
+    processed: number;
+    queued: number;
+  }> {
+    console.log('[MatchUpdateOrchestrator] Starting queue-based match update process...');
+
+    // Step 1: Find matches needing updates
+    const matchesNeedingUpdate = await this.pollingService.findMatchesNeedingUpdate();
+
+    if (matchesNeedingUpdate.length === 0) {
+      console.log('[MatchUpdateOrchestrator] No matches need updating at this time');
+      return { processed: 0, queued: 0 };
+    }
+
+    console.log(`[MatchUpdateOrchestrator] Found ${matchesNeedingUpdate.length} matches needing updates`);
+
+    // Step 2: Queue individual jobs for each match
+    let queuedCount = 0;
+    const QUEUE_NAME = 'update-match';
+
+    for (const match of matchesNeedingUpdate) {
+      try {
+        const jobData: MatchUpdateJobData = {
+          matchId: match.id,
+          matchExternalId: match.externalId,
+          tournamentId: match.tournamentId,
+          roundSlug: match.roundSlug,
+          provider: match.provider,
+          previousStatus: match.status,
+        };
+
+        await queue.send(QUEUE_NAME, jobData, {
+          retryLimit: 3,
+          retryDelay: 30, // 30 seconds
+          retryBackoff: true, // Exponential: 30s, 60s, 120s
+          expireInHours: 2, // Jobs expire after 2 hours if not processed
+        });
+
+        queuedCount++;
+      } catch (error) {
+        console.error(`[MatchUpdateOrchestrator] Failed to queue match ${match.id}:`, error);
+      }
+    }
+
+    console.log(
+      `[MatchUpdateOrchestrator] Queued ${queuedCount}/${matchesNeedingUpdate.length} matches for processing`
+    );
+
+    return {
+      processed: matchesNeedingUpdate.length,
+      queued: queuedCount,
+    };
+  }
+
+  /**
+   * Direct sequential match processing (fallback)
+   *
+   * Processes matches one by one in sequence.
+   * Used when queue is unavailable.
+   */
+  private async processMatchUpdatesDirect(): Promise<{
     processed: number;
     successful: number;
     failed: number;

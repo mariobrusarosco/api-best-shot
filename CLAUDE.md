@@ -43,9 +43,10 @@ current codebase
 
 ## Planner Mode
 
+- DO NOT WRITE THE IMPLEMENTATION CODE
 - Breakdown the feature into Phases and provide a clear plan of action.
 - Breakdown Phases into small tasks and provide a clear plan of action.
-- Consider break tasks into subtasks.
+- Breakdown Tasks into sub tasks and provide a clear plan of action.
 - Create a `.md` file for the plan. Store in the `/docs/plans` folder.
 - Fprmat
 
@@ -58,7 +59,11 @@ current codebase
 
 ### Task 1 - lorem ipsum dolor sit amet []
 #### Task 1.1 - lorem ipsum dolor sit amet []
+#### Task 1.1.a - lorem ipsum dolor sit amet []
+#### Task 1.1.b - lorem ipsum dolor sit amet []
 #### Task 1.2 - lorem ipsum dolor sit amet []
+#### Task 1.2.a - lorem ipsum dolor sit amet []
+#### Task 1.2.b - lorem ipsum dolor sit amet []
 
 ...
 

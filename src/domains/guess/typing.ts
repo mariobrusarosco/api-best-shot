@@ -18,6 +18,30 @@ export type GuessInput = {
   };
 };
 
+export interface IGuessAnalysis {
+  id: string;
+  matchId: string;
+  matchDate: Date | null;
+  home: {
+    status: GUESS_STATUS;
+    value: number | null;
+    points: number | null;
+  };
+  away: {
+    status: GUESS_STATUS;
+    value: number | null;
+    points: number | null;
+  };
+  fullMatch: {
+    status: GUESS_STATUS;
+    label: string;
+    points: number | null;
+  };
+  total: number | null;
+  status: GUESS_STATUS;
+  hasLostTimewindowToGuess: boolean;
+}
+
 export const GUESS_STATUSES = {
   EXPIRED: 'expired',
   CORRECT: 'correct',
@@ -29,13 +53,6 @@ export const GUESS_STATUSES = {
 } as const;
 
 export type GUESS_STATUS = (typeof GUESS_STATUSES)[keyof typeof GUESS_STATUSES];
-
-export interface GuessAnalysis {
-  status: string;
-  fullMatch: {
-    status: 'correct' | 'incorrect';
-  };
-}
 
 export interface GuessesByOutcome {
   correct: number;

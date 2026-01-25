@@ -1,14 +1,29 @@
 import { Utils } from '@/domains/auth/utils';
-import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { ErrorMapper } from '@/domains/guess/error-handling/mapper';
-import { T_Guess, DB_SelectGuess } from '@/domains/guess/schema';
+import { DB_SelectGuess, T_Guess } from '@/domains/guess/schema';
+import { runGuessAnalysis } from '@/domains/guess/services/guess-analysis-v2';
 import { CreateGuessRequest, GuessInput } from '@/domains/guess/typing';
-import { T_Match, DB_SelectMatch } from '@/domains/match/schema';
+import { DB_SelectMatch, T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import db from '@/services/database';
 import Profiling from '@/services/profiling';
+import { randomUUID } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { Response } from 'express';
+
+const buildExpiredGuess = (memberId: string, matchId: string, roundId: string) => {
+  return {
+    id: randomUUID(),
+    memberId,
+    matchId,
+    roundId,
+    homeScore: null,
+    awayScore: null,
+    active: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+};
 
 const GuessController = {
   createGuess,
@@ -26,15 +41,20 @@ async function getMemberGuesses({
   round: string;
 }) {
   try {
-    const guesses = await db
+    // Single query: Get all matches with their guesses (if they exist) using LEFT JOIN
+    const matchesWithGuesses = await db
       .select()
-      .from(T_Guess)
-      .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
-      .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round), eq(T_Guess.memberId, memberId)));
+      .from(T_Match)
+      .leftJoin(T_Guess, and(eq(T_Match.id, T_Guess.matchId), eq(T_Guess.memberId, memberId)))
+      .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, round)));
 
-    const parsedGuesses = guesses.map((row: { guess: DB_SelectGuess; match: DB_SelectMatch }) =>
-      runGuessAnalysis(row.guess, row.match)
-    );
+    // Single loop: Process each match-guess pair
+    const parsedGuesses = matchesWithGuesses.map((row: { match: DB_SelectMatch; guess: DB_SelectGuess | null }) => {
+      const guess = row.guess || buildExpiredGuess(memberId, row.match.id, round);
+      return runGuessAnalysis(guess, row.match);
+    });
+
+    console.log('-----------------', parsedGuesses);
 
     return parsedGuesses;
   } catch (error: unknown) {

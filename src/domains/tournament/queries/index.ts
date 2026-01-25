@@ -2,6 +2,7 @@ import { T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
 
 import { DatabaseError } from '@/domains/shared/error-handling/database';
+import { T_Team } from '@/domains/team/schema';
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import {
   DB_InsertTournament,
@@ -185,8 +186,10 @@ const getTournamentStandings = async (tournamentId: string) => {
         gd: T_TournamentStandings.gd,
         provider: T_TournamentStandings.provider,
         updatedAt: T_TournamentStandings.updatedAt,
+        teamBadge: T_Team.badge,
       })
       .from(T_TournamentStandings)
+      .leftJoin(T_Team, eq(T_Team.externalId, T_TournamentStandings.teamExternalId))
       .where(eq(T_TournamentStandings.tournamentId, tournamentId))
       .orderBy(sql`cast(${T_TournamentStandings.order} as integer)`);
   } catch (error: unknown) {

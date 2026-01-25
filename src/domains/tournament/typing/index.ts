@@ -13,6 +13,7 @@ export interface TournamentStandings {
 }
 
 export type TournamentMode = 'regular-season-and-knockout' | 'regular-season-only' | 'knockout-only';
+export type ITournamentStadingsMode = 'unique-group' | 'multi-group';
 
 // Override just the standingsMode property
 export type TournamentWithTypedMode = Omit<DB_SelectTournament, 'mode'> & {

@@ -31,7 +31,9 @@ import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
 import db from '@/services/database';
 import { QUERIES_TOURNAMENT } from '../queries';
 
+import type { ITournamentStadingsMode } from '@/domains/tournament/typing';
 import { DB_InsertTournament } from '../schema';
+import { parseStandingsByMode } from '../utils/standing-mode-mapper';
 
 const getAllTournaments = async () => {
   return QUERIES_TOURNAMENT.allTournaments();
@@ -94,11 +96,9 @@ const getTournamentStandings = async (tournamentId: string) => {
   }
 
   const standings = await QUERIES_TOURNAMENT.getTournamentStandings(tournamentId);
-  return {
-    teams: standings,
-    format: tournament.standingsMode,
-    lastUpdated: standings[0]?.updatedAt,
-  };
+  const parsedStandings = await parseStandingsByMode(standings, tournament.standingsMode as ITournamentStadingsMode);
+
+  return parsedStandings;
 };
 
 const getTournament = async (tournamentId: string) => {

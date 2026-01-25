@@ -1,11 +1,12 @@
+import { QUERIES_GUESS } from '@/domains/guess/queries';
 import { DB_SelectGuess } from '@/domains/guess/schema';
+import type { IGuessAnalysis } from '@/domains/guess/typing';
+import { GUESS_STATUSES } from '@/domains/guess/typing';
 import { DB_SelectMatch } from '@/domains/match/schema';
 import { toNumberOrNull, toNumberOrZero } from '@/utils';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import utc from 'dayjs/plugin/utc';
-import { QUERIES_GUESS } from '../queries';
-import { GUESS_STATUS, GUESS_STATUSES } from '../typing';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
@@ -21,6 +22,10 @@ export const runGuessAnalysis = (guess: DB_SelectGuess, match: DB_SelectMatch) =
   const guessExpired = hasNullGuesses && hasLostTimewindowToGuess;
   const notStartedGuess = match.status === 'open' && hasNullGuesses;
   const waitingForGame = match.status === 'open' && !hasNullGuesses;
+
+  // console.log('----- match.status', match.status);
+  // console.log('----- has null guesses', hasNullGuesses);
+  // console.log('----- has lost timewindow to guess', hasLostTimewindowToGuess);
 
   if (guessPaused) return generatePausedGuess(guess, match, { hasLostTimewindowToGuess });
   if (guessExpired) return generateExpiredGuess(guess, match, { hasLostTimewindowToGuess });
@@ -231,27 +236,3 @@ const getMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
     status: guessPrediction.label === matchOutcome.label ? GUESS_STATUSES.CORRECT : GUESS_STATUSES.INCORRECT,
   };
 };
-
-interface IGuessAnalysis {
-  id: string;
-  matchId: string;
-  matchDate: Date | null;
-  home: {
-    status: GUESS_STATUS;
-    value: number | null;
-    points: number | null;
-  };
-  away: {
-    status: GUESS_STATUS;
-    value: number | null;
-    points: number | null;
-  };
-  fullMatch: {
-    status: GUESS_STATUS;
-    label: string;
-    points: number | null;
-  };
-  total: number | null;
-  status: GUESS_STATUS;
-  hasLostTimewindowToGuess: boolean;
-}

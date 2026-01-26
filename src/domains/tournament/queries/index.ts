@@ -210,6 +210,21 @@ const createTournament = async (input: DB_InsertTournament) => {
   }
 };
 
+const updateCurrentRound = async (tournamentId: string, currentRound: number) => {
+  try {
+    await db
+      .update(T_Tournament)
+      .set({
+        currentRound,
+      })
+      .where(eq(T_Tournament.id, tournamentId));
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    console.error('[TournamentQueries] - [updateCurrentRound]', dbError);
+    throw error;
+  }
+};
+
 const upsertTournamentStandings = async (standings: DB_InsertTournamentStandings[]) => {
   if (standings.length === 0) {
     return [];
@@ -252,6 +267,7 @@ export const QUERIES_TOURNAMENT = {
 
   getTournamentStandings,
   createTournament,
+  updateCurrentRound,
   upsertTournamentStandings,
   updateMemberPoints,
   bulkUpdateMemberPoints,

@@ -1,0 +1,1 @@
+ALTER TABLE "tournament" ADD COLUMN "current_round" integer DEFAULT 0;

@@ -1,7 +1,10 @@
 import { config } from 'dotenv';
-import './services/profiling/sentry-instrument';
-import { redis } from './services/redis/client';
 config({ path: process.env.ENV_PATH || '.env' });
+
+// Sentry must be initialized AFTER env vars are loaded
+require('./services/profiling/sentry-instrument');
+
+import { redis } from './services/redis/client';
 
 import cookieParser from 'cookie-parser';
 import cors from 'cors';

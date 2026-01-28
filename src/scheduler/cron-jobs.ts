@@ -1,19 +1,26 @@
 /**
  * Cron Jobs Entry Point
  *
- * Manages automated scheduled tasks:
+ * Manages automated scheduled tasks using Node-cron (NOT AWS Scheduler/EventBridge):
  * - Match updates (every 10 minutes)
  * - Future: Standings updates, score calculations, etc.
  *
  * Usage:
  *   Local: yarn scheduler
- *   Production: Runs as separate Railway service
+ *   Production: Runs as separate Railway service (Node.js process)
  */
 
-import cron from 'node-cron';
+import { config } from 'dotenv';
+// Initialize Sentry and Environment variables before other imports
+config({ path: process.env.ENV_PATH || '.env' });
+require('@/services/profiling/sentry-instrument'); // Initialize Sentry
+
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { MatchUpdateOrchestratorService } from '@/domains/scheduler/services/match-update-orchestrator.service';
+import { logError, logInfo } from '@/services/logger';
 import { getQueue, stopQueue } from '@/services/queue';
+import * as Sentry from '@sentry/node';
+import cron from 'node-cron';
 
 // Environment configuration
 const MATCH_POLLING_ENABLED = process.env.MATCH_POLLING_ENABLED === 'true';
@@ -28,9 +35,9 @@ let isShuttingDown = false;
  */
 async function initializeScraper(): Promise<BaseScraper> {
   if (!scraper) {
-    console.log('[Scheduler] Initializing browser...');
+    logInfo('[Scheduler] Initializing browser...');
     scraper = await BaseScraper.createInstance();
-    console.log('[Scheduler] Browser initialized successfully');
+    logInfo('[Scheduler] Browser initialized successfully');
   }
   return scraper;
 }
@@ -41,12 +48,12 @@ async function initializeScraper(): Promise<BaseScraper> {
  */
 async function runMatchUpdateJob() {
   if (isShuttingDown) {
-    console.log('[MatchUpdateCron] Shutdown in progress, skipping execution');
+    logInfo('[MatchUpdateCron] Shutdown in progress, skipping execution');
     return;
   }
 
-  console.log('\n=== [MatchUpdateCron] Starting scheduled execution ===');
-  console.log(`[MatchUpdateCron] Time: ${new Date().toISOString()}`);
+  logInfo('\n=== [MatchUpdateCron] Starting scheduled execution ===');
+  logInfo(`[MatchUpdateCron] Time: ${new Date().toISOString()}`);
 
   try {
     const scraperInstance = await initializeScraper();
@@ -54,30 +61,31 @@ async function runMatchUpdateJob() {
 
     // Get stats before update
     const statsBefore = await orchestrator.getStats();
-    console.log(`[MatchUpdateCron] Matches needing update: ${statsBefore.matchesNeedingUpdate}`);
+    logInfo(`[MatchUpdateCron] Matches needing update: ${statsBefore.matchesNeedingUpdate}`);
 
     // Run the update process
     const result = await orchestrator.processMatchUpdates();
 
-    console.log('[MatchUpdateCron] Results:');
-    console.log(`  ✅ Processed: ${result.processed}`);
+    logInfo('[MatchUpdateCron] Results:');
+    logInfo(`  ✅ Processed: ${result.processed}`);
 
     // Queue-based results
     if (result.queued !== undefined) {
-      console.log(`  📋 Queued: ${result.queued}`);
-      console.log(`  ⚡ Processing: Concurrent (workers will process jobs in background)`);
+      logInfo(`  📋 Queued: ${result.queued}`);
+      logInfo(`  ⚡ Processing: Concurrent (workers will process jobs in background)`);
     }
 
     // Direct processing results
     if (result.successful !== undefined) {
-      console.log(`  ✅ Successful: ${result.successful}`);
-      console.log(`  ❌ Failed: ${result.failed}`);
-      console.log(`  📊 Standings Updated: ${result.standingsUpdated}`);
+      logInfo(`  ✅ Successful: ${result.successful}`);
+      logInfo(`  ❌ Failed: ${result.failed}`);
+      logInfo(`  📊 Standings Updated: ${result.standingsUpdated}`);
     }
 
-    console.log('=== [MatchUpdateCron] Completed ===\n');
+    logInfo('=== [MatchUpdateCron] Completed ===\n');
   } catch (error) {
-    console.error('[MatchUpdateCron] Job failed:', error);
+    logError('[MatchUpdateCron] Job failed:', error instanceof Error ? error : new Error(String(error)));
+    Sentry.captureException(error);
   }
 }
 
@@ -90,31 +98,32 @@ async function runMatchUpdateJob() {
  */
 async function shutdown(signal: string) {
   if (isShuttingDown) {
-    console.log('[Scheduler] Already shutting down...');
+    logInfo('[Scheduler] Already shutting down...');
     return;
   }
 
   isShuttingDown = true;
-  console.log(`\n[Scheduler] Received ${signal}, shutting down gracefully...`);
+  logInfo(`\n[Scheduler] Received ${signal}, shutting down gracefully...`);
 
   try {
     // Stop queue workers first (allows current jobs to finish)
-    console.log('[Scheduler] Stopping queue workers...');
+    logInfo('[Scheduler] Stopping queue workers...');
     await stopQueue();
-    console.log('[Scheduler] ✅ Queue workers stopped');
+    logInfo('[Scheduler] ✅ Queue workers stopped');
 
     // Close browser
     if (scraper) {
-      console.log('[Scheduler] Closing browser...');
+      logInfo('[Scheduler] Closing browser...');
       await scraper.close();
       scraper = null;
-      console.log('[Scheduler] ✅ Browser closed');
+      logInfo('[Scheduler] ✅ Browser closed');
     }
 
-    console.log('[Scheduler] 🎉 Shutdown complete');
+    logInfo('[Scheduler] 🎉 Shutdown complete');
     process.exit(0);
   } catch (error) {
-    console.error('[Scheduler] ❌ Error during shutdown:', error);
+    logError('[Scheduler] ❌ Error during shutdown:', error instanceof Error ? error : new Error(String(error)));
+    Sentry.captureException(error);
     process.exit(1);
   }
 }
@@ -123,30 +132,31 @@ async function shutdown(signal: string) {
  * Start all cron jobs
  */
 async function startCronJobs() {
-  console.log('\n========================================');
-  console.log('🚀 Best Shot Scheduler Starting...');
-  console.log('========================================\n');
+  logInfo('\n========================================');
+  logInfo('🚀 Best Shot Scheduler Starting...');
+  logInfo('========================================\n');
 
-  console.log('Configuration:');
-  console.log(`  Match Polling Enabled: ${MATCH_POLLING_ENABLED}`);
-  console.log(`  Match Polling Schedule: ${CRON_SCHEDULE} (${getCronDescription(CRON_SCHEDULE)})`);
-  console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log('');
+  logInfo('Configuration:', {
+    matchPollingEnabled: MATCH_POLLING_ENABLED,
+    schedule: CRON_SCHEDULE,
+    desc: getCronDescription(CRON_SCHEDULE),
+    env: process.env.NODE_ENV || 'development',
+  });
 
   if (!MATCH_POLLING_ENABLED) {
-    console.log('⚠️  Match polling is DISABLED');
-    console.log('   Set MATCH_POLLING_ENABLED=true to enable\n');
+    logInfo('⚠️  Match polling is DISABLED');
+    logInfo('   Set MATCH_POLLING_ENABLED=true to enable\n');
     return;
   }
 
   // Initialize queue and workers for concurrent processing
-  console.log('[Scheduler] Initializing queue and workers...');
+  logInfo('[Scheduler] Initializing queue and workers...');
   try {
     const queue = await getQueue();
 
     if (queue) {
       // Queue available - initialize workers for concurrent processing
-      console.log('[Scheduler] ✅ Queue service available');
+      logInfo('[Scheduler] ✅ Queue service available');
 
       // Initialize browser for workers
       const scraperInstance = await initializeScraper();
@@ -154,37 +164,35 @@ async function startCronJobs() {
 
       // Register workers
       await orchestrator.registerWorkers(queue);
-      console.log('[Scheduler] ✅ Queue workers initialized successfully');
-      console.log('');
-      console.log('[Scheduler] Queue Configuration:');
-      console.log('  Queue Name: update-match');
-      console.log('  Workers: 10 concurrent workers');
-      console.log('  Concurrency: 1 job per worker');
-      console.log('  Retry Policy: 3 attempts with exponential backoff (30s → 60s → 120s)');
-      console.log('  Job Expiration: 2 hours');
-      console.log('  Processing Mode: Concurrent (background workers)');
+      logInfo('[Scheduler] ✅ Queue workers initialized successfully');
+
+      logInfo('[Scheduler] Queue Configuration:', {
+        queueName: 'update-match',
+        workers: 10,
+        concurrency: 1,
+        processingMode: 'Concurrent (background workers)',
+      });
     } else {
       // Queue unavailable - will fall back to direct processing
-      console.log('[Scheduler] ⚠️  Queue service unavailable');
-      console.log('[Scheduler] Mode: Sequential processing (fallback)');
+      logInfo('[Scheduler] ⚠️  Queue service unavailable');
+      logInfo('[Scheduler] Mode: Sequential processing (fallback)');
     }
   } catch (error) {
     // Queue initialization failed - graceful degradation
-    console.error('[Scheduler] ⚠️  Failed to initialize queue:', error);
-    console.log('[Scheduler] Mode: Sequential processing (fallback)');
+    logError('[Scheduler] ⚠️  Failed to initialize queue:', error instanceof Error ? error : new Error(String(error)));
+    logInfo('[Scheduler] Mode: Sequential processing (fallback)');
   }
-  console.log('');
 
   // Schedule match update job
-  console.log('[Scheduler] Scheduling match update cron job...');
+  logInfo('[Scheduler] Scheduling match update cron job...');
   cron.schedule(CRON_SCHEDULE, runMatchUpdateJob, {
     timezone: 'UTC',
   });
 
-  console.log('✅ Match update cron job scheduled successfully\n');
+  logInfo('✅ Match update cron job scheduled successfully\n');
 
   // Run once immediately on startup (optional - comment out if not desired)
-  console.log('[Scheduler] Running initial match update...');
+  logInfo('[Scheduler] Running initial match update...');
   await runMatchUpdateJob();
 }
 
@@ -204,17 +212,20 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
 // Handle uncaught errors
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('[Scheduler] Unhandled Rejection at:', promise, 'reason:', reason);
+process.on('unhandledRejection', reason => {
+  logError('[Scheduler] Unhandled Rejection at:', new Error(String(reason)));
+  Sentry.captureException(reason);
 });
 
 process.on('uncaughtException', error => {
-  console.error('[Scheduler] Uncaught Exception:', error);
+  logError('[Scheduler] Uncaught Exception:', error);
+  Sentry.captureException(error);
   shutdown('UNCAUGHT_EXCEPTION');
 });
 
 // Start the scheduler
 startCronJobs().catch(error => {
-  console.error('[Scheduler] Failed to start:', error);
+  logError('[Scheduler] Failed to start:', error);
+  Sentry.captureException(error);
   process.exit(1);
 });

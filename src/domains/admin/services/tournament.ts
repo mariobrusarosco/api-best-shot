@@ -5,7 +5,8 @@ import type { TournamentRequestIn } from '@/domains/data-provider/typing';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
-import Profiling from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { randomUUID } from 'crypto';
 import { desc, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
@@ -28,23 +29,21 @@ class AdminTournamentService {
         message: `Tournament "${tournament.label}" created successfully`,
       });
     } catch (error) {
-      Profiling.error({
-        source: 'ADMIN_SERVICE_TOURNAMENT_create',
-        error,
-        data: {
-          requestId,
-          operation: 'admin_tournament_creation',
-          adminUser: req.authenticatedUser?.nickName,
-        },
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'service',
+        operation: 'create',
+        resource: 'TOURNAMENTS',
+        requestId,
+        adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
     } finally {
       if (scraper) {
         await scraper.close();
-        Profiling.log({
-          msg: '[CLEANUP] Playwright resources cleaned up successfully',
-          data: { requestId, source: 'admin_service' },
-          source: 'ADMIN_SERVICE_TOURNAMENT_create',
+        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
+          requestId,
+          source: 'admin_service',
         });
       }
     }

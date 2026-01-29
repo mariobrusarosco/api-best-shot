@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { logger } from '../services/logger';
+import Logger from '../services/logger';
 
 const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
@@ -7,15 +7,19 @@ const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   // Log response when finished
   res.on('finish', () => {
     const duration = Date.now() - start;
-    const level = res.statusCode >= 400 ? 'warn' : 'info';
-
-    logger.log(level, 'Request completed', {
+    const context = {
       method: req.method,
       url: req.url,
       statusCode: res.statusCode,
       duration: `${duration}ms`,
       requestId: req.get('X-Request-ID') || 'unknown',
-    });
+    };
+
+    if (res.statusCode >= 400) {
+      Logger.warn('Request completed', context);
+    } else {
+      Logger.info('Request completed', context);
+    }
   });
 
   next();

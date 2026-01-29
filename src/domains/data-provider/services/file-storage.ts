@@ -1,5 +1,6 @@
 import { env } from '@/config/env';
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
 
@@ -67,9 +68,9 @@ export class S3FileStorage {
         })
       );
 
-      Profiling.log({
-        msg: `[S3FileStorage] File uploaded successfully: ${key}`,
-        source: 'DATA_PROVIDER_FILE_STORAGE',
+      Logger.info(`[S3FileStorage] File uploaded successfully: ${key}`, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
       });
       return key;
     } catch (error) {

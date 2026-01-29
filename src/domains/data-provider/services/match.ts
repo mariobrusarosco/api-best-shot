@@ -3,7 +3,8 @@ import { DB_InsertMatch, T_Match } from '@/domains/match/schema';
 import { DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { safeString } from '@/utils';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
@@ -138,10 +139,11 @@ export class MatchesDataProviderService {
         mkdirSync(reportsDir, { recursive: true });
         writeFileSync(filepath, jsonContent);
 
-        Profiling.log({
-          msg: `[REPORT] Matches operation report generated successfully (local)`,
-          data: { filepath, requestId: this.report.requestId },
-          source: 'DATA_PROVIDER_V2_MATCHES_generateOperationReport',
+        Logger.info(`[REPORT] Matches operation report generated successfully (local)`, {
+          filepath,
+          requestId: this.report.requestId,
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
         });
       } else {
         // Store in S3 for demo/production environments
@@ -154,20 +156,22 @@ export class MatchesDataProviderService {
           cacheControl: 'max-age=604800, public', // 7 days cache
         });
 
-        Profiling.log({
-          msg: `[REPORT] Matches operation report generated successfully (S3)`,
-          data: { s3Key, requestId: this.report.requestId },
-          source: 'DATA_PROVIDER_V2_MATCHES_generateOperationReport',
+        Logger.info(`[REPORT] Matches operation report generated successfully (S3)`, {
+          s3Key,
+          requestId: this.report.requestId,
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
         });
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      Profiling.error({
-        source: 'DATA_PROVIDER_V2_MATCHES_generateOperationReport',
-        error: error instanceof Error ? error : new Error(errorMessage),
-        data: { requestId: this.report.requestId, filename },
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'generateOperationReport',
+        requestId: this.report.requestId,
+        filename,
       });
-      console.error('Failed to write matches operation report file:', errorMessage);
+      console.error('Failed to write matches operation report file:', (error as Error).message);
     }
   }
 
@@ -208,9 +212,10 @@ export class MatchesDataProviderService {
         roundSlug: round.slug,
         error: (error as Error).message,
       });
-      Profiling.error({
-        source: 'DATA_PROVIDER_MATCHES_getTournamentMatchesByRound',
-        error: error as Error,
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'getTournamentMatchesByRound',
       });
       throw error;
     }
@@ -230,9 +235,10 @@ export class MatchesDataProviderService {
         this.addOperation('scraping', 'fetch_tournament_matches', 'failed', {
           error: 'No rounds provided',
         });
-        Profiling.error({
-          source: 'MatchesDataProviderService.getTournamentMatches',
-          error: new Error('No rounds provided, returning empty matches array'),
+        Logger.error(new Error('No rounds provided, returning empty matches array'), {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'getTournamentMatches',
         });
         return [];
       }
@@ -316,9 +322,10 @@ export class MatchesDataProviderService {
       this.addOperation('scraping', 'fetch_tournament_matches', 'failed', {
         error: (error as Error).message,
       });
-      Profiling.error({
-        source: 'DATA_PROVIDER_MATCHES_getTournamentMatches',
-        error: error as Error,
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'services.match',
+        operation: 'getTournamentMatches',
       });
       throw error;
     }
@@ -393,9 +400,10 @@ export class MatchesDataProviderService {
       this.addOperation('database', 'create_matches', 'failed', {
         error: (error as Error).message,
       });
-      Profiling.error({
-        error,
-        source: 'MatchesDataProviderService.createOnDatabase',
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'createOnDatabase',
       });
       throw error;
     }
@@ -410,9 +418,10 @@ export class MatchesDataProviderService {
       this.addOperation('database', 'update_matches', 'failed', {
         error: 'No matches to update',
       });
-      Profiling.error({
-        error: new Error('No matches to update in the database'),
-        source: 'MatchesDataProviderService.updateOnDatabase',
+      Logger.error(new Error('No matches to update in the database'), {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateOnDatabase',
       });
       return 0;
     }
@@ -429,9 +438,10 @@ export class MatchesDataProviderService {
       this.addOperation('database', 'update_matches', 'failed', {
         error: (error as Error).message,
       });
-      Profiling.error({
-        error,
-        source: 'MatchesDataProviderService.updateOnDatabase',
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateOnDatabase',
       });
       throw error;
     }
@@ -471,9 +481,10 @@ export class MatchesDataProviderService {
         error: (error as Error).message,
       });
       await this.generateOperationReport();
-      Profiling.error({
-        error,
-        source: 'MatchesDataProviderService.init',
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'init',
       });
       throw error;
     }
@@ -515,9 +526,64 @@ export class MatchesDataProviderService {
         error: (error as Error).message,
       });
       await this.generateOperationReport();
-      Profiling.error({
-        error,
-        source: 'MatchesDataProviderService.updateRound',
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateRound',
+      });
+      throw error;
+    }
+  }
+
+  public async updateSingleMatch(payload: {
+    matchExternalId: string;
+    tournamentId: string;
+    roundSlug: string;
+    label: string;
+    provider: string;
+  }) {
+    // Initialize report for update operation
+    this.report.tournament = {
+      id: payload.tournamentId,
+      label: payload.label,
+    };
+    this.report.operationType = 'update';
+
+    this.addOperation('initialization', 'validate_input', 'started', {
+      matchExternalId: payload.matchExternalId,
+      tournamentId: payload.tournamentId,
+    });
+
+    try {
+      this.addOperation('initialization', 'validate_input', 'completed', {
+        matchExternalId: payload.matchExternalId,
+      });
+
+      const rawMatch = await this.scraper.getMatchData(payload.matchExternalId);
+      if (!rawMatch) {
+        await this.generateOperationReport();
+        return {} as DB_InsertMatch;
+      }
+      const match = this.mapMatches(
+        { events: [rawMatch.event], hasPreviousPage: false },
+        payload.tournamentId,
+        payload.roundSlug
+      )[0];
+      const query = await this.updateOnDatabase([match]);
+
+      // Generate invoice file at the very end
+      await this.generateOperationReport();
+
+      return query;
+    } catch (error) {
+      this.addOperation('update', 'process_single_match', 'failed', {
+        error: (error as Error).message,
+      });
+      await this.generateOperationReport();
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateSingleMatch',
       });
       throw error;
     }

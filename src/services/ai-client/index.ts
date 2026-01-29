@@ -12,7 +12,7 @@ export { OpenAIClient } from './providers/openai-client';
 export { AIClientFactory } from './factory';
 
 // Main convenience class for easy usage
-import { logger } from '../logger';
+import Logger from '../logger';
 import { AIClientFactory } from './factory';
 import type { AIClientConfig, AIProvider, IAIClient } from './types';
 
@@ -37,7 +37,7 @@ export class AIClient {
 
     this.client = AIClientFactory.create(provider, finalConfig);
 
-    logger.info('AI Client initialized', {
+    Logger.info('AI Client initialized', {
       provider,
       model: finalConfig.model,
       baseUrl: finalConfig.baseUrl,

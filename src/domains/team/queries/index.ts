@@ -1,6 +1,7 @@
 import db from '@/services/database';
 import { T_Team, DB_InsertTeam } from '@/domains/team/schema';
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 
 const createTeams = async (teams: DB_InsertTeam[]) => {
   return await db.insert(T_Team).values(teams).onConflictDoNothing().returning();
@@ -25,10 +26,10 @@ const updateTeams = async (teams: DB_InsertTeam[]) => {
 
       results.push(result[0]);
 
-      Profiling.log({
-        msg: '[SofascoreTeams] - UPSERTING TEAM',
-        data: team,
-        source: 'TEAM_QUERIES_updateTeams',
+      Logger.info('[SofascoreTeams] - UPSERTING TEAM', {
+        domain: DOMAINS.TEAM,
+        component: 'database',
+        team,
       });
     }
     return results;

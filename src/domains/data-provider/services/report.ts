@@ -1,4 +1,5 @@
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { S3FileStorage } from './file-storage';
@@ -120,16 +121,19 @@ export class DataProviderReport {
         const cloudFrontDomain = process.env.AWS_CLOUDFRONT_URL || '';
         s3Url = `https://${cloudFrontDomain}/${s3Key}`;
 
-        Profiling.log({
-          msg: `[REPORT] Operation report uploaded to S3 successfully`,
-          data: { s3Key, s3Url, requestId: this.report.requestId },
-          source: 'DATA_PROVIDER_REPORT_generateOperationReport',
+        Logger.info(`[REPORT] Operation report uploaded to S3 successfully`, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          s3Key,
+          s3Url,
+          requestId: this.report.requestId,
         });
       } catch (s3Error) {
-        Profiling.log({
-          msg: `[REPORT] S3 upload failed, saving locally only`,
-          data: { error: String(s3Error), requestId: this.report.requestId },
-          source: 'DATA_PROVIDER_REPORT_generateOperationReport',
+        Logger.info(`[REPORT] S3 upload failed, saving locally only`, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          error: String(s3Error),
+          requestId: this.report.requestId,
         });
         s3Key = undefined;
         s3Url = undefined;
@@ -146,22 +150,25 @@ export class DataProviderReport {
         ? `[REPORT] Operation report saved locally and uploaded to S3`
         : `[REPORT] Operation report saved locally only`;
 
-      Profiling.log({
-        msg: logMessage,
-        data: { filepath, s3Key, requestId: this.report.requestId },
-        source: 'DATA_PROVIDER_REPORT_generateOperationReport',
+      Logger.info(logMessage, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        filepath,
+        s3Key,
+        requestId: this.report.requestId,
       });
 
       // Return S3 information for database storage (if available)
       return { s3Key, s3Url };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      Profiling.error({
-        source: 'DATA_PROVIDER_REPORT_generateOperationReport',
-        error: error instanceof Error ? error : new Error(errorMessage),
-        data: { requestId: this.report.requestId, filename },
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'createFileAndUpload',
+        requestId: this.report.requestId,
+        filename,
       });
-      console.error('Failed to write operation report file:', errorMessage);
+      console.error('Failed to write operation report file:', (error as Error).message);
 
       // Return empty object on error
       return {};

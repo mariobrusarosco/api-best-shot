@@ -3,7 +3,8 @@ import { AuthenticateMemberRequest } from '../typing';
 import { SERVICES_AUTH } from '../services';
 import { z } from 'zod';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { ErrorMapper } from '../error-handling/mapper';
 
 const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) => {
@@ -15,9 +16,11 @@ const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) =
     if (hasValidationError) {
       const errors = validationResult.error.format();
 
-      Profiling.error({
-        source: 'AUTH_API_authenticateUser',
-        error: errors,
+      Logger.error(new Error('Validation Error'), {
+        domain: DOMAINS.AUTH,
+        component: 'api',
+        operation: 'authenticate',
+        errors: errors as any,
       });
 
       return res.status(ErrorMapper.VALIDATION_ERROR.status).send({
@@ -35,9 +38,10 @@ const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) =
 
     return res.status(200).send(result.token);
   } catch (error: unknown) {
-    Profiling.error({
-      source: 'AUTH_API_authenticateUser',
-      error,
+    Logger.error(error as Error, {
+      domain: DOMAINS.AUTH,
+      component: 'api',
+      operation: 'authenticate',
     });
 
     return res.status(ErrorMapper.USER_NOT_FOUND.status).send({
@@ -49,15 +53,16 @@ const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) =
 const unauthenticateUser = (_: Request, res: Response) => {
   try {
     SERVICES_AUTH.unauthenticateUser(res);
-    Profiling.log({
-      msg: 'Successfully logged out',
-      source: 'AUTH_API_unauthenticateUser',
+    Logger.info('Successfully logged out', {
+      domain: DOMAINS.AUTH,
+      component: 'api',
     });
     return res.status(200).send({ message: 'Successfully logged out' });
   } catch (error: unknown) {
-    Profiling.error({
-      source: 'AUTH_API_unauthenticateUser',
-      error,
+    Logger.error(error as Error, {
+      domain: DOMAINS.AUTH,
+      component: 'api',
+      operation: 'unauthenticateUser',
     });
     return handleInternalServerErrorResponse(res, error);
   }

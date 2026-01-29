@@ -131,8 +131,33 @@ Best Shot API is a TypeScript/Express.js backend service for a football predicti
 - PostgreSQL + Drizzle ORM (data layer)
 - AWS Lambda/Scheduler (automated tasks)
 - Docker (local development)
+- Sentry (Monitoring & Logging)
 
 **Architecture:**
+
+### Logging (Critical Convention)
+
+This project uses a **unified `LoggerService`** for all logging and error reporting, located at `src/services/logger`.
+
+-   **DO NOT USE `console.log` or `console.error`**. Use the `Logger` service exclusively.
+-   For tracking handled exceptions and other critical errors, **ALWAYS** use `Logger.error(error, context)`.
+-   The `context` object should be populated with relevant tags from `src/services/logger/constants.ts` to ensure errors are filterable in Sentry.
+
+**Example:**
+```typescript
+import Logger from '@/services/logger';
+import { DOMAINS, COMPONENTS } from '@/services/logger/constants';
+
+try {
+  // ...
+} catch (e) {
+  Logger.error(e as Error, {
+    domain: DOMAINS.AUTH,
+    component: COMPONENTS.API,
+    // ... other relevant context
+  });
+}
+```
 
 - Domain-Driven Design with strict separation of concerns
 - API versioning (v1/v2) for backward compatibility

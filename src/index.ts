@@ -1,9 +1,6 @@
 import { config } from 'dotenv';
 config({ path: process.env.ENV_PATH || '.env' });
 
-// Sentry must be initialized AFTER env vars are loaded
-require('./services/profiling/sentry-instrument');
-
 import { redis } from './services/redis/client';
 
 import cookieParser from 'cookie-parser';
@@ -14,9 +11,10 @@ import apiRouter from './router';
 
 import { env } from './config/env';
 import accessControl from './domains/shared/middlewares/access-control';
-import { logError, logInfo } from './services/logger';
+import Logger from './services/logger';
+import { DOMAINS } from './services/logger/constants';
 
-logInfo('Starting API Best Shot...', {
+Logger.info('Starting API Best Shot...', {
   environment: env.NODE_ENV,
   port: env.PORT,
   version: env.API_VERSION,
@@ -36,12 +34,12 @@ app.get('/health', (_req, res) => {
   });
 });
 
-logInfo('Registered /health endpoint');
+Logger.info('Registered /health endpoint');
 
 // Root endpoint for testing
 app.get('/', (_req, res) => {
   res.status(200).json({
-    message: 'API Best Shot Demo - Running on Cloud Run!',
+    message: 'API Best Shot Demo - Hello World!',
     version: env.API_VERSION || 'v1',
   });
 });
@@ -71,15 +69,15 @@ app.get('/debug/env', (_req, res) => {
   });
 });
 
-logInfo('Registered root endpoint');
+Logger.info('Registered root endpoint');
 
 // JSON Parser Middleware
 app.use(express.json());
-logInfo('Registered JSON parser middleware');
+Logger.info('Registered JSON parser middleware');
 
 app.set('trust proxy', 1);
 app.use(cookieParser());
-logInfo('Registered cookie parser');
+Logger.info('Registered cookie parser');
 
 const corsConfig = {
   origin: process.env.ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -87,34 +85,38 @@ const corsConfig = {
 };
 app.use(cors(corsConfig));
 app.options('*', cors(corsConfig));
-logInfo('Registered CORS');
+Logger.info('Registered CORS');
 
 app.use(requestLogger);
 app.use(accessControl);
-logInfo('Registered logger and access control');
+Logger.info('Registered logger and access control');
 
 // Mount the central API router at /api
 app.use('/api', apiRouter);
-logInfo('Registered /api router');
+Logger.info('Registered /api router');
 
 // Redis Health Check
 redis
   .ping()
-  .then(() => logInfo('✅ Redis PING successful'))
-  .catch(err => logError('❌ Redis PING failed', err));
+  .then(() => Logger.info('✅ Redis PING successful'))
+  .catch(err => Logger.error(err as Error, { domain: DOMAINS.DATA_PROVIDER, component: 'redis', operation: 'ping' }));
 
 app.listen(port, '0.0.0.0', () => {
-  logInfo(`Server running on port ${port} in ${env.NODE_ENV} mode`, {
+  Logger.info(`Server running on port ${port} in ${env.NODE_ENV} mode`, {
     port,
     environment: env.NODE_ENV,
   });
 });
 
 process.on('uncaughtException', err => {
-  logError('Uncaught Exception', err);
+  Logger.error(err, { domain: DOMAINS.DATA_PROVIDER, component: 'process', operation: 'uncaughtException' });
 });
 process.on('unhandledRejection', reason => {
-  logError('Unhandled Rejection', reason instanceof Error ? reason : new Error(String(reason)));
+  Logger.error(reason instanceof Error ? reason : new Error(String(reason)), {
+    domain: DOMAINS.DATA_PROVIDER,
+    component: 'process',
+    operation: 'unhandledRejection',
+  });
 });
 
 export default app;

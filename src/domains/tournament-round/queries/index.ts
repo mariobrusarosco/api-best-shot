@@ -6,7 +6,8 @@ import {
 } from '@/domains/tournament-round/schema';
 import { and, asc, eq } from 'drizzle-orm';
 import { DatabaseError } from '@/domains/shared/error-handling/database';
-import Profiling from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 
 const getRound = async (tournamentId: string, roundSlug: string) => {
   try {
@@ -78,9 +79,10 @@ const createTournamentRounds = async (inputs: DB_InsertTournamentRound[]) => {
     return rounds;
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    Profiling.error({
-      source: 'QUERIES_TOURNAMENT_ROUND_createTournamentRounds',
-      error: dbError,
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'createTournamentRounds',
     });
     throw error;
   }

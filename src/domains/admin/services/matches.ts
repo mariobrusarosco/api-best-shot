@@ -1,8 +1,10 @@
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { MatchesDataProviderService } from '@/domains/data-provider/services/matches';
+import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import Profiling from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
 
@@ -30,18 +32,12 @@ class AdminMatchesService {
         });
       }
 
+      const rounds = await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournamentId);
+
       scraper = await BaseScraper.createInstance();
       const dataProviderService = new MatchesDataProviderService(scraper, requestId);
 
-      // Build proper payload for matches service
-      const payload = {
-        tournamentId: tournamentId,
-        baseUrl: tournament.baseUrl,
-        label: tournament.label,
-        provider: tournament.provider,
-      };
-
-      const matches = await dataProviderService.init(payload);
+      const matches = await dataProviderService.init(rounds, tournament);
 
       return res.status(201).json({
         success: true,
@@ -49,23 +45,20 @@ class AdminMatchesService {
         message: `Matches created successfully`,
       });
     } catch (error) {
-      Profiling.error({
-        source: 'ADMIN_SERVICE_MATCHES_create',
-        error,
-        data: {
-          requestId,
-          operation: 'admin_matches_creation',
-          adminUser: req.authenticatedUser?.nickName,
-        },
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        operation: 'createMatches',
+        component: 'service',
+        requestId,
+        adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
     } finally {
       if (scraper) {
         await scraper.close();
-        Profiling.log({
-          msg: '[CLEANUP] Playwright resources cleaned up successfully',
-          data: { requestId, source: 'admin_service' },
-          source: 'ADMIN_SERVICE_MATCHES_create',
+        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
+          requestId,
+          source: 'admin_service',
         });
       }
     }
@@ -76,7 +69,6 @@ class AdminMatchesService {
     let scraper: BaseScraper | null = null;
 
     try {
-      // Get tournament ID from URL params
       const tournamentId = req.params.tournamentId;
       if (!tournamentId) {
         return res.status(400).json({
@@ -85,7 +77,6 @@ class AdminMatchesService {
         });
       }
 
-      // Get tournament data to build payload
       const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
       if (!tournament) {
         return res.status(404).json({
@@ -94,18 +85,12 @@ class AdminMatchesService {
         });
       }
 
+      const rounds = await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournamentId);
+
       scraper = await BaseScraper.createInstance();
       const dataProviderService = new MatchesDataProviderService(scraper, requestId);
 
-      // Build proper payload for matches service
-      const payload = {
-        tournamentId: tournamentId,
-        baseUrl: tournament.baseUrl,
-        label: tournament.label,
-        provider: tournament.provider,
-      };
-
-      const matches = await dataProviderService.update(payload);
+      const matches = await dataProviderService.init(rounds, tournament);
 
       return res.status(200).json({
         success: true,
@@ -113,23 +98,20 @@ class AdminMatchesService {
         message: `Matches updated successfully`,
       });
     } catch (error) {
-      Profiling.error({
-        source: 'ADMIN_SERVICE_MATCHES_update',
-        error,
-        data: {
-          requestId,
-          operation: 'admin_matches_update',
-          adminUser: req.authenticatedUser?.nickName,
-        },
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        operation: 'updateMatches',
+        component: 'service',
+        requestId,
+        adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
     } finally {
       if (scraper) {
         await scraper.close();
-        Profiling.log({
-          msg: '[CLEANUP] Playwright resources cleaned up successfully',
-          data: { requestId, source: 'admin_service' },
-          source: 'ADMIN_SERVICE_MATCHES_update',
+        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
+          requestId,
+          source: 'admin_service',
         });
       }
     }
@@ -167,19 +149,18 @@ class AdminMatchesService {
         });
       }
 
+      const round = await QUERIES_TOURNAMENT_ROUND.getRound(tournamentId, roundSlug);
+      if (!round) {
+        return res.status(404).json({
+          success: false,
+          error: 'Round not found',
+        });
+      }
+
       scraper = await BaseScraper.createInstance();
       const dataProviderService = new MatchesDataProviderService(scraper, requestId);
 
-      // Build proper payload for round-specific matches service
-      const payload = {
-        tournamentId: tournamentId,
-        roundSlug: roundSlug,
-        baseUrl: tournament.baseUrl,
-        label: tournament.label,
-        provider: tournament.provider,
-      };
-
-      const matches = await dataProviderService.updateRound(payload);
+      const matches = await dataProviderService.updateRound(round);
 
       return res.status(200).json({
         success: true,
@@ -187,23 +168,20 @@ class AdminMatchesService {
         message: `Matches for round "${roundSlug}" updated successfully`,
       });
     } catch (error) {
-      Profiling.error({
-        source: 'ADMIN_SERVICE_MATCHES_updateByRound',
-        error,
-        data: {
-          requestId,
-          operation: 'admin_matches_update_by_round',
-          adminUser: req.authenticatedUser?.nickName,
-        },
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        operation: 'updateMatchesByRound',
+        component: 'service',
+        requestId,
+        adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
     } finally {
       if (scraper) {
         await scraper.close();
-        Profiling.log({
-          msg: '[CLEANUP] Playwright resources cleaned up successfully',
-          data: { requestId, source: 'admin_service' },
-          source: 'ADMIN_SERVICE_MATCHES_updateByRound',
+        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
+          requestId,
+          source: 'admin_service',
         });
       }
     }

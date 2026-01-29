@@ -64,13 +64,37 @@
 - **ORM**: Drizzle ORM
 - **Testing**: Jest (Unit/Integration), Playwright (Web Scraping/E2E)
 - **Infrastructure**: Docker, AWS (S3, Scheduler), Railway (Hosting)
-- **Monitoring**: Sentry
+- **Monitoring & Logging**: Sentry
 
 ## Architecture & Patterns
 
 The project enforces a **Three-Layer Architecture** within a Domain-Driven structure.
 
-### 1. Domain Structure (`src/domains/{domain}/`)
+### 1. Logging (Critical Convention)
+
+This project uses a **unified `LoggerService`** for all logging and error reporting, located at `src/services/logger`.
+
+-   **DO NOT USE `console.log` or `console.error`**. Use the `Logger` service exclusively.
+-   For tracking handled exceptions and other critical errors, **ALWAYS** use `Logger.error(error, context)`.
+-   The `context` object should be populated with relevant tags from `src/services/logger/constants.ts` to ensure errors are filterable in Sentry.
+
+**Example:**
+```typescript
+import Logger from '@/services/logger';
+import { DOMAINS, COMPONENTS } from '@/services/logger/constants';
+
+try {
+  // ...
+} catch (e) {
+  Logger.error(e as Error, {
+    domain: DOMAINS.AUTH,
+    component: COMPONENTS.API,
+    // ... other relevant context
+  });
+}
+```
+
+### 2. Domain Structure (`src/domains/{domain}/`)
 
 Each feature belongs to a domain (e.g., `tournament`, `match`, `guess`).
 
@@ -81,7 +105,7 @@ Each feature belongs to a domain (e.g., `tournament`, `match`, `guess`).
 - `routes/`: Express router definitions.
 - `typing.ts`: Domain-specific type definitions.
 
-### 2. Layer Responsibilities (Strict Rules)
+### 3. Layer Responsibilities (Strict Rules)
 
 - **API Layer**: `const API_{DOMAIN} = { ... }`
   - Receives `req`, returns `res`.
@@ -96,7 +120,7 @@ Each feature belongs to a domain (e.g., `tournament`, `match`, `guess`).
   - Executes Drizzle ORM commands (`db.select()`, `db.insert()`).
   - Returns raw data entities.
 
-### 3. Database Conventions
+### 4. Database Conventions
 
 - **Table Names**: Prefix with `T_` (e.g., `T_Tournament`).
 - **Fields**: All tables must have `createdAt` and `updatedAt`.

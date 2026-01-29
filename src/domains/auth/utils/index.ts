@@ -1,5 +1,6 @@
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { PROFILLING_AUTH } from '../constants/profiling';
@@ -13,16 +14,20 @@ const decodeMemberToken = (token: string) => {
     return jwt.verify(token, process.env.JWT_SECRET!);
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      Profiling.error({
-        source: PROFILLING_AUTH.EXPIRED_TOKEN,
-        error,
+      Logger.error(error, {
+        domain: DOMAINS.AUTH,
+        component: 'service',
+        operation: 'decodeMemberToken',
+        context: 'Token expired',
       });
       throw new Error('Token expired');
     }
 
-    Profiling.error({
-      source: PROFILLING_AUTH.INVALID_TOKEN,
-      error,
+    Logger.error(error as Error, {
+      domain: DOMAINS.AUTH,
+      component: 'service',
+      operation: 'decodeMemberToken',
+      context: 'Invalid token',
     });
     throw new Error('Invalid token');
   }
@@ -32,9 +37,10 @@ const getUserCookie = (req: CustomRequest) => {
   const cookie = req.cookies[process.env.MEMBER_PUBLIC_ID_COOKIE!];
 
   if (!cookie) {
-    Profiling.error({
-      source: PROFILLING_AUTH.INVALID_TOKEN,
-      error: 'No auth cookie found',
+    Logger.error(new Error('No auth cookie found'), {
+      domain: DOMAINS.AUTH,
+      component: 'service',
+      operation: 'getUserCookie',
     });
     throw new Error('Not authenticated');
   }
@@ -59,7 +65,11 @@ const signUserCookieBased = ({ memberId, res }: { memberId: string; res: Respons
 
     return token;
   } catch (e) {
-    console.log('[AUTH] - sign user via cookie based failed', e);
+    Logger.error(e as Error, {
+      domain: DOMAINS.AUTH,
+      component: 'service',
+      operation: 'signUserCookieBased',
+    });
   }
 };
 
@@ -116,17 +126,18 @@ export const Utils = {
       });
 
       // Log successful token creation
-      Profiling.log({
-        msg: PROFILLING_AUTH.TOKEN_REFRESHED,
-        data: { userId },
-        source: 'AUTH_UTILS_createTokenResponse',
+      Logger.info(PROFILLING_AUTH.TOKEN_REFRESHED, {
+        domain: DOMAINS.AUTH,
+        component: 'service',
+        userId,
       });
 
       return token;
     } catch (error) {
-      Profiling.error({
-        source: PROFILLING_AUTH.CREATE_TOKEN,
-        error,
+      Logger.error(error as Error, {
+        domain: DOMAINS.AUTH,
+        component: 'service',
+        operation: 'create',
       });
       throw error;
     }

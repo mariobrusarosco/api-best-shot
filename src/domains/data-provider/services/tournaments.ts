@@ -5,7 +5,8 @@ import { CreateTournamentInput, DataProviderExecutionOperationType } from '@/dom
 import { DB_InsertTournament, DB_UpdateTournament, T_Tournament } from '@/domains/tournament/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { and, eq } from 'drizzle-orm';
 
 export class TournamentDataProvider {
@@ -40,10 +41,10 @@ export class TournamentDataProvider {
       this.reporter.addOperation('database', 'create_tournament', 'failed', {
         error: errorMessage,
       });
-      Profiling.error({
-        error: errorMessage,
-        data: { error: errorMessage },
-        source: 'DATA_PROVIDER_V2_TOURNAMENT_create',
+      Logger.error(new Error(errorMessage), {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'createOnDatabase',
       });
       throw error;
     }
@@ -72,10 +73,10 @@ export class TournamentDataProvider {
       this.reporter.addOperation('database', 'update_tournament', 'failed', {
         error: errorMessage,
       });
-      Profiling.error({
-        error: errorMessage,
-        data: { error: errorMessage },
-        source: 'DATA_PROVIDER_V2_TOURNAMENT_update',
+      Logger.error(new Error(errorMessage), {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateOnDatabase',
       });
       throw error;
     }
@@ -186,10 +187,13 @@ export class TournamentDataProvider {
         reportResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
         console.error('Failed to upload report file:', reportError);
-        Profiling.error({
-          error: reportError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'DATA_PROVIDER_V2_TOURNAMENT_report_upload_failed',
+        Logger.error(reportError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'init',
+          context: 'report_upload_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -211,10 +215,13 @@ export class TournamentDataProvider {
         });
       } catch (notificationError) {
         console.error('Failed to send failure notification:', notificationError);
-        Profiling.error({
-          error: notificationError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'DATA_PROVIDER_V2_TOURNAMENT_notification_failed',
+        Logger.error(notificationError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'init',
+          context: 'notification_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 

@@ -2,6 +2,8 @@
 
 **Purpose:** Explain how streaming prevents memory issues when calculating scoreboard points for tournaments with 100k+ users.
 
+> **Note:** For scheduler integration with scoreboard updates and atomic operations, see [`/docs/guides/scheduler-complete-guide.md`](/docs/guides/scheduler-complete-guide.md)
+
 **Created:** January 25, 2026
 **Target Audience:** Developers working on the Best Shot API scoreboard system
 

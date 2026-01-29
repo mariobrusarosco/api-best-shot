@@ -1,5 +1,7 @@
 # Job Queues with pg-boss: A Complete Guide
 
+> **Note:** For scheduler-specific queue usage and implementation details, see [`/docs/guides/scheduler-complete-guide.md`](/docs/guides/scheduler-complete-guide.md)
+
 ## What is a Job Queue? (The Restaurant Analogy)
 
 Imagine a restaurant:

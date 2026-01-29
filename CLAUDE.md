@@ -32,7 +32,7 @@ current codebase
 9 - **Impact Assessment**: Analyze how proposed changes affect upstream and downstream systems
 10 - **Multiple Approaches**: Present 2-3 different solution approaches with trade-offs
 11 - **Evidence-Based**: Never guess - provide research and evidence for recommendations
-
+12 - DO NOT RUN GIT 'push', 'stash', 'add' or 'commit' commands
 **NEVER:**
 
 - Jump to quick fixes without understanding the full system
@@ -94,10 +94,10 @@ current codebase
 
 **Before starting ANY task, check this table for required reading:**
 
-| Task Type                          | Required Reading                              | Key Workflows                                  | Commands                                                   |
-| ---------------------------------- | --------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
-| **Database Operations**            | `/docs/guides/database-complete-guide.md`     | Migrations, transactions, seeding              | `yarn db:generate`, `yarn db:migrate`, `yarn db:seed`      |
-| **CI/CD & Deployment**             | (Check GitHub Actions workflows)              | Understand automated deployment flow           | Review `.github/workflows/`                                |
+| Task Type               | Required Reading                          | Key Workflows                        | Commands                                              |
+| ----------------------- | ----------------------------------------- | ------------------------------------ | ----------------------------------------------------- |
+| **Database Operations** | `/docs/guides/database-complete-guide.md` | Migrations, transactions, seeding    | `yarn db:generate`, `yarn db:migrate`, `yarn db:seed` |
+| **CI/CD & Deployment**  | (Check GitHub Actions workflows)          | Understand automated deployment flow | Review `.github/workflows/`                           |
 
 **Checklist When Starting a Task:**
 
@@ -138,11 +138,12 @@ Best Shot API is a TypeScript/Express.js backend service for a football predicti
 
 This project uses a **unified `LoggerService`** for all logging and error reporting, located at `src/services/logger`.
 
--   **DO NOT USE `console.log` or `console.error`**. Use the `Logger` service exclusively.
--   For tracking handled exceptions and other critical errors, **ALWAYS** use `Logger.error(error, context)`.
--   The `context` object should be populated with relevant tags from `src/services/logger/constants.ts` to ensure errors are filterable in Sentry.
+- **DO NOT USE `console.log` or `console.error`**. Use the `Logger` service exclusively.
+- For tracking handled exceptions and other critical errors, **ALWAYS** use `Logger.error(error, context)`.
+- The `context` object should be populated with relevant tags from `src/services/logger/constants.ts` to ensure errors are filterable in Sentry.
 
 **Example:**
+
 ```typescript
 import Logger from '@/services/logger';
 import { DOMAINS, COMPONENTS } from '@/services/logger/constants';

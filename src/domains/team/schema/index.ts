@@ -3,7 +3,7 @@ import { pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 export const T_Team = pgTable(
   'team',
   {
-    id: uuid('id').defaultRandom(),
+    id: uuid('id').defaultRandom().unique(),
     name: text('name').notNull(),
     externalId: text('external_id').notNull(),
     shortName: text('short_name'),

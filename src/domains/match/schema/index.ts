@@ -1,4 +1,5 @@
 import { index, numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { T_Team } from '@/domains/team/schema';
 
 export const T_Match = pgTable(
   'match',
@@ -8,10 +9,12 @@ export const T_Match = pgTable(
     provider: text('provider').notNull(),
     tournamentId: uuid('tournament_id').notNull(),
     roundSlug: text('round_slug').notNull(),
-    homeTeamId: text('home_team_id').notNull(),
+    homeTeamId: uuid('home_team_id').references(() => T_Team.id),
+    externalHomeTeamId: text('external_home_team_id').notNull(),
     homeScore: numeric('home_score'),
     homePenaltiesScore: numeric('home_penalties_score'),
-    awayTeamId: text('away_team_id').notNull(),
+    awayTeamId: uuid('away_team_id').references(() => T_Team.id),
+    externalAwayTeamId: text('external_away_team_id').notNull(),
     awayScore: numeric('away_score'),
     awayPenaltiesScore: numeric('away_penalties_score'),
     date: timestamp('date'),

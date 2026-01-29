@@ -243,8 +243,8 @@ Apply the same changes to production database.
 
 | Phase | Description             | Status      |
 | ----- | ----------------------- | ----------- |
-| 1     | Local DB Preparation    | Not Started |
-| 2     | Data Migration          | Not Started |
-| 3     | Make FK NOT NULL        | Not Started |
-| 4     | Update Application Code | Not Started |
-| 5     | Production Deployment   | Not Started |
+| 1     | Local DB Preparation    | ✅ Complete |
+| 2     | Data Migration          | ✅ Complete |
+| 3     | Make FK NOT NULL        | ✅ Complete |
+| 4     | Update Application Code | ⚠️ Skipped  |
+| 5     | Production Deployment   | 🔜 Ready    |

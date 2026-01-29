@@ -78,6 +78,13 @@
       "when": 1769717840393,
       "tag": "0010_majestic_lyja",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1769722646311,
+      "tag": "0011_parallel_marauders",
+      "breakpoints": true
     }
   ]
 }

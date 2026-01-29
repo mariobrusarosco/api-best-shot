@@ -96,8 +96,7 @@ current codebase
 
 | Task Type                          | Required Reading                              | Key Workflows                                  | Commands                                                   |
 | ---------------------------------- | --------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
-| **Database Migrations**            | `/docs/guides/database-migrations.md`         | Modify schema → Generate → Apply → Test        | `yarn db:generate --name "description"`, `yarn db:migrate` |
-| **Database Multi-Step Operations** | `/docs/guides/database-transactions-guide.md` | Always use transactions for related operations | Use `db.transaction(async tx => {...})`                    |
+| **Database Operations**            | `/docs/guides/database-complete-guide.md`     | Migrations, transactions, seeding              | `yarn db:generate`, `yarn db:migrate`, `yarn db:seed`      |
 | **CI/CD & Deployment**             | (Check GitHub Actions workflows)              | Understand automated deployment flow           | Review `.github/workflows/`                                |
 
 **Checklist When Starting a Task:**

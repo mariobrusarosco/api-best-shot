@@ -19,7 +19,7 @@
     "db:reset": "docker compose down postgres -v && docker compose up -d postgres",
     "dev-demo": "ENV_PATH=.env.demo ts-node-dev -r tsconfig-paths/register ./src/index.ts",
     "build-demo": "rimraf ./dist && tsc && tsc-alias && yarn sentry:sourcemaps",
-    "serve-demo": "node -r dotenv/config ./dist/src/index.js",
+    "serve-demo": "ENV_PATH=.env.demo node -r dotenv/config ./dist/src/index.js",
     "dev-staging": "ENV_PATH=.env.staging ts-node-dev -r tsconfig-paths/register ./src/index.ts",
     "build-staging": "rimraf ./dist && tsc && tsc-alias && yarn sentry:sourcemaps",
     "serve-staging": "ENV_PATH=.env.staging node -r dotenv/config ./dist/src/index.js",

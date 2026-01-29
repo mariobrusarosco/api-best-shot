@@ -11,7 +11,7 @@ const envSchema = z.object({
   DB_STRING_CONNECTION: z.string().optional(),
   REDIS_URL: z.string(),
   // App
-  NODE_ENV: z.enum(['development', 'demo', 'staging', 'production']).default('development'),
+  NODE_ENV: z.enum(['development', 'demo', 'staging', 'production', 'test']).default('development'),
   PORT: z
     .string()
     .transform(val => {

@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "API - Best Shot",
   "volta": {
     "node": "22.17.1"
@@ -37,9 +37,9 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "hydrate:scoreboard": "ts-node -r tsconfig-paths/register scripts/hydrate-redis.ts",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
+    "test": "ENV_PATH=.env.test jest",
+    "test:watch": "ENV_PATH=.env.test jest --watch",
+    "test:cov": "ENV_PATH=.env.test jest --coverage",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",

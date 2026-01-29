@@ -1,4 +1,5 @@
-import { Profiling } from '@/services/profiling';
+import Logger from '../logger';
+import { DOMAINS } from '../logger/constants';
 
 export interface SlackNotificationPayload {
   text: string;
@@ -51,9 +52,9 @@ export interface SlackField {
 export class SlackService {
   async sendNotification(webhookUrl: string, payload: SlackNotificationPayload): Promise<void> {
     if (!webhookUrl) {
-      Profiling.log({
-        msg: '[SLACK] Webhook URL not provided, skipping notification',
-        source: 'SLACK_SERVICE_sendNotification',
+      Logger.info('[SLACK] Webhook URL not provided, skipping notification', {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
       });
       return;
     }
@@ -72,9 +73,10 @@ export class SlackService {
         throw new Error(`Slack notification failed: ${response.status} ${responseText}`);
       }
     } catch (error) {
-      Profiling.error({
-        error: error instanceof Error ? error : new Error(String(error)),
-        source: 'SLACK_SERVICE_sendNotification',
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'sendNotification',
       });
       throw error;
     }

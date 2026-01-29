@@ -313,14 +313,14 @@ Total: 0 points ✗
 
 ### When Match Results are Updated
 
-**Automated Flow** (via AWS Lambda):
+**Automated Flow** (via Scheduler Service):
 
 ```
 1. Scheduled job triggers
-   AWS Scheduler → Lambda function
+   Railway Scheduler (Cron) → Match Update Orchestrator
 
 2. Data provider fetches results
-   SofaScore API scraping
+   SofaScore API scraping (via Playwright)
 
 3. Update match table
    UPDATE T_Match SET
@@ -329,8 +329,7 @@ Total: 0 points ✗
      status = 'ended'
 
 4. Trigger performance update
-   Call internal API endpoints
-   (Implementation in Lambda, not in this repo)
+   Automatically triggered by the Orchestrator after match update
 ```
 
 ### When Performance is Recalculated
@@ -1562,7 +1561,6 @@ yarn db:migrate
 
 - [Drizzle ORM Documentation](https://orm.drizzle.team)
 - [Database Migrations Guide](./database-migrations.md)
-- [AWS Lambda Deployment](./aws-lambda-deployment.md)
 - [Data Provider Best Practices](./data-provider-best-practices.md)
 
 ---

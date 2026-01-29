@@ -2,7 +2,8 @@ import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import { DB_InsertTournamentStandings, T_TournamentStandings } from '@/domains/tournament/schema';
 import db from '@/services/database';
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { safeString } from '@/utils';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { API_SOFASCORE_STANDINGS } from '../typing';
@@ -78,10 +79,13 @@ export class StandingsDataProviderService {
         reportUploadResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
         console.error('Failed to upload report file:', reportError);
-        Profiling.error({
-          error: reportError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'STANDINGS_DATA_PROVIDER_INIT_report_upload_failed',
+        Logger.error(reportError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'init',
+          context: 'report_upload_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -100,10 +104,13 @@ export class StandingsDataProviderService {
         });
       } catch (notificationError) {
         console.error('Failed to send failure notification:', notificationError);
-        Profiling.error({
-          error: notificationError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'STANDINGS_DATA_PROVIDER_INIT_notification_failed',
+        Logger.error(notificationError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'init',
+          context: 'notification_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -161,10 +168,13 @@ export class StandingsDataProviderService {
         reportUploadResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
         console.error('Failed to upload report file:', reportError);
-        Profiling.error({
-          error: reportError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'STANDINGS_DATA_PROVIDER_UPDATE_report_upload_failed',
+        Logger.error(reportError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'update',
+          context: 'report_upload_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -183,10 +193,13 @@ export class StandingsDataProviderService {
         });
       } catch (notificationError) {
         console.error('Failed to send failure notification:', notificationError);
-        Profiling.error({
-          error: notificationError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'STANDINGS_DATA_PROVIDER_UPDATE_notification_failed',
+        Logger.error(notificationError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'update',
+          context: 'notification_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -301,10 +314,10 @@ export class StandingsDataProviderService {
       this.reporter.addOperation('database', 'create_standings', 'failed', {
         error: errorMessage,
       });
-      Profiling.error({
-        error: errorMessage,
-        data: { error: errorMessage },
-        source: 'StandingsDataProviderService.createOnDatabase',
+      Logger.error(new Error(errorMessage), {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'createOnDatabase',
       });
       throw error;
     }
@@ -320,9 +333,10 @@ export class StandingsDataProviderService {
         error: 'No standings to update',
       });
       const error = new Error('No standings to update in the database');
-      Profiling.error({
-        error,
-        source: 'StandingsDataProviderService.updateOnDatabase',
+      Logger.error(error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateOnDatabase',
       });
       throw error;
     }
@@ -340,9 +354,10 @@ export class StandingsDataProviderService {
       this.reporter.addOperation('database', 'update_standings', 'failed', {
         error: errorMessage,
       });
-      Profiling.error({
-        error: error instanceof Error ? error : new Error(errorMessage),
-        source: 'StandingsDataProviderService.updateOnDatabase',
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateOnDatabase',
       });
       throw error;
     }

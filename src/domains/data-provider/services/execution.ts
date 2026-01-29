@@ -1,4 +1,5 @@
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { SlackBlock, SlackNotificationPayload, slackService } from '@/services/slack';
 import { QUERIES_DATA_PROVIDER_EXECUTIONS } from '../queries';
 import type { DB_InsertDataProviderExecution, DB_SelectDataProviderExecution } from '../schema';
@@ -148,10 +149,11 @@ export class DataProviderExecution {
       console.log('[DEBUG] Slack notification sent successfully');
     } catch (error) {
       console.error('[DEBUG] Slack notification error:', error);
-      Profiling.error({
-        error: error instanceof Error ? error : new Error(String(error)),
-        data: { requestId: this.requestId },
-        source: 'DATA_PROVIDER_EXECUTION_notifySuccess',
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'notifySuccess',
+        requestId: this.requestId,
       });
     }
   }
@@ -175,10 +177,11 @@ export class DataProviderExecution {
       });
       await slackService.sendNotification(this.webhookUrl, payload);
     } catch (err) {
-      Profiling.error({
-        error: err instanceof Error ? err : new Error(String(err)),
-        data: { requestId: this.requestId },
-        source: 'DATA_PROVIDER_EXECUTION_notifyFailure',
+      Logger.error(err as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'notifyFailure',
+        requestId: this.requestId,
       });
     }
   }

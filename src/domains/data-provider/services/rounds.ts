@@ -4,7 +4,8 @@ import { API_SOFASCORE_ROUNDS, DataProviderExecutionOperationType } from '@/doma
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
 import { ITournament } from '@/domains/tournament/typing';
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { DataProviderReport } from './report';
 
 export interface CreateRoundsInput {
@@ -76,10 +77,13 @@ export class RoundsDataProviderService {
         reportUploadResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
         console.error('Failed to upload report file:', reportError);
-        Profiling.error({
-          error: reportError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'ROUNDS_DATA_PROVIDER_INIT_report_upload_failed',
+        Logger.error(reportError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'init',
+          context: 'report_upload_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -98,10 +102,13 @@ export class RoundsDataProviderService {
         });
       } catch (notificationError) {
         console.error('Failed to send failure notification:', notificationError);
-        Profiling.error({
-          error: notificationError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'ROUNDS_DATA_PROVIDER_INIT_notification_failed',
+        Logger.error(notificationError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'init',
+          context: 'notification_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -159,10 +166,13 @@ export class RoundsDataProviderService {
         reportUploadResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
         console.error('Failed to upload report file:', reportError);
-        Profiling.error({
-          error: reportError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'ROUNDS_DATA_PROVIDER_UPDATE_report_upload_failed',
+        Logger.error(reportError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'update',
+          context: 'report_upload_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -181,10 +191,13 @@ export class RoundsDataProviderService {
         });
       } catch (notificationError) {
         console.error('Failed to send failure notification:', notificationError);
-        Profiling.error({
-          error: notificationError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'ROUNDS_DATA_PROVIDER_UPDATE_notification_failed',
+        Logger.error(notificationError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'update',
+          context: 'notification_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -326,10 +339,10 @@ export class RoundsDataProviderService {
       this.reporter.addOperation('database', 'create_rounds', 'failed', {
         error: errorMessage,
       });
-      Profiling.error({
-        error: errorMessage,
-        data: { error: errorMessage },
-        source: 'RoundsDataProviderService.createOnDatabase',
+      Logger.error(new Error(errorMessage), {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'createOnDatabase',
       });
       throw error;
     }
@@ -345,9 +358,10 @@ export class RoundsDataProviderService {
         error: 'No rounds to update',
       });
       const error = new Error('No rounds to update in the database');
-      Profiling.error({
-        error,
-        source: 'RoundsDataProviderService.updateOnDatabase',
+      Logger.error(error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateOnDatabase',
       });
       throw error;
     }
@@ -365,9 +379,10 @@ export class RoundsDataProviderService {
       this.reporter.addOperation('database', 'update_rounds', 'failed', {
         error: errorMessage,
       });
-      Profiling.error({
-        error: error instanceof Error ? error : new Error(errorMessage),
-        source: 'RoundsDataProviderService.updateOnDatabase',
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateOnDatabase',
       });
       throw error;
     }
@@ -431,10 +446,13 @@ export class RoundsDataProviderService {
         reportUploadResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
         console.error('Failed to upload report file:', reportError);
-        Profiling.error({
-          error: reportError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'ROUNDS_DATA_PROVIDER_UPDATE_KNOCKOUT_report_upload_failed',
+        Logger.error(reportError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'updateKnockoutRounds',
+          context: 'report_upload_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -453,10 +471,13 @@ export class RoundsDataProviderService {
         });
       } catch (notificationError) {
         console.error('Failed to send failure notification:', notificationError);
-        Profiling.error({
-          error: notificationError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'ROUNDS_DATA_PROVIDER_UPDATE_KNOCKOUT_notification_failed',
+        Logger.error(notificationError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'updateKnockoutRounds',
+          context: 'notification_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 

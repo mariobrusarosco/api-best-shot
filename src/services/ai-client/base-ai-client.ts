@@ -1,4 +1,5 @@
-import { logger } from '../logger';
+import Logger from '../logger';
+import { DOMAINS } from '../logger/constants';
 import type { AIClientConfig, AIMessage, AIResponse, IAIClient } from './types';
 
 export abstract class BaseAIClient implements IAIClient {
@@ -23,7 +24,7 @@ export abstract class BaseAIClient implements IAIClient {
   }
 
   protected logRequest(messages: AIMessage[]): void {
-    logger.debug('AI Client Request', {
+    Logger.info('AI Client Request', {
       provider: this.constructor.name,
       model: this.config.model,
       messageCount: messages.length,
@@ -32,7 +33,7 @@ export abstract class BaseAIClient implements IAIClient {
   }
 
   protected logResponse(response: AIResponse): void {
-    logger.debug('AI Client Response', {
+    Logger.info('AI Client Response', {
       provider: this.constructor.name,
       model: response.model,
       contentLength: response.content.length,
@@ -41,7 +42,10 @@ export abstract class BaseAIClient implements IAIClient {
   }
 
   protected logError(error: unknown, context?: string): void {
-    logger.error('AI Client Error', error instanceof Error ? error : new Error(String(error)), {
+    Logger.error(error as Error, {
+      domain: DOMAINS.AI,
+      component: 'service',
+      operation: 'aiClientError',
       provider: this.constructor.name,
       model: this.config.model,
       context,

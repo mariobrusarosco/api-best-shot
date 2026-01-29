@@ -2,7 +2,8 @@ import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-s
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import Profiling from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
 
@@ -49,23 +50,21 @@ class AdminStandingsService {
         message: `Standings created successfully`,
       });
     } catch (error) {
-      Profiling.error({
-        source: 'ADMIN_SERVICE_STANDINGS_create',
-        error,
-        data: {
-          requestId,
-          operation: 'admin_standings_creation',
-          adminUser: req.authenticatedUser?.nickName,
-        },
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'service',
+        operation: 'create',
+        resource: 'STANDINGS',
+        requestId,
+        adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
     } finally {
       if (scraper) {
         await scraper.close();
-        Profiling.log({
-          msg: '[CLEANUP] Playwright resources cleaned up successfully',
-          data: { requestId, source: 'admin_service' },
-          source: 'ADMIN_SERVICE_STANDINGS_create',
+        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
+          requestId,
+          source: 'admin_service',
         });
       }
     }
@@ -113,23 +112,21 @@ class AdminStandingsService {
         message: `Standings updated successfully`,
       });
     } catch (error) {
-      Profiling.error({
-        source: 'ADMIN_SERVICE_STANDINGS_update',
-        error,
-        data: {
-          requestId,
-          operation: 'admin_standings_update',
-          adminUser: req.authenticatedUser?.nickName,
-        },
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'service',
+        operation: 'update',
+        resource: 'STANDINGS',
+        requestId,
+        adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
     } finally {
       if (scraper) {
         await scraper.close();
-        Profiling.log({
-          msg: '[CLEANUP] Playwright resources cleaned up successfully',
-          data: { requestId, source: 'admin_service' },
-          source: 'ADMIN_SERVICE_STANDINGS_update',
+        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
+          requestId,
+          source: 'admin_service',
         });
       }
     }

@@ -1,9 +1,9 @@
-import { PROFILLING_AUTH } from '@/domains/auth/constants/profiling';
 import { Utils } from '@/domains/auth/utils';
 import { DB_SelectMember } from '@/domains/member/schema';
 import { MemberService } from '@/domains/member/services';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { NextFunction, Request, Response } from 'express';
 
 export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
@@ -19,9 +19,10 @@ export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) 
 
     next();
   } catch (error: unknown) {
-    Profiling.error({
-      source: PROFILLING_AUTH.AUTH_MIDDLEWARE_ERROR,
-      error: error as Error,
+    Logger.error(error as Error, {
+      domain: DOMAINS.AUTH,
+      component: 'middleware',
+      operation: 'AuthMiddleware',
     });
 
     res.status(GlobalErrorMapper.NOT_AUTHORIZED.status).send(GlobalErrorMapper.NOT_AUTHORIZED.userMessage);
@@ -54,9 +55,10 @@ export const AdminMiddleware = async (req: Request, res: Response, next: NextFun
 
     next();
   } catch (error: unknown) {
-    Profiling.error({
-      source: PROFILLING_AUTH.AUTH_MIDDLEWARE_ERROR,
-      error: error as Error,
+    Logger.error(error as Error, {
+      domain: DOMAINS.AUTH,
+      component: 'middleware',
+      operation: 'AdminMiddleware',
     });
 
     res.status(GlobalErrorMapper.NOT_AUTHORIZED.status).send(GlobalErrorMapper.NOT_AUTHORIZED.userMessage);

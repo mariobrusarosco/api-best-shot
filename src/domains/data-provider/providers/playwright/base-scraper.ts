@@ -1,4 +1,5 @@
-import Profiling from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import mime from 'mime-types';
 import type { Browser, BrowserContext, Page, Response } from 'playwright';
 import { chromium } from 'playwright';
@@ -77,17 +78,18 @@ export class BaseScraper {
       this.page.setDefaultNavigationTimeout(30000); // 30 seconds
 
       const duration = Date.now() - startTime;
-      Profiling.log({
-        msg: 'Playwright browser initialized',
-        data: { duration },
-        source: 'BaseScraper.init',
+      Logger.info('Playwright browser initialized', {
+        duration: duration.toString(),
+        component: 'scraper',
+        domain: 'data-provider',
       });
 
       return this;
     } catch (error) {
-      Profiling.error({
-        source: 'BaseScraper.init',
-        error,
+      Logger.error(error as Error, {
+        component: 'scraper',
+        operation: 'init',
+        domain: DOMAINS.DATA_PROVIDER,
       });
       throw error;
     }
@@ -112,9 +114,10 @@ export class BaseScraper {
       this.context = null;
       this.browser = null;
     } catch (error) {
-      Profiling.error({
-        source: 'BaseScraper.close',
-        error,
+      Logger.error(error as Error, {
+        component: 'scraper',
+        operation: 'close',
+        domain: DOMAINS.DATA_PROVIDER,
       });
     }
   }
@@ -154,10 +157,10 @@ export class BaseScraper {
 
         attempt++;
         if (attempt <= retries) {
-          Profiling.log({
-            msg: `Navigation retry ${attempt}/${retries} for ${url}`,
-            data: { error: lastError.message },
-            source: 'BaseScraper.goto',
+          Logger.info(`Navigation retry ${attempt}/${retries} for ${url}`, {
+            error: lastError.message,
+            component: 'scraper',
+            domain: DOMAINS.DATA_PROVIDER,
           });
 
           // Exponential backoff delay
@@ -167,9 +170,10 @@ export class BaseScraper {
     }
 
     // If we get here, all retries failed
-    Profiling.error({
-      source: 'BaseScraper.goto',
-      error: lastError,
+    Logger.error(lastError as Error, {
+      component: 'scraper',
+      operation: 'goto',
+      domain: DOMAINS.DATA_PROVIDER,
     });
     throw lastError;
   }
@@ -230,10 +234,12 @@ export class BaseScraper {
 
       return data;
     } catch (error) {
-      Profiling.error({
-        source: 'BaseScraper.getMatchData',
-        error,
-        data: { matchExternalId, apiUrl },
+      Logger.error(error as Error, {
+        component: 'scraper',
+        operation: 'getMatchData',
+        domain: DOMAINS.DATA_PROVIDER,
+        matchExternalId,
+        apiUrl,
       });
       throw error;
     }

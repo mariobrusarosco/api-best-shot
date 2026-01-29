@@ -12,12 +12,14 @@
 import { randomUUID } from 'crypto';
 import type { Job } from 'pg-boss';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { MatchesDataProviderService } from '@/domains/data-provider/services/matches';
+import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { retryMatchOperation } from '@/domains/data-provider/utils/retry';
-import { DB_SelectMatch } from '@/domains/match/schema';
+import { DB_SelectMatch, T_Match } from '@/domains/match/schema';
 import { ScoreboardService } from '@/domains/score/services/scoreboard.service';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
+import db from '@/services/database';
+import { eq } from 'drizzle-orm';
 import type { IQueue } from '@/services/queue';
 import { getQueue } from '@/services/queue';
 import { MatchPollingService } from './match-polling.service';
@@ -122,7 +124,7 @@ export class MatchUpdateOrchestratorService {
       console.log(`[MatchUpdateOrchestrator] [Job] Successfully updated match: ${jobData.matchExternalId}`);
 
       // Check if match transitioned to "ended" status
-      const matchJustEnded = jobData.previousStatus !== 'ended' && updatedMatch.status === 'ended';
+      const matchJustEnded = jobData.previousStatus !== 'ended' && (updatedMatch as any).status === 'ended';
 
       // If match just ended, trigger scoreboard updates and queue standings update
       if (matchJustEnded) {
@@ -369,7 +371,7 @@ export class MatchUpdateOrchestratorService {
     const requestId = randomUUID();
 
     // Execute update with retry logic
-    const updatedMatch = await retryMatchOperation(async () => {
+    await retryMatchOperation(async () => {
       const matchesService = new MatchesDataProviderService(this.scraper, requestId);
       return await matchesService.updateSingleMatch({
         matchExternalId: match.externalId,
@@ -385,8 +387,15 @@ export class MatchUpdateOrchestratorService {
 
     console.log(`[MatchUpdateOrchestrator] Successfully updated match: ${match.externalId}`);
 
+    // Fetch the updated match from database to check its new status
+    const [updatedMatchFromDb] = await db
+      .select({ status: T_Match.status })
+      .from(T_Match)
+      .where(eq(T_Match.id, match.id))
+      .limit(1);
+
     // Check if match transitioned to "ended" status
-    const matchJustEnded = previousStatus !== 'ended' && updatedMatch.status === 'ended';
+    const matchJustEnded = previousStatus !== 'ended' && updatedMatchFromDb?.status === 'ended';
 
     return matchJustEnded;
   }

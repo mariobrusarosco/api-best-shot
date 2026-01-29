@@ -2,7 +2,8 @@ import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-s
 import { RoundsDataProviderService } from '@/domains/data-provider/services/rounds';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import Profiling from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
 
@@ -49,23 +50,20 @@ class AdminRoundsService {
         message: `Rounds created successfully`,
       });
     } catch (error) {
-      Profiling.error({
-        source: 'ADMIN_SERVICE_ROUNDS_create',
-        error,
-        data: {
-          requestId,
-          operation: 'admin_rounds_creation',
-          adminUser: req.authenticatedUser?.nickName,
-        },
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        operation: 'createRounds',
+        component: 'service',
+        requestId,
+        adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
     } finally {
       if (scraper) {
         await scraper.close();
-        Profiling.log({
-          msg: '[CLEANUP] Playwright resources cleaned up successfully',
-          data: { requestId, source: 'admin_service' },
-          source: 'ADMIN_SERVICE_ROUNDS_create',
+        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
+          requestId,
+          source: 'admin_service',
         });
       }
     }
@@ -112,23 +110,20 @@ class AdminRoundsService {
         message: `Rounds updated successfully`,
       });
     } catch (error) {
-      Profiling.error({
-        source: 'ADMIN_SERVICE_ROUNDS_update',
-        error,
-        data: {
-          requestId,
-          operation: 'admin_rounds_update',
-          adminUser: req.authenticatedUser?.nickName,
-        },
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        operation: 'updateRounds',
+        component: 'service',
+        requestId,
+        adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
     } finally {
       if (scraper) {
         await scraper.close();
-        Profiling.log({
-          msg: '[CLEANUP] Playwright resources cleaned up successfully',
-          data: { requestId, source: 'admin_service' },
-          source: 'ADMIN_SERVICE_ROUNDS_update',
+        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
+          requestId,
+          source: 'admin_service',
         });
       }
     }
@@ -167,10 +162,12 @@ class AdminRoundsService {
         message: `Knockout rounds updated successfully`,
       });
     } catch (error) {
-      Profiling.error({
-        source: 'ADMIN_SERVICE_ROUNDS_updateKnockoutRounds',
-        error,
-        data: { requestId, source: 'admin_service' },
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        operation: 'updateKnockoutRounds',
+        component: 'service',
+        requestId,
+        context: 'knockout',
       });
     }
   }

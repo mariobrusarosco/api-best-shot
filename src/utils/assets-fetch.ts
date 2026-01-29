@@ -1,4 +1,5 @@
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
 
@@ -30,19 +31,19 @@ export async function fetchAndStoreAssetFromApi(payload: FetchAndStoreAssetPaylo
     let ContentType: string | undefined;
 
     if (payload.logoPngBase64) {
-      Profiling.log({
-        msg: 'Creating a new asset from base64',
-        data: payload.logoPngBase64,
-        source: 'fetchAndStoreAssetFromApi',
+      Logger.info('Creating a new asset from base64', {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        ...payload,
       });
       Body = Buffer.from(payload.logoPngBase64 || '', 'base64');
       ContentType = 'image/png';
       Key = `data-providers/${payload.filename}.png`;
     } else {
-      Profiling.log({
-        msg: 'Creating a new asset from url',
-        data: payload.logoUrl,
-        source: 'fetchAndStoreAssetFromApi',
+      Logger.info('Creating a new asset from url', {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        ...payload,
       });
       try {
         const response = await fetch(payload.logoUrl || '');
@@ -50,35 +51,34 @@ export async function fetchAndStoreAssetFromApi(payload: FetchAndStoreAssetPaylo
         ContentType = response.headers.get('content-type') || 'image/png';
         const ext = mime.extension(ContentType);
         Key = `data-providers/${payload?.filename}.${ext || 'png'}`;
-        Profiling.log({
-          msg: 'Asset created successfully',
-          data: { Key, ContentType, Body },
-          source: 'fetchAndStoreAssetFromApi',
+        Logger.info('Asset created successfully', {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          Key,
+          ContentType,
         });
       } catch (error: unknown) {
         const fetchError = error as Error;
-        Profiling.error({
-          source: 'fetchAndStoreAssetFromApi',
-          error: {
-            message: fetchError.message,
-            url: payload.logoUrl,
-            error: fetchError,
-          },
+        Logger.error(fetchError, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'fetchAndStoreAssetFromApi',
+          context: 'fetch',
+          url: payload.logoUrl,
         });
       }
     }
 
     // Ensure we have valid upload parameters
     if (!Key || !Body || !ContentType) {
-      Profiling.error({
-        source: 'fetchAndStoreAssetFromApi',
-        error: {
-          message: 'Missing upload parameters, skipping S3 upload',
-          Bucket,
-          Key,
-          ContentType,
-          Body,
-        },
+      Logger.error(new Error('Missing upload parameters, skipping S3 upload'), {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'fetchAndStoreAssetFromApi',
+        context: 'validation',
+        Bucket,
+        Key,
+        ContentType,
       });
       return `dummy-path/${payload.filename}`;
     }
@@ -94,24 +94,29 @@ export async function fetchAndStoreAssetFromApi(payload: FetchAndStoreAssetPaylo
           Expires: new Date(Date.now() + 15768000 * 1000),
         })
       );
-      Profiling.log({
-        msg: `File uploaded successfully: ${Key}`,
-        source: 'fetchAndStoreAssetFromApi',
+      Logger.info(`File uploaded successfully: ${Key}`, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'fetchAndStoreAssetFromApi',
+        context: 's3_upload',
       });
       return Key;
     } catch (s3error: unknown) {
-      Profiling.error({
-        source: 'fetchAndStoreAssetFromApi',
-        error: s3error,
+      Logger.error(s3error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'fetchAndStoreAssetFromApi',
+        context: 's3_upload',
       });
       // Even if S3 upload fails, return a dummy path so the application can continue
       // This is crucial because the logo field is NOT NULL in the database
       return `dummy-path/${payload.filename}`;
     }
   } catch (error) {
-    Profiling.error({
-      source: 'fetchAndStoreAssetFromApi',
-      error,
+    Logger.error(error as Error, {
+      domain: DOMAINS.DATA_PROVIDER,
+      component: 'service',
+      operation: 'fetchAndStoreAssetFromApi',
     });
     return `dummy-path/${payload.filename}`;
   }

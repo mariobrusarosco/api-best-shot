@@ -2,7 +2,8 @@ import { ErrorMapper } from '@/domains/auth/error-handling/mapper';
 import { Utils } from '@/domains/auth/utils';
 
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import Profiling from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { Request, Response } from 'express';
 import { MemberService } from '../services';
 import { createMemberSchema } from './schemas';
@@ -34,9 +35,10 @@ const getMemberV2 = async (req: Request, res: Response) => {
 
     return res.status(200).send(member);
   } catch (error: unknown) {
-    Profiling.error({
-      source: 'MEMBER_API_getMemberV2',
-      error,
+    Logger.error(error as Error, {
+      domain: DOMAINS.MEMBER,
+      component: 'api',
+      operation: 'getMemberV2',
     });
     return handleInternalServerErrorResponse(res, error);
   }
@@ -45,15 +47,14 @@ const getMemberV2 = async (req: Request, res: Response) => {
 const createMember = async (req: Request, res: Response) => {
   try {
     // Log incoming request for debugging
-    Profiling.log({
-      msg: 'Create member request received',
-      source: 'MEMBER_API_createMember_request',
-      data: {
-        contentType: req.get('content-type'),
-        bodyKeys: req.body ? Object.keys(req.body) : [],
-        bodyPresent: !!req.body,
-        bodyType: typeof req.body,
-      },
+    Logger.info('Create member request received', {
+      domain: DOMAINS.MEMBER,
+      component: 'api',
+      operation: 'createMember',
+      contentType: req.get('content-type'),
+      bodyKeys: req.body ? Object.keys(req.body) : [],
+      bodyPresent: !!req.body,
+      bodyType: typeof req.body,
     });
 
     // Validate request body
@@ -63,13 +64,13 @@ const createMember = async (req: Request, res: Response) => {
     if (hasValidationError) {
       const errors = validationResult.error.format();
 
-      Profiling.error({
-        source: 'MEMBER_API_createMember',
-        error: errors,
-        data: {
-          receivedBody: req.body,
-          contentType: req.get('content-type'),
-        },
+      Logger.error(new Error('Validation Error'), {
+        domain: DOMAINS.MEMBER,
+        component: 'api',
+        operation: 'createMember',
+        errors: errors as any,
+        receivedBody: req.body,
+        contentType: req.get('content-type'),
       });
 
       return res.status(ErrorMapper.VALIDATION_ERROR.status).send({
@@ -88,9 +89,10 @@ const createMember = async (req: Request, res: Response) => {
 
     return res.status(201).send(member);
   } catch (error: unknown) {
-    Profiling.error({
-      source: 'MEMBER_API_createMember',
-      error,
+    Logger.error(error as Error, {
+      domain: DOMAINS.MEMBER,
+      component: 'api',
+      operation: 'createMember',
     });
     return handleInternalServerErrorResponse(res, error);
   }

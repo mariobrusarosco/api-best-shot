@@ -6,7 +6,8 @@ import { CreateGuessRequest, GuessInput } from '@/domains/guess/typing';
 import { DB_SelectMatch, T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import db from '@/services/database';
-import Profiling from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { randomUUID } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { Response } from 'express';
@@ -58,9 +59,10 @@ async function getMemberGuesses({
 
     return parsedGuesses;
   } catch (error: unknown) {
-    Profiling.error({
-      source: 'GUESS_CONTROLLERS_getMemberGuesses',
-      error,
+    Logger.error(error as Error, {
+      domain: DOMAINS.GUESS,
+      component: 'controller',
+      operation: 'getMemberGuesses',
     });
   }
 }

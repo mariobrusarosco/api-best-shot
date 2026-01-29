@@ -1,7 +1,8 @@
 import { T_Guess } from '@/services/database/schema';
 import { T_LeagueRole, T_Match, T_Member, T_Tournament } from '@/services/database/schema';
 import { and, eq, gte, lte } from 'drizzle-orm';
-import Profiling from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 
 import db from '@/services/database';
 
@@ -22,9 +23,10 @@ async function getLeagueScore(leagueId: string) {
         )
       );
   } catch (error: unknown) {
-    Profiling.error({
-      source: 'SCORE_QUERIES_getLeagueScore',
-      error,
+    Logger.error(error as Error, {
+      domain: DOMAINS.SCORE,
+      component: 'database',
+      operation: 'getLeagueScore',
     });
     throw error;
   }

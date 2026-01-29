@@ -1,5 +1,6 @@
 import { env } from '@/config/env';
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import type { NextFunction, Request, Response } from 'express';
 
 export const InternalMiddleware = (req: Request, res: Response, next: NextFunction) => {
@@ -7,13 +8,12 @@ export const InternalMiddleware = (req: Request, res: Response, next: NextFuncti
     const internalToken = req.headers['x-internal-token'] || req.headers.authorization?.replace('Bearer ', '');
 
     if (!internalToken) {
-      Profiling.error({
-        source: 'INTERNAL_MIDDLEWARE_missingToken',
-        error: new Error('No internal token provided'),
-        data: {
-          path: req.path,
-          method: req.method,
-        },
+      Logger.error(new Error('No internal token provided'), {
+        domain: DOMAINS.AUTH,
+        component: 'middleware',
+        operation: 'InternalMiddleware',
+        path: req.path,
+        method: req.method,
       });
 
       return res.status(401).json({
@@ -23,14 +23,13 @@ export const InternalMiddleware = (req: Request, res: Response, next: NextFuncti
     }
 
     if (internalToken !== env.INTERNAL_SERVICE_TOKEN) {
-      Profiling.error({
-        source: 'INTERNAL_MIDDLEWARE_invalidToken',
-        error: new Error('Invalid internal token provided'),
-        data: {
-          path: req.path,
-          method: req.method,
-          providedToken: typeof internalToken === 'string' ? `${internalToken.substring(0, 8)}...` : 'array_value', // Log only first 8 chars for security
-        },
+      Logger.error(new Error('Invalid internal token provided'), {
+        domain: DOMAINS.AUTH,
+        component: 'middleware',
+        operation: 'InternalMiddleware',
+        path: req.path,
+        method: req.method,
+        providedToken: typeof internalToken === 'string' ? `${internalToken.substring(0, 8)}...` : 'array_value',
       });
 
       return res.status(403).json({
@@ -39,20 +38,19 @@ export const InternalMiddleware = (req: Request, res: Response, next: NextFuncti
       });
     }
 
-    Profiling.log({
-      msg: 'Internal service authenticated successfully',
-      source: 'INTERNAL_MIDDLEWARE_success',
-      data: {
-        path: req.path,
-        method: req.method,
-      },
+    Logger.info('Internal service authenticated successfully', {
+      domain: DOMAINS.AUTH,
+      component: 'middleware',
+      path: req.path,
+      method: req.method,
     });
 
     next();
   } catch (error: unknown) {
-    Profiling.error({
-      source: 'INTERNAL_MIDDLEWARE_error',
-      error,
+    Logger.error(error as Error, {
+      domain: DOMAINS.AUTH,
+      component: 'middleware',
+      operation: 'InternalMiddleware',
     });
 
     return res.status(500).json({

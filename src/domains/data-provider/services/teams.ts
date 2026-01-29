@@ -4,7 +4,8 @@ import { DB_InsertTeam } from '@/domains/team/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import type { TournamentMode } from '@/domains/tournament/typing';
 import { TournamentWithTypedMode } from '@/domains/tournament/typing';
-import { Profiling } from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 import { safeString } from '@/utils';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { API_SOFASCORE_ROUND, API_SOFASCORE_STANDINGS, DataProviderExecutionOperationType } from '../typing';
@@ -77,10 +78,13 @@ export class TeamsDataProviderService {
         reportUploadResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
         console.error('Failed to upload report file:', reportError);
-        Profiling.error({
-          error: reportError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'TEAMS_DATA_PROVIDER_INIT_report_upload_failed',
+        Logger.error(reportError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'init',
+          context: 'report_upload_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -99,10 +103,13 @@ export class TeamsDataProviderService {
         });
       } catch (notificationError) {
         console.error('Failed to send failure notification:', notificationError);
-        Profiling.error({
-          error: notificationError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'TEAMS_DATA_PROVIDER_INIT_notification_failed',
+        Logger.error(notificationError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'init',
+          context: 'notification_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -160,10 +167,13 @@ export class TeamsDataProviderService {
         reportUploadResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
         console.error('Failed to upload report file:', reportError);
-        Profiling.error({
-          error: reportError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'TEAMS_DATA_PROVIDER_UPDATE_report_upload_failed',
+        Logger.error(reportError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'update',
+          context: 'report_upload_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -182,10 +192,13 @@ export class TeamsDataProviderService {
         });
       } catch (notificationError) {
         console.error('Failed to send failure notification:', notificationError);
-        Profiling.error({
-          error: notificationError,
-          data: { requestId: this.requestId, originalError: errorMessage },
-          source: 'TEAMS_DATA_PROVIDER_UPDATE_notification_failed',
+        Logger.error(notificationError as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'update',
+          context: 'notification_failed',
+          requestId: this.requestId,
+          originalError: errorMessage,
         });
       }
 
@@ -500,10 +513,10 @@ export class TeamsDataProviderService {
       this.reporter.addOperation('database', 'create_teams', 'failed', {
         error: errorMessage,
       });
-      Profiling.error({
-        error: errorMessage,
-        data: { error: errorMessage },
-        source: 'TeamsDataProviderService.createOnDatabase',
+      Logger.error(new Error(errorMessage), {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'createOnDatabase',
       });
       throw error;
     }
@@ -519,9 +532,10 @@ export class TeamsDataProviderService {
         error: 'No teams to update',
       });
       const error = new Error('No teams to update in the database');
-      Profiling.error({
-        error,
-        source: 'TeamsDataProviderService.updateOnDatabase',
+      Logger.error(error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateOnDatabase',
       });
       throw error;
     }
@@ -539,9 +553,10 @@ export class TeamsDataProviderService {
       this.reporter.addOperation('database', 'update_teams', 'failed', {
         error: errorMessage,
       });
-      Profiling.error({
-        error: error instanceof Error ? error : new Error(errorMessage),
-        source: 'TeamsDataProviderService.updateOnDatabase',
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateOnDatabase',
       });
       throw error;
     }

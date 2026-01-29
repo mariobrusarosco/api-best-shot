@@ -1,12 +1,14 @@
 import { MatchQueries } from '@/domains/match/queries';
-import Profiling from '@/services/profiling';
+import Logger from '@/services/logger';
+import { DOMAINS } from '@/services/logger/constants';
 
 const getDashboard = async () => {
   const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase();
 
-  Profiling.log({
-    msg: `[Current day matches: ${currentDayMatches.length}]`,
-    data: { currentDayMatches },
+  Logger.info(`[Current day matches: ${currentDayMatches.length}]`, {
+    domain: DOMAINS.DASHBOARD,
+    component: 'service',
+    currentDayMatches,
   });
 
   const uniqueMatches = new Map();

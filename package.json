@@ -1,6 +1,6 @@
 {
   "name": "api-best-shot",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "API - Best Shot",
   "volta": {
     "node": "22.17.1"
@@ -67,7 +67,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.703.0",
-    "@aws-sdk/client-scheduler": "^3.716.0",
     "@sentry/cli": "^2.39.1",
     "@sentry/node": "^8.47.0",
     "@sentry/profiling-node": "^8.47.0",

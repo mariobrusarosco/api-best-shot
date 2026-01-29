@@ -23,7 +23,7 @@ import cron from 'node-cron';
 
 // Environment configuration
 const MATCH_POLLING_ENABLED = process.env.MATCH_POLLING_ENABLED === 'true';
-const CRON_SCHEDULE = process.env.MATCH_POLLING_CRON || '*/10 * * * *'; // Default: every 10 minutes
+const CRON_SCHEDULE = process.env.MATCH_POLLING_CRON || '*/5 * * * *'; // Default: every 5 minutes
 
 // Shared scraper instance (reused across cron jobs)
 let scraper: BaseScraper | null = null;

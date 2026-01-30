@@ -83,23 +83,24 @@ export const T_Member = pgTable(
 );
 ```
 
-#### Task 1.1.1 - Schema Changes []
+#### Task 1.1.1 - Schema Changes [✅]
 
-- Update `password` field to `.notNull()` or add OAuth support logic
-- Add enum constraint to `role` field
-- Add `deletedAt` timestamp for soft deletes
-- Generate migration
+- ✅ Kept `password` field nullable (supports OAuth users like Google OAuth2)
+- ✅ Add enum constraint to `role` field
+- ✅ Add `deletedAt` timestamp for soft deletes
+- ✅ Generate migration (0012_overrated_mad_thinker.sql)
 
-#### Task 1.1.2 - Add Indexes []
+#### Task 1.1.2 - Add Indexes [✅]
 
-- Add index on `publicId`
-- Add index on `email`
-- Generate migration
+- ✅ Add index on `publicId`
+- ✅ Add index on `email`
+- ✅ Migration includes CREATE INDEX statements
 
-#### Task 1.1.3 - Update Type Definitions []
+#### Task 1.1.3 - Update Type Definitions [✅]
 
-- Update `MemberRole` type to be used in schema enum
-- Add `DB_UpdateMember` type (currently missing)
+- ✅ Moved `MemberRole` type before schema definition
+- ✅ Used `MemberRole` type in schema enum constraint
+- ✅ Added `DB_UpdateMember` type export
 
 **Dependencies:** None  
 **Expected Result:** Member schema has proper constraints, supports soft deletes, improved query performance  

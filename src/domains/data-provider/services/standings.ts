@@ -4,10 +4,9 @@ import { DB_InsertTournamentStandings, T_TournamentStandings } from '@/domains/t
 import db from '@/services/database';
 import Logger from '@/services/logger';
 import { DOMAINS } from '@/services/logger/constants';
-import { safeString } from '@/utils';
+import { safeNumber, safeString } from '@/utils';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { API_SOFASCORE_STANDINGS } from '../typing';
-import { DataProviderExecutionOperationType } from '../typing';
+import { API_SOFASCORE_STANDINGS, DataProviderExecutionOperationType } from '../typing';
 import { DataProviderExecution } from './execution';
 
 export interface CreateStandingsInput {
@@ -265,18 +264,18 @@ export class StandingsDataProviderService {
         return {
           teamExternalId: safeString(rowData.team.id) || '',
           tournamentId: tournamentId,
-          order: safeString(rowData.position) || '',
+          order: safeNumber(rowData.position),
           groupName: groupData.name,
           shortName: safeString(rowData.team.shortName) || '',
           longName: safeString(rowData.team.name) || '',
-          points: safeString(rowData.points) || '',
-          games: safeString(rowData.matches) || '',
-          wins: safeString(rowData.wins) || '',
-          draws: safeString(rowData.draws) || '',
-          losses: safeString(rowData.losses) || '',
-          gf: safeString(rowData.scoresFor) || '',
-          ga: safeString(rowData.scoresAgainst) || '',
-          gd: safeString(rowData.scoreDiffFormatted) || '',
+          points: safeNumber(rowData.points),
+          games: safeNumber(rowData.matches),
+          wins: safeNumber(rowData.wins),
+          draws: safeNumber(rowData.draws),
+          losses: safeNumber(rowData.losses),
+          gf: safeNumber(rowData.scoresFor),
+          ga: safeNumber(rowData.scoresAgainst),
+          gd: safeNumber(rowData.scoreDiffFormatted),
           provider: 'sofascore',
         };
       });

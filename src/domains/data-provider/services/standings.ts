@@ -262,6 +262,7 @@ export class StandingsDataProviderService {
           scoreDiffFormatted: unknown;
         };
         return {
+          teamId: undefined, // Will be populated by data migration script
           teamExternalId: safeString(rowData.team.id) || '',
           tournamentId: tournamentId,
           order: safeNumber(rowData.position),

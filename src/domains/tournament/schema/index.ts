@@ -1,3 +1,4 @@
+import { T_Team } from '@/domains/team/schema';
 import { integer, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Tournament = pgTable(
@@ -35,8 +36,11 @@ export const T_TournamentStandings = pgTable(
   'tournament_standings',
   {
     id: uuid('id').defaultRandom(),
-    teamExternalId: text('team_external_id').notNull(),
-    tournamentId: uuid('tournament_id').notNull(), // Changed from text to uuid
+    teamId: uuid('team_id').references(() => T_Team.id), // Nullable for data migration
+    teamExternalId: text('team_external_id').notNull(), // Keep for data migration
+    tournamentId: uuid('tournament_id')
+      .notNull()
+      .references(() => T_Tournament.id), // 🆕 FK to tournament
     order: integer('order').notNull(), // Changed from numeric to integer
     groupName: text('group_name').default(''),
     shortName: text('short_name').notNull(), // Fixed typo: was 'shortame'

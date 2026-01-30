@@ -41,7 +41,7 @@ Fix the `member` schema to establish proper data integrity, security, and type s
 
 ## Tasks
 
-### Task 1.1 - Add Missing Constraints and Indexes []
+### Task 1.1 - Add Missing Constraints and Indexes [✅]
 
 **Severity:** HIGH  
 **Impact:** Data integrity, security, query performance
@@ -173,7 +173,7 @@ export const T_TournamentStandings = pgTable(
 );
 ```
 
-#### Task 2.1.1 - Rename Columns (Breaking Change) []
+#### Task 2.1.1 - Rename Columns (Breaking Change) [✅]
 
 - Rename `shortame` → `short_name`
 - Rename `longame` → `long_name`
@@ -182,7 +182,9 @@ export const T_TournamentStandings = pgTable(
 - Rename `gd` → `goal_difference`
 - Generate migration
 
-#### Task 2.1.2 - Fix Data Types []
+**Important:** This renames SQL columns only. TypeScript field names (`gf`, `ga`, `gd`) remain unchanged to avoid breaking changes. See Task 2.1.5 for optional refactoring.
+
+#### Task 2.1.2 - Fix Data Types [✅]
 
 - Change `tournamentId` from text to uuid
 - Change `order` from numeric to integer
@@ -201,6 +203,25 @@ export const T_TournamentStandings = pgTable(
 - Update all queries to use new column names
 - Update all queries to use new FK relationships
 - Update seeding scripts
+
+#### Task 2.1.5 - Refactor Field Names (Optional, Code Quality) []
+
+**Purpose:** Improve code consistency by renaming TypeScript field names to match SQL columns
+
+**Changes:**
+
+- Rename TypeScript field: `gf` → `goalsFor`
+- Rename TypeScript field: `ga` → `goalsAgainst`
+- Rename TypeScript field: `gd` → `goalDifference`
+
+**Files to update:**
+
+- `src/domains/tournament/schema/index.ts` (schema definition)
+- `src/domains/tournament/queries/index.ts` (queries using these fields)
+- `src/domains/data-provider/services/standings.ts` (data mapping)
+- `src/domains/ai/services/prediction-service.ts` (if using these fields)
+
+**Note:** This is non-critical and can be done later for better maintainability.
 
 **Dependencies:** Team schema must have UUID available  
 **Expected Result:** Tournament standings with proper types, no orphaned data, correct column names  

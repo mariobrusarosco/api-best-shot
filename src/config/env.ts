@@ -36,10 +36,6 @@ const envSchema = z.object({
   AWS_CLOUDFRONT_URL: z.string().min(1, 'AWS CloudFront URL is required'),
   AWS_REGION: z.string().default('us-east-1'),
 
-  // AWS Lambda Environment Variables (for Lambda execution)
-  DATA_PROVIDER_COOKIE_PRODUCTION: z.string().optional(),
-  DATA_PROVIDER_COOKIE_DEMO: z.string().optional(),
-
   // Monitoring
   SENTRY_DSN: z.string().min(1, 'Sentry DSN is required'),
 

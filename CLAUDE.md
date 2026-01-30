@@ -128,7 +128,6 @@ Best Shot API is a TypeScript/Express.js backend service for a football predicti
 
 - TypeScript/Express.js (API framework)
 - PostgreSQL + Drizzle ORM (data layer)
-- AWS Lambda/Scheduler (automated tasks)
 - Docker (local development)
 - Sentry (Monitoring & Logging)
 
@@ -343,10 +342,9 @@ AWS Scheduler integration for automated tasks:
 
 The project has GitHub Actions workflows for automated deployment:
 
-- **Lambda Functions**: Automated deployment of AWS Lambda functions (`data-provider-lambdas.yml`)
-  - Supports demo and production environments
-  - Deploys layers and functions based on file changes
-  - Includes comprehensive testing and validation
+- Supports demo and production environments
+- Deploys layers and functions based on file changes
+- Includes comprehensive testing and validation
 
 ### Lambda Functions
 

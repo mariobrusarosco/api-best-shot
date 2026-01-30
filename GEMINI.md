@@ -74,11 +74,12 @@ The project enforces a **Three-Layer Architecture** within a Domain-Driven struc
 
 This project uses a **unified `LoggerService`** for all logging and error reporting, located at `src/services/logger`.
 
--   **DO NOT USE `console.log` or `console.error`**. Use the `Logger` service exclusively.
--   For tracking handled exceptions and other critical errors, **ALWAYS** use `Logger.error(error, context)`.
--   The `context` object should be populated with relevant tags from `src/services/logger/constants.ts` to ensure errors are filterable in Sentry.
+- **DO NOT USE `console.log` or `console.error`**. Use the `Logger` service exclusively.
+- For tracking handled exceptions and other critical errors, **ALWAYS** use `Logger.error(error, context)`.
+- The `context` object should be populated with relevant tags from `src/services/logger/constants.ts` to ensure errors are filterable in Sentry.
 
 **Example:**
+
 ```typescript
 import Logger from '@/services/logger';
 import { DOMAINS, COMPONENTS } from '@/services/logger/constants';
@@ -172,7 +173,6 @@ Each feature belongs to a domain (e.g., `tournament`, `match`, `guess`).
 │   │   ├── match/
 │   │   ├── tournament/
 │   │   └── ...
-│   ├── lambdas/         # AWS Lambda functions
 │   ├── middlewares/     # Express middlewares (Auth, Logger)
 │   ├── services/        # Shared/Infrastructure services (DB, Logger, AI)
 │   ├── utils/           # Shared utilities

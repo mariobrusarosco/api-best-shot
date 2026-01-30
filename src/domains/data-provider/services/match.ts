@@ -1,11 +1,13 @@
 import { QUERIES_MATCH } from '@/domains/match/queries';
 import { DB_InsertMatch, T_Match } from '@/domains/match/schema';
+import { T_Team } from '@/domains/team/schema';
 import { DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
 import Logger from '@/services/logger';
 import { DOMAINS } from '@/services/logger/constants';
 import { safeString } from '@/utils';
+import { and, eq, inArray } from 'drizzle-orm';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { BaseScraper } from '../providers/playwright/base-scraper';
@@ -339,10 +341,10 @@ export class MatchesDataProviderService {
           provider: 'sofa',
           tournamentId,
           roundSlug,
-          homeTeamId: safeString(event.homeTeam.id),
+          externalHomeTeamId: safeString(event.homeTeam.id),
+          externalAwayTeamId: safeString(event.awayTeam.id),
           homeScore: safeString(event.homeScore.display, null),
           homePenaltiesScore: safeString(event.homeScore.penalties, null),
-          awayTeamId: safeString(event.awayTeam.id),
           awayScore: safeString(event.awayScore.display, null),
           awayPenaltiesScore: safeString(event.awayScore.penalties, null),
           date: safeSofaDate(event.startTimestamp! * 1000),
@@ -371,6 +373,27 @@ export class MatchesDataProviderService {
     }
   }
 
+  private async enrichMatchesWithTeamIds(matches: DB_InsertMatch[]): Promise<DB_InsertMatch[]> {
+    if (matches.length === 0) return [];
+
+    const teamExternalIds = [...new Set(matches.flatMap(m => [m.externalHomeTeamId, m.externalAwayTeamId]))];
+
+    const teams = await db
+      .select({ id: T_Team.id, externalId: T_Team.externalId })
+      .from(T_Team)
+      .where(and(eq(T_Team.provider, matches[0].provider), inArray(T_Team.externalId, teamExternalIds)));
+
+    const teamMap = new Map(teams.map(t => [t.externalId, t.id]));
+
+    return matches
+      .filter(m => teamMap.has(m.externalHomeTeamId) && teamMap.has(m.externalAwayTeamId))
+      .map(m => ({
+        ...m,
+        homeTeamId: teamMap.get(m.externalHomeTeamId)!,
+        awayTeamId: teamMap.get(m.externalAwayTeamId)!,
+      }));
+  }
+
   async createOnDatabase(matches: DB_InsertMatch[]) {
     this.addOperation('database', 'create_matches', 'started', {
       matchesCount: matches.length,
@@ -387,7 +410,10 @@ export class MatchesDataProviderService {
     }
 
     try {
-      const query = await db.insert(T_Match).values(matches);
+      const enrichedMatches = await this.enrichMatchesWithTeamIds(matches);
+      if (enrichedMatches.length === 0) return [];
+
+      const query = await db.insert(T_Match).values(enrichedMatches);
 
       this.addOperation('database', 'create_matches', 'completed', {
         createdMatchesCount: matches.length,
@@ -427,7 +453,10 @@ export class MatchesDataProviderService {
     }
 
     try {
-      const query = await QUERIES_MATCH.upsertMatches(matches);
+      const enrichedMatches = await this.enrichMatchesWithTeamIds(matches);
+      if (enrichedMatches.length === 0) return 0;
+
+      const query = await QUERIES_MATCH.upsertMatches(enrichedMatches);
 
       this.addOperation('database', 'update_matches', 'completed', {
         updatedMatchesCount: query.length,

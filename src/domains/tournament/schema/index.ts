@@ -1,4 +1,4 @@
-import { integer, numeric, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { integer, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Tournament = pgTable(
   'tournament',
@@ -36,19 +36,19 @@ export const T_TournamentStandings = pgTable(
   {
     id: uuid('id').defaultRandom(),
     teamExternalId: text('team_external_id').notNull(),
-    tournamentId: text('tournament_id').notNull(),
-    order: numeric('order').notNull(),
+    tournamentId: uuid('tournament_id').notNull(), // Changed from text to uuid
+    order: integer('order').notNull(), // Changed from numeric to integer
     groupName: text('group_name').default(''),
-    shortName: text('shortame').notNull(),
-    longName: text('longame').notNull(),
-    points: text('points').notNull(),
-    games: text('games').notNull(),
-    wins: text('wins').notNull(),
-    draws: text('draws').notNull(),
-    losses: text('losses').notNull(),
-    gf: text('gf').notNull(),
-    ga: text('ga').notNull(),
-    gd: text('gd').notNull(),
+    shortName: text('short_name').notNull(), // Fixed typo: was 'shortame'
+    longName: text('long_name').notNull(), // Fixed typo: was 'longame'
+    points: integer('points').notNull().default(0), // Changed from text to integer
+    games: integer('games').notNull().default(0), // Changed from text to integer
+    wins: integer('wins').notNull().default(0), // Changed from text to integer
+    draws: integer('draws').notNull().default(0), // Changed from text to integer
+    losses: integer('losses').notNull().default(0), // Changed from text to integer
+    gf: integer('goals_for').notNull().default(0), // Changed from text to integer
+    ga: integer('goals_against').notNull().default(0), // Changed from text to integer
+    gd: integer('goal_difference').notNull().default(0), // Changed from text to integer
     provider: text('provider').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')

@@ -1,13 +1,17 @@
-import { pgTable, uuid, text, timestamp, integer, jsonb, index } from 'drizzle-orm/pg-core';
+import { T_Match } from '@/domains/match/schema';
+import { T_Tournament } from '@/domains/tournament/schema';
+import { index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { DATA_PROVIDER_EXECUTION_STATUS } from '../typing';
 
 export const T_DataProviderExecutions = pgTable(
   'data_provider_executions',
   {
     id: uuid('id').defaultRandom().primaryKey(),
     requestId: uuid('request_id').notNull(),
-    tournamentId: uuid('tournament_id').notNull(),
+    tournamentId: uuid('tournament_id').references(() => T_Tournament.id),
+    matchId: uuid('match_id').references(() => T_Match.id),
     operationType: text('operation_type').notNull(), // standings_create, standings_update, rounds_create, etc.
-    status: text('status').notNull(), // in_progress, completed, failed
+    status: text('status', { enum: Object.values(DATA_PROVIDER_EXECUTION_STATUS) as [string, ...string[]] }).notNull(), // in_progress, completed, failed
     startedAt: timestamp('started_at').notNull().defaultNow(),
     completedAt: timestamp('completed_at'),
     duration: integer('duration'), // Duration in milliseconds

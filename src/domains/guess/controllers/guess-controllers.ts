@@ -12,12 +12,12 @@ import { randomUUID } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { Response } from 'express';
 
-const buildExpiredGuess = (memberId: string, matchId: string, roundId: string) => {
+const buildExpiredGuess = (memberId: string, matchId: string, roundSlug: string) => {
   return {
     id: randomUUID(),
     memberId,
     matchId,
-    roundId,
+    roundSlug,
     homeScore: null,
     awayScore: null,
     active: true,
@@ -72,8 +72,8 @@ async function createGuess(req: CreateGuessRequest, res: Response) {
     const memberId = Utils.getAuthenticatedUserId(req, res);
     const input = req?.body as GuessInput;
 
-    const homeScore = String(input.home.score);
-    const awayScore = String(input.away.score);
+    const homeScore = input.home.score;
+    const awayScore = input.away.score;
 
     const [guess] = await db
       .insert(T_Guess)
@@ -86,7 +86,7 @@ async function createGuess(req: CreateGuessRequest, res: Response) {
       })
       .onConflictDoUpdate({
         target: [T_Guess.memberId, T_Guess.matchId],
-        set: { awayScore: String(input.away.score), homeScore: String(input.home.score) },
+        set: { awayScore: input.away.score, homeScore: input.home.score },
       })
       .returning();
 

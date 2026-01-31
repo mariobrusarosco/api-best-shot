@@ -1,23 +1,34 @@
-import { index, numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { T_Team } from '@/domains/team/schema';
+import { T_Tournament } from '@/domains/tournament/schema';
+import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { MATCH_STATUSES } from '../typing';
 
 export const T_Match = pgTable(
   'match',
   {
-    id: uuid('id').notNull().defaultRandom(),
+    id: uuid('id').notNull().defaultRandom().primaryKey(),
     externalId: text('external_id').notNull(),
     provider: text('provider').notNull(),
-    tournamentId: uuid('tournament_id').notNull(),
+    tournamentId: uuid('tournament_id')
+      .notNull()
+      .references(() => T_Tournament.id, { onDelete: 'cascade' }), // ✅ FK (Task 6.1.1)
     roundSlug: text('round_slug').notNull(),
-    homeTeamId: text('home_team_id').notNull(),
-    homeScore: numeric('home_score'),
-    homePenaltiesScore: numeric('home_penalties_score'),
-    awayTeamId: text('away_team_id').notNull(),
-    awayScore: numeric('away_score'),
-    awayPenaltiesScore: numeric('away_penalties_score'),
+    homeTeamId: uuid('home_team_id')
+      .notNull()
+      .references(() => T_Team.id),
+    externalHomeTeamId: text('external_home_team_id').notNull(),
+    homeScore: integer('home_score'), // ✅ Integer
+    homePenaltiesScore: integer('home_penalties_score'), // ✅ Integer
+    awayTeamId: uuid('away_team_id')
+      .notNull()
+      .references(() => T_Team.id),
+    externalAwayTeamId: text('external_away_team_id').notNull(),
+    awayScore: integer('away_score'), // ✅ Integer
+    awayPenaltiesScore: integer('away_penalties_score'), // ✅ Integer
     date: timestamp('date'),
     time: text('time'),
     stadium: text('stadium'),
-    status: text('status').notNull(),
+    status: text('status', { enum: Object.values(MATCH_STATUSES) as [string, ...string[]] }).notNull(),
     tournamentMatch: text('tournament_match'),
     lastCheckedAt: timestamp('last_checked_at'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -27,7 +38,7 @@ export const T_Match = pgTable(
       .$onUpdate(() => new Date()),
   },
   table => ({
-    pk: primaryKey({ columns: [table.externalId, table.provider] }),
+    uniqueMatch: uniqueIndex('unique_match').on(table.externalId, table.provider),
     // Indexes for query performance
     statusIdx: index('match_status_idx').on(table.status),
     tournamentRoundsIdx: index('match_tournament_rounds_idx').on(table.tournamentId, table.roundSlug),

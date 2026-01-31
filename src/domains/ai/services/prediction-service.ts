@@ -38,10 +38,18 @@ export const getAIPredictionForMatch = async (matchId: string): Promise<z.infer<
 
   console.log('match', match);
 
-  // 2. Fetch both teams data
-  const [homeTeam] = await db.select().from(T_Team).where(eq(T_Team.externalId, match.homeTeamId));
+  // 2. Fetch both teams data using external IDs
+  if (!match.externalHomeTeamId || !match.externalAwayTeamId) {
+    throw new Error('Match is missing team external IDs');
+  }
 
-  const [awayTeam] = await db.select().from(T_Team).where(eq(T_Team.externalId, match.awayTeamId));
+  const [homeTeam] = await db.select().from(T_Team).where(eq(T_Team.externalId, match.externalHomeTeamId));
+
+  const [awayTeam] = await db.select().from(T_Team).where(eq(T_Team.externalId, match.externalAwayTeamId));
+
+  if (!homeTeam || !awayTeam) {
+    throw new Error('Teams not found for match');
+  }
 
   // 3. Get tournament data
   const [tournament] = await db.select().from(T_Tournament).where(eq(T_Tournament.id, match.tournamentId));
@@ -53,7 +61,7 @@ export const getAIPredictionForMatch = async (matchId: string): Promise<z.infer<
     .where(
       and(
         eq(T_TournamentStandings.tournamentId, match.tournamentId),
-        eq(T_TournamentStandings.teamExternalId, match.homeTeamId)
+        eq(T_TournamentStandings.teamExternalId, match.externalHomeTeamId)
       )
     );
 
@@ -63,7 +71,7 @@ export const getAIPredictionForMatch = async (matchId: string): Promise<z.infer<
     .where(
       and(
         eq(T_TournamentStandings.tournamentId, match.tournamentId),
-        eq(T_TournamentStandings.teamExternalId, match.awayTeamId)
+        eq(T_TournamentStandings.teamExternalId, match.externalAwayTeamId)
       )
     );
 

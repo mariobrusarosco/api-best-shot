@@ -1,10 +1,10 @@
 import db from '@/services/database';
-import { T_Match, T_Tournament, T_Team } from '@/services/database/schema';
+import { T_Match, T_Team, T_Tournament } from '@/services/database/schema';
+import { defineTimebox } from '@/utils/timebox';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
-import { and, asc, eq, gte, sql, aliasedTable } from 'drizzle-orm';
-import { defineTimebox } from '@/utils/timebox';
+import { aliasedTable, and, asc, eq, gte, sql } from 'drizzle-orm';
 import type { DB_InsertMatch } from '../schema';
 
 dayjs.extend(utc);
@@ -129,8 +129,8 @@ const getMatchesByTournament = async (tournamentId: string, roundId: string) => 
         timebox: sql<string>`${T_Match.date}`.mapWith(defineTimebox),
       })
       .from(T_Match)
-      .leftJoin(homeTeam, eq(T_Match.homeTeamId, homeTeam.externalId))
-      .leftJoin(awayTeam, eq(T_Match.awayTeamId, awayTeam.externalId))
+      .leftJoin(homeTeam, eq(T_Match.homeTeamId, homeTeam.id))
+      .leftJoin(awayTeam, eq(T_Match.awayTeamId, awayTeam.id))
       .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, roundId)));
   } catch (error: unknown) {
     console.error('[MATCH QUERIES] - [getMatchesByTournament]', error);

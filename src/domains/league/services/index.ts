@@ -15,7 +15,7 @@ const createLeague = async (data: { label: string; description: string; founderI
   await QUERIES_LEAGUE.createLeagueRole({
     leagueId: league.id,
     memberId: data.founderId,
-    role: 'ADMIN',
+    role: 'admin',
   });
 
   return league;
@@ -31,7 +31,7 @@ const inviteToLeague = async (data: { leagueId: string; guestId: string }) => {
   await QUERIES_LEAGUE.createLeagueRole({
     leagueId: data.leagueId,
     memberId: data.guestId,
-    role: 'GUEST',
+    role: 'member',
   });
 
   return true;
@@ -51,9 +51,9 @@ const getLeagueDetails = async (leagueId: string, memberId: string) => {
 
   const memberRole = mainQuery.find((row: (typeof mainQuery)[number]) => row.league_role.memberId === memberId);
   const permissions = {
-    edit: memberRole?.league_role.role === 'ADMIN',
-    invite: memberRole?.league_role.role === 'ADMIN',
-    delete: memberRole?.league_role.role === 'ADMIN',
+    edit: memberRole?.league_role.role === 'admin',
+    invite: memberRole?.league_role.role === 'admin',
+    delete: memberRole?.league_role.role === 'admin',
   };
 
   const tournamentsQuery = await QUERIES_LEAGUE.getLeagueTournaments(leagueId);
@@ -69,7 +69,9 @@ const getLeagueDetails = async (leagueId: string, memberId: string) => {
   };
 };
 
-const updateLeagueTournaments = async (updateInput: { leagueId: string; tournamentId: string; status: string }[]) => {
+const updateLeagueTournaments = async (
+  updateInput: { leagueId: string; tournamentId: string; status: 'active' | 'completed' | 'upcoming' }[]
+) => {
   return QUERIES_LEAGUE.updateLeagueTournaments(updateInput);
 };
 

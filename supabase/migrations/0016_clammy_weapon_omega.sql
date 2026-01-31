@@ -1,0 +1,1 @@
+ALTER TABLE "tournament_standings" ALTER COLUMN "team_id" SET NOT NULL;

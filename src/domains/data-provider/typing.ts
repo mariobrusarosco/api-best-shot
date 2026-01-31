@@ -89,7 +89,7 @@ export type CreateTournamentInput = {
   season: string;
   mode: 'regular-season-only' | 'regular-season-and-knockout' | 'knockout-only';
   label: string;
-  standingsMode: string;
+  standingsMode: 'unique-group' | 'multi-group';
 };
 
 export type TournamentRequestIn = Request<{ tournamentId?: string }, CreateTournamentInput>;
@@ -276,3 +276,12 @@ export interface API_SOFASCORE_MATCH {
     penalties: number;
   };
 }
+
+export const DATA_PROVIDER_EXECUTION_STATUS = {
+  STARTED: 'started',
+  FAILED: 'failed',
+  COMPLETED: 'completed',
+} as const;
+
+export type IDataProviderExecutionStatus =
+  (typeof DATA_PROVIDER_EXECUTION_STATUS)[keyof typeof DATA_PROVIDER_EXECUTION_STATUS];

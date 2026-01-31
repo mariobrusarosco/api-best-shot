@@ -1,18 +1,22 @@
-import { pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { ITournamentRoundType } from '@/domains/tournament-round/typing';
+import { T_Tournament } from '@/domains/tournament/schema';
+import { integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_TournamentRound = pgTable(
   'tournament_round',
   {
-    id: uuid('id').defaultRandom(),
-    tournamentId: text('tournament_id').notNull(),
-    order: text('order').notNull(),
+    id: uuid('id').defaultRandom().primaryKey(),
+    tournamentId: uuid('tournament_id')
+      .notNull()
+      .references(() => T_Tournament.id, { onDelete: 'cascade' }), // FK with cascade delete
+    order: integer('order').notNull(),
     label: text('label').notNull(),
     slug: text('slug').notNull(),
     knockoutId: text('knockout_id').default(''),
     prefix: text('prefix').default(''),
     providerUrl: text('provider_url').notNull(),
     providerId: text('provider_id').notNull(),
-    type: text('type').notNull(),
+    type: text('type', { enum: ['season', 'knockout'] as [ITournamentRoundType, ...ITournamentRoundType[]] }).notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .notNull()
@@ -21,9 +25,7 @@ export const T_TournamentRound = pgTable(
   },
   table => {
     return {
-      pk: primaryKey({
-        columns: [table.tournamentId, table.slug],
-      }),
+      uniqueTournamentSlug: uniqueIndex('tournament_round_tournament_slug_idx').on(table.tournamentId, table.slug), // Composite unique constraint
     };
   }
 );

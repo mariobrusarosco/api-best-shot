@@ -51,8 +51,19 @@ async function runMatchUpdateJob() {
     return;
   }
 
+  const executionTime = new Date().toISOString();
+
+  // Send info event to Sentry to track cron job execution
+  Logger.info('[MatchUpdateCron] Cron job started', {
+    domain: DOMAINS.DATA_PROVIDER,
+    component: 'scheduler',
+    operation: 'runMatchUpdateJob',
+    cronSchedule: CRON_SCHEDULE,
+    executionTime,
+  });
+
   Logger.info('\n=== [MatchUpdateCron] Starting scheduled execution ===');
-  Logger.info(`[MatchUpdateCron] Time: ${new Date().toISOString()}`);
+  Logger.info(`[MatchUpdateCron] Time: ${executionTime}`);
 
   try {
     const scraperInstance = await initializeScraper();

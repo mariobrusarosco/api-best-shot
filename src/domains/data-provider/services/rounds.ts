@@ -3,6 +3,7 @@ import { DataProviderExecution } from '@/domains/data-provider/services/executio
 import { API_SOFASCORE_ROUNDS, DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
+import type { ITournamentRoundType } from '@/domains/tournament-round/typing';
 import { ITournament } from '@/domains/tournament/typing';
 import Logger from '@/services/logger';
 import { DOMAINS } from '@/services/logger/constants';
@@ -295,11 +296,11 @@ export class RoundsDataProviderService {
           providerUrl: endpoint,
           providerId: String(roundData.round),
           tournamentId: tournamentId,
-          order: order.toString(),
+          order: order,
           label: label,
           slug: slug.toLowerCase(),
           knockoutId: roundData.prefix,
-          type: isKnockoutRound || isSpecialRound ? 'knockout' : 'season',
+          type: (isKnockoutRound || isSpecialRound ? 'knockout' : 'season') as ITournamentRoundType,
         };
       });
 

@@ -61,6 +61,7 @@ const setupTournament = async (memberId: string, tournamentId: string) => {
     (match: (typeof matches)[number]) =>
       ({
         matchId: match.id,
+        roundSlug: match.roundSlug,
         memberId,
         awayScore: null,
         homeScore: null,

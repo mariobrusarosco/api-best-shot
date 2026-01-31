@@ -14,7 +14,7 @@ export interface TournamentStandings {
 
 export type TournamentMode = 'regular-season-and-knockout' | 'regular-season-only' | 'knockout-only';
 export type ITournamentStadingsMode = 'unique-group' | 'multi-group';
-
+export type TournamentStatus = 'active' | 'completed';
 // Override just the standingsMode property
 export type TournamentWithTypedMode = Omit<DB_SelectTournament, 'mode'> & {
   mode: TournamentMode;

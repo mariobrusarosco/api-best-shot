@@ -28,7 +28,12 @@ export const toNumberOrZero = (val: string | null | undefined) => {
   return Number(val);
 };
 
+export const safeNumber = (val: unknown, fallback = 0): number => {
+  const num = Number(val);
+  return isNaN(num) ? fallback : num;
+};
+
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Re-export asset fetch functions and types
-export { fetchAndStoreAssetFromApi, FetchAndStoreAssetPayload } from './utils/assets-fetch';
+export { FetchAndStoreAssetPayload, fetchAndStoreAssetFromApi } from './utils/assets-fetch';

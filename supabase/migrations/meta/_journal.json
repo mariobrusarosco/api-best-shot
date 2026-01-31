@@ -183,6 +183,13 @@
       "when": 1769865676621,
       "tag": "0025_short_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1769866214661,
+      "tag": "0026_known_cerise",
+      "breakpoints": true
     }
   ]
 }

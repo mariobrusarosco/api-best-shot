@@ -504,7 +504,7 @@ Ensure `T_Match` and `T_Guess` adhere to project standards (UUID PKs) and enforc
 - Update Data Types (`roundSlug`, `scores`).
 - Add Performance Indexes.
 
-#### Task 4.2.2 - Generate Guess Migration []
+#### Task 4.2.2 - Generate Guess Migration [✅]
 
 - Run `yarn db:generate`.
 - **Manual Intervention:** Add `USING` clauses for type conversions.

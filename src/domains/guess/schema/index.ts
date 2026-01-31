@@ -1,6 +1,6 @@
 import { T_Match } from '@/domains/match/schema';
 import { T_Member } from '@/domains/member/schema';
-import { boolean, index, integer, pgTable, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Guess = pgTable(
   'guess',
@@ -12,7 +12,7 @@ export const T_Guess = pgTable(
     matchId: uuid('match_id')
       .notNull()
       .references(() => T_Match.id, { onDelete: 'cascade' }), // ✅ FK with Cascade
-    roundId: integer('round_id').notNull().default(0), // ✅ Type Fix: text -> integer
+    roundSlug: text('round_slug').notNull().default(''), // ✅ Renamed to roundSlug (Text) to match Match
     homeScore: integer('home_score'), // ✅ Type Fix: numeric -> integer
     active: boolean('active').notNull().default(true),
     awayScore: integer('away_score'), // ✅ Type Fix: numeric -> integer

@@ -1,3 +1,6 @@
+-- Hardening: Cleanup orphans before adding FKs
+DELETE FROM "guess" WHERE "member_id" NOT IN (SELECT "id" FROM "public"."member");--> statement-breakpoint
+DELETE FROM "guess" WHERE "match_id" NOT IN (SELECT "id" FROM "public"."match");--> statement-breakpoint
 ALTER TABLE "guess" RENAME COLUMN "round_id" TO "round_slug";--> statement-breakpoint
 ALTER TABLE "guess" DROP CONSTRAINT "guess_match_id_member_id_pk";--> statement-breakpoint
 ALTER TABLE "guess" ADD PRIMARY KEY ("id");--> statement-breakpoint

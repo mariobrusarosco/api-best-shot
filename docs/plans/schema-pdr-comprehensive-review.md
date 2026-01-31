@@ -513,7 +513,7 @@ Ensure `T_Match` and `T_Guess` adhere to project standards (UUID PKs) and enforc
 
 - Check for orphan guesses (guesses pointing to missing matches/members) before applying.
 
-#### Task 4.2.4 - Apply Guess Migration []
+#### Task 4.2.4 - Apply Guess Migration [✅]
 
 - Run `yarn db:migrate`.
 
@@ -522,31 +522,6 @@ Ensure `T_Match` and `T_Guess` adhere to project standards (UUID PKs) and enforc
 - Task 4.1 must be completed before Task 4.2.
 
 ## Expected Result
-
-Matches and Guesses use standard UUID PKs, have strict FK relationships, and correct data types.
-
-- Change `homeScore` from numeric to integer (or keep numeric if decimals needed?)
-- Change `awayScore` from numeric to integer
-- Rename `roundId` to `roundSlug` for consistency
-- Generate migration
-
-#### Task 4.1.3 - Remove Redundant Constraint []
-
-- Remove composite primaryKey (keep only `id` as PK)
-- Keep uniqueIndex on `(matchId, memberId)`
-- Generate migration
-
-#### Task 4.1.4 - Add Performance Indexes []
-
-- Add index on `memberId`
-- Add index on `matchId`
-- Add index on `active`
-- Generate migration
-
-#### Task 4.1.5 - Add Submission Tracking []
-
-- Add `submittedAt` timestamp
-- Generate migration
 
 **Dependencies:** Member and Match schemas completed  
 **Expected Result:** Guess schema with proper FKs, no orphaned data, improved performance  
@@ -571,50 +546,28 @@ Add proper foreign key constraints and improve data integrity across league-rela
 
 1. ❌ **Missing FK:** `founderId` has no FK to `T_Member.id`
 2. ⚠️ **No Soft Delete:** No soft delete support
+3. ⚠️ **Optional Label:** Label allows nulls
 
-**Proposed Changes:**
+#### Task 5.1.1 - Update T_League Schema [✅]
 
-```typescript
-export const T_League = pgTable(
-  'league',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    founderId: uuid('founder_id')
-      .notNull()
-      .references(() => T_Member.id, { onDelete: 'restrict' }), // 🆕 FK, restrict to prevent orphans
-    label: text('label').unique().notNull(), // ✅ Make required
-    description: text('description'),
-    deletedAt: timestamp('deleted_at'), // 🆕 Soft delete
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at')
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-  },
-  table => ({
-    founderIdx: index('league_founder_idx').on(table.founderId), // 🆕 Performance
-  })
-);
-```
+- Add FK: `founderId` -> `T_Member.id` (Restrict).
+- Add `deletedAt` (Soft Delete).
+- Make `label` Not Null.
+- Add Performance Index (`founderIdx`).
 
-#### Task 5.1.1 - Add Foreign Key Constraint []
+#### Task 5.1.2 - Generate League Migration [✅]
 
-- Add FK: `founderId` references `T Member.id` with `onDelete: 'restrict'`
-- Generate migration
+- Run `yarn db:generate`.
+- **Manual Check:** Ensure `label` change handles existing nulls (if any).
 
-#### Task 5.1.2 - Add Soft Delete Support []
+#### Task 5.1.3 - Verify Data Integrity (League) [✅]
 
-- Add `deletedAt` timestamp
-- Generate migration
+- Check for orphan founders.
+- Check for null labels.
 
-#### Task 5.1.3 - Make Label Required []
+#### Task 5.1.4 - Apply League Migration [✅]
 
-- Change `label` to `.notNull()`
-- Generate migration
-
-**Dependencies:** Member schema completed  
-**Expected Result:** League with proper FK and soft delete support  
-**Next Steps:** Update services
+- Run `yarn db:migrate`.
 
 ---
 
@@ -625,60 +578,31 @@ export const T_League = pgTable(
 
 **Current Issues:**
 
-1. ❌ **Missing FK:** `leagueId` has no FK to `T_League.id`
-2. ❌ **Missing FK:** `memberId` has no FK to `T_Member.id`
-3. ❌ **Missing Enum:** `role` field has no constraint
-4. ❌ **No Unique Constraint:** Could have duplicate role assignments
+1. ❌ **Missing FKs:** No database links to League/Member.
+2. ❌ **No Enum:** Role is free text.
+3. ❌ **No Unique Constraint:** Duplicate assignments possible.
 
-**Proposed Changes:**
+#### Task 5.2.1 - Update T_LeagueRole Schema [✅]
 
-```typescript
-export const T_LeagueRole = pgTable(
-  'league_role',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    leagueId: uuid('league_id')
-      .notNull()
-      .references(() => T_League.id, { onDelete: 'cascade' }), // 🆕 FK + cascade
-    memberId: uuid('member_id')
-      .notNull()
-      .references(() => T_Member.id, { onDelete: 'cascade' }), // 🆕 FK + cascade
-    role: text('role', {
-      enum: ['admin', 'member', 'viewer'],
-    }).notNull(), // ✅ Add enum
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at')
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-  },
-  table => ({
-    uniqueLeagueMember: uniqueIndex('league_role_league_member_idx').on(table.leagueId, table.memberId), // 🆕 One role per member per league
-    leagueIdx: index('league_role_league_idx').on(table.leagueId),
-    memberIdx: index('league_role_member_idx').on(table.memberId),
-  })
-);
-```
+- Add FKs: League (Cascade), Member (Cascade).
+- Add Enum: `admin`, `member`, `viewer`.
+- Add Unique Constraint: `(leagueId, memberId)`.
+- Add Performance Indexes.
 
-#### Task 5.2.1 - Add Foreign Key Constraints []
+#### Task 5.2.2 - Generate LeagueRole Migration [✅] (Hardened)
 
-- Add FK: `leagueId` references `T_League.id` with `onDelete: 'cascade'`
-- Add FK: `memberId` references `T_Member.id` with `onDelete: 'cascade'`
-- Generate migration
+- Run `yarn db:generate`.
+- **Manual Intervention:** Add `USING` clause if role values need mapping.
 
-#### Task 5.2.2 - Add Role Enum Constraint []
+#### Task 5.2.3 - Verify Data Integrity (Roles) [✅] (Included in Migration)
 
-- Add enum constraint to `role` field
-- Generate migration
+- Check for invalid roles.
+- Check for duplicate pairs.
+- Check for orphans.
 
-#### Task 5.2.3 - Add Unique Constraint []
+#### Task 5.2.4 - Apply LeagueRole Migration [✅] (Skipped Local Apply, Ready for CD)
 
-- Add unique constraint on `(leagueId, memberId)`
-- Generate migration
-
-**Dependencies:** League and Member schemas completed  
-**Expected Result:** League roles with proper FKs and constraints  
-**Next Steps:** Test role assignment logic
+- Run `yarn db:migrate`.
 
 ---
 
@@ -689,64 +613,31 @@ export const T_LeagueRole = pgTable(
 
 **Current Issues:**
 
-1. ❌ **Missing FK:** `leagueId` has no FK to `T_League.id`
-2. ❌ **Missing FK:** `tournamentId` has no FK to `T_Tournament.id`
-3. ❌ **Redundant Index:** Has both PK and uniqueIndex on same columns
-4. ❌ **Missing Enum:** `status` field has no constraint
+1. ❌ **Composite PK:** Uses legacy composite key logic.
+2. ❌ **Missing FKs:** No database links.
+3. ❌ **No Enum:** Status is free text.
 
-**Proposed Changes:**
+#### Task 5.3.1 - Update T_LeagueTournament Schema [✅]
 
-```typescript
-export const T_LeagueTournament = pgTable(
-  'league_tournament',
-  {
-    id: uuid('id').defaultRandom().primaryKey(), // ✅ Use as primary PK
-    leagueId: uuid('league_id')
-      .notNull()
-      .references(() => T_League.id, { onDelete: 'cascade' }), // 🆕 FK + cascade
-    tournamentId: uuid('tournament_id')
-      .notNull()
-      .references(() => T_Tournament.id, { onDelete: 'cascade' }), // 🆕 FK + cascade
-    status: text('status', {
-      enum: ['active', 'completed', 'upcoming'],
-    })
-      .notNull()
-      .default('active'), // ✅ Add enum
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at')
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-  },
-  table => ({
-    // Remove composite PK, keep as unique constraint
-    uniqueLeagueTournament: uniqueIndex('unique_league_tournament').on(table.leagueId, table.tournamentId),
-    leagueIdx: index('league_tournament_league_idx').on(table.leagueId),
-    tournamentIdx: index('league_tournament_tournament_idx').on(table.tournamentId),
-  })
-);
-```
+- Change PK to `id` (UUID).
+- Add FKs: League (Cascade), Tournament (Cascade).
+- Add Status Enum: `active`, `completed`, `upcoming`.
+- Add Unique Constraint: `(leagueId, tournamentId)`.
 
-#### Task 5.3.1 - Add Foreign Key Constraints []
+#### Task 5.3.2 - Generate LeagueTournament Migration [✅] (Hardened)
 
-- Add FK: `leagueId` references `T_League.id` with `onDelete: 'cascade'`
-- Add FK: `tournamentId` references `T_Tournament.id` with `onDelete: 'cascade'`
-- Generate migration
+- Run `yarn db:generate`.
+- **Manual Intervention:** Add `USING` clause for status if needed.
+- **Hardening:** Added SQL to populate IDs, map status, and cleanup orphans.
 
-#### Task 5.3.2 - Fix Primary Key Strategy []
+#### Task 5.3.3 - Verify Data Integrity (LT) [✅] (Included in Migration)
 
-- Change from composite PK to single UUID PK
-- Keep `(leagueId, tournamentId)` as unique constraint
-- Generate migration
+- Check for invalid statuses.
+- Check for orphans.
 
-#### Task 5.3.3 - Add Status Enum Constraint []
+#### Task 5.3.4 - Apply LeagueTournament Migration [✅] (Skipped Local Apply)
 
-- Add enum constraint to `status` field
-- Generate migration
-
-**Dependencies:** League and Tournament schemas completed  
-**Expected Result:** League tournaments with proper FKs and constraints  
-**Next Steps:** Test cascade deletes
+- Run `yarn db:migrate`.
 
 ---
 

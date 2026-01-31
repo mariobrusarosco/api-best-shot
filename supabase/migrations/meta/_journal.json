@@ -190,6 +190,27 @@
       "when": 1769866214661,
       "tag": "0026_known_cerise",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1769867197045,
+      "tag": "0027_shiny_giant_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1769869465159,
+      "tag": "0028_little_bug",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1769869576170,
+      "tag": "0029_concerned_wildside",
+      "breakpoints": true
     }
   ]
 }

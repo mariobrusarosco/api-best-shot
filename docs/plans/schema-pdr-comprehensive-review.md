@@ -369,7 +369,7 @@ Fix type inconsistencies and add proper foreign key constraints to tournament ro
 
 ## Tasks
 
-### Task 3.1 - Fix T_TournamentRound Schema []
+### Task 3.1 - Fix T_TournamentRound Schema [✅]
 
 **Severity:** HIGH  
 **Impact:** Data integrity, type safety
@@ -430,7 +430,7 @@ export const T_TournamentRound = pgTable(
 - Create data migration script to ensure data integrity
 - Generate migration
 
-#### Task 3.1.4 - Add Type Constraint []
+#### Task 3.1.4 - Add Type Constraint [✅]
 
 - Add enum constraint to `type` field
 - Generate migration

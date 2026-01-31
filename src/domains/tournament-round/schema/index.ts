@@ -1,3 +1,4 @@
+import { ITournamentRoundType } from '@/domains/tournament-round/typing';
 import { T_Tournament } from '@/domains/tournament/schema';
 import { integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
@@ -15,7 +16,7 @@ export const T_TournamentRound = pgTable(
     prefix: text('prefix').default(''),
     providerUrl: text('provider_url').notNull(),
     providerId: text('provider_id').notNull(),
-    type: text('type').notNull(),
+    type: text('type', { enum: ['season', 'knockout'] as [ITournamentRoundType, ...ITournamentRoundType[]] }).notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .notNull()

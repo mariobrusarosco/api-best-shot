@@ -418,13 +418,13 @@ export const T_TournamentRound = pgTable(
 - Keep `(tournamentId, slug)` as unique constraint
 - Generate migration
 
-#### Task 3.1.2 - Fix Data Types []
+#### Task 3.1.2 - Fix Data Types [✅]
 
 - Change `tournamentId` from text to uuid
 - Change `order` from text to integer
 - Generate migration
 
-#### Task 3.1.3 - Add Foreign Key Constraint []
+#### Task 3.1.3 - Add Foreign Key Constraint [✅]
 
 - Add FK: `tournamentId` references `T_Tournament.id` with `onDelete: 'cascade'`
 - Create data migration script to ensure data integrity

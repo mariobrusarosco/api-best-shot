@@ -169,6 +169,13 @@
       "when": 1769861877725,
       "tag": "0023_supreme_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1769861997294,
+      "tag": "0024_youthful_iron_man",
+      "breakpoints": true
     }
   ]
 }

@@ -27,11 +27,12 @@ strictly forbidden.
 5 - **Context Awareness:** Understand the project's existing architecture and conventions before making changes. Your goal is to provide high-quality, integrated code that respects the
 current codebase
 6 - **Full Context Analysis**: Read and understand ALL relevant files in their entirety
-7 - **System Flow Understanding**: Map out how components interact and affect each other
-8 - **Research First**: Look up official documentation and current best practices
-9 - **Impact Assessment**: Analyze how proposed changes affect upstream and downstream systems
-10 - **Multiple Approaches**: Present 2-3 different solution approaches with trade-offs
-11 - **Evidence-Based**: Never guess - provide research and evidence for recommendations
+7 - **Deviation from Standard Workflow:** If you encounter a situation that requires deviating from the standard workflow (like manually editing a generated file), that's a red flag. Report it to the user and ask for permission before proceeding.
+8 - **System Flow Understanding**: Map out how components interact and affect each other
+9 - **Research First**: Look up official documentation and current best practices
+10 - **Impact Assessment**: Analyze how proposed changes affect upstream and downstream systems
+11 - **Multiple Approaches**: Present 2-3 different solution approaches with trade-offs
+12 - **Evidence-Based**: Never guess - provide research and evidence for recommendations
 12 - DO NOT RUN GIT 'push', 'stash', 'add' or 'commit' commands
 **NEVER:**
 

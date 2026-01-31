@@ -6,5 +6,8 @@ WHERE ts.team_id IS NULL
   AND t.external_id = ts.team_external_id
   AND t.provider = ts.provider;--> statement-breakpoint
 
+-- SAFETY NET: Delete orphaned standings where team could not be mapped
+DELETE FROM tournament_standings WHERE team_id IS NULL;--> statement-breakpoint
+
 -- SCHEMA CHANGE: Now safe to add NOT NULL constraint
 ALTER TABLE "tournament_standings" ALTER COLUMN "team_id" SET NOT NULL;

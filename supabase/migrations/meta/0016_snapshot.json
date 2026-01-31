@@ -1,6 +1,6 @@
 {
-  "id": "3cf7dfac-dadd-4c12-8834-ba0ff26b0772",
-  "prevId": "e476de39-9a5c-4231-bda4-c53245609dd8",
+  "id": "ebbcae6e-e398-426b-8778-5b7a510a626e",
+  "prevId": "3cf7dfac-dadd-4c12-8834-ba0ff26b0772",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1196,7 +1196,7 @@
           "name": "team_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "team_external_id": {
           "name": "team_external_id",

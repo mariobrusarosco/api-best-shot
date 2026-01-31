@@ -36,23 +36,25 @@ export const T_TournamentStandings = pgTable(
   'tournament_standings',
   {
     id: uuid('id').defaultRandom(),
-    teamId: uuid('team_id').references(() => T_Team.id), // Nullable for data migration
-    teamExternalId: text('team_external_id').notNull(), // Keep for data migration
+    teamId: uuid('team_id')
+      .notNull()
+      .references(() => T_Team.id), // Made NOT NULL after data migration
+    teamExternalId: text('team_external_id').notNull(),
     tournamentId: uuid('tournament_id')
       .notNull()
-      .references(() => T_Tournament.id), // 🆕 FK to tournament
-    order: integer('order').notNull(), // Changed from numeric to integer
+      .references(() => T_Tournament.id), // FK to tournament
+    order: integer('order').notNull(),
     groupName: text('group_name').default(''),
-    shortName: text('short_name').notNull(), // Fixed typo: was 'shortame'
-    longName: text('long_name').notNull(), // Fixed typo: was 'longame'
-    points: integer('points').notNull().default(0), // Changed from text to integer
-    games: integer('games').notNull().default(0), // Changed from text to integer
-    wins: integer('wins').notNull().default(0), // Changed from text to integer
-    draws: integer('draws').notNull().default(0), // Changed from text to integer
-    losses: integer('losses').notNull().default(0), // Changed from text to integer
-    gf: integer('goals_for').notNull().default(0), // Changed from text to integer
-    ga: integer('goals_against').notNull().default(0), // Changed from text to integer
-    gd: integer('goal_difference').notNull().default(0), // Changed from text to integer
+    shortName: text('short_name').notNull(), // ✅ Renamed in 0013
+    longName: text('long_name').notNull(), // ✅ Renamed in 0013
+    points: integer('points').notNull().default(0),
+    games: integer('games').notNull().default(0),
+    wins: integer('wins').notNull().default(0),
+    draws: integer('draws').notNull().default(0),
+    losses: integer('losses').notNull().default(0),
+    gf: integer('goals_for').notNull().default(0),
+    ga: integer('goals_against').notNull().default(0),
+    gd: integer('goal_difference').notNull().default(0),
     provider: text('provider').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')

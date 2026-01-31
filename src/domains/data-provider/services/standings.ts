@@ -1,10 +1,12 @@
 import { DataProviderReport } from '@/domains/data-provider/services/report';
+import { T_Team } from '@/domains/team/schema';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import { DB_InsertTournamentStandings, T_TournamentStandings } from '@/domains/tournament/schema';
 import db from '@/services/database';
 import Logger from '@/services/logger';
 import { DOMAINS } from '@/services/logger/constants';
 import { safeNumber, safeString } from '@/utils';
+import { sql } from 'drizzle-orm';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { API_SOFASCORE_STANDINGS, DataProviderExecutionOperationType } from '../typing';
 import { DataProviderExecution } from './execution';
@@ -246,6 +248,26 @@ export class StandingsDataProviderService {
   private async mapStandings(fetchedStandings: API_SOFASCORE_STANDINGS, tournamentId: string) {
     this.reporter.addOperation('transformation', 'map_standings', 'started');
 
+    // First, collect all unique team external IDs
+    const teamExternalIds = new Set<string>();
+    fetchedStandings.standings.forEach((group: unknown) => {
+      const groupData = group as { rows: unknown[] };
+      groupData.rows.forEach((row: unknown) => {
+        const rowData = row as { team: { id: unknown } };
+        const externalId = safeString(rowData.team.id);
+        if (externalId) teamExternalIds.add(externalId);
+      });
+    });
+
+    // Lookup all teams in one query
+    const teams = await db
+      .select({ id: T_Team.id, externalId: T_Team.externalId })
+      .from(T_Team)
+      .where(sql`${T_Team.externalId} = ANY(${Array.from(teamExternalIds)})`);
+
+    // Create a map for quick lookup
+    const teamIdMap = new Map(teams.map(t => [t.externalId, t.id]));
+
     const standings = fetchedStandings.standings.flatMap((group: unknown) => {
       const groupData = group as { name: string; rows: unknown[] };
       return groupData.rows.map((row: unknown) => {
@@ -261,9 +283,22 @@ export class StandingsDataProviderService {
           scoresAgainst: unknown;
           scoreDiffFormatted: unknown;
         };
+        const teamExternalId = safeString(rowData.team.id) || '';
+        const teamId = teamIdMap.get(teamExternalId);
+
+        if (!teamId) {
+          Logger.error(new Error(`Team not found for externalId: ${teamExternalId}`), {
+            domain: DOMAINS.DATA_PROVIDER,
+            teamExternalId,
+            tournamentId,
+            operation: 'map_standings',
+          });
+          throw new Error(`Team not found: ${teamExternalId}`);
+        }
+
         return {
-          teamId: undefined, // Will be populated by data migration script
-          teamExternalId: safeString(rowData.team.id) || '',
+          teamId, // ✅ Now populated from team lookup
+          teamExternalId,
           tournamentId: tournamentId,
           order: safeNumber(rowData.position),
           groupName: groupData.name,

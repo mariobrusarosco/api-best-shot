@@ -1,10 +1,10 @@
-import { describe, expect, it, jest, afterEach, beforeEach } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { runGuessAnalysis } from './guess-analysis-v2';
-import { GUESS_STATUSES } from '../typing';
-import { DB_SelectGuess } from '../schema';
 import { DB_SelectMatch } from '../../match/schema';
+import { DB_SelectGuess } from '../schema';
+import { GUESS_STATUSES } from '../typing';
+import { runGuessAnalysis } from './guess-analysis-v2';
 
 dayjs.extend(utc);
 
@@ -13,7 +13,7 @@ const createMockGuess = (overrides: Partial<DB_SelectGuess> = {}): DB_SelectGues
   id: 'guess-123',
   memberId: 'member-123',
   matchId: 'match-123',
-  roundId: 'round-1',
+  roundSlug: 'round-1',
   homeScore: null,
   awayScore: null,
   active: true,
@@ -29,7 +29,9 @@ const createMockMatch = (overrides: Partial<DB_SelectMatch> = {}): DB_SelectMatc
   tournamentId: 'tourney-123',
   roundSlug: 'round-1',
   homeTeamId: 'home-team',
+  externalHomeTeamId: 'ext-home',
   awayTeamId: 'away-team',
+  externalAwayTeamId: 'ext-away',
   homeScore: null,
   awayScore: null,
   homePenaltiesScore: null,
@@ -101,7 +103,7 @@ describe('guess-analysis-v2', () => {
 
     it('should return WAITING_FOR_GAME status when match is open and guess is made', () => {
       const match = createMockMatch({ status: 'open' });
-      const guess = createMockGuess({ homeScore: '1', awayScore: '0' });
+      const guess = createMockGuess({ homeScore: 1, awayScore: 0 });
 
       const result = runGuessAnalysis(guess, match);
 
@@ -114,12 +116,12 @@ describe('guess-analysis-v2', () => {
       it('should calculate points for CORRECT OUTCOME (Home Win)', () => {
         const match = createMockMatch({
           status: 'finished',
-          homeScore: '2',
-          awayScore: '1'
+          homeScore: 2,
+          awayScore: 1
         });
         const guess = createMockGuess({
-          homeScore: '1',
-          awayScore: '0'
+          homeScore: 1,
+          awayScore: 0
         });
 
         const result = runGuessAnalysis(guess, match);
@@ -136,12 +138,12 @@ describe('guess-analysis-v2', () => {
       it('should calculate points for EXACT SCORE', () => {
         const match = createMockMatch({
           status: 'finished',
-          homeScore: '2',
-          awayScore: '1'
+          homeScore: 2,
+          awayScore: 1
         });
         const guess = createMockGuess({
-          homeScore: '2',
-          awayScore: '1'
+          homeScore: 2,
+          awayScore: 1
         });
 
         const result = runGuessAnalysis(guess, match);
@@ -163,12 +165,12 @@ describe('guess-analysis-v2', () => {
       it('should calculate points for INCORRECT OUTCOME', () => {
         const match = createMockMatch({
           status: 'finished',
-          homeScore: '2',
-          awayScore: '1'
+          homeScore: 2,
+          awayScore: 1
         });
         const guess = createMockGuess({
-          homeScore: '0',
-          awayScore: '1' // Guessing Away Win
+          homeScore: 0,
+          awayScore: 1 // Guessing Away Win
         });
 
         const result = runGuessAnalysis(guess, match);
@@ -182,12 +184,12 @@ describe('guess-analysis-v2', () => {
       it('should calculate points for DRAW', () => {
         const match = createMockMatch({
           status: 'finished',
-          homeScore: '1',
-          awayScore: '1'
+          homeScore: 1,
+          awayScore: 1
         });
         const guess = createMockGuess({
-          homeScore: '1',
-          awayScore: '1'
+          homeScore: 1,
+          awayScore: 1
         });
 
         const result = runGuessAnalysis(guess, match);
@@ -202,12 +204,12 @@ describe('guess-analysis-v2', () => {
        it('should handle correct outcome but incorrect specific scores (Away Win)', () => {
         const match = createMockMatch({
           status: 'finished',
-          homeScore: '0',
-          awayScore: '3'
+          homeScore: 0,
+          awayScore: 3
         });
         const guess = createMockGuess({
-          homeScore: '1',
-          awayScore: '2'
+          homeScore: 1,
+          awayScore: 2
         });
 
         const result = runGuessAnalysis(guess, match);

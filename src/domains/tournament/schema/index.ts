@@ -1,3 +1,4 @@
+import { T_Member } from '@/domains/member/schema';
 import { T_Team } from '@/domains/team/schema';
 import { integer, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
@@ -79,8 +80,12 @@ export const T_TournamentMember = pgTable(
   'tournament_member',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    tournamentId: uuid('tournament_id').notNull(),
-    memberId: uuid('member_id').notNull(),
+    tournamentId: uuid('tournament_id')
+      .notNull()
+      .references(() => T_Tournament.id, { onDelete: 'cascade' }), // FK with cascade delete
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => T_Member.id, { onDelete: 'cascade' }), // FK with cascade delete
     points: integer('points').notNull().default(0),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')

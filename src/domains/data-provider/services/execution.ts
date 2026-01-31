@@ -125,8 +125,8 @@ export class DataProviderExecution {
   }
 
   private async notifySuccess(
-    tournamentId: string,
-    tournamentLabel: string,
+    tournamentId?: string | null,
+    tournamentLabel?: string | null,
     summary?: Record<string, unknown>,
     reportFileUrl?: string
   ): Promise<void> {
@@ -159,8 +159,8 @@ export class DataProviderExecution {
   }
 
   private async notifyFailure(
-    tournamentId: string,
-    tournamentLabel: string,
+    tournamentId?: string | null,
+    tournamentLabel?: string | null,
     error?: string,
     summary?: Record<string, unknown>,
     reportFileUrl?: string
@@ -450,16 +450,16 @@ type ConstructorProps = {
 };
 
 type NotificationPayloadFailure = {
-  tournamentId: string;
-  tournamentLabel: string;
+  tournamentId?: string | null;
+  tournamentLabel?: string | null;
   error?: string;
   summary?: Record<string, unknown>;
   reportFileUrl?: string;
 };
 
 type NotificationPayloadSuccess = {
-  tournamentId: string;
-  tournamentLabel: string;
+  tournamentId?: string | null;
+  tournamentLabel?: string | null;
   summary?: Record<string, unknown>;
   reportFileUrl?: string;
 };

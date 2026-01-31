@@ -713,18 +713,18 @@ export const T_Match = pgTable(
 - Add FK: `tournamentId` references `T_Tournament.id` with `onDelete: 'cascade'`
 - Generate migration
 
-#### Task 6.1.2 - Add Status Enum Constraint []
+#### Task 6.1.2 - Add Status Enum Constraint [x]
 
 - Add enum constraint to `status` field
 - Generate migration
 
-#### Task 6.1.3 - Consider Score Type Changes []
+#### Task 6.1.3 - Consider Score Type Changes [x]
 
 - **Discussion needed:** Should scores be `integer` instead of `numeric`?
 - If YES: Change `homeScore`, `awayScore`, `homePenaltiesScore`, `awayPenaltiesScore` to integer
 - Generate migration if approved
 
-#### Task 6.1.4 - Consider Time Field Type []
+#### Task 6.1.4 - Consider Time Field Type [x]
 
 - **Discussion needed:** Should `time` be part of `date` timestamp instead of separate text field?
 - Document decision

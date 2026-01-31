@@ -276,3 +276,12 @@ export interface API_SOFASCORE_MATCH {
     penalties: number;
   };
 }
+
+export const DATA_PROVIDER_EXECUTION_STATUS = {
+  STARTED: 'started',
+  FAILED: 'failed',
+  COMPLETED: 'completed',
+} as const;
+
+export type IDataProviderExecutionStatus =
+  (typeof DATA_PROVIDER_EXECUTION_STATUS)[keyof typeof DATA_PROVIDER_EXECUTION_STATUS];

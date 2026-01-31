@@ -176,6 +176,13 @@
       "when": 1769861997294,
       "tag": "0024_youthful_iron_man",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1769865676621,
+      "tag": "0025_short_blue_shield",
+      "breakpoints": true
     }
   ]
 }

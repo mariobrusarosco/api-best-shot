@@ -156,12 +156,12 @@ const generateWaitingForGameGuess = (
     matchDate: match.date,
     home: {
       status,
-      value: toNumberOrNull(guess.homeScore),
+      value: guess.homeScore,
       points,
     },
     away: {
       status,
-      value: toNumberOrNull(guess.awayScore),
+      value: guess.awayScore,
       points,
     },
     fullMatch: { status, points, label: '' },
@@ -182,19 +182,19 @@ const generateFinalizedGuess = (
   const POINTS_FOR_MISS = 0;
   const CORRECT_GUESS = GUESS_STATUSES.CORRECT;
   const INCORRECT_GUESS = GUESS_STATUSES.INCORRECT;
-  const hasGuessedHome = toNumberOrNull(guess.homeScore) === toNumberOrNull(match.homeScore);
-  const hasGuessedAway = toNumberOrNull(guess.awayScore) === toNumberOrNull(match.awayScore);
+  const hasGuessedHome = guess.homeScore === toNumberOrNull(match.homeScore);
+  const hasGuessedAway = guess.awayScore === toNumberOrNull(match.awayScore);
   const matchOutcome = getMatchOutcome(guess, match);
 
   const home = {
     status: hasGuessedHome ? CORRECT_GUESS : INCORRECT_GUESS,
-    value: toNumberOrNull(guess.homeScore),
+    value: guess.homeScore,
     points: hasGuessedHome ? POINTS_FOR_TEAM : POINTS_FOR_MISS,
   };
 
   const away = {
     status: hasGuessedAway ? CORRECT_GUESS : INCORRECT_GUESS,
-    value: toNumberOrNull(guess.awayScore),
+    value: guess.awayScore,
     points: hasGuessedAway ? POINTS_FOR_TEAM : POINTS_FOR_MISS,
   };
 
@@ -217,9 +217,9 @@ const getMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   const POINTS_FOR_MATCH_OUTCOME = 3;
   let guessPrediction = null;
   let matchOutcome = null;
-  const homeGuess = toNumberOrZero(guess.homeScore);
+  const homeGuess = guess.homeScore ?? 0;
   const homeMatch = toNumberOrZero(match.homeScore);
-  const awayGuess = toNumberOrZero(guess.awayScore);
+  const awayGuess = guess.awayScore ?? 0;
   const awayMatch = toNumberOrZero(match.awayScore);
 
   if (homeGuess > awayGuess) guessPrediction = { label: `HOME_WIN` };

@@ -464,16 +464,16 @@ Ensure `T_Match` and `T_Guess` adhere to project standards (UUID PKs) and enforc
 1.  **Primary Key:** Set `id` (UUID) as the Primary Key.
 2.  **Unique Constraint:** Replace Composite PK with Unique Index on `(externalId, provider)`.
 
-#### Task 4.1.1 - Update T_Match Schema []
+#### Task 4.1.1 - Update T_Match Schema [✅]
 
 - Change PK to `id` (UUID).
 - Add Unique Index to `(externalId, provider)`.
 
-#### Task 4.1.2 - Generate Match Migration []
+#### Task 4.1.2 - Generate Match Migration [✅]
 
 - Run `yarn db:generate`.
 
-#### Task 4.1.3 - Apply Match Migration []
+#### Task 4.1.3 - Apply Match Migration [✅]
 
 - Run `yarn db:migrate`.
 - Verify success.
@@ -496,7 +496,7 @@ Ensure `T_Match` and `T_Guess` adhere to project standards (UUID PKs) and enforc
 3.  **Foreign Keys:** Add `matchId` -> `T_Match.id` (Cascade) and `memberId` -> `T_Member.id` (Cascade).
 4.  **Types:** specific `integer` types for scores and roundId.
 
-#### Task 4.2.1 - Update T_Guess Schema []
+#### Task 4.2.1 - Update T_Guess Schema [✅]
 
 - Change PK to `id` (UUID).
 - Add Unique Index to `(matchId, memberId)`.

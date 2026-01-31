@@ -1,15 +1,21 @@
-import { boolean, numeric, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { T_Match } from '@/domains/match/schema';
+import { T_Member } from '@/domains/member/schema';
+import { boolean, index, integer, pgTable, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Guess = pgTable(
   'guess',
   {
-    id: uuid('id').notNull().defaultRandom(),
-    memberId: uuid('member_id').notNull(),
-    matchId: uuid('match_id').notNull(),
-    roundId: text('round_id').notNull().default(''),
-    homeScore: numeric('home_score'),
+    id: uuid('id').notNull().defaultRandom().primaryKey(), // ✅ Standard UUID PK
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => T_Member.id, { onDelete: 'cascade' }), // ✅ FK with Cascade
+    matchId: uuid('match_id')
+      .notNull()
+      .references(() => T_Match.id, { onDelete: 'cascade' }), // ✅ FK with Cascade
+    roundId: integer('round_id').notNull().default(0), // ✅ Type Fix: text -> integer
+    homeScore: integer('home_score'), // ✅ Type Fix: numeric -> integer
     active: boolean('active').notNull().default(true),
-    awayScore: numeric('away_score'),
+    awayScore: integer('away_score'), // ✅ Type Fix: numeric -> integer
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .notNull()
@@ -18,8 +24,12 @@ export const T_Guess = pgTable(
   },
   table => {
     return {
-      pk: primaryKey({ columns: [table.matchId, table.memberId] }),
+      // ✅ Unique Constraint (formerly composite PK)
       uniqueGuess: uniqueIndex('unique_guess').on(table.matchId, table.memberId),
+      // ✅ Performance Indexes
+      memberIdx: index('guess_member_idx').on(table.memberId),
+      matchIdx: index('guess_match_idx').on(table.matchId),
+      activeIdx: index('guess_active_idx').on(table.active),
     };
   }
 );

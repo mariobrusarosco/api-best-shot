@@ -1,11 +1,14 @@
-import { pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { T_Tournament } from '@/domains/tournament/schema';
+import { integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_TournamentRound = pgTable(
   'tournament_round',
   {
-    id: uuid('id').defaultRandom().primaryKey(), // Changed to regular PK
-    tournamentId: text('tournament_id').notNull(),
-    order: text('order').notNull(),
+    id: uuid('id').defaultRandom().primaryKey(),
+    tournamentId: uuid('tournament_id')
+      .notNull()
+      .references(() => T_Tournament.id, { onDelete: 'cascade' }), // FK with cascade delete
+    order: integer('order').notNull(),
     label: text('label').notNull(),
     slug: text('slug').notNull(),
     knockoutId: text('knockout_id').default(''),

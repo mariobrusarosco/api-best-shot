@@ -162,6 +162,13 @@
       "when": 1769860775641,
       "tag": "0022_daily_norrin_radd",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1769861877725,
+      "tag": "0023_supreme_stranger",
+      "breakpoints": true
     }
   ]
 }

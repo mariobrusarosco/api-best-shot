@@ -295,7 +295,7 @@ export class RoundsDataProviderService {
           providerUrl: endpoint,
           providerId: String(roundData.round),
           tournamentId: tournamentId,
-          order: order.toString(),
+          order: order,
           label: label,
           slug: slug.toLowerCase(),
           knockoutId: roundData.prefix,

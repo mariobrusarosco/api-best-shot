@@ -1,6 +1,6 @@
 import { T_Member } from '@/domains/member/schema';
 import { T_Team } from '@/domains/team/schema';
-import { integer, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { index, integer, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Tournament = pgTable(
   'tournament',
@@ -96,6 +96,8 @@ export const T_TournamentMember = pgTable(
   table => {
     return {
       uniqueMemberTournament: uniqueIndex('unique_member_tournament').on(table.memberId, table.tournamentId),
+      tournamentIdx: index('tournament_member_tournament_idx').on(table.tournamentId), // Performance index
+      memberIdx: index('tournament_member_member_idx').on(table.memberId), // Performance index
     };
   }
 );

@@ -127,6 +127,13 @@
       "when": 1769858854591,
       "tag": "0017_eminent_miek",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1769858945697,
+      "tag": "0018_curly_dreadnoughts",
+      "breakpoints": true
     }
   ]
 }

@@ -1,9 +1,9 @@
-import { pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Team = pgTable(
   'team',
   {
-    id: uuid('id').defaultRandom().unique(),
+    id: uuid('id').defaultRandom().primaryKey(),
     name: text('name').notNull(),
     externalId: text('external_id').notNull(),
     shortName: text('short_name'),
@@ -17,7 +17,8 @@ export const T_Team = pgTable(
   },
   table => {
     return {
-      pk: primaryKey({ columns: [table.provider, table.externalId] }),
+      uniqueTeamForProvider: uniqueIndex('team_unique_idx').on(table.provider, table.externalId),
+      nameIdx: index('team_name_idx').on(table.name),
     };
   }
 );

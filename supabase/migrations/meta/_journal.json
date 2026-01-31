@@ -225,6 +225,13 @@
       "when": 1769874125573,
       "tag": "0031_shiny_chimera",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1769876427484,
+      "tag": "0032_whole_azazel",
+      "breakpoints": true
     }
   ]
 }

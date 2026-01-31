@@ -606,7 +606,7 @@ Add proper foreign key constraints and improve data integrity across league-rela
 
 ---
 
-### Task 5.3 - Fix T_LeagueTournament Schema []
+### Task 5.3 - Fix T_LeagueTournament Schema [✅]
 
 **Severity:** HIGH  
 **Impact:** Data integrity
@@ -708,7 +708,7 @@ export const T_Match = pgTable(
 );
 ```
 
-#### Task 6.1.1 - Add Tournament Foreign Key []
+#### Task 6.1.1 - Add Tournament Foreign Key [x]
 
 - Add FK: `tournamentId` references `T_Tournament.id` with `onDelete: 'cascade'`
 - Generate migration

@@ -3,7 +3,6 @@ import { DB_SelectGuess } from '@/domains/guess/schema';
 import type { IGuessAnalysis } from '@/domains/guess/typing';
 import { GUESS_STATUSES } from '@/domains/guess/typing';
 import { DB_SelectMatch } from '@/domains/match/schema';
-import { toNumberOrNull, toNumberOrZero } from '@/utils';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import utc from 'dayjs/plugin/utc';
@@ -182,8 +181,8 @@ const generateFinalizedGuess = (
   const POINTS_FOR_MISS = 0;
   const CORRECT_GUESS = GUESS_STATUSES.CORRECT;
   const INCORRECT_GUESS = GUESS_STATUSES.INCORRECT;
-  const hasGuessedHome = guess.homeScore === toNumberOrNull(match.homeScore);
-  const hasGuessedAway = guess.awayScore === toNumberOrNull(match.awayScore);
+  const hasGuessedHome = guess.homeScore === match.homeScore;
+  const hasGuessedAway = guess.awayScore === match.awayScore;
   const matchOutcome = getMatchOutcome(guess, match);
 
   const home = {
@@ -218,9 +217,9 @@ const getMatchOutcome = (guess: DB_SelectGuess, match: DB_SelectMatch) => {
   let guessPrediction = null;
   let matchOutcome = null;
   const homeGuess = guess.homeScore ?? 0;
-  const homeMatch = toNumberOrZero(match.homeScore);
+  const homeMatch = match.homeScore ?? 0;
   const awayGuess = guess.awayScore ?? 0;
-  const awayMatch = toNumberOrZero(match.awayScore);
+  const awayMatch = match.awayScore ?? 0;
 
   if (homeGuess > awayGuess) guessPrediction = { label: `HOME_WIN` };
   else if (homeGuess < awayGuess) guessPrediction = { label: 'AWAY_WIN' };

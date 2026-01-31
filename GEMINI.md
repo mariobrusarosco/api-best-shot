@@ -55,6 +55,25 @@
 - Once confirmed by the user, mark the current sub-task or task as done.
 - If you need to do a fix, mark the current sub-task or task as in progress.
 
+Example:
+
+```
+You don't have to ask permission to everyhing. let me explain:
+
+You: "Can I start task 15.4.4?"
+me: "Yes"
+You:
+'....
+working on the task...
+....'
+You: "Finisish 15.4.4. Take a look and if it's good, I'll start 15.4.5"
+Me: "it's all good, proceed"
+You:
+'....
+working on the task...
+....'
+```
+
 ### Tech Stack
 
 - **Runtime**: Node.js (v18.17.1 via Volta)

@@ -82,6 +82,23 @@ current codebase
 - Be ready to do fixes.
 - Once confirmed by the user, mark the current sub-task or task as done.
 - If you need to do a fix, mark the current sub-task or task as in progress.
+  Example:
+
+```
+You don't have to ask permission to everyhing. let me explain:
+
+You: "Can I start task 15.4.4?"
+me: "Yes"
+You:
+'....
+working on the task...
+....'
+You: "Finisish 15.4.4. Take a look and if it's good, I'll start 15.4.5"
+Me: "it's all good, proceed"
+You:
+'....
+working on the task...
+....'
 
 **For CI/CD, Docker, Deployment Issues:**
 
@@ -110,15 +127,18 @@ current codebase
 **Example Flow:**
 
 ```
+
 User: "Let's start with Phase 1, Task 1.1 - Database Migration"
 
 You (AI):
+
 1. "I see this is a database migration task."
 2. "Let me read /docs/guides/database-migrations.md first..."
 3. [Reads guide]
 4. "According to the guide, the workflow is: Modify Schema → Generate Migration → Apply Locally → Test"
 5. "Ready to proceed with this workflow?"
-```
+
+````
 
 ## Project Overview
 
@@ -156,7 +176,7 @@ try {
     // ... other relevant context
   });
 }
-```
+````
 
 - Domain-Driven Design with strict separation of concerns
 - API versioning (v1/v2) for backward compatibility

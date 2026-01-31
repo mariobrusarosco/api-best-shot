@@ -148,6 +148,20 @@
       "when": 1769859566093,
       "tag": "0020_polite_mariko_yashida",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1769859765662,
+      "tag": "0021_even_santa_claus",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1769860775641,
+      "tag": "0022_daily_norrin_radd",
+      "breakpoints": true
     }
   ]
 }

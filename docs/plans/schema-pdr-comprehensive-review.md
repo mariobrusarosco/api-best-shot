@@ -191,14 +191,14 @@ export const T_TournamentStandings = pgTable(
 - Change all stat fields from text to integer
 - Generate migration
 
-#### Task 2.1.3 - Add Foreign Keys []
+#### Task 2.1.3 - Add Foreign Keys [✅]
 
 - Add FK: `teamId` references `T_Team.id`
 - Add FK: `tournamentId` references `T_Tournament.id`
 - Create data migration script to populate `teamId` from `teamExternalId`
 - Generate migration
 
-#### Task 2.1.4 - Update Queries and Services []
+#### Task 2.1.4 - Update Queries and Services [✅]
 
 - Update all queries to use new column names
 - Update all queries to use new FK relationships
@@ -229,7 +229,7 @@ export const T_TournamentStandings = pgTable(
 
 ---
 
-### Task 2.2 - Fix T_TournamentMember Schema []
+### Task 2.2 - Fix T_TournamentMember Schema [✅]
 
 **Severity:** HIGH  
 **Impact:** Data integrity, orphaned data risk
@@ -268,13 +268,13 @@ export const T_TournamentMember = pgTable(
 );
 ```
 
-#### Task 2.2.1 - Add Foreign Key Constraints []
+#### Task 2.2.1 - Add Foreign Key Constraints [✅]
 
 - Add FK: `tournamentId` references `T_Tournament.id` with `onDelete: 'cascade'`
 - Add FK: `memberId` references `T_Member.id` with `onDelete: 'cascade'`
 - Generate migration
 
-#### Task 2.2.2 - Add Performance Indexes []
+#### Task 2.2.2 - Add Performance Indexes [✅]
 
 - Add index on `tournamentId`
 - Add index on `memberId`
@@ -286,7 +286,7 @@ export const T_TournamentMember = pgTable(
 
 ---
 
-### Task 2.3 - Fix T_Tournament Schema []
+### Task 2.3 - Fix T_Tournament Schema [✅]
 
 **Severity:** MEDIUM  
 **Impact:** Data integrity
@@ -338,19 +338,19 @@ export const T_Tournament = pgTable(
 );
 ```
 
-#### Task 2.3.1 - Add Enum Constraints []
+#### Task 2.3.1 - Add Enum Constraints [✅]
 
 - Add enum to `mode` field
 - Add enum to `standingsMode` field
 - Add enum to `status` field
 - Generate migration
 
-#### Task 2.3.2 - Add Soft Delete Support []
+#### Task 2.3.2 - Add Soft Delete Support [✅]
 
 - Add `deletedAt` timestamp
 - Generate migration
 
-#### Task 2.3.3 - Add Performance Index []
+#### Task 2.3.3 - Add Performance Index [✅]
 
 - Add index on `provider`
 - Generate migration
@@ -412,7 +412,7 @@ export const T_TournamentRound = pgTable(
 );
 ```
 
-#### Task 3.1.1 - Fix Primary Key Strategy []
+#### Task 3.1.1 - Fix Primary Key Strategy [✅]
 
 - Change from composite PK to single UUID PK
 - Keep `(tournamentId, slug)` as unique constraint

@@ -1,9 +1,9 @@
-import { pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_TournamentRound = pgTable(
   'tournament_round',
   {
-    id: uuid('id').defaultRandom(),
+    id: uuid('id').defaultRandom().primaryKey(), // Changed to regular PK
     tournamentId: text('tournament_id').notNull(),
     order: text('order').notNull(),
     label: text('label').notNull(),
@@ -21,9 +21,7 @@ export const T_TournamentRound = pgTable(
   },
   table => {
     return {
-      pk: primaryKey({
-        columns: [table.tournamentId, table.slug],
-      }),
+      uniqueTournamentSlug: uniqueIndex('tournament_round_tournament_slug_idx').on(table.tournamentId, table.slug), // Composite unique constraint
     };
   }
 );

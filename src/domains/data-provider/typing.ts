@@ -89,7 +89,7 @@ export type CreateTournamentInput = {
   season: string;
   mode: 'regular-season-only' | 'regular-season-and-knockout' | 'knockout-only';
   label: string;
-  standingsMode: string;
+  standingsMode: 'unique-group' | 'multi-group';
 };
 
 export type TournamentRequestIn = Request<{ tournamentId?: string }, CreateTournamentInput>;

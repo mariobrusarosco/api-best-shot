@@ -11,11 +11,22 @@ export const T_Tournament = pgTable(
     slug: text('slug').notNull().default(''),
     provider: text('provider').notNull(),
     season: text('season').notNull(),
-    mode: text('mode').notNull(),
-    standingsMode: text('standings_mode').notNull().default(''),
+    mode: text('mode', {
+      enum: ['regular-season-and-knockout', 'regular-season-only', 'knockout-only'],
+    }).notNull(),
+    standingsMode: text('standings_mode', {
+      enum: ['unique-group', 'multi-group'],
+    })
+      .notNull()
+      .default('unique-group'),
     label: text('label').notNull(),
     logo: text('logo').notNull().default(''),
-    status: text('status').notNull().default('active'),
+    status: text('status', {
+      enum: ['active', 'completed', 'upcoming', 'cancelled'],
+    })
+      .notNull()
+      .default('active'),
+    deletedAt: timestamp('deleted_at'), // Soft delete support
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .notNull()

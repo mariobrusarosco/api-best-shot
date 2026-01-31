@@ -134,6 +134,13 @@
       "when": 1769858945697,
       "tag": "0018_curly_dreadnoughts",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1769859388136,
+      "tag": "0019_supreme_elektra",
+      "breakpoints": true
     }
   ]
 }

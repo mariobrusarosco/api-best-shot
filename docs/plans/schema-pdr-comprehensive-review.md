@@ -743,7 +743,7 @@ Review and validate the data provider execution tracking schema.
 
 ## Tasks
 
-### Task 7.1 - Review T_DataProviderExecutions Schema []
+### Task 7.1 - Review T_DataProviderExecutions Schema [x]
 
 **Severity:** LOW  
 **Impact:** Monitoring, observability
@@ -803,12 +803,12 @@ export const T_DataProviderExecutions = pgTable(
 );
 ```
 
-#### Task 7.1.1 - Add Tournament Foreign Key []
+#### Task 7.1.1 - Add Tournament Foreign Key [x]
 
 - Add FK: `tournamentId` references `T_Tournament.id` with `onDelete: 'cascade'`
 - Generate migration
 
-#### Task 7.1.2 - Add Enum Constraints []
+#### Task 7.1.2 - Add Enum Constraints [x]
 
 - Add enum to `operationType` field
 - Add enum to `status` field
@@ -828,7 +828,7 @@ Review the team schema for any final improvements.
 
 ## Tasks
 
-### Task 8.1 - Review T_Team Schema []
+### Task 8.1 - Review T_Team Schema [x]
 
 **Severity:** LOW  
 **Impact:** Minor improvements
@@ -867,12 +867,12 @@ export const T_Team = pgTable(
 );
 ```
 
-#### Task 8.1.1 - Add Provider Enum []
+#### Task 8.1.1 - Add Provider Enum [x] (Postponed)
 
 - Add enum constraint to `provider` field
 - Generate migration
 
-#### Task 8.1.2 - Add Name Index []
+#### Task 8.1.2 - Add Name Index [x]
 
 - Add index on `name` for search queries
 - Generate migration
@@ -891,35 +891,34 @@ Determine if Score schema is needed or should be removed.
 
 ## Tasks
 
-### Task 9.1 - Investigate Score Domain []
+### Task 9.1 - Investigate Score Domain [x]
 
 **Severity:** LOW  
 **Impact:** Code cleanliness
 
-**Current State:** ⚠️ **Empty schema file exists**
+**Current State:** ✅ **Resolved**
 
-**Action Items:**
+**Findings:**
 
-1. Check if `score` domain is used anywhere in codebase
-2. Check if there are plans to implement scoring logic
-3. If unused: Remove from codebase and schema exports
-4. If planned: Document the intended schema design
+- Domain IS used by `MatchUpdateOrchestratorService`
+- `ScoreboardService` handles point calculations and Redis leaderboards
+- Logic relies on `T_TournamentMember` and Redis, so no specific SQL tables are needed for this domain currently.
 
-#### Task 9.1.1 - Code Review []
+#### Task 9.1.1 - Code Review [x]
 
 - Search for any references to score domain
 - Check service layer for score-related logic
-- Document findings
+- Document findings: **Used in Scheduler/Match Update**
 
-#### Task 9.1.2 - Decision []
+#### Task 9.1.2 - Decision [x]
 
-- **Option A:** Remove score domain entirely
-- **Option B:** Implement score schema (define requirements)
-- **Option C:** Keep as placeholder (add TODO comment)
+- **Decision:** **Keep Domain Logic, Remove Empty Schema**
+- The `src/domains/score/schema/index.ts` file was empty and has been deleted.
+- The `Score` domain will remain to encapsulate scoring rules and leaderboard services.
 
 **Dependencies:** None  
-**Expected Result:** Clear decision on score domain  
-**Next Steps:** Implement decision
+**Expected Result:** Cleaned up project structure  
+**Next Steps:** None
 
 ---
 

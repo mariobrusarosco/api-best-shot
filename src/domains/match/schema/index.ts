@@ -1,10 +1,10 @@
 import { T_Team } from '@/domains/team/schema';
-import { index, numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { index, numeric, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_Match = pgTable(
   'match',
   {
-    id: uuid('id').notNull().defaultRandom(),
+    id: uuid('id').notNull().defaultRandom().primaryKey(),
     externalId: text('external_id').notNull(),
     provider: text('provider').notNull(),
     tournamentId: uuid('tournament_id').notNull(),
@@ -34,7 +34,7 @@ export const T_Match = pgTable(
       .$onUpdate(() => new Date()),
   },
   table => ({
-    pk: primaryKey({ columns: [table.externalId, table.provider] }),
+    uniqueMatch: uniqueIndex('unique_match').on(table.externalId, table.provider),
     // Indexes for query performance
     statusIdx: index('match_status_idx').on(table.status),
     tournamentRoundsIdx: index('match_tournament_rounds_idx').on(table.tournamentId, table.roundSlug),

@@ -441,68 +441,89 @@ export const T_TournamentRound = pgTable(
 
 ---
 
-# Phase 4: Guess Schema Improvements
+# Phase 4: Match & Guess Schema Standardization
 
 ## Goal
 
-Add proper foreign key constraints and improve data integrity for the guess system.
+Ensure `T_Match` and `T_Guess` adhere to project standards (UUID PKs) and enforce strict referential integrity.
 
 ## Tasks
 
-### Task 4.1 - Fix T_Guess Schema []
+### Task 4.1 - Standardize T_Match Schema []
 
-**Severity:** HIGH  
-**Impact:** Data integrity, orphaned data risk
+**Severity:** CRITICAL
+**Impact:** Foundation for all match-related relationships
 
 **Current Issues:**
 
-1. ❌ **Missing FK:** `memberId` has no FK to `T_Member.id`
-2. ❌ **Missing FK:** `matchId` has no FK to `T_Match.id`
-3. ❌ **Wrong Type:** `roundId` is `text` but should reference round properly
-4. ❌ **Redundant Index:** Has both PK and uniqueIndex on same columns
-5. ❌ **Missing Cascade:** No ON DELETE policy defined
+1. ❌ **Non-Standard PK:** Uses Composite PK `(externalId, provider)`.
+2. ❌ **Reference Block:** Cannot create FKs pointing to `T_Match` easily.
 
 **Proposed Changes:**
 
-```typescript
-export const T_Guess = pgTable(
-  'guess',
-  {
-    id: uuid('id').notNull().defaultRandom().primaryKey(), // ✅ Use as primary PK
-    memberId: uuid('member_id')
-      .notNull()
-      .references(() => T_Member.id, { onDelete: 'cascade' }), // 🆕 FK + cascade
-    matchId: uuid('match_id')
-      .notNull()
-      .references(() => T_Match.id, { onDelete: 'cascade' }), // 🆕 FK + cascade
-    roundSlug: text('round_slug').notNull(), // ✅ Renamed for consistency with match
-    homeScore: integer('home_score'), // ✅ Changed from numeric to integer
-    awayScore: integer('away_score'), // ✅ Changed from numeric to integer
-    active: boolean('active').notNull().default(true),
-    submittedAt: timestamp('submitted_at').notNull().defaultNow(), // 🆕 Track submission time
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at')
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-  },
-  table => ({
-    // Remove duplicate: keep only unique constraint, not composite PK
-    uniqueGuess: uniqueIndex('unique_guess').on(table.matchId, table.memberId),
-    memberIdx: index('guess_member_idx').on(table.memberId), // 🆕 Performance
-    matchIdx: index('guess_match_idx').on(table.matchId), // 🆕 Performance
-    activeIdx: index('guess_active_idx').on(table.active), // 🆕 For filtering
-  })
-);
-```
+1.  **Primary Key:** Set `id` (UUID) as the Primary Key.
+2.  **Unique Constraint:** Replace Composite PK with Unique Index on `(externalId, provider)`.
 
-#### Task 4.1.1 - Add Foreign Key Constraints []
+#### Task 4.1.1 - Update T_Match Schema []
 
-- Add FK: `memberId` references `T_Member.id` with `onDelete: 'cascade'`
-- Add FK: `matchId` references `T_Match.id` with `onDelete: 'cascade'`
-- Generate migration
+- Change PK to `id` (UUID).
+- Add Unique Index to `(externalId, provider)`.
 
-#### Task 4.1.2 - Fix Data Types []
+#### Task 4.1.2 - Generate Match Migration []
+
+- Run `yarn db:generate`.
+
+#### Task 4.1.3 - Apply Match Migration []
+
+- Run `yarn db:migrate`.
+- Verify success.
+
+### Task 4.2 - Standardize T_Guess Schema []
+
+**Severity:** HIGH
+**Impact:** Data integrity, Type safety
+
+**Current Issues:**
+
+1. ❌ **Non-Standard PK:** Uses Composite PK `(matchId, memberId)`.
+2. ❌ **Missing FKs:** No database-level links to Match or Member.
+3. ❌ **Wrong Types:** `roundId` (text), `scores` (numeric).
+
+**Proposed Changes:**
+
+1.  **Primary Key:** Set `id` (UUID) as Primary Key.
+2.  **Unique Constraint:** Replace Composite PK with Unique Index on `(matchId, memberId)`.
+3.  **Foreign Keys:** Add `matchId` -> `T_Match.id` (Cascade) and `memberId` -> `T_Member.id` (Cascade).
+4.  **Types:** specific `integer` types for scores and roundId.
+
+#### Task 4.2.1 - Update T_Guess Schema []
+
+- Change PK to `id` (UUID).
+- Add Unique Index to `(matchId, memberId)`.
+- Add FKs to `T_Match.id` and `T_Member.id`.
+- Update Data Types (`roundSlug`, `scores`).
+- Add Performance Indexes.
+
+#### Task 4.2.2 - Generate Guess Migration []
+
+- Run `yarn db:generate`.
+- **Manual Intervention:** Add `USING` clauses for type conversions.
+
+#### Task 4.2.3 - Verify Data Integrity []
+
+- Check for orphan guesses (guesses pointing to missing matches/members) before applying.
+
+#### Task 4.2.4 - Apply Guess Migration []
+
+- Run `yarn db:migrate`.
+
+## Dependencies
+
+- Task 4.1 must be completed before Task 4.2.
+
+## Expected Result
+
+Matches and Guesses use standard UUID PKs, have strict FK relationships, and correct data types.
 
 - Change `homeScore` from numeric to integer (or keep numeric if decimals needed?)
 - Change `awayScore` from numeric to integer

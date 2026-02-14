@@ -2,7 +2,6 @@ import { AdminMiddleware } from '@/domains/auth/middleware';
 import express from 'express';
 import { API_ADMIN } from '../api';
 import { API_ADMIN_EXECUTION_JOBS } from '../api/execution-jobs';
-import { API_ADMIN_SCHEDULER } from '../api/scheduler';
 import { API_ADMIN_TOURNAMENTS } from '../api/tournaments';
 
 const router = express.Router();
@@ -15,12 +14,6 @@ router.post('/seed', AdminMiddleware, API_ADMIN.seedDatabase);
 
 // Data Provider Execution Tracking Routes (admin only)
 router.get('/executions', AdminMiddleware, API_ADMIN_EXECUTION_JOBS.getExecutionJobs);
-
-// Scheduler Management Routes (admin only)
-router.post('/scheduler/trigger-match-polling', AdminMiddleware, API_ADMIN_SCHEDULER.triggerMatchPolling);
-router.get('/scheduler/stats', AdminMiddleware, API_ADMIN_SCHEDULER.getPollingStats);
-router.get('/scheduler/queue-stats', AdminMiddleware, API_ADMIN_SCHEDULER.getQueueStats);
-router.get('/scheduler/jobs/:jobId', AdminMiddleware, API_ADMIN_SCHEDULER.getJobStatus);
 
 // Tournament Management Routes (admin only)
 router.get('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.getAllTournaments);

@@ -1,249 +1,300 @@
 # System Design V1 (Draft)
 
-This is our working draft for the app system design.
-It is intentionally simple so we can iterate quickly.
+## Document Status
 
-## 1. Scope (V1)
+- Version: `v1-draft`
+- Last updated: `2026-02-16`
+- Source of truth for this draft: current implementation in `src/`, `scripts/`, and `docs/architecture/`
+- Goal: capture the real architecture as implemented today, then define next incremental design steps
 
-- Member auth and profile
-- Tournament, matches, guesses
-- Tournament leaderboard
-- Data provider ingestion
-- Asset delivery (S3 + CloudFront)
+## 1. Purpose and Scope
 
-## 2. Fixed Decisions
+This system powers the Best Shot backend API for football predictions and league scoreboards.
 
-- PostgreSQL is the source of truth.
-- Redis is a fast projection/cache.
-- Leaderboard updates only when match status transitions to `ended` (provider `finished` maps to internal `ended`).
-- We group settlement only for matches with the exact same `finished_at`.
-- Dense ranking (`1, 1, 2`) for ties.
-- Provider is polled every 5 minutes.
-- Round identifier is `roundSlug` across API, cache keys, jobs, and internal flows.
-- Ranking is computed in API from sorted points (dense ranking), not precomputed in DB.
+In scope for this draft:
 
-## 3. High-Level Architecture
+- Authenticated member APIs (tournaments, guesses, leagues, dashboard)
+- Admin ingestion APIs (tournament bootstrap and update from data provider)
+- Data layer (PostgreSQL + Drizzle)
+- Scoreboard projection layer (Redis)
+- Operational integrations (Playwright, S3/CloudFront, Slack, Sentry)
+
+Out of scope for this draft:
+
+- Frontend architecture
+- Billing, rate limiting, and multi-region failover
+- Full API contract catalog for every endpoint
+
+## 2. System Context
 
 ```mermaid
 flowchart LR
-    subgraph CLIENT[Client]
-        FE[Frontend]
-    end
-
-    subgraph SERVING[Serving Layer]
-        API[API Best Shot<br/>Express + TypeScript]
-        REDIS[(Redis)]
-        PG[(PostgreSQL)]
-    end
-
-    FE --> API
-    API -->|read cache| REDIS
-    API -->|cache miss / writes / Redis unavailable| PG
-    PG -->|refresh projections| REDIS
-
-    subgraph INGESTION[Ingestion Layer]
-        SCHED[Scheduler<br/>every 5 min]
-        POLL[Provider Polling Worker]
-        MAP[Normalize / Map Data]
-        Q[Settlement Queue]
-        SETTLE[Settlement Worker]
-        DLQ[(Settlement DLQ)]
-    end
-
-    SCHED --> POLL --> MAP --> PG
-    MAP -->|invalidate related keys| REDIS
-    MAP -->|if status -> ended| Q --> SETTLE
-    SETTLE -->|temporary failure: retry| Q
-    SETTLE -->|max retries reached| DLQ
-    SETTLE -->|update tournament points| PG
-    SETTLE -->|update leaderboard cache| REDIS
-
-    subgraph ASSETS[Assets]
-        S3[(S3)]
-        CDN[CloudFront]
-    end
-
-    MAP -->|team/tournament assets| S3 --> CDN --> FE
+    FE["Frontend / Clients"] --> API["Best Shot API (Express + TypeScript)"]
+    API --> PG["PostgreSQL (Source of Truth)"]
+    API --> REDIS["Redis (Scoreboard Projection + Cache)"]
+    API --> S3["AWS S3 (Reports + Assets)"]
+    S3 --> CDN["CloudFront"]
+    API --> SENTRY["Sentry (Errors + Profiling)"]
+    API --> SLACK["Slack Webhook (Execution Notifications)"]
+    API --> SOFA["SofaScore Endpoints (via Playwright Scraper)"]
 ```
 
-### 3.1 Redis Caches Used In V1
+## 3. Runtime Architecture
 
-- `tournament:{id}:round:{slug}:matches`
-- `tournament:{id}:standings`
-- `tournament:{id}:leaderboard`
-- Optional combined page cache:
-  - `tournament:{id}:round:{slug}:page` (matches + standings)
+### 3.1 Application Entry and Middleware
 
-### 3.2 Cache Behavior (Simple)
+- Entry point: `src/index.ts`
+- Router root: `/api` mounted from `src/router/index.ts`
+- Global middleware: `express.json()`, `cookie-parser`, `cors`, custom access-control headers, request logger
+- Root endpoints: `GET /health`, `GET /`, `GET /debug/env` (debug endpoint still enabled)
 
-- API tries Redis first for reads.
-- On miss, API reads PostgreSQL and repopulates Redis.
-- If Redis is unavailable, API reads directly from PostgreSQL.
-- Data-provider updates invalidate only affected keys.
-- Finished-match settlements are enqueued before processing.
-- Settlement worker retries temporary failures.
-- Jobs that keep failing are moved to DLQ for manual/async handling.
-- Settlement updates leaderboard projection right after finished matches are processed.
+### 3.2 API Versioning and Domains
 
-### 3.3 Cache Ownership (V1)
+Versioned domain routes are mounted under `/api/v1/...` and `/api/v2/...`.
 
-- Ingestion mapper owns invalidation for:
-  - `tournament:{id}:round:{slug}:matches`
-  - `tournament:{id}:standings`
-- Settlement worker owns update/refresh for:
-  - `tournament:{id}:leaderboard`
+Primary v2 areas:
 
-## 4. Finished Match Settlement Flow
+- `/api/v2/auth`
+- `/api/v2/member`
+- `/api/v2/tournaments`
+- `/api/v2/leagues`
+- `/api/v2/guess`
+- `/api/v2/dashboard`
+- `/api/v2/ai`
+- `/api/v2/admin`
+
+### 3.3 Layering Pattern
+
+The dominant pattern in the codebase is domain-driven layering:
+
+- `api/` for HTTP orchestration
+- `services/` for business logic
+- `queries/` for database operations
+- `schema/` for Drizzle table definitions
+
+This pattern is consistent in core domains (`tournament`, `league`, `guess`, `match`, `member`, `data-provider`), with some legacy files coexisting in `admin/api`.
+
+### 3.4 Security Boundaries
+
+- Member auth: JWT in cookie (`MEMBER_PUBLIC_ID_COOKIE`) via `AuthMiddleware`
+- Admin auth: `AdminMiddleware` resolves member role from DB and enforces `admin`
+- Internal token middleware exists (`InternalMiddleware`) but is not currently wired to active routes
+
+## 4. Data Architecture
+
+### 4.1 Primary Data Store (PostgreSQL)
+
+PostgreSQL is the persistent source of truth. Drizzle ORM manages schema and migrations.
+
+Key entity tables:
+
+- `member`
+- `tournament`
+- `tournament_round`
+- `team`
+- `match`
+- `guess`
+- `tournament_standings`
+- `tournament_member`
+- `league`
+- `league_role`
+- `league_tournament`
+- `data_provider_executions`
+
+### 4.2 Core Relational Model (Simplified)
 
 ```mermaid
-flowchart TD
-    A[Poll Provider] --> B{Match transitioned<br/>to ended?}
-    B -- No --> Z[No settlement]
-    B -- Yes --> C[Enqueue settlement job]
-    C --> D[Settlement Queue]
-    D --> E[Settlement Worker]
-    E -->|temporary failure| D
-    E -->|max retries reached| J[(Settlement DLQ)]
-    E --> F[Update tournament points<br/>in PostgreSQL]
-    F --> G[Mark settlement applied<br/>idempotency key]
-    G --> H[Update leaderboard projection<br/>in Redis]
-    H --> I[API serves updated leaderboard]
+erDiagram
+    MEMBER ||--o{ GUESS : places
+    TOURNAMENT ||--o{ TOURNAMENT_ROUND : has
+    TOURNAMENT ||--o{ MATCH : contains
+    TEAM ||--o{ MATCH : "home/away"
+    MATCH ||--o{ GUESS : receives
+    TOURNAMENT ||--o{ TOURNAMENT_STANDINGS : tracks
+    TEAM ||--o{ TOURNAMENT_STANDINGS : ranks
+    TOURNAMENT ||--o{ TOURNAMENT_MEMBER : enrolls
+    MEMBER ||--o{ TOURNAMENT_MEMBER : participates
+    LEAGUE ||--o{ LEAGUE_ROLE : has
+    MEMBER ||--o{ LEAGUE_ROLE : joins
+    LEAGUE ||--o{ LEAGUE_TOURNAMENT : links
+    TOURNAMENT ||--o{ LEAGUE_TOURNAMENT : links
+    TOURNAMENT ||--o{ DATA_PROVIDER_EXECUTIONS : tracks
 ```
 
-## 5. Ranking Rules (V1)
+### 4.3 Redis Projection and Cache
 
-- Sort by points descending.
-- If points are equal, use dense ranking.
-- Stable tiebreak display order: nickname ascending (or memberId if needed).
+Redis is used for scoreboard projection and fast reads, with keys such as:
 
-## 6. Decisions (V1)
+- `tournament:{tournamentId}:master_scores` (sorted set of member points)
+- `league:{leagueId}:members` (set of league members)
+- `league:{leagueId}:leaderboard` (league ranking projection)
+- `league:{leagueId}:leaderboard:prev` (previous snapshot for movement)
 
-| Decision | V1 Choice | Notes |
-|---|---|---|
-| Retry + DLQ policy | `3` attempts with backoff `30s`, `60s`, `120s`; then move to DLQ | Prevents infinite retry loops while still handling transient failures |
-| Redis rebuild strategy | Read-through fallback to PostgreSQL; rebuild leaderboard projections using `hydrate:scoreboard` per tournament (or all active tournaments) | Keeps recovery scoped and safe |
-| Leaderboard API contract | Use the response shape defined in section `7.4` with dense ranking metadata | Keeps frontend integration stable and explicit |
+Hydration utility:
 
-## 7. Contracts (V1)
+- `scripts/hydrate-redis.ts` rebuilds projection from PostgreSQL (`tournament_member` and `league_role` links)
 
-This section defines the minimum contracts needed to implement the design safely.
+## 5. Core Flows
 
-### 7.1 Settlement Job Contract (`match_finished`)
+### 5.1 Authenticated Tournament Read Flow
 
-Used by ingestion to trigger score settlement only when a match transitions to internal `ended`.
-Provider status `finished` is normalized to internal status `ended` before job creation.
+1. Client calls `/api/v2/tournaments/:tournamentId/...` with auth cookie.
+2. `AuthMiddleware` decodes JWT and sets `req.authenticatedUser`.
+3. API calls service layer.
+4. Services query Drizzle repositories.
+5. Response returns domain DTOs (matches, guesses, score, standings, details).
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `eventType` | string | yes | Fixed value: `match_finished` |
-| `matchId` | string (uuid) | yes | Internal match id |
-| `tournamentId` | string (uuid) | yes | Internal tournament id |
-| `finishedAt` | string (ISO datetime) | yes | Canonical match end timestamp used for grouping/idempotency |
-| `provider` | string | yes | Example: `sofascore` |
-| `providerStatus` | string | yes | Raw provider status (example: `finished`) |
-| `internalStatus` | string | yes | Normalized internal status (must be `ended`) |
-| `detectedAt` | string (ISO datetime) | yes | When poller detected the transition |
-| `sourceVersion` | string | no | Optional provider-side version/hash if available |
+### 5.2 Admin Ingestion Flow (Current)
 
-Example:
+```mermaid
+sequenceDiagram
+    participant A as Admin Client
+    participant API as /api/v2/admin
+    participant SCR as Playwright BaseScraper
+    participant DP as DataProvider Service
+    participant PG as PostgreSQL
+    participant S3 as S3/CloudFront
+    participant SL as Slack
 
-```json
-{
-  "eventType": "match_finished",
-  "matchId": "58de2f1b-1374-4c92-bd53-23a81943de4b",
-  "tournamentId": "72ae0b2f-1967-49dd-a1d3-3b4965954fd8",
-  "finishedAt": "2026-02-14T17:00:00Z",
-  "provider": "sofascore",
-  "providerStatus": "finished",
-  "internalStatus": "ended",
-  "detectedAt": "2026-02-14T17:05:03Z",
-  "sourceVersion": "evt-884213"
-}
+    A->>API: POST/PATCH tournament ingestion endpoint
+    API->>API: AdminMiddleware role check
+    API->>SCR: create scraper instance
+    API->>DP: init/update
+    DP->>PG: create execution record
+    DP->>SCR: fetch provider payloads/assets
+    DP->>PG: upsert tournament/rounds/teams/matches/standings
+    DP->>S3: upload report + assets
+    DP->>PG: mark execution completed/failed
+    DP->>SL: send webhook notification
+    API-->>A: operation result
 ```
 
-### 7.2 Idempotency Contract
+Current control-plane characteristics:
 
-Settlement must never double-apply points.
+- All ingestion work runs in request lifecycle (synchronous from HTTP perspective)
+- Per-operation report JSON is always saved locally and optionally uploaded to S3
+- `data_provider_executions` tracks status, summary, report URLs, and timings
 
-- Idempotency key format: `matchId#finishedAt`
-- Key example: `58de2f1b-1374-4c92-bd53-23a81943de4b#2026-02-14T17:00:00Z`
-- Worker behavior:
-  1. If key already marked applied -> skip scoring and ack job.
-  2. If key not applied -> run settlement transaction and mark key as applied.
+### 5.3 Guess Scoring Flow (Per Request / Per Match)
 
-### 7.3 Retry + DLQ Contract
+- Guess analysis status machine: `NOT_STARTED`, `WAITING_FOR_GAME`, `EXPIRED`, `PAUSED`, `FINALIZED`
+- Points model currently implemented: outcome correct = `3`, exact home score = `0`, exact away score = `0`
 
-- Retry attempts: `3`
-- Backoff: `30s`, `60s`, `120s`
-- Temporary failures (db timeout, redis timeout): retry
-- Permanent failures (bad payload, missing required ids): move to DLQ
-- After max retries: move to `Settlement DLQ`
-- DLQ handling:
-  - alert/monitoring event
-  - operator can replay job after fix
+This scoring logic is used for:
 
-### 7.4 API Read Contracts (Tournament Page)
+- Member tournament score reads
+- Match-level score delta calculation for scoreboard updates
 
-These are the read contracts for pages using Redis acceleration.
+### 5.4 League Scoreboard Flow (Current)
 
-#### `GET /api/v2/tournaments/:tournamentId/matches/:roundSlug`
+Implemented primitives in `ScoreboardService`:
 
-Response shape:
+- `calculateMatchPoints(matchId)`
+- `applyScoreUpdates(tournamentId, deltas)`
+- `refreshLeagueRanking(leagueId, tournamentId)`
+- `getLeagueLeaderboard(...)`
 
-```json
-{
-  "data": [
-    {
-      "id": "match-uuid",
-      "date": "2026-02-14T17:00:00Z",
-      "status": "open|ended|not-defined",
-      "home": { "id": "team-uuid", "name": "Arsenal", "score": 2 },
-      "away": { "id": "team-uuid", "name": "Chelsea", "score": 1 }
-    }
-  ]
-}
-```
+Read path is active via `/api/v2/leagues/:leagueId/scoreboard`.
 
+Write orchestration gap:
 
-#### `GET /api/v2/tournaments/:tournamentId/standings`
+- There is no active settlement orchestrator/worker in `src/` that triggers `calculate/apply/refresh` automatically on match status transition.
+- Manual utilities exist (`scripts/test-scoreboard-flow.ts`, hydration script).
 
-Response shape:
+## 6. Infrastructure and Deployment
 
-```json
-{
-  "data": [
-    { "position": 1, "teamId": "team-uuid", "team": "Arsenal", "points": 50, "played": 23 }
-  ]
-}
-```
+- Runtime: Node.js `22.x`, TypeScript, Express
+- DB: PostgreSQL (local docker compose + cloud connection options)
+- Cache: Redis
+- Scraping: Playwright (Chromium, headless)
+- Storage/CDN: S3 + CloudFront
+- Monitoring: Sentry + structured logger
+- Container: multi-stage `Dockerfile` based on Playwright image
 
-#### `GET /api/v2/tournaments/:tournamentId/leaderboard`
+Local docker dependencies in `docker-compose.yml`:
 
-Response shape:
+- `postgres` on `5433:5432`
+- `redis` on `6379:6379`
 
-```json
-{
-  "data": [
-    { "rank": 1, "memberId": "member-uuid", "nickName": "Ana", "points": 23 }
-  ],
-  "meta": { "ranking": "dense" }
-}
-```
+## 7. Reliability and Observability
 
-## 8. Failure Scenarios (V1)
+Current strengths:
 
-These are the 5 core failure cases we expect and how V1 should behave.
+- Structured logging with domain tags
+- Sentry integration enabled in `demo/staging/production`
+- Retry utility with backoff exists (`30s`, `60s`, `120s`) and tests
+- DB and Redis health checks at startup level
 
-| # | Scenario | Detection | Expected System Behavior | User Impact | Recovery |
-|---|---|---|---|---|---|
-| 1 | Provider unavailable during poll | Poll worker timeout/error | Poll fails, no settlement jobs created for that cycle, next 5-min poll retries naturally | Leaderboard/matches can be stale until next successful poll | Automatic on next poll cycle |
-| 2 | Settlement worker temporarily down | Queue lag grows, no job consumption | Jobs remain in settlement queue, no data loss, worker resumes and drains queue | Leaderboard updates delayed | Restart worker and process backlog |
-| 3 | DB timeout during settlement | Worker gets DB error while applying points | Job is retried with backoff (`30s/60s/120s`), idempotency prevents double-apply | Delay for affected match updates | Automatic retry; DLQ if persistent |
-| 4 | Crash after DB update but before Redis update | Process crash/restart signal, missing projection update | Idempotency key already applied blocks re-scoring; projection update is retried/replayed to Redis | Temporary mismatch: DB fresh, Redis stale | Replay projection/settlement job safely |
-| 5 | Redis unavailable (read or write path) | Redis connection errors | Read path falls back to PostgreSQL; write path retries, then DLQ/manual replay if needed | Slower API responses; possible temporary stale cache | Redis restore + replay failed projection updates |
+Current limitations:
 
-### 8.1 DLQ Policy In Practice
+- Ingestion jobs are synchronous and coupled to HTTP request success window
+- No in-repo queue worker or scheduler implementation is currently present
+- Minimal automated coverage for integration/business-critical flows (tests mostly unit/basic)
+- `GET /debug/env` is exposed and should be gated/removed outside local environments
 
-- A job goes to DLQ only after max retries are exhausted.
-- DLQ job must preserve original payload and error reason.
-- Replay must be idempotent and safe.
+## 8. Known Design Gaps (To Address Next)
+
+1. Settlement orchestration is incomplete: we still need event-driven transition handling when `match.status` changes to `ended`, plus idempotent persistence to avoid double scoring on replay/crash.
+2. Async resilience is incomplete: queue-backed processing, retry policy, and DLQ are not wired for settlement flows.
+3. Ranking semantics need formalization: desired dense ranking and tie-breaking rules are not codified, and current Redis rank reads are ordinal (`zrevrange` index), not dense.
+4. Codebase consistency needs cleanup: legacy/unwired admin API files coexist with active service-based paths, and `data_provider_executions.status` naming is inconsistent across typing/comments (`started` vs `in_progress`).
+
+## 9. Proposed V1 Increment Plan
+
+1. Add `match_finished` event emission on status transition to `ended`.
+2. Introduce settlement queue + worker.
+3. Persist idempotency key `matchId#finishedAt`.
+4. Execute DB update then Redis projection refresh with safe retry policy.
+5. Add DLQ and replay tooling.
+6. Add integration test covering replay/no-double-apply behavior.
+
+## 10. Open Questions
+
+1. Should `/api/v2/ai/predict/match/:matchId` be authenticated or public?
+2. Should exact-score bonus points remain zero in v1 leaderboard logic?
+3. Should we compute dense rank in Redis materialization or on API read?
+4. Which runtime should own scheduler responsibilities (API process vs separate worker service)?
+
+## 11. Cron Jobs and Queues (Proposed Model)
+
+### 11.1 Three-Player Model
+
+1. `Provider Executions` (`data_provider_executions`) = control-plane state and audit trail for a run.
+2. `Cron Jobs` = time-based scheduler that decides when a run should start.
+3. `Queues` = reliable work buffer/work distribution for async execution and retries.
+
+### 11.2 Responsibilities
+
+- Cron should enqueue work, not do scraping directly.
+- Workers should execute scraping/settlement tasks and persist results.
+- `data_provider_executions` should expose run status for UI/ops (`in_progress`, `completed`, `failed`).
+
+### 11.3 Recommended Run Lifecycle
+
+1. Cron fires for a tournament sync window.
+2. API/worker creates an execution row with `requestId` and `status = in_progress`.
+3. Producer enqueues jobs with `executionId` + `requestId` + payload.
+4. Workers process jobs (provider fetch, map, DB upsert, optional cache refresh).
+5. Queue handles retries with backoff for transient failures.
+6. On max retries, job moves to DLQ and execution is marked `failed` (with error summary).
+7. When all jobs for that execution complete, mark execution `completed` with duration and summary.
+
+### 11.4 Queue Split for This System
+
+1. `ingestion` queue: heavier data-provider operations (rounds, teams, matches, standings).
+2. `settlement` queue: match-finished scoring and leaderboard projection updates.
+
+This split prevents heavy Playwright jobs from delaying scoreboard settlement jobs.
+
+### 11.5 Execution Row as Correlation Anchor
+
+Use `requestId`/`executionId` in every queued message and worker log context so operations can be traced end-to-end:
+
+- Scheduler log -> producer log -> worker log -> execution row -> report URL -> Slack notification.
+
+### 11.6 Failure Handling Contract
+
+- Retry transient errors (provider timeout, short DB contention, temporary Redis failure).
+- Do not infinitely retry malformed payloads or permanent validation failures.
+- Preserve original payload and final error in DLQ for replay.
+- Replays must be idempotent for both DB updates and leaderboard projection updates.

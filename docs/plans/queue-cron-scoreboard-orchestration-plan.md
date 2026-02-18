@@ -313,3 +313,212 @@ Production hardening, runbooks, and rollout readiness.
 
 Execute tasks sequentially with review gates and mark each task/subtask status as we progress.
 
+# Simulation
+
+## Cron + Queue + Orchestration Example (Real Match Day)
+
+Pretend the same day has 6 matches across 3 tournaments:
+
+| Match | Tournament | Kickoff |
+|---|---|---|
+| M1 | T1 | 3:15 PM |
+| M2 | T1 | 4:00 PM |
+| M3 | T2 | 4:00 PM |
+| M4 | T3 | 6:00 PM |
+| M5 | T2 | 8:00 PM |
+| M6 | T3 | 8:00 PM |
+
+### Visual 1: Clock View (Cron + Queue)
+
+```text
+Every 5 min Cron Tick:
+3:20, 3:25, 3:30, ... 11:55
+
+At each tick:
+1) Find candidate matches (open/in-progress, not checked recently)
+2) Enqueue "verify-match" jobs (one per match)
+3) Workers process jobs in parallel
+
+If match not ended:
+- noop (update lastCheckedAt)
+
+If match ended:
+- update DB match result
+- enqueue "settle-match-score" job
+```
+
+Real moments:
+
+```text
+~5:10 PM tick -> M1 now ended -> verify job says "ENDED" -> settlement queued for M1 (T1)
+~5:55 PM tick -> M2 + M3 ended -> settlement queued for M2 (T1) and M3 (T2)
+~7:55 PM tick -> M4 ended -> settlement queued for M4 (T3)
+~9:55 PM tick -> M5 + M6 ended -> settlement queued for M5 (T2) and M6 (T3)
+```
+
+### Visual 2: Inside One Ended Match
+
+```mermaid
+flowchart LR
+  C["Cron Tick (every 5 min)"] --> Q1["Queue: verify-match"]
+  Q1 --> W1["Worker: verify with provider"]
+  W1 --> D{"Ended?"}
+  D -- No --> N["Noop + lastCheckedAt update"]
+  D -- Yes --> U["Update match result in DB"]
+  U --> L["Insert settlement ledger key (idempotency)"]
+  L --> Q2["Queue: settle-match-score"]
+  Q2 --> W2["Worker: compute deltas for guesses"]
+  W2 --> P["Bulk update tournament_member points (DB)"]
+  P --> R["Update Redis leaderboard projection"]
+  R --> F["Done (exactly-once)"]
+```
+
+### How `/admin/cron` Fits
+
+When admin opens `/admin/cron`, backend endpoint returns:
+
+1. Registered cron jobs (`match-verifier-5m`, `knockout-check-daily`, etc).
+2. Last run status, duration, next run.
+3. Queue stats (`pending`, `processing`, `dlq`).
+4. Scheduler heartbeat (`online/offline`).
+
+### Why This Scales for 50k Guesses
+
+For one ended final match with 50k guesses:
+
+1. Only one settlement job for that match.
+2. Compute deltas once.
+3. Apply points in bulk SQL (not per-user loop).
+4. Update Redis sorted sets incrementally.
+5. Idempotency key prevents double scoring on retries/replays.
+
+Key design choice: event-driven incremental settlement, not full tournament recalculation on every read.
+
+## Payload Drafts
+
+### 1) `verify-match` Queue Payload
+
+```json
+{
+  "jobId": "8e2e8c90-8f65-4e58-b2d1-2fdf3b913705",
+  "jobType": "verify-match",
+  "requestId": "f4d8c6c0-53e5-43c4-9971-2431bf934b90",
+  "executionId": "9be539ec-d7fd-4552-944e-5a51959bb8fd",
+  "idempotencyKey": "verify:T1:M1:2026-02-18T17:10:00Z",
+  "enqueuedAt": "2026-02-18T17:10:00.000Z",
+  "attempt": 0,
+  "maxAttempts": 3,
+  "payload": {
+    "matchId": "M1_UUID",
+    "tournamentId": "T1_UUID",
+    "matchExternalId": "12345",
+    "roundSlug": "round-8",
+    "provider": "sofascore",
+    "scheduledBy": "match-verifier-5m"
+  }
+}
+```
+
+### 2) `settle-match-score` Queue Payload
+
+```json
+{
+  "jobId": "77193038-3fd6-4b7d-8ec2-3311647e2652",
+  "jobType": "settle-match-score",
+  "requestId": "f4d8c6c0-53e5-43c4-9971-2431bf934b90",
+  "executionId": "9be539ec-d7fd-4552-944e-5a51959bb8fd",
+  "idempotencyKey": "settlement:M1_UUID:2026-02-18T17:09:10Z",
+  "enqueuedAt": "2026-02-18T17:10:02.000Z",
+  "attempt": 0,
+  "maxAttempts": 5,
+  "payload": {
+    "matchId": "M1_UUID",
+    "tournamentId": "T1_UUID",
+    "finalResult": {
+      "homeScore": 2,
+      "awayScore": 1,
+      "status": "ended",
+      "providerFinishedAt": "2026-02-18T17:09:10Z"
+    },
+    "rankingMode": "dense"
+  }
+}
+```
+
+### 3) `GET /api/v2/admin/cron` Response Payload
+
+```json
+{
+  "scheduler": {
+    "status": "online",
+    "heartbeatAt": "2026-02-18T17:10:03.000Z",
+    "instanceId": "scheduler-1"
+  },
+  "jobs": [
+    {
+      "jobKey": "match-verifier-5m",
+      "description": "Verifies candidate matches and emits settlement jobs",
+      "schedule": "*/5 * * * *",
+      "enabled": true,
+      "running": false,
+      "lastRun": {
+        "startedAt": "2026-02-18T17:10:00.000Z",
+        "finishedAt": "2026-02-18T17:10:02.100Z",
+        "status": "completed",
+        "durationMs": 2100,
+        "summary": {
+          "candidates": 6,
+          "verified": 6,
+          "endedDetected": 1,
+          "verifyQueued": 6,
+          "settlementQueued": 1
+        }
+      },
+      "nextRunAt": "2026-02-18T17:15:00.000Z",
+      "queue": {
+        "name": "verify-match",
+        "pending": 2,
+        "processing": 1,
+        "dlq": 0
+      }
+    },
+    {
+      "jobKey": "knockout-check-daily",
+      "description": "Checks tournaments for new knockout rounds",
+      "schedule": "0 6 * * *",
+      "enabled": true,
+      "running": false,
+      "lastRun": {
+        "startedAt": "2026-02-18T06:00:00.000Z",
+        "finishedAt": "2026-02-18T06:00:15.000Z",
+        "status": "completed",
+        "durationMs": 15000,
+        "summary": {
+          "tournamentsChecked": 3,
+          "newKnockoutRounds": 1
+        }
+      },
+      "nextRunAt": "2026-02-19T06:00:00.000Z",
+      "queue": {
+        "name": "knockout-rounds-check",
+        "pending": 0,
+        "processing": 0,
+        "dlq": 0
+      }
+    }
+  ]
+}
+```
+
+### 4) `POST /api/v2/admin/cron/:jobKey/run` Response Payload
+
+```json
+{
+  "success": true,
+  "jobKey": "match-verifier-5m",
+  "trigger": "manual",
+  "executionId": "61ac59ad-6809-4d1e-a7f6-cd3dd99e9231",
+  "queuedAt": "2026-02-18T17:12:00.000Z",
+  "message": "Cron job enqueued for immediate execution"
+}
+```

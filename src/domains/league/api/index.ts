@@ -96,7 +96,6 @@ const updateLeagueTournaments = async (req: Request, res: Response) => {
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
   }
 };
-
 export const API_LEAGUE = {
   getLeagues,
   createLeague,

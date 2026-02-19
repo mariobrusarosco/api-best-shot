@@ -6,7 +6,7 @@ import db from '@/services/database';
 import Logger from '@/services/logger';
 import { DOMAINS } from '@/services/logger/constants';
 import { safeNumber, safeString } from '@/utils';
-import { sql } from 'drizzle-orm';
+import { inArray } from 'drizzle-orm';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { API_SOFASCORE_STANDINGS, DataProviderExecutionOperationType } from '../typing';
 import { DataProviderExecution } from './execution';
@@ -48,6 +48,7 @@ export class StandingsDataProviderService {
       this.validateTournament(payload);
       // ------ FETCH STANDINGS ------
       const fetchedStandings = await this.fetchStandings(payload.baseUrl);
+      this.reporter.setData(fetchedStandings);
       // ------ MAP STANDINGS ------
       const mappedStandings = await this.mapStandings(fetchedStandings, payload.tournamentId);
       // ------ CREATE STANDINGS ------
@@ -137,6 +138,7 @@ export class StandingsDataProviderService {
       this.validateTournament(payload);
       // ------ FETCH STANDINGS ------
       const fetchedStandings = await this.fetchStandings(payload.baseUrl);
+      this.reporter.setData(fetchedStandings);
       // ------ MAP STANDINGS ------
       const mappedStandings = await this.mapStandings(fetchedStandings, payload.tournamentId);
       // ------ CREATE STANDINGS ------
@@ -260,10 +262,23 @@ export class StandingsDataProviderService {
     });
 
     // Lookup all teams in one query
+    if (teamExternalIds.size === 0) {
+      Logger.warn('No team IDs extracted from standings data', {
+        domain: DOMAINS.DATA_PROVIDER,
+        tournamentId,
+        operation: 'map_standings',
+        context: 'empty_team_ids',
+      });
+      throw new Error(
+        'No team IDs found in scraped data. This indicates a potential issue with the scraping provider or data format.'
+      );
+    }
+
+    // Lookup all teams in one query
     const teams = await db
       .select({ id: T_Team.id, externalId: T_Team.externalId })
       .from(T_Team)
-      .where(sql`${T_Team.externalId} = ANY(${Array.from(teamExternalIds)})`);
+      .where(inArray(T_Team.externalId, Array.from(teamExternalIds)));
 
     // Create a map for quick lookup
     const teamIdMap = new Map(teams.map(t => [t.externalId, t.id]));
@@ -317,18 +332,36 @@ export class StandingsDataProviderService {
       });
     });
 
-    if (standings.length === 0) {
+    // Deduplicate standings by shortName to ensure uniqueness for the composite Primary Key (shortName + tournamentId)
+    // The scraper might return duplicates (e.g., if multiple groups share teams or data is malformed)
+    const uniqueStandings = Array.from(new Map(standings.map(item => [item.shortName, item])).values());
+
+    if (uniqueStandings.length < standings.length) {
+      Logger.warn('Duplicate teams found in standings. Deduplicated based on shortName.', {
+        domain: DOMAINS.DATA_PROVIDER,
+        tournamentId,
+        operation: 'map_standings',
+        context: {
+          originalCount: standings.length,
+          uniqueCount: uniqueStandings.length,
+        },
+      });
+    }
+
+    if (uniqueStandings.length === 0) {
+      // This check handles the case where deduplication might somehow result in empty list (unlikely if standings > 0)
+      // or if original list was empty (handled by earlier guards, but good for safety)
       this.reporter.addOperation('transformation', 'map_standings', 'failed', {
-        error: 'No standings data found',
+        error: 'No standings data found after deduplication',
       });
       throw new Error('No standings data found');
     }
 
     this.reporter.addOperation('transformation', 'map_standings', 'completed', {
-      standingsCount: standings.length,
+      standingsCount: uniqueStandings.length,
     });
 
-    return standings;
+    return uniqueStandings;
   }
 
   public async createOnDatabase(standings: DB_InsertTournamentStandings[]) {

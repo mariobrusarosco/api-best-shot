@@ -33,6 +33,7 @@ interface OperationReport {
     successfulOperations: number;
     failedOperations: number;
   };
+  data?: unknown;
 }
 
 export class DataProviderReport {
@@ -52,12 +53,18 @@ export class DataProviderReport {
         successfulOperations: 0,
         failedOperations: 0,
       },
+      data: null,
     };
   }
 
   public setTournamentInfo(tournament: { label: string; tournamentId: string; provider: string }) {
     this.report.tournament = tournament;
 
+    return this;
+  }
+
+  public setData(data: unknown) {
+    this.report.data = data;
     return this;
   }
 

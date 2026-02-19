@@ -9,8 +9,6 @@ We follow a hybrid development approach:
 - Infrastructure (PostgreSQL, AWS, Monitoring) runs in Docker
 - Development tools (Node.js, Yarn) run locally via Volta
 
-
-
 ## Tech Stack
 
 - **Runtime**: Node.js
@@ -22,7 +20,6 @@ We follow a hybrid development approach:
 - **Cloud Services**: AWS (S3, Scheduler)
 - **Monitoring**: Sentry
 - **Web Scraping**: Playwright for automated data collection
-
 
 ## Documentation
 
@@ -44,8 +41,7 @@ We use Docker Compose profiles to manage environment setup:
 #### First-time Setup
 
 ```bash
-# Only needed once or when you want to reset to defaults
-docker compose --profile initial up initial_setup
+yarn db:migrate
 
 # Verify .env was created
 cat .env

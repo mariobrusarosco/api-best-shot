@@ -343,17 +343,9 @@ External data fetching uses provider pattern:
 - Playwright for web scraping
 - AWS S3 for file storage
 
-### Scheduling
-
-AWS Scheduler integration for automated tasks:
-
-- Daily score updates
-- Knockout stage updates
-- Standings refresh
-
 ## External Services
 
-- **AWS**: S3 (file storage), Scheduler (cron jobs), Lambda (serverless functions)
+- **AWS**: S3 (file storage)
 - **Sentry**: Error tracking and performance monitoring
 - **OpenAI**: AI predictions service
 - **SofaScore**: Football data provider

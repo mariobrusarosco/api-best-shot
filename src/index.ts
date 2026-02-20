@@ -1,8 +1,6 @@
 import { config } from 'dotenv';
 config({ path: process.env.ENV_PATH || '.env' });
 
-import { redis } from './services/redis/client';
-
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -94,12 +92,6 @@ Logger.info('Registered logger and access control');
 // Mount the central API router at /api
 app.use('/api', apiRouter);
 Logger.info('Registered /api router');
-
-// Redis Health Check
-redis
-  .ping()
-  .then(() => Logger.info('✅ Redis PING successful'))
-  .catch(err => Logger.error(err as Error, { domain: DOMAINS.DATA_PROVIDER, component: 'redis', operation: 'ping' }));
 
 app.listen(port, '0.0.0.0', () => {
   Logger.info(`Server running on port ${port} in ${env.NODE_ENV} mode`, {

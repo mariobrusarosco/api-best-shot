@@ -175,7 +175,7 @@ const getTournamentStandings = async (tournamentId: string) => {
   try {
     return db
       .select({
-        id: T_TournamentStandings.id,
+        id: T_TournamentStandings.teamId,
         teamExternalId: T_TournamentStandings.teamExternalId,
         order: T_TournamentStandings.order,
         groupName: T_TournamentStandings.groupName,

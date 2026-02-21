@@ -3,6 +3,7 @@
 ⚠️ **CRITICAL: NEVER ALTER ANY DATABASE FILE WITHOUT ASKING ME**
 
 ## Table of Contents
+
 1. [Overview & Architecture](#1-overview--architecture)
 2. [Migrations](#2-migrations)
 3. [Transactions](#3-transactions)
@@ -16,6 +17,7 @@
 ### Database Stack
 
 Best Shot API uses:
+
 - **PostgreSQL** - Primary database
 - **Drizzle ORM** - Type-safe database toolkit
 - **Automated CI/CD** - Migrations applied automatically on deployment
@@ -48,6 +50,7 @@ supabase/migrations/
 ```
 
 **Migration History:**
+
 - Project maintains clean migration history from `0000_initial_complete_schema.sql`
 - All future migrations build incrementally from this foundation
 - Ensures perfect sync between development and production
@@ -80,22 +83,26 @@ supabase/migrations/
 #### Step-by-Step Process
 
 1. **Modify Schema Files**
+
    ```bash
    # Edit schema in TypeScript
    # Example: src/domains/member/schema/index.ts
    ```
 
 2. **Generate Migration**
+
    ```bash
    yarn db:generate --name "add_user_role_field"
    ```
 
 3. **Apply Locally**
+
    ```bash
    yarn db:migrate
    ```
 
 4. **Test Changes**
+
    ```bash
    yarn dev
    # Test your API endpoints
@@ -229,6 +236,7 @@ yarn db:seed
 If a migration causes issues:
 
 1. **Immediate Action**
+
    ```bash
    # Revert to previous working commit
    git revert HEAD
@@ -261,11 +269,13 @@ If a migration causes issues:
 #### 🔧 Fixing Mistakes
 
 **If you generated a migration with errors (BEFORE applying it):**
+
 1. Use `yarn db:drop` to remove it from the journal
 2. Fix your schema
 3. Regenerate with `yarn db:generate --name "correct_name"`
 
 **If you already applied a migration:**
+
 - Don't drop it! Create a new migration to fix the issue
 
 ### Troubleshooting
@@ -273,6 +283,7 @@ If a migration causes issues:
 #### Common Issues
 
 **1. Migration Fails in CI**
+
 ```
 🔍 Check: GitHub Actions logs
 🔍 Verify: Database connection secrets
@@ -280,12 +291,14 @@ If a migration causes issues:
 ```
 
 **2. Schema Out of Sync**
+
 ```
 🛠️ Fix: Generate new migration with current differences
 🛠️ Command: yarn db:generate --name "sync_schema"
 ```
 
 **3. Database Connection Issues**
+
 ```
 🔍 Check: DEMO_DB_CONNECTION secret in GitHub
 🔍 Verify: Database is accessible from GitHub Actions
@@ -321,6 +334,7 @@ async function updateStandings(standings) {
 ```
 
 **What could go wrong:**
+
 - Standing #1: ✅ Success
 - Standing #2: ✅ Success
 - Standing #3: ❌ **Fails** (network error, constraint violation, etc.)
@@ -343,6 +357,7 @@ async function updateStandings(standings) {
 ```
 
 **What happens:**
+
 - Standing #1: ✅ Success (but not committed yet)
 - Standing #2: ✅ Success (but not committed yet)
 - Standing #3: ❌ **Fails**
@@ -405,6 +420,7 @@ await db.transaction(async tx => {
 ```
 
 **Guarantees:**
+
 1. **All teams updated** OR **no teams updated**
 2. **No partial updates** that could confuse users
 3. **Database stays consistent** even if server crashes mid-operation
@@ -413,11 +429,13 @@ await db.transaction(async tx => {
 ### When to Use Transactions
 
 ✅ **Use transactions when:**
+
 - Multiple related operations must succeed together
 - Data consistency is critical
 - Failure of one operation should undo others
 
 ❌ **Don't need transactions for:**
+
 - Single, independent operations
 - Read-only operations
 - Operations where partial success is acceptable
@@ -431,6 +449,7 @@ await db.transaction(async tx => {
 ### Seeding Approach
 
 Our database seeding uses a simple, direct approach:
+
 - A single script in `scripts/seed-db.ts` handles the seeding process
 - Currently, only member data is seeded
 - The script is idempotent (can be run multiple times safely)
@@ -441,11 +460,13 @@ Our database seeding uses a simple, direct approach:
 We provide two commands to seed different environments:
 
 **Local Development:** Seed your local database
+
 ```bash
 yarn db:seed
 ```
 
 **Demo Environment:** Seed the remote demo database
+
 ```bash
 yarn db:seed:demo
 ```
@@ -453,6 +474,7 @@ yarn db:seed:demo
 ### How It Works
 
 The seeding script:
+
 1. Connects to the database using the configuration for the current environment
 2. Checks for existing records before inserting to avoid duplicates
 3. Creates test users with consistent credentials
@@ -462,6 +484,7 @@ The seeding script:
 Currently, the seeding process creates the following data:
 
 **Members:**
+
 - Admin user with OAuth (mariobrusarosco@gmail.com)
 - Test user with password (test@example.com) - password is 'test123'
 - Additional demo users (John Doe, Jane Smith) - password is 'test123'
@@ -481,6 +504,7 @@ To add seeding for additional entities (tournaments, rounds, etc.):
 ### 🚀 Common Commands
 
 **Migration Commands:**
+
 ```bash
 # Generate migration from schema changes
 yarn db:generate --name "descriptive_name"
@@ -499,6 +523,7 @@ yarn db:studio
 ```
 
 **Seeding Commands:**
+
 ```bash
 # Seed local database
 yarn db:seed
@@ -508,6 +533,7 @@ yarn db:seed:demo
 ```
 
 **Transaction Template:**
+
 ```typescript
 // Use transactions for multi-step operations
 await db.transaction(async (tx) => {
@@ -521,6 +547,7 @@ await db.transaction(async (tx) => {
 ### 📊 Database Queries
 
 **Check Migration Status:**
+
 ```sql
 -- View applied migrations
 SELECT * FROM drizzle.__drizzle_migrations
@@ -528,6 +555,7 @@ ORDER BY created_at DESC;
 ```
 
 **Verify Seed Data:**
+
 ```sql
 -- Check members
 SELECT id, email, name FROM "T_Member"
@@ -535,6 +563,7 @@ WHERE email LIKE '%test%' OR email LIKE '%demo%';
 ```
 
 **Check Table Schema:**
+
 ```sql
 -- View table structure
 SELECT column_name, data_type, is_nullable
@@ -545,6 +574,7 @@ WHERE table_name = 'T_Member';
 ### 🚨 Emergency Procedures
 
 **Migration Failed in CI:**
+
 1. Check GitHub Actions logs for error details
 2. Verify database connection secrets
 3. Test migration locally: `yarn db:migrate`
@@ -552,6 +582,7 @@ WHERE table_name = 'T_Member';
 5. Push corrected migration
 
 **Need to Rollback Migration:**
+
 ```bash
 # Revert code
 git revert HEAD
@@ -561,6 +592,7 @@ git push origin main
 ```
 
 **Schema Out of Sync:**
+
 ```bash
 # Generate sync migration
 yarn db:generate --name "sync_schema"
@@ -570,6 +602,7 @@ yarn db:migrate
 ### 📋 Best Practices Checklist
 
 **Before Every Migration:**
+
 - [ ] Schema changes are small and focused
 - [ ] Migration has descriptive name
 - [ ] Tested locally with `yarn db:migrate`
@@ -577,12 +610,14 @@ yarn db:migrate
 - [ ] All tests pass
 
 **When Writing Database Code:**
+
 - [ ] Use transactions for multi-step operations
 - [ ] Check for existing records before inserting (idempotency)
 - [ ] Use proper TypeScript types from schema
 - [ ] Test with both empty and populated database
 
 **Production Deployment:**
+
 - [ ] CI/CD pipeline runs migrations automatically
 - [ ] Never edit existing migration files
 - [ ] Let automated process handle deployments
@@ -590,29 +625,28 @@ yarn db:migrate
 
 ### ⚠️ Common Pitfalls
 
-| Issue | Problem | Solution |
-|-------|---------|----------|
-| **Edited existing migration** | Breaks migration history | Never edit - create new migration instead |
-| **Skipped local testing** | Migration fails in CI | Always test with `yarn db:migrate` first |
-| **No transaction for multi-step** | Partial updates on failure | Wrap related operations in `db.transaction()` |
-| **Applied then dropped** | Broken migration journal | Only drop migrations that haven't been applied |
-| **Large schema changes** | Hard to debug/rollback | Break into smaller, incremental migrations |
+| Issue                             | Problem                    | Solution                                       |
+| --------------------------------- | -------------------------- | ---------------------------------------------- |
+| **Edited existing migration**     | Breaks migration history   | Never edit - create new migration instead      |
+| **Skipped local testing**         | Migration fails in CI      | Always test with `yarn db:migrate` first       |
+| **No transaction for multi-step** | Partial updates on failure | Wrap related operations in `db.transaction()`  |
+| **Applied then dropped**          | Broken migration journal   | Only drop migrations that haven't been applied |
+| **Large schema changes**          | Hard to debug/rollback     | Break into smaller, incremental migrations     |
 
 ### 🔍 Troubleshooting Guide
 
 **Symptoms & Solutions:**
 
-| Symptom | Diagnosis | Fix |
-|---------|-----------|-----|
-| Migration fails locally | Schema syntax error | Check generated SQL, fix schema, regenerate |
-| Migration fails in CI | Connection/secrets issue | Verify `DEMO_DB_CONNECTION` in GitHub secrets |
-| Schema out of sync | Missed migration or manual edit | Generate sync migration |
-| Duplicate entries when seeding | Not idempotent | Add existence checks before inserting |
-| Transaction rollback | One operation failed | Check error logs, fix failing operation |
+| Symptom                        | Diagnosis                       | Fix                                           |
+| ------------------------------ | ------------------------------- | --------------------------------------------- |
+| Migration fails locally        | Schema syntax error             | Check generated SQL, fix schema, regenerate   |
+| Migration fails in CI          | Connection/secrets issue        | Verify `DEMO_DB_CONNECTION` in GitHub secrets |
+| Schema out of sync             | Missed migration or manual edit | Generate sync migration                       |
+| Duplicate entries when seeding | Not idempotent                  | Add existence checks before inserting         |
+| Transaction rollback           | One operation failed            | Check error logs, fix failing operation       |
 
 ### 📚 Related Documentation
 
-- **Queue System:** See `/docs/guides/job-queues-with-pgboss.md` for pg-boss database schema
 - **Deployment:** See GitHub Actions workflows for automated migration process
 - **Reset Strategy:** See `/docs/adr/003-database-reset-strategy.md` for architectural decision
 
@@ -624,4 +658,5 @@ yarn db:migrate
 **Status:** Current
 
 **Changelog:**
+
 - **v1.0 (Jan 29, 2026):** Unified documentation from database-migrations, database-transactions-guide, and database-seeding guides

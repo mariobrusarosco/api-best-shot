@@ -6,7 +6,7 @@ import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/services/database';
 import Logger from '@/services/logger';
 import { DOMAINS } from '@/services/logger/constants';
-import { safeString } from '@/utils';
+import { safeString, toNumberOrNull } from '@/utils';
 import { and, eq, inArray } from 'drizzle-orm';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
@@ -338,15 +338,15 @@ export class MatchesDataProviderService {
       const matches = rawContent.events.map((event: API_SOFASCORE_ROUND['events'][number]) => {
         return {
           externalId: safeString(event.id),
-          provider: 'sofa',
+          provider: 'sofascore',
           tournamentId,
           roundSlug,
           externalHomeTeamId: safeString(event.homeTeam.id),
           externalAwayTeamId: safeString(event.awayTeam.id),
-          homeScore: safeString(event.homeScore.display, null),
-          homePenaltiesScore: safeString(event.homeScore.penalties, null),
-          awayScore: safeString(event.awayScore.display, null),
-          awayPenaltiesScore: safeString(event.awayScore.penalties, null),
+          homeScore: toNumberOrNull(safeString(event.homeScore.display, null)),
+          homePenaltiesScore: toNumberOrNull(safeString(event.homeScore.penalties, null)),
+          awayScore: toNumberOrNull(safeString(event.awayScore.display, null)),
+          awayPenaltiesScore: toNumberOrNull(safeString(event.awayScore.penalties, null)),
           date: safeSofaDate(event.startTimestamp! * 1000),
           status: this.getMatchStatus(event),
         } as DB_InsertMatch;
@@ -411,7 +411,11 @@ export class MatchesDataProviderService {
 
     try {
       const enrichedMatches = await this.enrichMatchesWithTeamIds(matches);
-      if (enrichedMatches.length === 0) return [];
+      if (enrichedMatches.length === 0) {
+        throw new Error(
+          'No matches could be enriched with team IDs - teams may not exist in the database yet. Ensure tournament teams are created before creating matches.'
+        );
+      }
 
       const query = await db.insert(T_Match).values(enrichedMatches);
 

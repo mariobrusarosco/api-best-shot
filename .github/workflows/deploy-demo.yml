@@ -51,11 +51,6 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEMO }}
 
-      - name: Deploy Scheduler to Railway Demo
-        run: yarn dlx @railway/cli up --service api-best-shot-scheduler
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEMO }}
-
       - name: Run database migrations (Demo)
         run: yarn db:migrate
         env:

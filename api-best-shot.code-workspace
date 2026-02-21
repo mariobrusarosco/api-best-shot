@@ -1,26 +1,10 @@
 {
   "folders": [
     {
-      "path": ".",
-    },
-    {
-      "path": "../best-shot",
-    },
-    {
-      "path": "../garden",
-    },
-    {
-      "path": "../best-shot-app",
-    },
-    {
-      "path": "../infrastructure",
-    },
-    {
-      "path": "../bazinga",
-    },
-    {
-      "path": "../financial-app",
-    },
+      "path": "."
+    }
   ],
-  "settings": {},
+  "settings": {
+    "chatgpt.commentCodeLensEnabled": false
+  },
 }

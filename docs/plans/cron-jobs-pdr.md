@@ -457,6 +457,27 @@ No open questions for cron-only v1 at this stage.
 5. Risk: run history table grows indefinitely.
    - Mitigation: retention policy target set to 180 days and future cleanup maintenance script.
 
+## 20) Implementation coverage (must include all)
+
+Cron v1 is only complete when all of these are delivered:
+1. Data model and migrations for `cron_job_definitions` and `cron_job_runs`.
+2. Admin API for create/list/pause/resume/new-version/run-now and run history reads.
+3. Dedicated scheduler app entrypoint and runtime (`src/scheduler/*`).
+4. Startup recovery behavior:
+   - stale `running` > 15 minutes -> `failed`
+   - execute persisted `pending` runs
+5. Timer registration and execution for recurring schedules.
+6. Idempotent run creation (`ON CONFLICT DO NOTHING` + unique slot key).
+7. Overlap rule enforced (`skip`) for scheduled and run-now paths.
+8. Target validation against code-level registry (reject unknown targets).
+9. Pause requires mandatory reason text.
+10. Access control: cron run history is admin-only.
+11. Railway deployment with separate scheduler service/process.
+12. Staging verification using the DoD recurring 5-min test job.
+
+Reference execution plan:
+`/Users/mariobrusarosco/coding/api-best-shot/docs/plans/cron-jobs-implementation-checklist.md`
+
 ---
 
 This PDR is intentionally scoped to cron-only v1.

@@ -232,6 +232,13 @@
       "when": 1769876427484,
       "tag": "0032_whole_azazel",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1771768597858,
+      "tag": "0033_goofy_scrambler",
+      "breakpoints": true
     }
   ]
 }

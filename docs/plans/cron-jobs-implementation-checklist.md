@@ -51,7 +51,7 @@ Scope: Cron-only v1, broken into small logical tasks
 1. Export cron schema in `/Users/mariobrusarosco/coding/api-best-shot/src/services/database/schema.ts`.
 2. Ensure imports compile.
 
-### A5 - Create migration and apply locally []
+### A5 - Create migration and apply locally [x]
 
 1. Generate migration.
 2. Run migration.

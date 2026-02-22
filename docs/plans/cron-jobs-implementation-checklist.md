@@ -82,7 +82,7 @@ Checkpoint A (required):
 6. Mark `failed`.
 7. Find stale `running` and mark failed.
 
-### B3 - Active-run overlap query []
+### B3 - Active-run overlap query [x]
 
 1. Query active run for same definition/version.
 2. Return boolean/helper for skip policy.

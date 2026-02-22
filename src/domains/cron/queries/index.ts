@@ -267,6 +267,31 @@ export const QUERIES_CRON_JOB_RUNS = {
       .limit(limit);
   },
 
+  async findActiveRunByDefinitionVersion(
+    jobDefinitionId: string,
+    jobVersion: number
+  ): Promise<DB_SelectCronJobRun | null> {
+    const [result] = await db
+      .select()
+      .from(T_CronJobRuns)
+      .where(
+        and(
+          eq(T_CronJobRuns.jobDefinitionId, jobDefinitionId),
+          eq(T_CronJobRuns.jobVersion, jobVersion),
+          eq(T_CronJobRuns.status, 'running')
+        )
+      )
+      .orderBy(desc(T_CronJobRuns.startedAt), desc(T_CronJobRuns.createdAt))
+      .limit(1);
+
+    return result || null;
+  },
+
+  async hasActiveRunByDefinitionVersion(jobDefinitionId: string, jobVersion: number): Promise<boolean> {
+    const result = await this.findActiveRunByDefinitionVersion(jobDefinitionId, jobVersion);
+    return !!result;
+  },
+
   async markRun(
     id: string,
     updates: Partial<DB_UpdateCronJobRun>

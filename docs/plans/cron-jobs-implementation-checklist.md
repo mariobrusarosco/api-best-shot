@@ -46,7 +46,7 @@ Scope: Cron-only v1, broken into small logical tasks
 3. Add unique scheduled-slot guard for idempotency:
    - `(job_definition_id, scheduled_at, trigger_type)` for scheduled runs.
 
-### A4 - Register schema exports []
+### A4 - Register schema exports [x]
 
 1. Export cron schema in `/Users/mariobrusarosco/coding/api-best-shot/src/services/database/schema.ts`.
 2. Ensure imports compile.

@@ -4,6 +4,7 @@ export * from '../../domains/match/schema';
 export * from '../../domains/member/schema';
 
 export * from '../../domains/data-provider/schema';
+export * from '../../domains/cron/schema';
 export * from '../../domains/team/schema';
 export * from '../../domains/tournament-round/schema';
 export * from '../../domains/tournament/schema';

@@ -1,5 +1,5 @@
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { Response } from 'express';
 import { GlobalErrorMapper } from './mapper';
 

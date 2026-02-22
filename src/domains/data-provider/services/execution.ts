@@ -1,6 +1,6 @@
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
-import { SlackBlock, SlackNotificationPayload, slackService } from '@/services/slack';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
+import { SlackBlock, SlackNotificationPayload, slackService } from '@/core/slack';
 import { QUERIES_DATA_PROVIDER_EXECUTIONS } from '../queries';
 import type { DB_InsertDataProviderExecution, DB_SelectDataProviderExecution } from '../schema';
 

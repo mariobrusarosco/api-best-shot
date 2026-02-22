@@ -1,4 +1,4 @@
-import db from '@/services/database';
+import db from '@/core/database';
 import { and, asc, desc, eq, inArray, lt } from 'drizzle-orm';
 import {
   DB_InsertCronJobDefinition,

@@ -1,8 +1,8 @@
 import { and, eq, isNull, or } from 'drizzle-orm';
-import db from '../../src/services/database';
-import { T_Match, T_Team } from '../../src/services/database/schema';
-import Logger from '../../src/services/logger';
-import { DOMAINS } from '../../src/services/logger/constants';
+import db from '../../src/core/database';
+import { T_Match, T_Team } from '../../src/core/database/schema';
+import Logger from '../../src/core/logger';
+import { DOMAINS } from '../../src/core/logger/constants';
 
 async function populateMatchTeamFKs() {
   try {

@@ -1,6 +1,6 @@
 import { env } from '@/config/env';
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import type { NextFunction, Request, Response } from 'express';
 
 export const InternalMiddleware = (req: Request, res: Response, next: NextFunction) => {

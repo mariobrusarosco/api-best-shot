@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import db from '../src/services/database';
+import db from '../src/core/database';
 
 async function main() {
   try {

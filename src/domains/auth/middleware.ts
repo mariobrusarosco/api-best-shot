@@ -2,8 +2,8 @@ import { Utils } from '@/domains/auth/utils';
 import { DB_SelectMember } from '@/domains/member/schema';
 import { MemberService } from '@/domains/member/services';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { NextFunction, Request, Response } from 'express';
 
 export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) => {

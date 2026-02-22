@@ -16,7 +16,7 @@ A unified interface for interacting with different AI models (OpenAI, Ollama, et
 ### Basic Usage
 
 ```typescript
-import { AIClient } from '@/services/ai-client';
+import { AIClient } from '@/core/ai-client';
 
 // Using OpenAI
 const openaiClient = new AIClient('openai', {
@@ -203,7 +203,7 @@ const client = new AIClient('ollama', {
 1. **Create Provider Implementation**:
 
 ```typescript
-// src/services/ai-client/providers/new-provider-client.ts
+// src/core/ai-client/providers/new-provider-client.ts
 export class NewProviderClient extends BaseAIClient {
   async generateResponse(input: AIMessage[] | string): Promise<AIResponse> {
     // Implementation specific to new provider
@@ -214,7 +214,7 @@ export class NewProviderClient extends BaseAIClient {
 2. **Update Factory**:
 
 ```typescript
-// src/services/ai-client/factory.ts
+// src/core/ai-client/factory.ts
 case 'newprovider':
   return new NewProviderClient(config);
 ```
@@ -222,14 +222,14 @@ case 'newprovider':
 3. **Update Types**:
 
 ```typescript
-// src/services/ai-client/types.ts
+// src/core/ai-client/types.ts
 export type AIProvider = 'openai' | 'ollama' | 'newprovider';
 ```
 
 ## 🧪 Testing
 
 ```typescript
-import { AIClient } from '@/services/ai-client';
+import { AIClient } from '@/core/ai-client';
 
 // Mock for testing
 const mockClient = new AIClient('openai', {

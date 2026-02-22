@@ -1,5 +1,5 @@
 import { T_Member } from '@/domains/member/schema';
-import db from '@/services/database';
+import db from '@/core/database';
 import { eq } from 'drizzle-orm';
 
 const getMemberByPublicId = async (publicId: string) => {

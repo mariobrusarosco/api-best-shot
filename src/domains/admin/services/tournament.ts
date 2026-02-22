@@ -4,9 +4,9 @@ import { TournamentDataProvider } from '@/domains/data-provider/services/tournam
 import type { TournamentRequestIn } from '@/domains/data-provider/typing';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import db from '@/services/database';
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import db from '@/core/database';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { randomUUID } from 'crypto';
 import { desc, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';

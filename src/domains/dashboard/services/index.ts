@@ -1,6 +1,6 @@
 import { MatchQueries } from '@/domains/match/queries';
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 
 const getDashboard = async () => {
   const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase();

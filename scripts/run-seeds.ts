@@ -1,4 +1,4 @@
-import db from '../src/services/database';
+import db from '../src/core/database';
 import { T_Member } from '../src/domains/member/schema';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';

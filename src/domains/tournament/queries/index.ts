@@ -11,7 +11,7 @@ import {
   T_TournamentMember,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
-import db from '@/services/database';
+import db from '@/core/database';
 import { and, eq, sql, SQL } from 'drizzle-orm';
 import { TournamentWithTypedMode } from '../typing';
 

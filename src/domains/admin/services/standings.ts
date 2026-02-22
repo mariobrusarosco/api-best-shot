@@ -2,8 +2,8 @@ import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-s
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
 

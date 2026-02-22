@@ -2,7 +2,7 @@ import { T_League, T_LeagueRole, T_LeagueTournament } from '@/domains/league/sch
 import { T_Member } from '@/domains/member/schema';
 
 import { T_Tournament } from '@/domains/tournament/schema';
-import db from '@/services/database';
+import db from '@/core/database';
 import { and, eq, sql } from 'drizzle-orm';
 
 const selectLeague = async (leagueId: string) => {

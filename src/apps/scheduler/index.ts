@@ -2,8 +2,8 @@ import { config } from 'dotenv';
 config({ path: process.env.ENV_PATH || '.env' });
 
 import { env } from '@/config/env';
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 
 Logger.info('Starting Best Shot Scheduler runtime', {
   environment: env.NODE_ENV,

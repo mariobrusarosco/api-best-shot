@@ -3,8 +3,8 @@ import { AuthenticateMemberRequest } from '../typing';
 import { SERVICES_AUTH } from '../services';
 import { z } from 'zod';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { ErrorMapper } from '../error-handling/mapper';
 
 const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) => {

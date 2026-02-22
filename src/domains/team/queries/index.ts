@@ -1,7 +1,7 @@
-import db from '@/services/database';
+import db from '@/core/database';
 import { T_Team, DB_InsertTeam } from '@/domains/team/schema';
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 
 const createTeams = async (teams: DB_InsertTeam[]) => {
   return await db.insert(T_Team).values(teams).onConflictDoNothing().returning();

@@ -9,7 +9,7 @@
  */
 
 import { T_TournamentStandings } from '@/domains/tournament/schema';
-import db from '@/services/database';
+import db from '@/core/database';
 import { isNull, sql } from 'drizzle-orm';
 
 async function populateTournamentStandingsTeamId() {

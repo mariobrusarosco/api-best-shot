@@ -1,7 +1,7 @@
-import { T_Member } from '@/services/database/schema';
+import { T_Member } from '@/core/database/schema';
 import { eq } from 'drizzle-orm';
 
-import db from '@/services/database';
+import db from '@/core/database';
 import { CreateMemberInput } from '../api/typing';
 
 const getMember = async (memberId: string) => {

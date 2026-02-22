@@ -1,4 +1,4 @@
-import db from '@/services/database';
+import db from '@/core/database';
 import {
   T_TournamentRound,
   DB_InsertTournamentRound,
@@ -6,8 +6,8 @@ import {
 } from '@/domains/tournament-round/schema';
 import { and, asc, eq } from 'drizzle-orm';
 import { DatabaseError } from '@/domains/shared/error-handling/database';
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 
 const getRound = async (tournamentId: string, roundSlug: string) => {
   try {

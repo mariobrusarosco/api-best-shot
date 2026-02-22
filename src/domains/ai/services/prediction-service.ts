@@ -3,7 +3,7 @@ import { T_Match, DB_SelectMatch } from '@/domains/match/schema';
 import { T_Team, DB_SelectTeam } from '@/domains/team/schema';
 import { T_Tournament, DB_SelectTournament } from '@/domains/tournament/schema';
 import { T_TournamentStandings, DB_SelectTournamentStandings } from '@/domains/tournament/schema';
-import db from '@/services/database';
+import db from '@/core/database';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { zodResponseFormat } from 'openai/helpers/zod';

@@ -1,7 +1,7 @@
 import { T_Guess } from '@/domains/guess/schema';
 import { T_League, T_LeagueRole, T_LeagueTournament } from '@/domains/league/schema';
 
-import db from '@/services/database';
+import db from '@/core/database';
 
 /**
  * Service for administrative maintenance tasks

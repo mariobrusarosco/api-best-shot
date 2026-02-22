@@ -1,4 +1,4 @@
-import db from '@/services/database';
+import db from '@/core/database';
 import { and, desc, eq, gte, lte } from 'drizzle-orm';
 import {
   DB_InsertDataProviderExecution,

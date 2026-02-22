@@ -2,8 +2,8 @@ import { ErrorMapper } from '@/domains/auth/error-handling/mapper';
 import { Utils } from '@/domains/auth/utils';
 
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { Request, Response } from 'express';
 import { MemberService } from '../services';
 import { createMemberSchema } from './schemas';

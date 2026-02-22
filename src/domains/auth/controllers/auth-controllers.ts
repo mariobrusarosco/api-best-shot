@@ -1,9 +1,9 @@
 import { Utils } from '@/domains/auth/utils';
 import { T_Member } from '@/domains/member/schema';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
+import db from '@/core/database';
 import { eq } from 'drizzle-orm';
 import { Response } from 'express';
-import db from '../../../services/database';
 import { AuthenticateMemberRequest } from '../typing';
 
 async function authenticateUser(req: AuthenticateMemberRequest, res: Response) {

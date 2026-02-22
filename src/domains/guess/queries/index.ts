@@ -1,4 +1,4 @@
-import db from '@/services/database';
+import db from '@/core/database';
 import { T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
 import { eq, and } from 'drizzle-orm';

@@ -28,7 +28,7 @@
 
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
-import db from '@/services/database';
+import db from '@/core/database';
 import { QUERIES_TOURNAMENT } from '../queries';
 
 import type { ITournamentStadingsMode } from '@/domains/tournament/typing';

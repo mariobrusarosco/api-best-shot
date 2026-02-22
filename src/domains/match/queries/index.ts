@@ -1,5 +1,5 @@
-import db from '@/services/database';
-import { T_Match, T_Team, T_Tournament } from '@/services/database/schema';
+import db from '@/core/database';
+import { T_Match, T_Team, T_Tournament } from '@/core/database/schema';
 import { defineTimebox } from '@/utils/timebox';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';

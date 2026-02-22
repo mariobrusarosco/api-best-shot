@@ -4,9 +4,9 @@ import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { CreateTournamentInput, DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 import { DB_InsertTournament, DB_UpdateTournament, T_Tournament } from '@/domains/tournament/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import db from '@/services/database';
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import db from '@/core/database';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { and, eq } from 'drizzle-orm';
 
 export class TournamentDataProvider {

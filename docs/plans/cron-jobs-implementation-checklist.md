@@ -48,7 +48,7 @@ Scope: Cron-only v1, broken into small logical tasks
 
 ### A4 - Register schema exports [x]
 
-1. Export cron schema in `/Users/mariobrusarosco/coding/api-best-shot/src/services/database/schema.ts`.
+1. Export cron schema in `/Users/mariobrusarosco/coding/api-best-shot/src/core/database/schema.ts`.
 2. Ensure imports compile.
 
 ### A5 - Create migration and apply locally [x]
@@ -171,7 +171,7 @@ Checkpoint D (required):
 3. Move API bootstrap from `/Users/mariobrusarosco/coding/api-best-shot/src/index.ts` to `/Users/mariobrusarosco/coding/api-best-shot/src/apps/api/index.ts`.
 4. Keep `/Users/mariobrusarosco/coding/api-best-shot/src/index.ts` as temporary forwarder during transition.
 
-### E0.3 - Shared infra rename (`services` -> `core`) []
+### E0.3 - Shared infra rename (`services` -> `core`) [x]
 
 1. Rename `/Users/mariobrusarosco/coding/api-best-shot/src/services` to `/Users/mariobrusarosco/coding/api-best-shot/src/core`.
 2. Refactor all imports from `@/services/*` to `@/core/*`.

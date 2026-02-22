@@ -1,6 +1,6 @@
 import { env } from '@/config/env';
 import { T_Member } from '@/domains/member/schema';
-import db from '@/services/database';
+import db from '@/core/database';
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';

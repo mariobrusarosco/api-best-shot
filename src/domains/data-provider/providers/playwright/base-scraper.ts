@@ -1,5 +1,5 @@
-import Logger from '@/services/logger';
-import { DOMAINS } from '@/services/logger/constants';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import mime from 'mime-types';
 import type { Browser, BrowserContext, Page, Response } from 'playwright';
 import { chromium } from 'playwright';

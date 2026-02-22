@@ -94,7 +94,7 @@ Checkpoint B (required):
 
 ## 4) Phase C - Service layer (business rules)
 
-### C1 - Target registry service []
+### C1 - Target registry service [x]
 
 1. Add code-level target registry.
 2. Expose `isValidTarget` and handler resolver.

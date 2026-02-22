@@ -1,6 +1,11 @@
 import { sql } from 'drizzle-orm';
 import { check, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
-import { CRON_JOB_DEFINITION_STATUSES, CRON_JOB_SCHEDULE_TYPES } from '@/domains/cron/typing';
+import {
+  CRON_JOB_DEFINITION_STATUSES,
+  CRON_JOB_SCHEDULE_TYPES,
+  CRON_RUN_STATUSES,
+  CRON_RUN_TRIGGER_TYPES,
+} from '@/domains/cron/typing';
 
 export const T_CronJobDefinitions = pgTable(
   'cron_job_definitions',
@@ -50,3 +55,53 @@ export const T_CronJobDefinitions = pgTable(
 export type DB_InsertCronJobDefinition = typeof T_CronJobDefinitions.$inferInsert;
 export type DB_UpdateCronJobDefinition = typeof T_CronJobDefinitions.$inferInsert;
 export type DB_SelectCronJobDefinition = typeof T_CronJobDefinitions.$inferSelect;
+
+export const T_CronJobRuns = pgTable(
+  'cron_job_runs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    jobDefinitionId: uuid('job_definition_id')
+      .notNull()
+      .references(() => T_CronJobDefinitions.id, { onDelete: 'restrict' }),
+    jobKey: text('job_key').notNull(),
+    jobVersion: integer('job_version').notNull(),
+    target: text('target').notNull(),
+    payloadSnapshot: jsonb('payload_snapshot'),
+    triggerType: text('trigger_type', {
+      enum: Object.values(CRON_RUN_TRIGGER_TYPES) as [string, ...string[]],
+    }).notNull(),
+    scheduledAt: timestamp('scheduled_at').notNull(),
+    startedAt: timestamp('started_at'),
+    finishedAt: timestamp('finished_at'),
+    status: text('status', {
+      enum: Object.values(CRON_RUN_STATUSES) as [string, ...string[]],
+    })
+      .notNull()
+      .default('pending'),
+    failureCode: text('failure_code'),
+    failureMessage: text('failure_message'),
+    failureDetails: jsonb('failure_details'),
+    runnerInstanceId: text('runner_instance_id'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  table => ({
+    statusScheduledAtIdx: index('cron_job_runs_status_scheduled_at_idx').on(table.status, table.scheduledAt),
+    jobDefinitionIdIdx: index('cron_job_runs_job_definition_id_idx').on(table.jobDefinitionId),
+    jobKeyVersionIdx: index('cron_job_runs_job_key_job_version_idx').on(table.jobKey, table.jobVersion),
+    targetIdx: index('cron_job_runs_target_idx').on(table.target),
+    createdAtIdx: index('cron_job_runs_created_at_idx').on(table.createdAt),
+    uniqueScheduledSlot: uniqueIndex('cron_job_runs_scheduled_slot_unique_idx').on(
+      table.jobDefinitionId,
+      table.scheduledAt,
+      table.triggerType
+    ),
+  })
+);
+
+export type DB_InsertCronJobRun = typeof T_CronJobRuns.$inferInsert;
+export type DB_UpdateCronJobRun = typeof T_CronJobRuns.$inferInsert;
+export type DB_SelectCronJobRun = typeof T_CronJobRuns.$inferSelect;

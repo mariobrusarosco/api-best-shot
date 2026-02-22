@@ -39,7 +39,7 @@ Scope: Cron-only v1, broken into small logical tasks
 1. Add table fields and constraints.
 2. Add indexes for `status`, `target`, `(job_key, version)`, `schedule_type`.
 
-### A3 - Add `cron_job_runs` schema []
+### A3 - Add `cron_job_runs` schema [x]
 
 1. Add table fields and FK to `job_definition_id`.
 2. Add indexes for `(status, scheduled_at)`, `(job_key, job_version)`, `target`, `created_at`.

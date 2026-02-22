@@ -7,27 +7,31 @@ import express from 'express';
 import requestLogger from '@/middlewares/logger';
 import apiRouter from '@/router';
 
-import { env } from '@/config/env';
 import accessControl from '@/domains/shared/middlewares/access-control';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const API_VERSION = process.env.API_VERSION || '/v2';
+const PORT = Number(process.env.PORT || '9090');
+const ACCESS_CONTROL_ALLOW_ORIGIN = process.env.ACCESS_CONTROL_ALLOW_ORIGIN || '*';
+
 Logger.info('Starting API Best Shot...', {
-  environment: env.NODE_ENV,
-  port: env.PORT,
-  version: env.API_VERSION,
-  CORS: env.ACCESS_CONTROL_ALLOW_ORIGIN,
+  environment: NODE_ENV,
+  port: PORT,
+  version: API_VERSION,
+  CORS: ACCESS_CONTROL_ALLOW_ORIGIN,
 });
 
 const app = express();
-const port = Number(process.env.PORT || env.PORT || 8080);
+const port = PORT;
 
 // Simple health check endpoint - add this BEFORE complex initialization
 app.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    environment: env.NODE_ENV,
+    environment: NODE_ENV,
     port: port,
   });
 });
@@ -38,7 +42,7 @@ Logger.info('Registered /health endpoint');
 app.get('/', (_req, res) => {
   res.status(200).json({
     message: 'API Best Shot Demo - Hello World!',
-    version: env.API_VERSION || 'v1',
+    version: API_VERSION || 'v1',
   });
 });
 
@@ -53,7 +57,7 @@ app.get('/debug/env', (_req, res) => {
     HAS_AWS_SECRET_KEY: !!process.env.AWS_SECRET_ACCESS_KEY,
     HAS_AWS_BUCKET: !!process.env.AWS_BUCKET_NAME,
     HAS_AWS_CLOUDFRONT: !!process.env.AWS_CLOUDFRONT_URL,
-    HAS_INTERNAL_SERVICE_TOKEN: !!env.INTERNAL_SERVICE_TOKEN,
+    HAS_INTERNAL_SERVICE_TOKEN: !!process.env.INTERNAL_SERVICE_TOKEN,
     HAS_CORS_ORIGIN: !!process.env.ACCESS_CONTROL_ALLOW_ORIGIN,
     HAS_COOKIE_NAME: !!process.env.MEMBER_PUBLIC_ID_COOKIE,
     SENTRY_DSN_PREFIX: `${process.env.SENTRY_DSN?.substring(0, 20)}...` || 'NOT_SET',
@@ -78,7 +82,7 @@ app.use(cookieParser());
 Logger.info('Registered cookie parser');
 
 const corsConfig = {
-  origin: process.env.ACCESS_CONTROL_ALLOW_ORIGIN,
+  origin: ACCESS_CONTROL_ALLOW_ORIGIN,
   credentials: true,
 };
 app.use(cors(corsConfig));
@@ -94,9 +98,9 @@ app.use('/api', apiRouter);
 Logger.info('Registered /api router');
 
 app.listen(port, '0.0.0.0', () => {
-  Logger.info(`Server running on port ${port} in ${env.NODE_ENV} mode`, {
+  Logger.info(`Server running on port ${port} in ${NODE_ENV} mode`, {
     port,
-    environment: env.NODE_ENV,
+    environment: NODE_ENV,
   });
 });
 

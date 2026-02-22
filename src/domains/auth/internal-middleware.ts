@@ -1,4 +1,3 @@
-import { env } from '@/config/env';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import type { NextFunction, Request, Response } from 'express';
@@ -22,7 +21,7 @@ export const InternalMiddleware = (req: Request, res: Response, next: NextFuncti
       });
     }
 
-    if (internalToken !== env.INTERNAL_SERVICE_TOKEN) {
+    if (internalToken !== process.env.INTERNAL_SERVICE_TOKEN) {
       Logger.error(new Error('Invalid internal token provided'), {
         domain: DOMAINS.AUTH,
         component: 'middleware',

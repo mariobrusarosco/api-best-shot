@@ -246,17 +246,8 @@ gcloud secrets list
 
 ## 🚨 **Environment Validation**
 
-Your app validates environment variables at startup using **Zod schemas**:
-
-```typescript
-// src/config/env.ts
-const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'demo', 'production']),
-  API_DOMAIN: z.string().min(1, 'API domain is required'),
-  JWT_SECRET: z.string().min(1, 'JWT secret is required'),
-  // ... more validations
-});
-```
+There is currently no centralized env schema file.
+The app reads values directly from `process.env` at runtime.
 
 ### **Validation Flow**
 
@@ -277,14 +268,14 @@ Validate with Zod Schema
 
 ### **Common Issues:**
 
-#### **"Environment Validation Failed"**
+#### **"Environment Validation / Missing env vars"**
 
 ```bash
 # Check your .env file has all required variables
 cat .env
 
-# Verify against the schema in src/config/env.ts
-# Missing: API_DOMAIN, JWT_SECRET are common culprits
+# Verify required variables for the runtime you are starting
+# Common missing vars: DB_STRING_CONNECTION, JWT_SECRET
 ```
 
 #### **"Cannot connect to database"**

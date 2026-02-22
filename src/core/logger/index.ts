@@ -12,17 +12,19 @@
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import * as pc from 'picocolors';
-import { env } from '@/config/env';
 import { LogTags, LogExtra } from './types';
 
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const SENTRY_DSN = process.env.SENTRY_DSN || '';
+
 // Determine if Sentry should be enabled
-const isSentryEnabled = ['production', 'staging', 'demo'].includes(env.NODE_ENV);
+const isSentryEnabled = ['production', 'staging', 'demo'].includes(NODE_ENV) && SENTRY_DSN.trim().length > 0;
 
 // Initialize Sentry if enabled
 if (isSentryEnabled) {
   Sentry.init({
-    dsn: env.SENTRY_DSN,
-    environment: env.NODE_ENV,
+    dsn: SENTRY_DSN,
+    environment: NODE_ENV,
     integrations: [nodeProfilingIntegration()],
     tracesSampleRate: 1.0,
     profilesSampleRate: 1.0,
@@ -80,7 +82,7 @@ class LoggerService {
     const finalTags: Record<string, string> = {
       domain,
       operation,
-      environment: env.NODE_ENV,
+      environment: NODE_ENV,
     };
     if (component) {
       finalTags.component = component;

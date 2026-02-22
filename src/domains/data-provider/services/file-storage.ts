@@ -1,4 +1,3 @@
-import { env } from '@/config/env';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -19,17 +18,17 @@ export class S3FileStorage {
   private readonly credentialsValid: boolean;
 
   constructor() {
-    this.bucketName = env.AWS_BUCKET_NAME;
+    this.bucketName = process.env.AWS_BUCKET_NAME || '';
 
     // Validate credentials before creating client
-    const accessKeyId = env.AWS_ACCESS_KEY_ID;
-    const secretAccessKey = env.AWS_SECRET_ACCESS_KEY;
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID || '';
+    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || '';
 
     this.credentialsValid = !!(accessKeyId && secretAccessKey && this.bucketName);
 
     if (this.credentialsValid) {
       this.s3Client = new S3Client({
-        region: env.AWS_REGION,
+        region: process.env.AWS_REGION || 'us-east-1',
         credentials: {
           accessKeyId,
           secretAccessKey,
@@ -90,6 +89,6 @@ export class S3FileStorage {
   }
 
   public getCloudFrontUrl(s3Key: string): string {
-    return `https://${env.AWS_CLOUDFRONT_URL}/${s3Key}`;
+    return `https://${process.env.AWS_CLOUDFRONT_URL || ''}/${s3Key}`;
   }
 }

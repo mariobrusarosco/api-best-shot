@@ -1,4 +1,3 @@
-import { env } from '@/config/env';
 import { T_Member } from '@/domains/member/schema';
 import db from '@/core/database';
 import bcrypt from 'bcryptjs';
@@ -6,13 +5,16 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const JWT_SECRET = process.env.JWT_SECRET || '';
+
 export const API_ADMIN = {
   healthCheck: async (_req: Request, res: Response) => {
     try {
       res.status(200).json({
         success: true,
         message: 'Admin API is healthy',
-        environment: env.NODE_ENV,
+        environment: NODE_ENV,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -28,10 +30,10 @@ export const API_ADMIN = {
   seedDatabase: async (req: Request, res: Response) => {
     try {
       // Security check - only allow in demo environment
-      if (env.NODE_ENV !== 'demo' && env.NODE_ENV !== 'development') {
+      if (NODE_ENV !== 'demo' && NODE_ENV !== 'development') {
         return res.status(403).json({
           error: 'Seeding is only allowed in demo, development ',
-          environment: env.NODE_ENV,
+          environment: NODE_ENV,
         });
       }
 
@@ -41,7 +43,7 @@ export const API_ADMIN = {
 
       try {
         console.log('Attempting to verify token...');
-        const token = jwt.verify(tokenString, env.JWT_SECRET);
+        const token = jwt.verify(tokenString, JWT_SECRET);
         console.log('Token verified successfully');
 
         if (!token) {
@@ -117,7 +119,7 @@ export const API_ADMIN = {
         success: true,
         message: 'Database seeded successfully',
         membersCreated: members.length,
-        environment: env.NODE_ENV,
+        environment: NODE_ENV,
       });
     } catch (error) {
       console.error('❌ Error seeding database:', error);

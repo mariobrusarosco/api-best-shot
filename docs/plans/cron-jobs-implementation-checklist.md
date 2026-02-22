@@ -256,7 +256,7 @@ Checkpoint E (required):
 
 ## 8) Phase F - Package scripts and local UX
 
-### F1 - Add scheduler scripts []
+### F1 - Add scheduler scripts [x]
 
 1. Add local process scripts:
 2. `dev:api`
@@ -268,7 +268,7 @@ Checkpoint E (required):
 8. `serve:scheduler:staging`
 9. `serve:scheduler:prod`
 
-### F2 - Local runbook []
+### F2 - Local runbook [x]
 
 1. Option A (single command): `yarn dev:stack`
 2. Option B (split terminals):
@@ -281,12 +281,13 @@ Checkpoint F (required):
 
 ## 9) Phase G - Environment and runtime hardening
 
-### G1 - Scheduler env requirements []
+### G1 - Scheduler env requirements [x]
 
 1. Verify scheduler-required env vars exist in staging/prod service configs.
-2. Resolve env validation conflicts between API and scheduler runtime.
+2. Remove centralized env schema dependency (`src/config/env.ts`) from runtime code.
+3. Use direct `process.env` reads in API/scheduler runtime paths.
 
-### G2 - Logging/monitoring tags []
+### G2 - Logging/monitoring tags [x]
 
 1. Add clear scheduler domain/component tags in logger context.
 

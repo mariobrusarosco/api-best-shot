@@ -3,11 +3,12 @@ config({ path: process.env.ENV_PATH || '.env' });
 
 import * as cron from 'node-cron';
 import type { ScheduledTask } from 'node-cron';
-import { env } from '@/config/env';
 import { SERVICES_CRON } from '@/domains/cron/services';
 import { DB_SelectCronJobDefinition } from '@/domains/cron/schema';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
+
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const HEARTBEAT_INTERVAL_MS = 60_000;
 const STALE_RUNNING_TIMEOUT_MINUTES = 15;
@@ -52,6 +53,7 @@ const shutdown = (signal: NodeJS.Signals) => {
   isShuttingDown = true;
 
   Logger.info('Scheduler shutdown requested', {
+    domain: DOMAINS.DATA_PROVIDER,
     component: 'scheduler',
     operation: 'shutdown',
     signal,
@@ -70,6 +72,7 @@ const shutdown = (signal: NodeJS.Signals) => {
   const stoppedTasksCount = stopAllRegisteredRecurringTasks();
 
   Logger.info('Scheduler shutdown completed', {
+    domain: DOMAINS.DATA_PROVIDER,
     component: 'scheduler',
     operation: 'shutdown',
     stoppedTasksCount,
@@ -98,6 +101,7 @@ const recoverStaleRunningRunsOnStartup = async (): Promise<void> => {
   });
 
   Logger.info('Scheduler stale-running recovery completed', {
+    domain: DOMAINS.DATA_PROVIDER,
     component: 'scheduler',
     operation: 'startup_stale_recovery',
     staleBefore: staleBefore.toISOString(),
@@ -109,7 +113,7 @@ const recoverStaleRunningRunsOnStartup = async (): Promise<void> => {
 
 const buildRunnerInstanceId = (): string => {
   const serviceName = process.env.RAILWAY_SERVICE_NAME || 'scheduler';
-  const environment = process.env.RAILWAY_ENVIRONMENT_NAME || env.NODE_ENV;
+  const environment = process.env.RAILWAY_ENVIRONMENT_NAME || NODE_ENV;
   const serviceId = process.env.RAILWAY_SERVICE_ID || 'local';
   return `${serviceName}:${environment}:${serviceId}:${process.pid}`;
 };
@@ -158,6 +162,7 @@ const recoverPendingRunsOnStartup = async (runnerInstanceId: string): Promise<vo
 
     if (passProgressCount === 0) {
       Logger.warn('Scheduler pending-run recovery stopped due to zero progress', {
+        domain: DOMAINS.DATA_PROVIDER,
         component: 'scheduler',
         operation: 'startup_pending_recovery',
         pass,
@@ -168,6 +173,7 @@ const recoverPendingRunsOnStartup = async (runnerInstanceId: string): Promise<vo
   }
 
   Logger.info('Scheduler pending-run recovery completed', {
+    domain: DOMAINS.DATA_PROVIDER,
     component: 'scheduler',
     operation: 'startup_pending_recovery',
     passesExecuted,
@@ -197,6 +203,7 @@ const executeRecurringDefinitionTick = async (
 
     if (!queueResult.run) {
       Logger.info('Recurring cron tick produced no run row', {
+        domain: DOMAINS.DATA_PROVIDER,
         component: 'scheduler',
         operation: 'recurring_tick',
         source,
@@ -215,6 +222,7 @@ const executeRecurringDefinitionTick = async (
 
     if (queueResult.outcome !== 'pending') {
       Logger.info('Recurring cron tick ended without execution', {
+        domain: DOMAINS.DATA_PROVIDER,
         component: 'scheduler',
         operation: 'recurring_tick',
         source,
@@ -236,6 +244,7 @@ const executeRecurringDefinitionTick = async (
     const terminalRun = await SERVICES_CRON.executePendingRun(queueResult.run.id, runnerInstanceId);
 
     Logger.info('Recurring cron tick executed', {
+      domain: DOMAINS.DATA_PROVIDER,
       component: 'scheduler',
       operation: 'recurring_tick',
       source,
@@ -300,6 +309,7 @@ const loadActiveRecurringDefinitions = async (): Promise<DB_SelectCronJobDefinit
 const registerRecurringTask = (definition: DB_SelectCronJobDefinition, runnerInstanceId: string): boolean => {
   if (!definition.cronExpression) {
     Logger.warn('Skipping recurring cron definition without cron expression', {
+      domain: DOMAINS.DATA_PROVIDER,
       component: 'scheduler',
       operation: 'register_recurring_definition',
       definitionId: definition.id,
@@ -311,6 +321,7 @@ const registerRecurringTask = (definition: DB_SelectCronJobDefinition, runnerIns
 
   if (!cron.validate(definition.cronExpression)) {
     Logger.warn('Skipping recurring cron definition with invalid cron expression', {
+      domain: DOMAINS.DATA_PROVIDER,
       component: 'scheduler',
       operation: 'register_recurring_definition',
       definitionId: definition.id,
@@ -335,6 +346,7 @@ const registerRecurringTask = (definition: DB_SelectCronJobDefinition, runnerIns
   recurringTaskRegistry.set(definition.id, task);
 
   Logger.info('Registered recurring cron definition', {
+    domain: DOMAINS.DATA_PROVIDER,
     component: 'scheduler',
     operation: 'register_recurring_definition',
     definitionId: definition.id,
@@ -380,6 +392,7 @@ const registerRecurringDefinitionsOnStartup = async (runnerInstanceId: string): 
   }
 
   Logger.info('Recurring cron registration completed', {
+    domain: DOMAINS.DATA_PROVIDER,
     component: 'scheduler',
     operation: 'register_recurring_definitions',
     loadedDefinitionsCount: activeRecurringDefinitions.length,
@@ -431,6 +444,7 @@ const processDueOneTimeDefinitions = async (runnerInstanceId: string): Promise<v
 const startHeartbeat = (): void => {
   heartbeatTimer = setInterval(() => {
     Logger.info('Scheduler heartbeat', {
+      domain: DOMAINS.DATA_PROVIDER,
       component: 'scheduler',
       operation: 'heartbeat',
       intervalMs: HEARTBEAT_INTERVAL_MS,
@@ -447,7 +461,10 @@ const startOneTimeSweep = (runnerInstanceId: string): void => {
 
 const bootstrap = async (): Promise<void> => {
   Logger.info('Starting Best Shot Scheduler runtime', {
-    environment: env.NODE_ENV,
+    domain: DOMAINS.DATA_PROVIDER,
+    component: 'scheduler',
+    operation: 'bootstrap_start',
+    environment: NODE_ENV,
   });
 
   const runnerInstanceId = buildRunnerInstanceId();
@@ -459,6 +476,7 @@ const bootstrap = async (): Promise<void> => {
 
   // E6 complete; shutdown edge cases are implemented in later Phase E tasks.
   Logger.info('Scheduler runtime initialized', {
+    domain: DOMAINS.DATA_PROVIDER,
     component: 'scheduler',
     operation: 'bootstrap',
     activeRecurringTaskHandles: recurringTaskRegistry.size,

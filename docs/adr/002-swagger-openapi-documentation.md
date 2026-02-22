@@ -296,7 +296,7 @@ const authenticateEndpoint = {
 
 ```typescript
 // Only expose Swagger in non-production environments
-if (env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production') {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 }
 
@@ -374,7 +374,7 @@ const openApiSpec = generator.generateDocument({
   openapi: '3.0.0',
   info: {
     title: 'Best Shot API',
-    version: env.API_VERSION || 'v2'
+    version: process.env.API_VERSION || 'v2'
   },
   servers: [
     { url: 'https://api-best-shot-staging.mariobrusarosco.com', description: 'Staging' },
@@ -383,7 +383,7 @@ const openApiSpec = generator.generateDocument({
   ]
 });
 
-if (env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production') {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 }
 ```

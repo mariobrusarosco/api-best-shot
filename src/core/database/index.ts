@@ -2,7 +2,9 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from './schema';
-import { env } from '../../config/env';
+
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const DB_STRING_CONNECTION = process.env.DB_STRING_CONNECTION;
 
 type DatabaseType = PostgresJsDatabase<typeof schema>;
 
@@ -24,7 +26,7 @@ Error: ${err instanceof Error ? err.message : String(err)}
     );
 
     // Don't exit in production/demo environments - let the app run without DB
-    if (env.NODE_ENV === 'development') {
+    if (NODE_ENV === 'development') {
       process.exit(1);
     } else {
       console.warn('⚠️ Continuing without database connection in non-development environment');
@@ -33,15 +35,15 @@ Error: ${err instanceof Error ? err.message : String(err)}
   }
 }
 
-if (env.DB_STRING_CONNECTION) {
-  const client = postgres(env.DB_STRING_CONNECTION, {
+if (DB_STRING_CONNECTION) {
+  const client = postgres(DB_STRING_CONNECTION, {
     prepare: false,
   });
   db = drizzle(client, { schema });
 
   // Verify connection but don't block startup in production/demo
   verifyConnection(client).then(connected => {
-    if (!connected && env.NODE_ENV !== 'development') {
+    if (!connected && NODE_ENV !== 'development') {
       console.warn('⚠️ Database verification failed - some features may not work');
     }
   });

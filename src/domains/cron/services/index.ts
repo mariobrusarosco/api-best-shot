@@ -403,6 +403,10 @@ const queueRunNow = async (jobDefinitionId: string, payloadSnapshot?: CronTarget
   });
 };
 
+const listPendingRuns = async (limit: number = 100): Promise<DB_SelectCronJobRun[]> => {
+  return QUERIES_CRON_JOB_RUNS.listPendingRuns(limit);
+};
+
 const markRunRunning = async (runId: string, runnerInstanceId?: string): Promise<DB_SelectCronJobRun> => {
   const updated = await QUERIES_CRON_JOB_RUNS.markRunning(runId, runnerInstanceId);
   if (!updated) {
@@ -495,6 +499,7 @@ export const SERVICES_CRON = {
   resumeDefinition,
   queueScheduledRun,
   queueRunNow,
+  listPendingRuns,
   markRunRunning,
   markRunSucceeded,
   markRunFailed,

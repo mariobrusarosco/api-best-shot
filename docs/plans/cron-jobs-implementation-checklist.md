@@ -198,7 +198,7 @@ Checkpoint D (required):
 5. Add scheduler environment and secrets checklist.
 6. Checklist file: `/Users/mariobrusarosco/coding/api-best-shot/docs/guides/scheduler-environment-secrets-checklist.md`.
 
-### E0.7 - Post-deploy verification []
+### E0.7 - Post-deploy verification [x]
 
 1. Verify API health endpoint.
 2. Verify scheduler startup heartbeat/log.
@@ -222,7 +222,7 @@ Checkpoint E0 (required):
 1. Find `running` rows older than 15 minutes.
 2. Mark them failed with timeout failure code/message.
 
-### E3 - Startup pending recovery []
+### E3 - Startup pending recovery [x]
 
 1. Load `pending` runs.
 2. Execute them before timer registration.

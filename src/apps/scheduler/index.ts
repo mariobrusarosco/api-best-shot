@@ -9,6 +9,8 @@ import { DOMAINS } from '@/core/logger/constants';
 const HEARTBEAT_INTERVAL_MS = 60_000;
 const STALE_RUNNING_TIMEOUT_MINUTES = 15;
 const STALE_RUNNING_RECOVERY_LIMIT = 500;
+const PENDING_RUN_RECOVERY_BATCH_SIZE = 200;
+const PENDING_RUN_RECOVERY_MAX_PASSES = 100;
 const STARTUP_FAILURE_CODE = 'startup_stale_timeout';
 const STARTUP_FAILURE_MESSAGE = `Marked as failed on scheduler startup after ${STALE_RUNNING_TIMEOUT_MINUTES} minutes timeout`;
 
@@ -67,6 +69,80 @@ const recoverStaleRunningRunsOnStartup = async (): Promise<void> => {
   });
 };
 
+const buildRunnerInstanceId = (): string => {
+  const serviceName = process.env.RAILWAY_SERVICE_NAME || 'scheduler';
+  const environment = process.env.RAILWAY_ENVIRONMENT_NAME || env.NODE_ENV;
+  const serviceId = process.env.RAILWAY_SERVICE_ID || 'local';
+  return `${serviceName}:${environment}:${serviceId}:${process.pid}`;
+};
+
+const recoverPendingRunsOnStartup = async (): Promise<void> => {
+  const runnerInstanceId = buildRunnerInstanceId();
+
+  let recoveredRunsCount = 0;
+  let succeededRunsCount = 0;
+  let failedRunsCount = 0;
+  let executionErrorsCount = 0;
+  let passesExecuted = 0;
+
+  for (let pass = 1; pass <= PENDING_RUN_RECOVERY_MAX_PASSES; pass++) {
+    const pendingRuns = await SERVICES_CRON.listPendingRuns(PENDING_RUN_RECOVERY_BATCH_SIZE);
+    if (pendingRuns.length === 0) {
+      break;
+    }
+
+    passesExecuted = pass;
+    let passProgressCount = 0;
+
+    for (const pendingRun of pendingRuns) {
+      try {
+        const terminalRun = await SERVICES_CRON.executePendingRun(pendingRun.id, runnerInstanceId);
+        recoveredRunsCount += 1;
+        passProgressCount += 1;
+
+        if (terminalRun.status === 'succeeded') {
+          succeededRunsCount += 1;
+        } else if (terminalRun.status === 'failed') {
+          failedRunsCount += 1;
+        }
+      } catch (error) {
+        executionErrorsCount += 1;
+
+        Logger.error(error instanceof Error ? error : new Error(String(error)), {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'scheduler',
+          operation: 'startup_pending_recovery_execute',
+          runId: pendingRun.id,
+          jobDefinitionId: pendingRun.jobDefinitionId,
+          jobKey: pendingRun.jobKey,
+          jobVersion: String(pendingRun.jobVersion),
+        });
+      }
+    }
+
+    if (passProgressCount === 0) {
+      Logger.warn('Scheduler pending-run recovery stopped due to zero progress', {
+        component: 'scheduler',
+        operation: 'startup_pending_recovery',
+        pass,
+        batchSize: pendingRuns.length,
+      });
+      break;
+    }
+  }
+
+  Logger.info('Scheduler pending-run recovery completed', {
+    component: 'scheduler',
+    operation: 'startup_pending_recovery',
+    passesExecuted,
+    maxPasses: PENDING_RUN_RECOVERY_MAX_PASSES,
+    recoveredRunsCount,
+    succeededRunsCount,
+    failedRunsCount,
+    executionErrorsCount,
+  });
+};
+
 const startHeartbeat = (): void => {
   heartbeatTimer = setInterval(() => {
     Logger.info('Scheduler heartbeat', {
@@ -83,8 +159,9 @@ const bootstrap = async (): Promise<void> => {
   });
 
   await recoverStaleRunningRunsOnStartup();
+  await recoverPendingRunsOnStartup();
 
-  // E2 complete; recurring orchestration is implemented in later Phase E tasks.
+  // E3 complete; recurring orchestration is implemented in later Phase E tasks.
   Logger.info('Scheduler runtime initialized. No recurring jobs are registered yet.', {
     component: 'scheduler',
     operation: 'bootstrap',

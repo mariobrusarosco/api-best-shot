@@ -110,7 +110,7 @@ Checkpoint B (required):
 1. Pause requires reason (min 5, max 300).
 2. Resume clears/keeps reason per agreed behavior.
 
-### C4 - Run orchestration helpers []
+### C4 - Run orchestration helpers [x]
 
 1. Enforce overlap `skip`.
 2. Enforce `run-now` also uses overlap `skip`.

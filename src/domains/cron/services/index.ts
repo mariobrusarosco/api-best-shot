@@ -1,7 +1,13 @@
-import { QUERIES_CRON_JOB_DEFINITIONS } from '@/domains/cron/queries';
-import { DB_InsertCronJobDefinition, DB_SelectCronJobDefinition } from '@/domains/cron/schema';
+import { QUERIES_CRON_JOB_DEFINITIONS, QUERIES_CRON_JOB_RUNS } from '@/domains/cron/queries';
+import {
+  DB_InsertCronJobDefinition,
+  DB_InsertCronJobRun,
+  DB_SelectCronJobDefinition,
+  DB_SelectCronJobRun,
+} from '@/domains/cron/schema';
 import {
   CRON_JOB_SCHEDULE_TYPES,
+  CRON_RUN_TRIGGER_TYPES,
   ICronJobScheduleType,
   ICronRunTriggerType,
 } from '@/domains/cron/typing';
@@ -43,6 +49,19 @@ type CreateCronDefinitionVersionInput = Partial<
     'target' | 'payload' | 'scheduleType' | 'cronExpression' | 'runAt' | 'timezone' | 'createdBy' | 'updatedBy'
   >
 >;
+
+type QueueRunOutcome = 'pending' | 'skipped' | 'duplicate_slot';
+
+type QueueRunResult = {
+  outcome: QueueRunOutcome;
+  run: DB_SelectCronJobRun | null;
+};
+
+type MarkRunFailedInput = {
+  failureCode: string;
+  failureMessage: string;
+  failureDetails?: Record<string, unknown> | null;
+};
 
 const PAUSE_REASON_MIN_LENGTH = 5;
 const PAUSE_REASON_MAX_LENGTH = 300;
@@ -109,6 +128,12 @@ const validateScheduleShape = (definition: {
 const ensureTargetIsValid = (target: string): void => {
   if (!isValidTarget(target)) {
     throw new Error(`Unsupported cron target "${target}"`);
+  }
+};
+
+const assertDefinitionIsRunnable = (definition: DB_SelectCronJobDefinition): void => {
+  if (definition.status === 'retired') {
+    throw new Error(`Cron definition "${definition.id}" is retired`);
   }
 };
 
@@ -261,6 +286,187 @@ const resumeDefinition = async (id: string, updatedBy: string = 'system'): Promi
   return updated;
 };
 
+const buildRunInsert = (params: {
+  definition: DB_SelectCronJobDefinition;
+  triggerType: ICronRunTriggerType;
+  scheduledAt: Date;
+  payloadSnapshot: CronTargetPayload;
+  status: DB_InsertCronJobRun['status'];
+  failureCode?: string;
+  failureMessage?: string;
+  failureDetails?: Record<string, unknown> | null;
+}): DB_InsertCronJobRun => {
+  const now = new Date();
+
+  return {
+    jobDefinitionId: params.definition.id,
+    jobKey: params.definition.jobKey,
+    jobVersion: params.definition.version,
+    target: params.definition.target,
+    payloadSnapshot: params.payloadSnapshot,
+    triggerType: params.triggerType,
+    scheduledAt: params.scheduledAt,
+    status: params.status,
+    startedAt: params.status === 'pending' ? null : now,
+    finishedAt: params.status === 'pending' ? null : now,
+    failureCode: params.failureCode,
+    failureMessage: params.failureMessage,
+    failureDetails: params.failureDetails || null,
+  };
+};
+
+const insertRunByTrigger = async (
+  triggerType: ICronRunTriggerType,
+  run: DB_InsertCronJobRun
+): Promise<DB_SelectCronJobRun | null> => {
+  if (triggerType === CRON_RUN_TRIGGER_TYPES.SCHEDULED) {
+    return QUERIES_CRON_JOB_RUNS.createScheduledRunIfMissing(run);
+  }
+
+  return QUERIES_CRON_JOB_RUNS.createRun(run);
+};
+
+const queueRunWithOverlapPolicy = async (params: {
+  jobDefinitionId: string;
+  triggerType: ICronRunTriggerType;
+  scheduledAt?: Date;
+  payloadSnapshot?: CronTargetPayload;
+}): Promise<QueueRunResult> => {
+  const definition = await QUERIES_CRON_JOB_DEFINITIONS.getDefinitionById(params.jobDefinitionId);
+  if (!definition) {
+    throw new Error(`Cron definition "${params.jobDefinitionId}" not found`);
+  }
+
+  assertDefinitionIsRunnable(definition);
+
+  const scheduledAt = params.scheduledAt || new Date();
+  const payloadSnapshot = params.payloadSnapshot ?? (definition.payload as CronTargetPayload);
+  const hasActiveRun = await QUERIES_CRON_JOB_RUNS.hasActiveRunByDefinitionVersion(definition.id, definition.version);
+
+  if (hasActiveRun) {
+    const skippedRun = await insertRunByTrigger(
+      params.triggerType,
+      buildRunInsert({
+        definition,
+        triggerType: params.triggerType,
+        scheduledAt,
+        payloadSnapshot,
+        status: 'skipped',
+        failureCode: 'overlap_skipped',
+        failureMessage: 'Run skipped due to overlap policy',
+      })
+    );
+
+    return {
+      outcome: skippedRun ? 'skipped' : 'duplicate_slot',
+      run: skippedRun,
+    };
+  }
+
+  const pendingRun = await insertRunByTrigger(
+    params.triggerType,
+    buildRunInsert({
+      definition,
+      triggerType: params.triggerType,
+      scheduledAt,
+      payloadSnapshot,
+      status: 'pending',
+    })
+  );
+
+  return {
+    outcome: pendingRun ? 'pending' : 'duplicate_slot',
+    run: pendingRun,
+  };
+};
+
+const queueScheduledRun = async (jobDefinitionId: string, scheduledAt: Date): Promise<QueueRunResult> => {
+  return queueRunWithOverlapPolicy({
+    jobDefinitionId,
+    triggerType: CRON_RUN_TRIGGER_TYPES.SCHEDULED,
+    scheduledAt,
+  });
+};
+
+const queueRunNow = async (
+  jobDefinitionId: string,
+  payloadSnapshot?: CronTargetPayload
+): Promise<QueueRunResult> => {
+  return queueRunWithOverlapPolicy({
+    jobDefinitionId,
+    triggerType: CRON_RUN_TRIGGER_TYPES.MANUAL,
+    scheduledAt: new Date(),
+    payloadSnapshot,
+  });
+};
+
+const markRunRunning = async (runId: string, runnerInstanceId?: string): Promise<DB_SelectCronJobRun> => {
+  const updated = await QUERIES_CRON_JOB_RUNS.markRunning(runId, runnerInstanceId);
+  if (!updated) {
+    throw new Error(`Run "${runId}" is not pending or does not exist`);
+  }
+
+  return updated;
+};
+
+const markRunSucceeded = async (runId: string): Promise<DB_SelectCronJobRun> => {
+  const updated = await QUERIES_CRON_JOB_RUNS.markSucceeded(runId);
+  if (!updated) {
+    throw new Error(`Run "${runId}" is not running or does not exist`);
+  }
+
+  return updated;
+};
+
+const markRunFailed = async (runId: string, failure: MarkRunFailedInput): Promise<DB_SelectCronJobRun> => {
+  const updated = await QUERIES_CRON_JOB_RUNS.markFailed(runId, failure);
+  if (!updated) {
+    throw new Error(`Run "${runId}" is not running or does not exist`);
+  }
+
+  return updated;
+};
+
+const executePendingRun = async (runId: string, runnerInstanceId?: string): Promise<DB_SelectCronJobRun> => {
+  const runningRun = await markRunRunning(runId, runnerInstanceId);
+  const handler = resolveTargetHandler(runningRun.target);
+
+  if (!handler) {
+    return markRunFailed(runId, {
+      failureCode: 'unknown_target',
+      failureMessage: `No handler registered for target "${runningRun.target}"`,
+      failureDetails: {
+        target: runningRun.target,
+      },
+    });
+  }
+
+  try {
+    await handler({
+      runId: runningRun.id,
+      jobDefinitionId: runningRun.jobDefinitionId,
+      jobKey: runningRun.jobKey,
+      jobVersion: runningRun.jobVersion,
+      target: runningRun.target,
+      triggerType: runningRun.triggerType as ICronRunTriggerType,
+      scheduledAt: runningRun.scheduledAt,
+      payload: runningRun.payloadSnapshot as CronTargetPayload,
+    });
+
+    return markRunSucceeded(runId);
+  } catch (error) {
+    const err = error as Error;
+    return markRunFailed(runId, {
+      failureCode: 'target_execution_failed',
+      failureMessage: err.message || 'Unhandled target execution failure',
+      failureDetails: {
+        name: err.name,
+        stack: err.stack,
+      },
+    });
+  }
+};
+
 export const SERVICES_CRON = {
   listTargets,
   isValidTarget,
@@ -272,4 +478,10 @@ export const SERVICES_CRON = {
   listDefinitions,
   pauseDefinition,
   resumeDefinition,
+  queueScheduledRun,
+  queueRunNow,
+  markRunRunning,
+  markRunSucceeded,
+  markRunFailed,
+  executePendingRun,
 };

@@ -1,5 +1,12 @@
 import { SERVICES_CRON } from '@/domains/cron/services';
-import { CRON_JOB_SCHEDULE_TYPES, ICronJobScheduleType } from '@/domains/cron/typing';
+import { QUERIES_CRON_JOB_RUNS } from '@/domains/cron/queries';
+import {
+  CRON_JOB_DEFINITION_STATUSES,
+  CRON_JOB_SCHEDULE_TYPES,
+  CRON_RUN_STATUSES,
+  CRON_RUN_TRIGGER_TYPES,
+  ICronJobScheduleType,
+} from '@/domains/cron/typing';
 import { Request, Response } from 'express';
 
 type CronDefinitionBody = {
@@ -27,6 +34,25 @@ type PauseBody = {
 
 type RunNowBody = {
   payload?: unknown;
+};
+
+type ListCronJobsQuery = {
+  jobKey?: unknown;
+  status?: unknown;
+  target?: unknown;
+  scheduleType?: unknown;
+  limit?: unknown;
+  offset?: unknown;
+};
+
+type ListCronRunsQuery = {
+  jobDefinitionId?: unknown;
+  jobKey?: unknown;
+  status?: unknown;
+  triggerType?: unknown;
+  target?: unknown;
+  limit?: unknown;
+  offset?: unknown;
 };
 
 // TODO: Move this to a utils file
@@ -86,6 +112,79 @@ const parseTimezone = (value: unknown): string | undefined => {
   }
 
   return value.trim();
+};
+
+const parseOptionalString = (value: unknown, fieldName: string): string | undefined => {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') {
+    throw new Error(`${fieldName} must be a string`);
+  }
+
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+};
+
+const parseOptionalInteger = (
+  value: unknown,
+  fieldName: string,
+  options: { min: number; max: number; defaultValue: number }
+): number => {
+  if (value === undefined) return options.defaultValue;
+
+  const parsed = Number.parseInt(String(value), 10);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`${fieldName} must be an integer`);
+  }
+
+  return Math.min(Math.max(parsed, options.min), options.max);
+};
+
+const parseOptionalDefinitionStatus = (value: unknown) => {
+  const parsed = parseOptionalString(value, 'status');
+  if (!parsed) return undefined;
+
+  const allowed = Object.values(CRON_JOB_DEFINITION_STATUSES);
+  if (!allowed.includes(parsed as (typeof allowed)[number])) {
+    throw new Error(`Invalid status. Allowed values: ${allowed.join(', ')}`);
+  }
+
+  return parsed as (typeof allowed)[number];
+};
+
+const parseOptionalScheduleType = (value: unknown) => {
+  const parsed = parseOptionalString(value, 'scheduleType');
+  if (!parsed) return undefined;
+
+  const allowed = Object.values(CRON_JOB_SCHEDULE_TYPES);
+  if (!allowed.includes(parsed as (typeof allowed)[number])) {
+    throw new Error(`Invalid scheduleType. Allowed values: ${allowed.join(', ')}`);
+  }
+
+  return parsed as (typeof allowed)[number];
+};
+
+const parseOptionalRunStatus = (value: unknown) => {
+  const parsed = parseOptionalString(value, 'status');
+  if (!parsed) return undefined;
+
+  const allowed = Object.values(CRON_RUN_STATUSES);
+  if (!allowed.includes(parsed as (typeof allowed)[number])) {
+    throw new Error(`Invalid status. Allowed values: ${allowed.join(', ')}`);
+  }
+
+  return parsed as (typeof allowed)[number];
+};
+
+const parseOptionalRunTriggerType = (value: unknown) => {
+  const parsed = parseOptionalString(value, 'triggerType');
+  if (!parsed) return undefined;
+
+  const allowed = Object.values(CRON_RUN_TRIGGER_TYPES);
+  if (!allowed.includes(parsed as (typeof allowed)[number])) {
+    throw new Error(`Invalid triggerType. Allowed values: ${allowed.join(', ')}`);
+  }
+
+  return parsed as (typeof allowed)[number];
 };
 
 // TODO: Move this to a utils file
@@ -328,6 +427,158 @@ export const API_ADMIN_CRON = {
       return res.status(getErrorStatus(error)).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to queue run-now',
+      });
+    }
+  },
+
+  async listJobs(req: Request<unknown, unknown, unknown, ListCronJobsQuery>, res: Response) {
+    try {
+      const limit = parseOptionalInteger(req.query.limit, 'limit', {
+        min: 1,
+        max: 100,
+        defaultValue: 20,
+      });
+      const offset = parseOptionalInteger(req.query.offset, 'offset', {
+        min: 0,
+        max: 10000,
+        defaultValue: 0,
+      });
+
+      const jobKey = parseOptionalString(req.query.jobKey, 'jobKey');
+      const status = parseOptionalDefinitionStatus(req.query.status);
+      const target = parseOptionalString(req.query.target, 'target');
+      const scheduleType = parseOptionalScheduleType(req.query.scheduleType);
+
+      const jobs = await SERVICES_CRON.listDefinitions({
+        jobKey,
+        status,
+        target,
+        scheduleType,
+        limit,
+        offset,
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: jobs,
+        meta: {
+          count: jobs.length,
+          limit,
+          offset,
+        },
+      });
+    } catch (error) {
+      return res.status(getErrorStatus(error)).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to list cron jobs',
+      });
+    }
+  },
+
+  async getJobById(req: Request<{ jobId: string }>, res: Response) {
+    try {
+      const { jobId } = req.params;
+
+      if (!jobId) {
+        return res.status(400).json({
+          success: false,
+          message: 'jobId is required',
+        });
+      }
+
+      const job = await SERVICES_CRON.getDefinitionById(jobId);
+      if (!job) {
+        return res.status(404).json({
+          success: false,
+          message: 'Cron job not found',
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: job,
+      });
+    } catch (error) {
+      return res.status(getErrorStatus(error)).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to get cron job',
+      });
+    }
+  },
+
+  async listRuns(req: Request<unknown, unknown, unknown, ListCronRunsQuery>, res: Response) {
+    try {
+      const limit = parseOptionalInteger(req.query.limit, 'limit', {
+        min: 1,
+        max: 200,
+        defaultValue: 50,
+      });
+      const offset = parseOptionalInteger(req.query.offset, 'offset', {
+        min: 0,
+        max: 10000,
+        defaultValue: 0,
+      });
+
+      const jobDefinitionId = parseOptionalString(req.query.jobDefinitionId, 'jobDefinitionId');
+      const jobKey = parseOptionalString(req.query.jobKey, 'jobKey');
+      const status = parseOptionalRunStatus(req.query.status);
+      const triggerType = parseOptionalRunTriggerType(req.query.triggerType);
+      const target = parseOptionalString(req.query.target, 'target');
+
+      const runs = await QUERIES_CRON_JOB_RUNS.listRuns({
+        jobDefinitionId,
+        jobKey,
+        status,
+        triggerType,
+        target,
+        limit,
+        offset,
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: runs,
+        meta: {
+          count: runs.length,
+          limit,
+          offset,
+        },
+      });
+    } catch (error) {
+      return res.status(getErrorStatus(error)).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to list cron runs',
+      });
+    }
+  },
+
+  async getRunById(req: Request<{ runId: string }>, res: Response) {
+    try {
+      const { runId } = req.params;
+
+      if (!runId) {
+        return res.status(400).json({
+          success: false,
+          message: 'runId is required',
+        });
+      }
+
+      const run = await QUERIES_CRON_JOB_RUNS.getRunById(runId);
+      if (!run) {
+        return res.status(404).json({
+          success: false,
+          message: 'Cron run not found',
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: run,
+      });
+    } catch (error) {
+      return res.status(getErrorStatus(error)).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to get cron run',
       });
     }
   },

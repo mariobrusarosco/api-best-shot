@@ -136,7 +136,7 @@ Checkpoint C (required):
 4. `POST /cron/jobs/:jobId/new-version`
 5. `POST /cron/jobs/:jobId/run-now`
 
-### D3 - Read endpoints []
+### D3 - Read endpoints [x]
 
 1. `GET /cron/jobs`
 2. `GET /cron/jobs/:jobId`

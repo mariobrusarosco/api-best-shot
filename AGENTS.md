@@ -82,6 +82,10 @@ working on the task...
 ....'
 ```
 
+## Style Guide
+
+Refer to the [style guide](docs/STYLE_GUIDE.md) for more information.
+
 ### Tech Stack
 
 - **Runtime**: Node.js (v18.17.1 via Volta)

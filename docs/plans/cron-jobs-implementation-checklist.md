@@ -128,7 +128,7 @@ Checkpoint C (required):
 1. Add cron routes under admin v2 router.
 2. Protect all cron routes with `AdminMiddleware`.
 
-### D2 - Write endpoints []
+### D2 - Write endpoints [x]
 
 1. `POST /cron/jobs`
 2. `PATCH /cron/jobs/:jobId/pause`

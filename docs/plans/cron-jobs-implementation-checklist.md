@@ -64,7 +64,7 @@ Checkpoint A (required):
 
 ## 3) Phase B - Query layer
 
-### B1 - Definitions queries []
+### B1 - Definitions queries [x]
 
 1. Create definition.
 2. Get by id.

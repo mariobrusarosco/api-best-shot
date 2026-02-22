@@ -63,6 +63,14 @@ type MarkRunFailedInput = {
   failureDetails?: Record<string, unknown> | null;
 };
 
+type FailStaleRunningRunsInput = {
+  staleBefore: Date;
+  limit?: number;
+  failureCode: string;
+  failureMessage: string;
+  failureDetails?: Record<string, unknown> | null;
+};
+
 const PAUSE_REASON_MIN_LENGTH = 5;
 const PAUSE_REASON_MAX_LENGTH = 300;
 
@@ -422,6 +430,18 @@ const markRunFailed = async (runId: string, failure: MarkRunFailedInput): Promis
   return updated;
 };
 
+const failStaleRunningRuns = async (input: FailStaleRunningRunsInput): Promise<DB_SelectCronJobRun[]> => {
+  return QUERIES_CRON_JOB_RUNS.markStaleRunningRunsAsFailed(
+    input.staleBefore,
+    {
+      failureCode: input.failureCode,
+      failureMessage: input.failureMessage,
+      failureDetails: input.failureDetails || null,
+    },
+    input.limit
+  );
+};
+
 const executePendingRun = async (runId: string, runnerInstanceId?: string): Promise<DB_SelectCronJobRun> => {
   const runningRun = await markRunRunning(runId, runnerInstanceId);
   const handler = resolveTargetHandler(runningRun.target);
@@ -478,5 +498,6 @@ export const SERVICES_CRON = {
   markRunRunning,
   markRunSucceeded,
   markRunFailed,
+  failStaleRunningRuns,
   executePendingRun,
 };

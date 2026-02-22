@@ -212,12 +212,12 @@ Checkpoint E0 (required):
 
 ## 7) Phase E - Scheduler app (new process)
 
-### E1 - Scheduler entrypoint []
+### E1 - Scheduler entrypoint [x]
 
 1. Create `/Users/mariobrusarosco/coding/api-best-shot/src/apps/scheduler/index.ts`.
 2. Initialize env + logger + shutdown hooks.
 
-### E2 - Startup stale-running handling []
+### E2 - Startup stale-running handling [x]
 
 1. Find `running` rows older than 15 minutes.
 2. Mark them failed with timeout failure code/message.

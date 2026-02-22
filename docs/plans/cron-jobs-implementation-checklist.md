@@ -151,11 +151,69 @@ Checkpoint D (required):
 
 1. Endpoint contract tested (happy path + validation + auth failures).
 
-## 6) Phase E - Scheduler app (new process)
+## 6) Phase E0 - Architecture and CI/CD foundation
+
+### E0.1 - Naming and structure contract [x]
+
+1. Create ADR locking folder semantics:
+2. `apps` = deployable runtimes.
+3. `domains` = business logic.
+4. `core` = shared infrastructure adapters.
+5. Lock target structure:
+6. `/Users/mariobrusarosco/coding/api-best-shot/src/apps`
+7. `/Users/mariobrusarosco/coding/api-best-shot/src/domains`
+8. `/Users/mariobrusarosco/coding/api-best-shot/src/core`
+
+### E0.2 - App entrypoints split []
+
+1. Create `/Users/mariobrusarosco/coding/api-best-shot/src/apps/api/index.ts`.
+2. Create `/Users/mariobrusarosco/coding/api-best-shot/src/apps/scheduler/index.ts`.
+3. Move API bootstrap from `/Users/mariobrusarosco/coding/api-best-shot/src/index.ts` to `/Users/mariobrusarosco/coding/api-best-shot/src/apps/api/index.ts`.
+4. Keep `/Users/mariobrusarosco/coding/api-best-shot/src/index.ts` as temporary forwarder during transition.
+
+### E0.3 - Shared infra rename (`services` -> `core`) []
+
+1. Rename `/Users/mariobrusarosco/coding/api-best-shot/src/services` to `/Users/mariobrusarosco/coding/api-best-shot/src/core`.
+2. Refactor all imports from `@/services/*` to `@/core/*`.
+3. Keep runtime behavior unchanged while renaming.
+
+### E0.4 - Script split for two processes []
+
+1. Add `dev:api`, `dev:scheduler`, and `dev:stack`.
+2. Add explicit serve scripts for both processes per environment.
+3. Keep temporary compatibility aliases while migration is in progress.
+
+### E0.5 - CI pipeline update []
+
+1. Build once in CI.
+2. Reuse build artifact for deploy jobs.
+3. Keep lint, compile, and test gates before deployment jobs.
+
+### E0.6 - CD workflow update (staging, production, demo) []
+
+1. Deploy API service first.
+2. Run database migrations once.
+3. Deploy scheduler service second.
+4. Add workflow concurrency guards per environment.
+5. Add scheduler environment and secrets checklist.
+
+### E0.7 - Post-deploy verification []
+
+1. Verify API health endpoint.
+2. Verify scheduler startup heartbeat/log.
+3. Trigger run-now smoke check and confirm `cron_job_runs` write.
+
+Checkpoint E0 (required):
+
+1. Both processes start locally from `src/apps/*`.
+2. CI and CD workflows are dual-service aware.
+3. No `@/services/*` imports remain.
+
+## 7) Phase E - Scheduler app (new process)
 
 ### E1 - Scheduler entrypoint []
 
-1. Create `/Users/mariobrusarosco/coding/api-best-shot/src/scheduler/index.ts`.
+1. Create `/Users/mariobrusarosco/coding/api-best-shot/src/apps/scheduler/index.ts`.
 2. Initialize env + logger + shutdown hooks.
 
 ### E2 - Startup stale-running handling []
@@ -195,24 +253,32 @@ Checkpoint E (required):
 1. Scheduler starts cleanly.
 2. Recovery + timer flow works locally.
 
-## 7) Phase F - Package scripts and local UX
+## 8) Phase F - Package scripts and local UX
 
 ### F1 - Add scheduler scripts []
 
-1. `scheduler:dev`
-2. `scheduler:staging`
-3. `scheduler:prod`
+1. Add local process scripts:
+2. `dev:api`
+3. `dev:scheduler`
+4. `dev:stack`
+5. Add environment serve scripts:
+6. `serve:api:staging`
+7. `serve:api:prod`
+8. `serve:scheduler:staging`
+9. `serve:scheduler:prod`
 
 ### F2 - Local runbook []
 
-1. Terminal A: `yarn dev`
-2. Terminal B: `yarn scheduler:dev`
+1. Option A (single command): `yarn dev:stack`
+2. Option B (split terminals):
+3. Terminal A: `yarn dev:api`
+4. Terminal B: `yarn dev:scheduler`
 
 Checkpoint F (required):
 
 1. Local two-process development works without manual hacks.
 
-## 8) Phase G - Environment and runtime hardening
+## 9) Phase G - Environment and runtime hardening
 
 ### G1 - Scheduler env requirements []
 
@@ -227,7 +293,7 @@ Checkpoint G (required):
 
 1. Scheduler starts in staging-like env without missing-var crashes.
 
-## 9) Phase H - CI/CD and Railway rollout
+## 10) Phase H - CI/CD and Railway rollout
 
 ### H1 - Railway services setup []
 
@@ -236,8 +302,8 @@ Checkpoint G (required):
 
 ### H2 - Start commands []
 
-1. API command: `node dist/src/index.js`
-2. Scheduler command: `node dist/src/scheduler/index.js`
+1. API command: `node dist/src/apps/api/index.js`
+2. Scheduler command: `node dist/src/apps/scheduler/index.js`
 
 ### H3 - Update staging workflow []
 
@@ -255,7 +321,7 @@ Checkpoint H (required):
 
 1. Staging pipeline deploys both services from same commit.
 
-## 10) Phase I - Validation and DoD proof
+## 11) Phase I - Validation and DoD proof
 
 ### I1 - Create DoD recurring job []
 

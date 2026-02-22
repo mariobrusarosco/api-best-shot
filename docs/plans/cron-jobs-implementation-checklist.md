@@ -123,7 +123,7 @@ Checkpoint C (required):
 
 ## 5) Phase D - Admin API and routes
 
-### D1 - Route registration []
+### D1 - Route registration [x]
 
 1. Add cron routes under admin v2 router.
 2. Protect all cron routes with `AdminMiddleware`.

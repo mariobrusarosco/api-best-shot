@@ -105,7 +105,7 @@ Checkpoint B (required):
 2. Validate target exists in registry.
 3. Enforce versioning workflow.
 
-### C3 - Pause/resume service rules []
+### C3 - Pause/resume service rules [x]
 
 1. Pause requires reason (min 5, max 300).
 2. Resume clears/keeps reason per agreed behavior.

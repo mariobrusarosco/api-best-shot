@@ -164,7 +164,7 @@ Checkpoint D (required):
 7. `/Users/mariobrusarosco/coding/api-best-shot/src/domains`
 8. `/Users/mariobrusarosco/coding/api-best-shot/src/core`
 
-### E0.2 - App entrypoints split []
+### E0.2 - App entrypoints split [x]
 
 1. Create `/Users/mariobrusarosco/coding/api-best-shot/src/apps/api/index.ts`.
 2. Create `/Users/mariobrusarosco/coding/api-best-shot/src/apps/scheduler/index.ts`.

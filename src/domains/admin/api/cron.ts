@@ -461,11 +461,10 @@ export const API_ADMIN_CRON = {
       return res.status(200).json({
         success: true,
         data: jobs,
-        meta: {
-          count: jobs.length,
-          limit,
-          offset,
-        },
+        total: jobs.length,
+        limit,
+        offset,
+        message: 'Cron jobs retrieved successfully',
       });
     } catch (error) {
       return res.status(getErrorStatus(error)).json({
@@ -497,6 +496,7 @@ export const API_ADMIN_CRON = {
       return res.status(200).json({
         success: true,
         data: job,
+        message: 'Cron job retrieved successfully',
       });
     } catch (error) {
       return res.status(getErrorStatus(error)).json({
@@ -538,11 +538,10 @@ export const API_ADMIN_CRON = {
       return res.status(200).json({
         success: true,
         data: runs,
-        meta: {
-          count: runs.length,
-          limit,
-          offset,
-        },
+        total: runs.length,
+        limit,
+        offset,
+        message: 'Cron runs retrieved successfully',
       });
     } catch (error) {
       return res.status(getErrorStatus(error)).json({
@@ -574,6 +573,7 @@ export const API_ADMIN_CRON = {
       return res.status(200).json({
         success: true,
         data: run,
+        message: 'Cron run retrieved successfully',
       });
     } catch (error) {
       return res.status(getErrorStatus(error)).json({

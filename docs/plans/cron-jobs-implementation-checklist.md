@@ -143,7 +143,7 @@ Checkpoint C (required):
 3. `GET /cron/runs`
 4. `GET /cron/runs/:runId`
 
-### D4 - Response shape normalization []
+### D4 - Response shape normalization [x]
 
 1. Keep admin responses consistent with existing admin API style.
 

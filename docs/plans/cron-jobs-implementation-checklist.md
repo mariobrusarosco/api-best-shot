@@ -99,7 +99,7 @@ Checkpoint B (required):
 1. Add code-level target registry.
 2. Expose `isValidTarget` and handler resolver.
 
-### C2 - Definitions service rules []
+### C2 - Definitions service rules [x]
 
 1. Validate one-time vs recurring fields.
 2. Validate target exists in registry.

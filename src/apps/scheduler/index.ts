@@ -1,12 +1,12 @@
 import { config } from 'dotenv';
 config({ path: process.env.ENV_PATH || '.env' });
 
-import * as cron from 'node-cron';
-import type { ScheduledTask } from 'node-cron';
-import { SERVICES_CRON } from '@/domains/cron/services';
-import { DB_SelectCronJobDefinition } from '@/domains/cron/schema';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
+import { DB_SelectCronJobDefinition } from '@/domains/cron/schema';
+import { SERVICES_CRON } from '@/domains/cron/services';
+import type { ScheduledTask } from 'node-cron';
+import * as cron from 'node-cron';
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -447,9 +447,9 @@ const startHeartbeat = (): void => {
       domain: DOMAINS.DATA_PROVIDER,
       component: 'scheduler',
       operation: 'heartbeat',
-      intervalMs: HEARTBEAT_INTERVAL_MS,
+      intervalMs: HEARTBEAT_INTERVAL_MS * 10,
     });
-  }, HEARTBEAT_INTERVAL_MS);
+  }, HEARTBEAT_INTERVAL_MS * 10);
 };
 
 const startOneTimeSweep = (runnerInstanceId: string): void => {

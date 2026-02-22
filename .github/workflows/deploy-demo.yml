@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: deploy-demo
+  cancel-in-progress: false
+
 jobs:
   quality-gates:
     name: Quality Gates
@@ -112,6 +116,11 @@ jobs:
         run: yarn db:migrate
         env:
           DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION_DEMO }}
+
+      - name: Deploy Scheduler to Railway Demo
+        run: yarn dlx @railway/cli up --service api-best-shot-scheduler
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEMO }}
 
       # Temporarily disabled for first deployment - re-enable after service is running
       # - name: Health check (Demo)

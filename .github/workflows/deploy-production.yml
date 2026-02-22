@@ -3,6 +3,10 @@ name: Deploy to Production
 on:
   workflow_dispatch:
 
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   quality-gates:
     name: Quality Gates
@@ -110,6 +114,11 @@ jobs:
         run: yarn db:migrate
         env:
           DB_STRING_CONNECTION: ${{ secrets.DB_STRING_CONNECTION_PRODUCTION }}
+
+      - name: Deploy Scheduler to Railway Production
+        run: yarn dlx @railway/cli up --service api-best-shot-scheduler
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PROD }}
 
 
       - name: Notify Slack

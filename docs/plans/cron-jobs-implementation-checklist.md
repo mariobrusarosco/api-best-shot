@@ -189,13 +189,14 @@ Checkpoint D (required):
 2. Reuse build artifact for deploy jobs.
 3. Keep lint, compile, and test gates before deployment jobs.
 
-### E0.6 - CD workflow update (staging, production, demo) []
+### E0.6 - CD workflow update (staging, production, demo) [x]
 
 1. Deploy API service first.
 2. Run database migrations once.
 3. Deploy scheduler service second.
 4. Add workflow concurrency guards per environment.
 5. Add scheduler environment and secrets checklist.
+6. Checklist file: `/Users/mariobrusarosco/coding/api-best-shot/docs/guides/scheduler-environment-secrets-checklist.md`.
 
 ### E0.7 - Post-deploy verification []
 

@@ -446,6 +446,25 @@ const failStaleRunningRuns = async (input: FailStaleRunningRunsInput): Promise<D
   );
 };
 
+const retireOneTimeDefinitionAfterSuccess = async (run: DB_SelectCronJobRun): Promise<void> => {
+  if (run.status !== 'succeeded') return;
+
+  const definition = await QUERIES_CRON_JOB_DEFINITIONS.getDefinitionById(run.jobDefinitionId);
+  if (!definition) return;
+  if (definition.scheduleType !== CRON_JOB_SCHEDULE_TYPES.ONE_TIME) return;
+  if (definition.status === 'retired') return;
+
+  try {
+    await QUERIES_CRON_JOB_DEFINITIONS.updateDefinition(definition.id, {
+      status: 'retired',
+      pauseReason: null,
+      updatedBy: 'scheduler',
+    });
+  } catch {
+    // Best effort; run terminal state is already persisted.
+  }
+};
+
 const executePendingRun = async (runId: string, runnerInstanceId?: string): Promise<DB_SelectCronJobRun> => {
   const runningRun = await markRunRunning(runId, runnerInstanceId);
   const handler = resolveTargetHandler(runningRun.target);
@@ -472,7 +491,9 @@ const executePendingRun = async (runId: string, runnerInstanceId?: string): Prom
       payload: runningRun.payloadSnapshot as CronTargetPayload,
     });
 
-    return markRunSucceeded(runId);
+    const terminalRun = await markRunSucceeded(runId);
+    await retireOneTimeDefinitionAfterSuccess(terminalRun);
+    return terminalRun;
   } catch (error) {
     const err = error as Error;
     return markRunFailed(runId, {

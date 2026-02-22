@@ -239,12 +239,12 @@ Checkpoint E0 (required):
 2. If queued as `pending`, execute transition `pending -> running -> terminal`.
 3. If overlap/duplicate prevents execution, record result and continue.
 
-### E6 - One-time behavior []
+### E6 - One-time behavior [x]
 
 1. Execute at `run_at`.
-2. After terminal run, retire definition internally.
+2. After successful run, retire definition internally.
 
-### E7 - Graceful shutdown []
+### E7 - Graceful shutdown [x]
 
 1. Stop new timer triggers.
 2. Finish/mark in-flight transitions safely.

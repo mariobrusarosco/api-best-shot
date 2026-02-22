@@ -16,11 +16,13 @@ const PENDING_RUN_RECOVERY_BATCH_SIZE = 200;
 const PENDING_RUN_RECOVERY_MAX_PASSES = 100;
 const ACTIVE_RECURRING_DEFINITION_PAGE_SIZE = 500;
 const ACTIVE_RECURRING_DEFINITION_MAX_PAGES = 100;
+const ONE_TIME_SWEEP_INTERVAL_MS = 15_000;
 const STARTUP_FAILURE_CODE = 'startup_stale_timeout';
 const STARTUP_FAILURE_MESSAGE = `Marked as failed on scheduler startup after ${STALE_RUNNING_TIMEOUT_MINUTES} minutes timeout`;
 
 let isShuttingDown = false;
 let heartbeatTimer: NodeJS.Timeout | null = null;
+let oneTimeSweepTimer: NodeJS.Timeout | null = null;
 const recurringTaskRegistry = new Map<string, ScheduledTask>();
 
 const stopAllRegisteredRecurringTasks = (): number => {
@@ -58,6 +60,11 @@ const shutdown = (signal: NodeJS.Signals) => {
   if (heartbeatTimer) {
     clearInterval(heartbeatTimer);
     heartbeatTimer = null;
+  }
+
+  if (oneTimeSweepTimer) {
+    clearInterval(oneTimeSweepTimer);
+    oneTimeSweepTimer = null;
   }
 
   const stoppedTasksCount = stopAllRegisteredRecurringTasks();
@@ -387,6 +394,40 @@ const registerRecurringDefinitionsOnStartup = async (runnerInstanceId: string): 
   });
 };
 
+const processDueOneTimeDefinitions = async (runnerInstanceId: string): Promise<void> => {
+  const now = new Date();
+  const oneTimeDefinitions = await SERVICES_CRON.listDefinitions({
+    status: 'active',
+    scheduleType: 'one_time',
+    limit: 1000,
+    offset: 0,
+  });
+
+  for (const definition of oneTimeDefinitions) {
+    if (!definition.runAt || definition.runAt.getTime() > now.getTime()) {
+      continue;
+    }
+
+    try {
+      const queueResult = await SERVICES_CRON.queueScheduledRun(definition.id, definition.runAt);
+      if (!queueResult.run || queueResult.outcome !== 'pending') {
+        continue;
+      }
+
+      await SERVICES_CRON.executePendingRun(queueResult.run.id, runnerInstanceId);
+    } catch (error) {
+      Logger.error(error instanceof Error ? error : new Error(String(error)), {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'scheduler',
+        operation: 'one_time_sweep',
+        definitionId: definition.id,
+        jobKey: definition.jobKey,
+        version: String(definition.version),
+      });
+    }
+  }
+};
+
 const startHeartbeat = (): void => {
   heartbeatTimer = setInterval(() => {
     Logger.info('Scheduler heartbeat', {
@@ -395,6 +436,13 @@ const startHeartbeat = (): void => {
       intervalMs: HEARTBEAT_INTERVAL_MS,
     });
   }, HEARTBEAT_INTERVAL_MS);
+};
+
+const startOneTimeSweep = (runnerInstanceId: string): void => {
+  oneTimeSweepTimer = setInterval(() => {
+    if (isShuttingDown) return;
+    void processDueOneTimeDefinitions(runnerInstanceId);
+  }, ONE_TIME_SWEEP_INTERVAL_MS);
 };
 
 const bootstrap = async (): Promise<void> => {
@@ -406,9 +454,10 @@ const bootstrap = async (): Promise<void> => {
 
   await recoverStaleRunningRunsOnStartup();
   await recoverPendingRunsOnStartup(runnerInstanceId);
+  await processDueOneTimeDefinitions(runnerInstanceId);
   await registerRecurringDefinitionsOnStartup(runnerInstanceId);
 
-  // E5 complete; one-time behavior and shutdown edge cases are implemented in later Phase E tasks.
+  // E6 complete; shutdown edge cases are implemented in later Phase E tasks.
   Logger.info('Scheduler runtime initialized', {
     component: 'scheduler',
     operation: 'bootstrap',
@@ -416,6 +465,7 @@ const bootstrap = async (): Promise<void> => {
     runnerInstanceId,
   });
 
+  startOneTimeSweep(runnerInstanceId);
   startHeartbeat();
 };
 

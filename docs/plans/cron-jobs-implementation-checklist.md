@@ -227,7 +227,7 @@ Checkpoint E0 (required):
 1. Load `pending` runs.
 2. Execute them before timer registration.
 
-### E4 - Timer registration []
+### E4 - Timer registration [x]
 
 1. Load active recurring definitions.
 2. Register `node-cron` jobs in memory.

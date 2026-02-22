@@ -107,9 +107,7 @@ const buildRunnerInstanceId = (): string => {
   return `${serviceName}:${environment}:${serviceId}:${process.pid}`;
 };
 
-const recoverPendingRunsOnStartup = async (): Promise<void> => {
-  const runnerInstanceId = buildRunnerInstanceId();
-
+const recoverPendingRunsOnStartup = async (runnerInstanceId: string): Promise<void> => {
   let recoveredRunsCount = 0;
   let succeededRunsCount = 0;
   let failedRunsCount = 0;
@@ -174,6 +172,98 @@ const recoverPendingRunsOnStartup = async (): Promise<void> => {
   });
 };
 
+type RecurringTickSource = 'startup_catch_up' | 'cron_tick';
+
+type RecurringTickExecutionResult = {
+  outcome: 'pending' | 'skipped' | 'duplicate' | 'error';
+  runId: string | null;
+  terminalStatus: string | null;
+};
+
+const executeRecurringDefinitionTick = async (
+  definition: DB_SelectCronJobDefinition,
+  runnerInstanceId: string,
+  source: RecurringTickSource
+): Promise<RecurringTickExecutionResult> => {
+  try {
+    const queueResult = await SERVICES_CRON.queueScheduledRun(definition.id, new Date());
+
+    if (!queueResult.run) {
+      Logger.info('Recurring cron tick produced no run row', {
+        component: 'scheduler',
+        operation: 'recurring_tick',
+        source,
+        definitionId: definition.id,
+        jobKey: definition.jobKey,
+        version: definition.version,
+        queueOutcome: queueResult.outcome,
+      });
+
+      return {
+        outcome: queueResult.outcome,
+        runId: null,
+        terminalStatus: null,
+      };
+    }
+
+    if (queueResult.outcome !== 'pending') {
+      Logger.info('Recurring cron tick ended without execution', {
+        component: 'scheduler',
+        operation: 'recurring_tick',
+        source,
+        definitionId: definition.id,
+        jobKey: definition.jobKey,
+        version: definition.version,
+        queueOutcome: queueResult.outcome,
+        runId: queueResult.run.id,
+        runStatus: queueResult.run.status,
+      });
+
+      return {
+        outcome: queueResult.outcome,
+        runId: queueResult.run.id,
+        terminalStatus: queueResult.run.status,
+      };
+    }
+
+    const terminalRun = await SERVICES_CRON.executePendingRun(queueResult.run.id, runnerInstanceId);
+
+    Logger.info('Recurring cron tick executed', {
+      component: 'scheduler',
+      operation: 'recurring_tick',
+      source,
+      definitionId: definition.id,
+      jobKey: definition.jobKey,
+      version: definition.version,
+      queueOutcome: queueResult.outcome,
+      runId: terminalRun.id,
+      terminalStatus: terminalRun.status,
+    });
+
+    return {
+      outcome: queueResult.outcome,
+      runId: terminalRun.id,
+      terminalStatus: terminalRun.status,
+    };
+  } catch (error) {
+    Logger.error(error instanceof Error ? error : new Error(String(error)), {
+      domain: DOMAINS.DATA_PROVIDER,
+      component: 'scheduler',
+      operation: 'recurring_tick',
+      source,
+      definitionId: definition.id,
+      jobKey: definition.jobKey,
+      version: String(definition.version),
+    });
+
+    return {
+      outcome: 'error',
+      runId: null,
+      terminalStatus: null,
+    };
+  }
+};
+
 const loadActiveRecurringDefinitions = async (): Promise<DB_SelectCronJobDefinition[]> => {
   const definitions: DB_SelectCronJobDefinition[] = [];
 
@@ -200,7 +290,7 @@ const loadActiveRecurringDefinitions = async (): Promise<DB_SelectCronJobDefinit
   return definitions;
 };
 
-const registerRecurringTask = (definition: DB_SelectCronJobDefinition): boolean => {
+const registerRecurringTask = (definition: DB_SelectCronJobDefinition, runnerInstanceId: string): boolean => {
   if (!definition.cronExpression) {
     Logger.warn('Skipping recurring cron definition without cron expression', {
       component: 'scheduler',
@@ -229,15 +319,8 @@ const registerRecurringTask = (definition: DB_SelectCronJobDefinition): boolean 
   const task = cron.schedule(
     definition.cronExpression,
     () => {
-      Logger.info('Recurring cron tick received', {
-        component: 'scheduler',
-        operation: 'cron_tick',
-        definitionId: definition.id,
-        jobKey: definition.jobKey,
-        version: definition.version,
-        cronExpression: definition.cronExpression,
-        timezone,
-      });
+      if (isShuttingDown) return;
+      void executeRecurringDefinitionTick(definition, runnerInstanceId, 'cron_tick');
     },
     { timezone }
   );
@@ -257,16 +340,33 @@ const registerRecurringTask = (definition: DB_SelectCronJobDefinition): boolean 
   return true;
 };
 
-const registerRecurringDefinitionsOnStartup = async (): Promise<void> => {
+const registerRecurringDefinitionsOnStartup = async (runnerInstanceId: string): Promise<void> => {
   const activeRecurringDefinitions = await loadActiveRecurringDefinitions();
 
   let registeredCount = 0;
   let skippedCount = 0;
+  let startupCatchUpTriggeredCount = 0;
+  let startupCatchUpExecutedCount = 0;
+  let startupCatchUpSkippedCount = 0;
+  let startupCatchUpDuplicateCount = 0;
+  let startupCatchUpErrorCount = 0;
 
   for (const definition of activeRecurringDefinitions) {
-    const wasRegistered = registerRecurringTask(definition);
+    const wasRegistered = registerRecurringTask(definition, runnerInstanceId);
     if (wasRegistered) {
       registeredCount += 1;
+      startupCatchUpTriggeredCount += 1;
+
+      const catchUpResult = await executeRecurringDefinitionTick(definition, runnerInstanceId, 'startup_catch_up');
+      if (catchUpResult.outcome === 'pending') {
+        startupCatchUpExecutedCount += 1;
+      } else if (catchUpResult.outcome === 'skipped') {
+        startupCatchUpSkippedCount += 1;
+      } else if (catchUpResult.outcome === 'duplicate') {
+        startupCatchUpDuplicateCount += 1;
+      } else {
+        startupCatchUpErrorCount += 1;
+      }
     } else {
       skippedCount += 1;
     }
@@ -278,6 +378,11 @@ const registerRecurringDefinitionsOnStartup = async (): Promise<void> => {
     loadedDefinitionsCount: activeRecurringDefinitions.length,
     registeredCount,
     skippedCount,
+    startupCatchUpTriggeredCount,
+    startupCatchUpExecutedCount,
+    startupCatchUpSkippedCount,
+    startupCatchUpDuplicateCount,
+    startupCatchUpErrorCount,
     activeTaskHandlesCount: recurringTaskRegistry.size,
   });
 };
@@ -297,15 +402,18 @@ const bootstrap = async (): Promise<void> => {
     environment: env.NODE_ENV,
   });
 
-  await recoverStaleRunningRunsOnStartup();
-  await recoverPendingRunsOnStartup();
-  await registerRecurringDefinitionsOnStartup();
+  const runnerInstanceId = buildRunnerInstanceId();
 
-  // E4 complete; timer callbacks are implemented in later Phase E tasks.
+  await recoverStaleRunningRunsOnStartup();
+  await recoverPendingRunsOnStartup(runnerInstanceId);
+  await registerRecurringDefinitionsOnStartup(runnerInstanceId);
+
+  // E5 complete; one-time behavior and shutdown edge cases are implemented in later Phase E tasks.
   Logger.info('Scheduler runtime initialized', {
     component: 'scheduler',
     operation: 'bootstrap',
     activeRecurringTaskHandles: recurringTaskRegistry.size,
+    runnerInstanceId,
   });
 
   startHeartbeat();

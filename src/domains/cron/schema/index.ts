@@ -94,7 +94,7 @@ export const T_CronJobRuns = pgTable(
     jobKeyVersionIdx: index('cron_job_runs_job_key_job_version_idx').on(table.jobKey, table.jobVersion),
     targetIdx: index('cron_job_runs_target_idx').on(table.target),
     createdAtIdx: index('cron_job_runs_created_at_idx').on(table.createdAt),
-    uniqueScheduledSlot: uniqueIndex('cron_job_runs_scheduled_slot_unique_idx').on(
+    uniqueScheduledRun: uniqueIndex('cron_job_runs_scheduled_run_unique_idx').on(
       table.jobDefinitionId,
       table.scheduledAt,
       table.triggerType

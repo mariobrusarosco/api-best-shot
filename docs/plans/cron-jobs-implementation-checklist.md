@@ -43,7 +43,7 @@ Scope: Cron-only v1, broken into small logical tasks
 
 1. Add table fields and FK to `job_definition_id`.
 2. Add indexes for `(status, scheduled_at)`, `(job_key, job_version)`, `target`, `created_at`.
-3. Add unique scheduled-slot guard for idempotency:
+3. Add unique scheduled-run guard for idempotency:
    - `(job_definition_id, scheduled_at, trigger_type)` for scheduled runs.
 
 ### A4 - Register schema exports [x]
@@ -233,11 +233,11 @@ Checkpoint E0 (required):
 2. Register `node-cron` jobs in memory.
 3. Track handles for graceful stop.
 
-### E5 - Timer callback flow []
+### E5 - Timer callback flow [x]
 
-1. Compute slot.
-2. Insert scheduled run (`ON CONFLICT DO NOTHING`).
-3. If inserted: transition `pending -> running -> terminal`.
+1. On each cron tick, queue a scheduled run using current time.
+2. If queued as `pending`, execute transition `pending -> running -> terminal`.
+3. If overlap/duplicate prevents execution, record result and continue.
 
 ### E6 - One-time behavior []
 

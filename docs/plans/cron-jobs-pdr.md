@@ -276,10 +276,10 @@ When scheduler process starts:
 ### 12.3 Timer fire sequence (hands-on)
 
 When a cron timer fires for `sample-heartbeat`:
-1. Compute slot time (for example `10:05:00`).
+1. Capture current scheduled timestamp (for example `10:05:00`).
 2. Insert run row with:
    - `status = pending`
-   - `scheduled_at = slot time`
+   - `scheduled_at = current scheduled timestamp`
    - snapshot fields (`job_key`, `job_version`, `target`, `payload_snapshot`)
 3. Immediately transition `pending -> running`.
 4. Execute target handler.
@@ -290,14 +290,14 @@ When a cron timer fires for `sample-heartbeat`:
 ### 12.4 Idempotency for timer mode
 
 Required rule:
-1. At most one scheduled run per definition+slot.
+1. At most one scheduled run per definition and scheduled timestamp.
 
 Recommended unique key:
 1. `(job_definition_id, scheduled_at, trigger_type)` for `trigger_type='scheduled'`.
 
 Insertion behavior:
 1. `ON CONFLICT DO NOTHING`.
-2. If conflict occurs, skip execution for that slot (already created by same or another instance).
+2. If conflict occurs, skip execution for that scheduled timestamp (already created by same or another instance).
 
 ### 12.5 What v1 does not do
 
@@ -323,8 +323,8 @@ onSchedulerStart():
   registerCronTimers(defs)
 
 onTimerFire(def):
-  slot = computeCurrentSlot(def)
-  inserted = insertScheduledRunIfMissing(def, slot) // ON CONFLICT DO NOTHING
+  scheduledAt = currentTimestamp()
+  inserted = insertScheduledRunIfMissing(def, scheduledAt) // ON CONFLICT DO NOTHING
   if (!inserted) return
   run = markRunning(inserted.id)
   try:
@@ -447,7 +447,7 @@ No open questions for cron-only v1 at this stage.
 ## 19) Risks and mitigations
 
 1. Risk: duplicate runs when scheduler restarts.
-   - Mitigation: single active scheduler (or leader lock) + unique slot constraint + idempotent insert.
+   - Mitigation: single active scheduler (or leader lock) + unique scheduled-run constraint + idempotent insert.
 2. Risk: hidden failures.
    - Mitigation: mandatory failure fields and admin visibility.
 3. Risk: schedule confusion due to timezone.
@@ -467,7 +467,7 @@ Cron v1 is only complete when all of these are delivered:
    - stale `running` > 15 minutes -> `failed`
    - execute persisted `pending` runs
 5. Timer registration and execution for recurring schedules.
-6. Idempotent run creation (`ON CONFLICT DO NOTHING` + unique slot key).
+6. Idempotent run creation (`ON CONFLICT DO NOTHING` + unique scheduled-run key).
 7. Overlap rule enforced (`skip`) for scheduled and run-now paths.
 8. Target validation against code-level registry (reject unknown targets).
 9. Pause requires mandatory reason text.

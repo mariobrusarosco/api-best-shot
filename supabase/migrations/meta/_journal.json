@@ -239,6 +239,13 @@
       "when": 1771768597858,
       "tag": "0033_goofy_scrambler",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1771784258639,
+      "tag": "0034_spooky_yellowjacket",
+      "breakpoints": true
     }
   ]
 }

@@ -50,7 +50,7 @@ type CreateCronDefinitionVersionInput = Partial<
   >
 >;
 
-type QueueRunOutcome = 'pending' | 'skipped' | 'duplicate_slot';
+type QueueRunOutcome = 'pending' | 'skipped' | 'duplicate';
 
 type QueueRunResult = {
   outcome: QueueRunOutcome;
@@ -364,7 +364,7 @@ const queueRunWithOverlapPolicy = async (params: {
     );
 
     return {
-      outcome: skippedRun ? 'skipped' : 'duplicate_slot',
+      outcome: skippedRun ? 'skipped' : 'duplicate',
       run: skippedRun,
     };
   }
@@ -381,7 +381,7 @@ const queueRunWithOverlapPolicy = async (params: {
   );
 
   return {
-    outcome: pendingRun ? 'pending' : 'duplicate_slot',
+    outcome: pendingRun ? 'pending' : 'duplicate',
     run: pendingRun,
   };
 };

@@ -169,7 +169,7 @@ If any answer is “no”, stop and clarify before coding.
 5. Execution mode: Mode A+ (timer-driven with startup recovery of persisted runs).
 6. Missing windows: do not replay never-recorded windows in v1.
 7. Overlap policy: `skip` when previous run for same definition/version is still `running`.
-8. Duplicate prevention: unique scheduled slot key + `ON CONFLICT DO NOTHING` + atomic `pending -> running` claim.
+8. Duplicate prevention: unique scheduled-run key + `ON CONFLICT DO NOTHING` + atomic `pending -> running` claim.
 9. Failure recording: persist `failure_code`, `failure_message`, `failure_details`, `started_at`, `finished_at`.
 10. Versioning: keep `new-version` endpoint to avoid mutating historical job definitions.
 11. Startup stale-running timeout: `15 minutes`.

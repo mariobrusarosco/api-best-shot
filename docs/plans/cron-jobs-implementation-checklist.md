@@ -72,7 +72,7 @@ Checkpoint A (required):
 4. Pause/resume update.
 5. New-version create.
 
-### B2 - Run queries []
+### B2 - Run queries [x]
 
 1. Insert scheduled run with conflict-safe behavior.
 2. Insert manual/ad-hoc run.

@@ -4,8 +4,7 @@ export const CRON_JOB_DEFINITION_STATUSES = {
   RETIRED: 'retired',
 } as const;
 
-export type ICronJobDefinitionStatus =
-  (typeof CRON_JOB_DEFINITION_STATUSES)[keyof typeof CRON_JOB_DEFINITION_STATUSES];
+export type ICronJobDefinitionStatus = (typeof CRON_JOB_DEFINITION_STATUSES)[keyof typeof CRON_JOB_DEFINITION_STATUSES];
 
 export const CRON_JOB_SCHEDULE_TYPES = {
   ONE_TIME: 'one_time',

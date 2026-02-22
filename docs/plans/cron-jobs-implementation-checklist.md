@@ -177,7 +177,7 @@ Checkpoint D (required):
 2. Refactor all imports from `@/services/*` to `@/core/*`.
 3. Keep runtime behavior unchanged while renaming.
 
-### E0.4 - Script split for two processes []
+### E0.4 - Script split for two processes [x]
 
 1. Add `dev:api`, `dev:scheduler`, and `dev:stack`.
 2. Add explicit serve scripts for both processes per environment.

@@ -190,11 +190,7 @@ export const QUERIES_CRON_JOB_RUNS = {
       .insert(T_CronJobRuns)
       .values(run)
       .onConflictDoNothing({
-        target: [
-          T_CronJobRuns.jobDefinitionId,
-          T_CronJobRuns.scheduledAt,
-          T_CronJobRuns.triggerType,
-        ],
+        target: [T_CronJobRuns.jobDefinitionId, T_CronJobRuns.scheduledAt, T_CronJobRuns.triggerType],
       })
       .returning();
 
@@ -292,10 +288,7 @@ export const QUERIES_CRON_JOB_RUNS = {
     return !!result;
   },
 
-  async markRun(
-    id: string,
-    updates: Partial<DB_UpdateCronJobRun>
-  ): Promise<DB_SelectCronJobRun | null> {
+  async markRun(id: string, updates: Partial<DB_UpdateCronJobRun>): Promise<DB_SelectCronJobRun | null> {
     const [result] = await db
       .update(T_CronJobRuns)
       .set({ ...updates, updatedAt: new Date() })

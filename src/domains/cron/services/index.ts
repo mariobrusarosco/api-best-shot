@@ -186,9 +186,7 @@ const createNewVersion = async (
   }
 
   const nextTarget = hasOwnProperty(updates, 'target') ? updates.target : current.target;
-  const nextScheduleType = hasOwnProperty(updates, 'scheduleType')
-    ? updates.scheduleType
-    : current.scheduleType;
+  const nextScheduleType = hasOwnProperty(updates, 'scheduleType') ? updates.scheduleType : current.scheduleType;
   const nextCronExpression = hasOwnProperty(updates, 'cronExpression')
     ? updates.cronExpression
     : current.cronExpression;
@@ -388,10 +386,7 @@ const queueScheduledRun = async (jobDefinitionId: string, scheduledAt: Date): Pr
   });
 };
 
-const queueRunNow = async (
-  jobDefinitionId: string,
-  payloadSnapshot?: CronTargetPayload
-): Promise<QueueRunResult> => {
+const queueRunNow = async (jobDefinitionId: string, payloadSnapshot?: CronTargetPayload): Promise<QueueRunResult> => {
   return queueRunWithOverlapPolicy({
     jobDefinitionId,
     triggerType: CRON_RUN_TRIGGER_TYPES.MANUAL,

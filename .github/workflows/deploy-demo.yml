@@ -5,14 +5,10 @@ on:
   push:
     branches: [main]
 
-env:
-  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
 jobs:
-  deploy-demo:
-    name: Deploy to Railway Demo
+  quality-gates:
+    name: Quality Gates
     runs-on: ubuntu-latest
-    environment: demo
 
     steps:
       - name: Checkout code
@@ -38,10 +34,71 @@ jobs:
           yarn compile
           yarn test
 
+  build:
+    name: Build Demo Artifact
+    runs-on: ubuntu-latest
+    needs: quality-gates
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.17.0'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install Yarn
+        run: corepack prepare yarn@3.8.7 --activate
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
       - name: Build application for demo
         run: yarn build-demo
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-demo-dist-${{ github.sha }}
+          path: dist
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy-demo:
+    name: Deploy to Railway Demo
+    runs-on: ubuntu-latest
+    environment: demo
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.17.0'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install Yarn
+        run: corepack prepare yarn@3.8.7 --activate
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-demo-dist-${{ github.sha }}
+          path: .
 
       - name: Install Railway CLI
         run: yarn dlx @railway/cli --version

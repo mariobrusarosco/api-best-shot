@@ -183,7 +183,7 @@ Checkpoint D (required):
 2. Add explicit serve scripts for both processes per environment.
 3. Keep temporary compatibility aliases while migration is in progress.
 
-### E0.5 - CI pipeline update []
+### E0.5 - CI pipeline update [x]
 
 1. Build once in CI.
 2. Reuse build artifact for deploy jobs.

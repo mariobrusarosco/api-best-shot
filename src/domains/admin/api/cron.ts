@@ -1,4 +1,4 @@
-import { SERVICES_CRON } from '@/domains/cron/services';
+import { CRON_DEFINITION_SERVICE, CRON_RUN_SERVICE } from '@/domains/cron/services';
 import { QUERIES_CRON_JOB_RUNS } from '@/domains/cron/queries';
 import {
   CRON_JOB_DEFINITION_STATUSES,
@@ -227,7 +227,7 @@ export const API_ADMIN_CRON = {
       const parsedTimezone = parseTimezone(timezone) || 'UTC';
       const createdBy = getUpdatedByFromRequest(req);
 
-      const definition = await SERVICES_CRON.createDefinition({
+      const definition = await CRON_DEFINITION_SERVICE.createDefinition({
         jobKey: jobKey.trim(),
         target: target.trim(),
         payload: parsedPayload,
@@ -265,7 +265,7 @@ export const API_ADMIN_CRON = {
       }
 
       const updatedBy = getUpdatedByFromRequest(req);
-      const definition = await SERVICES_CRON.pauseDefinition(jobId, updatedBy);
+      const definition = await CRON_DEFINITION_SERVICE.pauseDefinition(jobId, updatedBy);
 
       return res.status(200).json({
         success: true,
@@ -292,7 +292,7 @@ export const API_ADMIN_CRON = {
       }
 
       const updatedBy = getUpdatedByFromRequest(req);
-      const definition = await SERVICES_CRON.resumeDefinition(jobId, updatedBy);
+      const definition = await CRON_DEFINITION_SERVICE.resumeDefinition(jobId, updatedBy);
 
       return res.status(200).json({
         success: true,
@@ -319,7 +319,7 @@ export const API_ADMIN_CRON = {
       }
 
       const payload = req.body ? parsePayload(req.body.payload) : undefined;
-      const runQueueResult = await SERVICES_CRON.queueRunNow(jobId, payload);
+      const runQueueResult = await CRON_RUN_SERVICE.queueRunNow(jobId, payload);
 
       return res.status(200).json({
         success: true,
@@ -352,7 +352,7 @@ export const API_ADMIN_CRON = {
       const target = parseOptionalString(req.query.target, 'target');
       const scheduleType = parseOptionalScheduleType(req.query.scheduleType);
 
-      const jobs = await SERVICES_CRON.listDefinitions({
+      const jobs = await CRON_DEFINITION_SERVICE.listDefinitions({
         jobKey,
         status,
         target,
@@ -388,7 +388,7 @@ export const API_ADMIN_CRON = {
         });
       }
 
-      const job = await SERVICES_CRON.getDefinitionById(jobId);
+      const job = await CRON_DEFINITION_SERVICE.getDefinitionById(jobId);
       if (!job) {
         return res.status(404).json({
           success: false,

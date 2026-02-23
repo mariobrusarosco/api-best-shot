@@ -17,7 +17,7 @@ Scope: Cron-only v1, broken into small logical tasks
 7. Stale `running` timeout is 15 minutes.
 8. Stale `running` rows are marked `failed` (no auto-retry).
 9. Targets are validated against code registry (not free text).
-10. Pause requires mandatory reason text.
+10. Pause/resume are status-only actions (no reason text required).
 11. Cron run history read is admin-only.
 12. Retention target is 180 days (cleanup script later).
 
@@ -70,7 +70,7 @@ Checkpoint A (required):
 2. Get by id.
 3. List with filters.
 4. Pause/resume update.
-5. New-version create.
+5. Create-only contract (no new-version endpoint).
 
 ### B2 - Run queries [x]
 
@@ -103,12 +103,12 @@ Checkpoint B (required):
 
 1. Validate one-time vs recurring fields.
 2. Validate target exists in registry.
-3. Enforce versioning workflow.
+3. Enforce create-only `jobKey` uniqueness workflow.
 
 ### C3 - Pause/resume service rules [x]
 
-1. Pause requires reason (min 5, max 300).
-2. Resume clears/keeps reason per agreed behavior.
+1. Pause/resume update only status + updatedBy metadata.
+2. No reason parsing/validation/persistence.
 
 ### C4 - Run orchestration helpers [x]
 
@@ -133,8 +133,7 @@ Checkpoint C (required):
 1. `POST /cron/jobs`
 2. `PATCH /cron/jobs/:jobId/pause`
 3. `PATCH /cron/jobs/:jobId/resume`
-4. `POST /cron/jobs/:jobId/new-version`
-5. `POST /cron/jobs/:jobId/run-now`
+4. `POST /cron/jobs/:jobId/run-now`
 
 ### D3 - Read endpoints [x]
 
@@ -338,7 +337,7 @@ Checkpoint H (required):
 
 1. Overlap skip behavior.
 2. Run-now skip behavior.
-3. Pause reason validation.
+3. Pause/resume status-only behavior validation.
 4. Unknown target rejection.
 
 ### I4 - Validate recovery []

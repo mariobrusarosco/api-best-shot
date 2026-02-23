@@ -29,7 +29,7 @@ We need:
 3. Full run history with status and timestamps.
 4. Failure diagnostics.
 5. Pause failing recurring jobs.
-6. Replace with a new version job when needed.
+6. Replace by creating a new job from scratch when needed.
 
 ## 3) Goals
 
@@ -37,7 +37,7 @@ We need:
 2. Keep cron engine action-agnostic (target labels only).
 3. Persist schedule definitions and run history in PostgreSQL.
 4. Expose admin APIs for visibility and control.
-5. Support pause, resume, run-now, and new-version workflows.
+5. Support pause, resume, and run-now workflows.
 6. Keep design simple enough to implement safely in staging first.
 
 ## 4) Non-goals
@@ -50,8 +50,8 @@ We need:
 ## 5) Current infra snapshot (codebase verified)
 
 ### Runtime
-1. API entrypoint exists at `/Users/mariobrusarosco/coding/api-best-shot/src/index.ts`.
-2. No scheduler runtime folder currently exists (`src/scheduler` missing).
+1. API entrypoint exists at `/Users/mariobrusarosco/coding/api-best-shot/src/apps/api/index.ts`.
+2. Scheduler runtime entrypoint exists at `/Users/mariobrusarosco/coding/api-best-shot/src/apps/scheduler/index.ts`.
 3. `node-cron` is installed in dependencies.
 
 ### Data and infra
@@ -84,7 +84,7 @@ If that process is down, cron callbacks do not fire during downtime.
 4. Must support recurring cron jobs (example every 5 minutes).
 5. Must capture why a run failed.
 6. No auto-retry required.
-7. Must support stopping recurring failing job and scheduling new version.
+7. Must support stopping recurring failing job and creating a new job from scratch.
 8. Cron engine must know only target label and metadata, not business logic internals.
 
 ## 7) Core concepts
@@ -92,7 +92,7 @@ If that process is down, cron callbacks do not fire during downtime.
 1. Cron Job Definition: schedule configuration and lifecycle state.
 2. Cron Job Run: one concrete execution attempt of a definition.
 3. Target: label that maps to an action resolver in code (`calling_my_mom`, `search_for_knockout_rounds`).
-4. Version: immutable schedule version used for safe replacement.
+4. Version: immutable schedule snapshot used for run audit and overlap checks.
 
 ## 8) Proposed architecture (Cron-only v1)
 
@@ -141,12 +141,10 @@ Columns:
 8. `run_at` timestamp null
 9. `timezone` text not null default `UTC`
 10. `status` enum (`active`, `paused`, `retired`)
-11. `pause_reason` text null
-12. `supersedes_job_id` uuid null
-13. `created_by` text or uuid
-14. `updated_by` text or uuid
-15. `created_at` timestamp not null default now
-16. `updated_at` timestamp not null default now
+11. `created_by` text or uuid
+12. `updated_by` text or uuid
+13. `created_at` timestamp not null default now
+14. `updated_at` timestamp not null default now
 
 Constraints:
 1. Unique `(job_key, version)`.
@@ -205,8 +203,7 @@ stateDiagram-v2
   [*] --> active
   active --> paused: manual pause
   paused --> active: manual resume
-  active --> retired: replaced by new version
-  paused --> retired: replaced by new version
+  active --> retired: one-time terminal success cleanup
   retired --> [*]
 ```
 
@@ -342,7 +339,6 @@ Schedule management:
 3. `GET /api/v2/admin/cron/jobs/:jobId`
 4. `PATCH /api/v2/admin/cron/jobs/:jobId/pause`
 5. `PATCH /api/v2/admin/cron/jobs/:jobId/resume`
-6. `POST /api/v2/admin/cron/jobs/:jobId/new-version`
 
 Run management:
 1. `POST /api/v2/admin/cron/jobs/:jobId/run-now`
@@ -437,7 +433,7 @@ PDR DoD (this document):
 1. `cron_job_runs` retention target is 180 days.
 2. `target` labels are validated against a code-level target registry (v1).
 3. `run-now` obeys overlap rule (`skip` if active run exists).
-4. Pause action requires mandatory reason text.
+4. Pause/resume are status-only actions (no reason text required).
 5. Cron run history read access is admin-only.
 
 ## 18) Open questions (to answer before implementation)
@@ -461,8 +457,8 @@ No open questions for cron-only v1 at this stage.
 
 Cron v1 is only complete when all of these are delivered:
 1. Data model and migrations for `cron_job_definitions` and `cron_job_runs`.
-2. Admin API for create/list/pause/resume/new-version/run-now and run history reads.
-3. Dedicated scheduler app entrypoint and runtime (`src/scheduler/*`).
+2. Admin API for create/list/pause/resume/run-now and run history reads.
+3. Dedicated scheduler app entrypoint and runtime (`src/apps/scheduler/*`).
 4. Startup recovery behavior:
    - stale `running` > 15 minutes -> `failed`
    - execute persisted `pending` runs
@@ -470,7 +466,7 @@ Cron v1 is only complete when all of these are delivered:
 6. Idempotent run creation (`ON CONFLICT DO NOTHING` + unique scheduled-run key).
 7. Overlap rule enforced (`skip`) for scheduled and run-now paths.
 8. Target validation against code-level registry (reject unknown targets).
-9. Pause requires mandatory reason text.
+9. Pause/resume status-only semantics (no reason text required).
 10. Access control: cron run history is admin-only.
 11. Railway deployment with separate scheduler service/process.
 12. Staging verification using the DoD recurring 5-min test job.

@@ -1,9 +1,5 @@
 # Best Shot API
 
-## Project Overview
-
-**Best Shot API** is the backend service for the _Football App_ project. It is a RESTful API built with **Node.js**, **Express**, and **TypeScript**, using **PostgreSQL** as the database with **Drizzle ORM**. The project follows a strict **Domain-Driven Design (DDD)** with a three-layer architecture.
-
 ## Core Mandates
 
 1 - **Strict Scope Adherence:** Do not fix unrelated bugs, refactor code, or change naming conventions outside the explicit scope of the user's request, even if you find errors. If you
@@ -82,82 +78,13 @@ working on the task...
 ....'
 ```
 
+## Architecture
+
+Refer to the [architecture](docs/ARCHITECTURE.md) for more information.
+
 ## Style Guide
 
 Refer to the [style guide](docs/STYLE_GUIDE.md) for more information.
-
-### Tech Stack
-
-- **Runtime**: Node.js (v18.17.1 via Volta)
-- **Framework**: Express.js
-- **Language**: TypeScript
-- **Database**: PostgreSQL 15
-- **ORM**: Drizzle ORM
-- **Testing**: Jest (Unit/Integration), Playwright (Web Scraping/E2E)
-- **Infrastructure**: Docker, AWS (S3, Scheduler), Railway (Hosting)
-- **Monitoring & Logging**: Sentry
-
-## Architecture & Patterns
-
-The project enforces a **Three-Layer Architecture** within a Domain-Driven structure.
-
-### 1. Logging (Critical Convention)
-
-This project uses a **unified `LoggerService`** for all logging and error reporting, located at `src/services/logger`.
-
-- **DO NOT USE `console.log` or `console.error`**. Use the `Logger` service exclusively.
-- For tracking handled exceptions and other critical errors, **ALWAYS** use `Logger.error(error, context)`.
-- The `context` object should be populated with relevant tags from `src/services/logger/constants.ts` to ensure errors are filterable in Sentry.
-
-**Example:**
-
-```typescript
-import Logger from '@/services/logger';
-import { DOMAINS, COMPONENTS } from '@/services/logger/constants';
-
-try {
-  // ...
-} catch (e) {
-  Logger.error(e as Error, {
-    domain: DOMAINS.AUTH,
-    component: COMPONENTS.API,
-    // ... other relevant context
-  });
-}
-```
-
-### 2. Domain Structure (`src/domains/{domain}/`)
-
-Each feature belongs to a domain (e.g., `tournament`, `match`, `guess`).
-
-- `api/`: **Controller Layer**. Handles HTTP requests/responses, input validation, and route definitions. **NO business logic here.**
-- `services/`: **Service Layer**. Contains business logic, data transformation, and cross-domain orchestration. Calls Query layer and other Services.
-- `queries/`: **Data Access Layer**. Raw database operations using Drizzle ORM. **NO business logic here.**
-- `schema/`: Database schema definitions for the domain.
-- `routes/`: Express router definitions.
-- `typing.ts`: Domain-specific type definitions.
-
-### 3. Layer Responsibilities (Strict Rules)
-
-- **API Layer**: `const API_{DOMAIN} = { ... }`
-  - Receives `req`, returns `res`.
-  - Validates input.
-  - Calls Service layer.
-  - Maps errors to HTTP status codes.
-- **Service Layer**: `const SERVICES_{DOMAIN} = { ... }`
-  - Implements business rules.
-  - Orchestrates calls to `QUERIES_{DOMAIN}` or other `SERVICES_{OTHER_DOMAIN}`.
-  - Throws domain-specific errors.
-- **Query Layer**: `const QUERIES_{DOMAIN} = { ... }`
-  - Executes Drizzle ORM commands (`db.select()`, `db.insert()`).
-  - Returns raw data entities.
-
-### 4. Database Conventions
-
-- **Table Names**: Prefix with `T_` (e.g., `T_Tournament`).
-- **Fields**: All tables must have `createdAt` and `updatedAt`.
-- **Types**: Use `$inferInsert` and `$inferSelect` for type safety.
-- **Migrations**: Managed via Drizzle Kit (`supabase/migrations`).
 
 ## Development Workflow
 

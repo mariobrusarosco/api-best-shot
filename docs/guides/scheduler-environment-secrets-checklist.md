@@ -11,7 +11,7 @@ Current constraint:
 
 1. Scheduler reads environment directly from `process.env`.
 2. There is no centralized env schema file.
-3. Scheduler only needs the runtime variables listed below.
+3. Scheduler app only needs the runtime variables listed below.
 
 ## 2) GitHub Actions Secrets (per environment)
 

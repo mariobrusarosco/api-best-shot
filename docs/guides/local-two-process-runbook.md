@@ -3,7 +3,7 @@
 This project runs as two local processes:
 
 1. API process
-2. Scheduler process
+2. Scheduler app process
 
 ## Prerequisites
 

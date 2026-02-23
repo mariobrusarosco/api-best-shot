@@ -1,6 +1,6 @@
 # Cron New-Version Removal Plan
 
-Status: Draft  
+Status: Completed  
 Owner: Backend + Frontend  
 Scope: `api-best-shot` + `best-shot`
 
@@ -31,13 +31,11 @@ From now on, users create jobs from scratch (`POST /admin/cron/jobs`) and manage
   - Remove `API_ADMIN_CRON.createNewVersion`.
 
 3. Remove domain service versioning flow:
+- `src/domains/cron/services/definitions.ts`
+  - Keep create-only definition flow.
+  - Enforce explicit duplicate job-key guidance (use a different `jobKey`).
 - `src/domains/cron/services/index.ts`
-  - Remove `CreateCronDefinitionVersionInput`.
-  - Remove `createNewVersion(...)`.
-  - Remove `createNewVersion` from `SERVICES_CRON` export.
-  - Update duplicate job-key error text in `createDefinition`:
-    - from: `Use new-version workflow.`
-    - to: explicit create-only guidance (e.g. `Use a different jobKey.`).
+  - Export split services only (`CRON_DEFINITION_SERVICE`, `CRON_RUN_SERVICE`, `CRON_EXECUTOR_SERVICE`).
 
 4. Remove query-layer transaction:
 - `src/domains/cron/queries/index.ts`
@@ -134,4 +132,3 @@ Action:
 
 1. Re-introduce route + handler + hook if needed (single feature rollback).
 2. If DB migration is already applied, rollback requires forward-fix migration to re-add `supersedes_job_id` (avoid destructive rollback in place).
-

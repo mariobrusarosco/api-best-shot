@@ -16,7 +16,7 @@ Audience: Backend engineers working on cron jobs
 Think in three parts:
 
 1. Definition (`what/when`)
-2. Scheduler (`execution engine`)
+2. Scheduler app (`runtime execution engine`)
 3. Runs (`history/audit`)
 
 Visual:
@@ -29,11 +29,17 @@ Visual:
         |
         | scheduler loads active definitions
         v
-[Scheduler timers + execution]
+[Scheduler app timers + execution]
         |
         v
 [cron_job_runs]
 ```
+
+Current code boundaries:
+
+1. `CRON_DEFINITION_SERVICE` (`src/domains/cron/services/definitions.ts`)
+2. `CRON_RUN_SERVICE` (`src/domains/cron/services/runs.ts`)
+3. `CRON_EXECUTOR_SERVICE` (`src/domains/cron/services/executor.ts`)
 
 ## 3) First recurring cron job (end-to-end)
 
@@ -103,7 +109,7 @@ handler(context) executes
 Source file:
 
 ```text
-src/domains/cron/services/index.ts
+src/domains/cron/services/executor.ts
 ```
 
 Current target constant:
@@ -132,7 +138,11 @@ const systemPrintMessageHandler: CronTargetHandler = async context => {
       ? rawMessage.trim()
       : `[CRON] ${context.jobKey}#${context.jobVersion} executed`;
 
-  console.log(`[CRON_TARGET:system.print_message] ${message}`);
+  Logger.info(`[CRON_TARGET:system.print_message] ${message}`, {
+    domain: DOMAINS.DATA_PROVIDER,
+    component: 'cron-executor',
+    operation: 'system_print_message',
+  });
 };
 ```
 
@@ -175,10 +185,9 @@ Use this checklist:
 3. `GET /api/v2/admin/cron/jobs/:jobId`
 4. `PATCH /api/v2/admin/cron/jobs/:jobId/pause`
 5. `PATCH /api/v2/admin/cron/jobs/:jobId/resume`
-6. `POST /api/v2/admin/cron/jobs/:jobId/new-version`
-7. `POST /api/v2/admin/cron/jobs/:jobId/run-now`
-8. `GET /api/v2/admin/cron/runs`
-9. `GET /api/v2/admin/cron/runs/:runId`
+6. `POST /api/v2/admin/cron/jobs/:jobId/run-now`
+7. `GET /api/v2/admin/cron/runs`
+8. `GET /api/v2/admin/cron/runs/:runId`
 
 ## 8) Practical verification checklist
 
@@ -188,4 +197,3 @@ After creating your first recurring job:
 2. Confirm scheduler logs show tick execution.
 3. Confirm runs are written with terminal status (`succeeded`/`failed`).
 4. Confirm target output appears (`system.print_message` console log).
-

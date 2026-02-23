@@ -127,15 +127,15 @@ When a run fails, store:
 
 No auto-retry is still valid for v1.
 
-## 13) Versioning baseline
+## 13) Replacement baseline
 
-`new-version` exists so we do not mutate history in place.
+We do not mutate historical definitions in place.
 
 Pattern:
 
-1. Pause/retire failing version.
-2. Create version N+1.
-3. Keep old runs tied to old version for audit.
+1. Pause/retire failing definition.
+2. Create a new job from scratch (new `jobKey`).
+3. Keep old runs tied to their original definition for audit.
 
 ## 14) Mentorship checklist before coding
 
@@ -155,7 +155,7 @@ Answer: Yes.
 Answer: Yes.
 7. Do I know how failure is recorded?  
 Answer: Yes.
-8. Do I know why versioning endpoint exists?  
+8. Do I know replacement is create-only (no `new-version` endpoint)?  
 Answer: Yes.
 
 If any answer is “no”, stop and clarify before coding.
@@ -171,13 +171,13 @@ If any answer is “no”, stop and clarify before coding.
 7. Overlap policy: `skip` when previous run for same definition/version is still `running`.
 8. Duplicate prevention: unique scheduled-run key + `ON CONFLICT DO NOTHING` + atomic `pending -> running` claim.
 9. Failure recording: persist `failure_code`, `failure_message`, `failure_details`, `started_at`, `finished_at`.
-10. Versioning: keep `new-version` endpoint to avoid mutating historical job definitions.
+10. Replacement strategy: create-only flow (no `new-version` endpoint).
 11. Startup stale-running timeout: `15 minutes`.
 12. Startup stale-running action: mark stale `running` rows as `failed` with timeout reason; do not auto-retry.
 13. Run history retention target: 180 days (cleanup script in future iteration).
 14. Target labels: validated against code-level target registry in v1 (not free text).
 15. `run-now` obeys overlap policy (`skip` if same definition/version already running).
-16. Pause requires mandatory reason text.
+16. Pause/resume are status-only actions (no reason text required).
 17. Cron run history read access: admin-only.
 
 ## 16) No remaining blockers for v1 fundamentals

@@ -19,15 +19,6 @@ type CronDefinitionBody = {
   timezone?: unknown;
 };
 
-type CronVersionBody = {
-  target?: unknown;
-  payload?: unknown;
-  scheduleType?: unknown;
-  cronExpression?: unknown;
-  runAt?: unknown;
-  timezone?: unknown;
-};
-
 type PauseBody = {
   reason?: unknown;
 };
@@ -324,82 +315,6 @@ export const API_ADMIN_CRON = {
       return res.status(getErrorStatus(error)).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to resume cron job',
-      });
-    }
-  },
-
-  async createNewVersion(req: Request<{ jobId: string }, unknown, CronVersionBody>, res: Response) {
-    try {
-      const { jobId } = req.params;
-
-      if (!jobId) {
-        return res.status(400).json({
-          success: false,
-          message: 'jobId is required',
-        });
-      }
-
-      const body = req.body || {};
-      const updates: Record<string, unknown> = {};
-
-      // TODO: Reason about the need, the readability of this kind o validation
-      if (Object.prototype.hasOwnProperty.call(body, 'target')) {
-        if (body.target !== undefined && (typeof body.target !== 'string' || !body.target.trim())) {
-          return res.status(400).json({
-            success: false,
-            message: 'target must be a non-empty string when provided',
-          });
-        }
-
-        updates.target = typeof body.target === 'string' ? body.target.trim() : body.target;
-      }
-      // TODO: Reason about the need, the readability of this kind o validation
-      if (Object.prototype.hasOwnProperty.call(body, 'payload')) {
-        updates.payload = parsePayload(body.payload);
-      }
-      // TODO: Reason about the need, the readability of this kind o validation
-      if (Object.prototype.hasOwnProperty.call(body, 'scheduleType')) {
-        updates.scheduleType = parseScheduleType(body.scheduleType);
-      }
-      // TODO: Reason about the need, the readability of this kind o validation
-      if (Object.prototype.hasOwnProperty.call(body, 'cronExpression')) {
-        if (
-          body.cronExpression !== null &&
-          body.cronExpression !== undefined &&
-          typeof body.cronExpression !== 'string'
-        ) {
-          return res.status(400).json({
-            success: false,
-            message: 'cronExpression must be a string, null, or omitted',
-          });
-        }
-
-        updates.cronExpression = body.cronExpression;
-      }
-      // TODO: Reason about the need, the readability of this kind o validation
-      if (Object.prototype.hasOwnProperty.call(body, 'runAt')) {
-        updates.runAt = parseOptionalDate(body.runAt, 'runAt');
-      }
-      // TODO: Reason about the need, the readability of this kind o validation
-      if (Object.prototype.hasOwnProperty.call(body, 'timezone')) {
-        updates.timezone = parseTimezone(body.timezone);
-      }
-
-      const updatedBy = getUpdatedByFromRequest(req);
-      updates.updatedBy = updatedBy;
-      updates.createdBy = updatedBy;
-
-      const result = await SERVICES_CRON.createNewVersion(jobId, updates, updatedBy);
-
-      return res.status(201).json({
-        success: true,
-        data: result,
-        message: 'Cron job new version created successfully',
-      });
-    } catch (error) {
-      return res.status(getErrorStatus(error)).json({
-        success: false,
-        message: error instanceof Error ? error.message : 'Failed to create cron job new version',
       });
     }
   },

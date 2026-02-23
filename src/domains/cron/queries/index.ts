@@ -127,42 +127,6 @@ export const QUERIES_CRON_JOB_DEFINITIONS = {
 
     return result || null;
   },
-
-  async createNewVersion(
-    currentDefinitionId: string,
-    nextVersionDefinition: DB_InsertCronJobDefinition,
-    updatedBy: string = 'system'
-  ): Promise<{
-    previous: DB_SelectCronJobDefinition | null;
-    next: DB_SelectCronJobDefinition;
-  }> {
-    return await db.transaction(async tx => {
-      const [previous] = await tx
-        .update(T_CronJobDefinitions)
-        .set({
-          status: 'retired',
-          updatedBy,
-          updatedAt: new Date(),
-        })
-        .where(eq(T_CronJobDefinitions.id, currentDefinitionId))
-        .returning();
-
-      const [next] = await tx
-        .insert(T_CronJobDefinitions)
-        .values({
-          ...nextVersionDefinition,
-          supersedesJobId: currentDefinitionId,
-          createdBy: nextVersionDefinition.createdBy || updatedBy,
-          updatedBy: nextVersionDefinition.updatedBy || updatedBy,
-        })
-        .returning();
-
-      return {
-        previous: previous || null,
-        next,
-      };
-    });
-  },
 };
 
 export const QUERIES_CRON = {

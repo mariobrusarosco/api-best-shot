@@ -246,6 +246,13 @@
       "when": 1771784258639,
       "tag": "0034_spooky_yellowjacket",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1771865910878,
+      "tag": "0035_early_sabra",
+      "breakpoints": true
     }
   ]
 }

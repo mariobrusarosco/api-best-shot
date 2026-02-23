@@ -38,17 +38,10 @@ type ListCronDefinitionsOptions = {
 
 type CreateCronDefinitionInput = Omit<
   DB_InsertCronJobDefinition,
-  'id' | 'version' | 'supersedesJobId' | 'createdAt' | 'updatedAt'
+  'id' | 'version' | 'createdAt' | 'updatedAt'
 > & {
   version?: number;
 };
-
-type CreateCronDefinitionVersionInput = Partial<
-  Pick<
-    DB_InsertCronJobDefinition,
-    'target' | 'payload' | 'scheduleType' | 'cronExpression' | 'runAt' | 'timezone' | 'createdBy' | 'updatedBy'
-  >
->;
 
 type QueueRunOutcome = 'pending' | 'skipped' | 'duplicate';
 
@@ -100,8 +93,6 @@ const isValidTarget = (target: string): boolean => !!CRON_TARGET_REGISTRY[target
 const resolveTargetHandler = (target: string): CronTargetHandler | null => {
   return CRON_TARGET_REGISTRY[target] || null;
 };
-
-const hasOwnProperty = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
 
 const hasValue = (value: unknown): boolean => value !== undefined && value !== null;
 
@@ -155,7 +146,7 @@ const createDefinition = async (input: CreateCronDefinitionInput): Promise<DB_Se
 
   const latest = await QUERIES_CRON_JOB_DEFINITIONS.getLatestDefinitionByJobKey(input.jobKey);
   if (latest) {
-    throw new Error(`Job key "${input.jobKey}" already exists. Use new-version workflow.`);
+    throw new Error(`Job key "${input.jobKey}" already exists. Use a different job key.`);
   }
 
   if (input.version !== undefined && input.version !== 1) {
@@ -169,65 +160,6 @@ const createDefinition = async (input: CreateCronDefinitionInput): Promise<DB_Se
   };
 
   return QUERIES_CRON_JOB_DEFINITIONS.createDefinition(definitionToCreate);
-};
-
-const createNewVersion = async (
-  currentDefinitionId: string,
-  updates: CreateCronDefinitionVersionInput,
-  updatedBy: string = 'system'
-): Promise<{
-  previous: DB_SelectCronJobDefinition | null;
-  next: DB_SelectCronJobDefinition;
-}> => {
-  const current = await QUERIES_CRON_JOB_DEFINITIONS.getDefinitionById(currentDefinitionId);
-  if (!current) {
-    throw new Error(`Cron definition "${currentDefinitionId}" not found`);
-  }
-
-  if (current.status === 'retired') {
-    throw new Error('Cannot create a new version from a retired definition');
-  }
-
-  const latest = await QUERIES_CRON_JOB_DEFINITIONS.getLatestDefinitionByJobKey(current.jobKey);
-  if (!latest || latest.id !== current.id) {
-    throw new Error('Only the latest definition version can be superseded');
-  }
-
-  const nextTarget = hasOwnProperty(updates, 'target') ? updates.target : current.target;
-  const nextScheduleType = hasOwnProperty(updates, 'scheduleType') ? updates.scheduleType : current.scheduleType;
-  const nextCronExpression = hasOwnProperty(updates, 'cronExpression')
-    ? updates.cronExpression
-    : current.cronExpression;
-  const nextRunAt = hasOwnProperty(updates, 'runAt') ? updates.runAt : current.runAt;
-  const nextPayload = hasOwnProperty(updates, 'payload') ? updates.payload : current.payload;
-  const nextTimezone = hasOwnProperty(updates, 'timezone') ? updates.timezone : current.timezone;
-
-  if (!nextTarget || !nextScheduleType || !nextTimezone) {
-    throw new Error('New cron definition version is missing required fields');
-  }
-
-  ensureTargetIsValid(nextTarget);
-  validateScheduleShape({
-    scheduleType: nextScheduleType as ICronJobScheduleType,
-    cronExpression: nextCronExpression,
-    runAt: nextRunAt,
-  });
-
-  const nextVersionDefinition: DB_InsertCronJobDefinition = {
-    jobKey: current.jobKey,
-    version: current.version + 1,
-    target: nextTarget,
-    payload: nextPayload,
-    scheduleType: nextScheduleType,
-    cronExpression: nextCronExpression,
-    runAt: nextRunAt,
-    timezone: nextTimezone,
-    status: 'active',
-    createdBy: updates.createdBy || updatedBy,
-    updatedBy: updates.updatedBy || updatedBy,
-  };
-
-  return QUERIES_CRON_JOB_DEFINITIONS.createNewVersion(currentDefinitionId, nextVersionDefinition, updatedBy);
 };
 
 const getDefinitionById = async (id: string): Promise<DB_SelectCronJobDefinition | null> => {
@@ -344,6 +276,15 @@ const queueRunWithOverlapPolicy = async (params: {
   }
 
   assertDefinitionIsRunnable(definition);
+
+  // Pause semantics:
+  // - only active definitions can queue new runs
+  if (definition.status !== 'active') {
+    return {
+      outcome: 'skipped',
+      run: null,
+    };
+  }
 
   const scheduledAt = params.scheduledAt || new Date();
   const payloadSnapshot = params.payloadSnapshot ?? (definition.payload as CronTargetPayload);
@@ -512,7 +453,6 @@ export const SERVICES_CRON = {
   isValidTarget,
   resolveTargetHandler,
   createDefinition,
-  createNewVersion,
   getDefinitionById,
   getLatestDefinitionByJobKey,
   listDefinitions,

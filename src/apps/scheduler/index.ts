@@ -1,4 +1,5 @@
 import { config } from 'dotenv';
+
 config({ path: process.env.ENV_PATH || '.env' });
 
 import Logger from '@/core/logger';
@@ -10,7 +11,7 @@ import * as cron from 'node-cron';
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-const HEARTBEAT_INTERVAL_MS = 60_000;
+const HEARTBEAT_INTERVAL_MS = 60_000 * 30;
 const STALE_RUNNING_TIMEOUT_MINUTES = 15;
 const STALE_RUNNING_RECOVERY_LIMIT = 500;
 const PENDING_RUN_RECOVERY_BATCH_SIZE = 200;
@@ -447,9 +448,9 @@ const startHeartbeat = (): void => {
       domain: DOMAINS.DATA_PROVIDER,
       component: 'scheduler',
       operation: 'heartbeat',
-      intervalMs: HEARTBEAT_INTERVAL_MS * 10,
+      intervalMs: HEARTBEAT_INTERVAL_MS,
     });
-  }, HEARTBEAT_INTERVAL_MS * 10);
+  }, HEARTBEAT_INTERVAL_MS);
 };
 
 const startOneTimeSweep = (runnerInstanceId: string): void => {

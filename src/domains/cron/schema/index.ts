@@ -27,7 +27,6 @@ export const T_CronJobDefinitions = pgTable(
       .notNull()
       .default('active'),
     pauseReason: text('pause_reason'),
-    supersedesJobId: uuid('supersedes_job_id'),
     createdBy: text('created_by').notNull().default('system'),
     updatedBy: text('updated_by').notNull().default('system'),
     createdAt: timestamp('created_at').notNull().defaultNow(),

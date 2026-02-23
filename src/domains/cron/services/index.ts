@@ -64,9 +64,6 @@ type FailStaleRunningRunsInput = {
   failureDetails?: Record<string, unknown> | null;
 };
 
-const PAUSE_REASON_MIN_LENGTH = 5;
-const PAUSE_REASON_MAX_LENGTH = 300;
-
 export const CRON_TARGETS = {
   SYSTEM_PRINT_MESSAGE: 'system.print_message',
 } as const;
@@ -174,33 +171,14 @@ const listDefinitions = async (options?: ListCronDefinitionsOptions): Promise<DB
   return QUERIES_CRON_JOB_DEFINITIONS.listDefinitions(options);
 };
 
-const normalizePauseReason = (reason: string): string => {
-  const normalized = reason.trim();
-
-  if (normalized.length < PAUSE_REASON_MIN_LENGTH) {
-    throw new Error(`Pause reason must be at least ${PAUSE_REASON_MIN_LENGTH} characters`);
-  }
-
-  if (normalized.length > PAUSE_REASON_MAX_LENGTH) {
-    throw new Error(`Pause reason must be at most ${PAUSE_REASON_MAX_LENGTH} characters`);
-  }
-
-  return normalized;
-};
-
-const pauseDefinition = async (
-  id: string,
-  reason: string,
-  updatedBy: string = 'system'
-): Promise<DB_SelectCronJobDefinition> => {
-  const normalizedReason = normalizePauseReason(reason);
+const pauseDefinition = async (id: string, updatedBy: string = 'system'): Promise<DB_SelectCronJobDefinition> => {
   const definition = await QUERIES_CRON_JOB_DEFINITIONS.getDefinitionById(id);
 
   if (!definition) {
     throw new Error(`Cron definition "${id}" not found`);
   }
 
-  const updated = await QUERIES_CRON_JOB_DEFINITIONS.pauseDefinition(id, normalizedReason, updatedBy);
+  const updated = await QUERIES_CRON_JOB_DEFINITIONS.pauseDefinition(id, updatedBy);
   if (!updated) {
     throw new Error(`Failed to pause cron definition "${id}"`);
   }
@@ -215,7 +193,6 @@ const resumeDefinition = async (id: string, updatedBy: string = 'system'): Promi
     throw new Error(`Cron definition "${id}" not found`);
   }
 
-  // v1 behavior: resume clears pause reason.
   const updated = await QUERIES_CRON_JOB_DEFINITIONS.resumeDefinition(id, updatedBy);
   if (!updated) {
     throw new Error(`Failed to resume cron definition "${id}"`);
@@ -398,7 +375,6 @@ const retireOneTimeDefinitionAfterSuccess = async (run: DB_SelectCronJobRun): Pr
   try {
     await QUERIES_CRON_JOB_DEFINITIONS.updateDefinition(definition.id, {
       status: 'retired',
-      pauseReason: null,
       updatedBy: 'scheduler',
     });
   } catch {

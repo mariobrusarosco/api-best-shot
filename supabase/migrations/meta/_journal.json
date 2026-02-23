@@ -253,6 +253,13 @@
       "when": 1771865910878,
       "tag": "0035_early_sabra",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1771869841608,
+      "tag": "0036_magenta_talisman",
+      "breakpoints": true
     }
   ]
 }

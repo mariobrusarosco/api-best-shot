@@ -19,10 +19,6 @@ type CronDefinitionBody = {
   timezone?: unknown;
 };
 
-type PauseBody = {
-  reason?: unknown;
-};
-
 type RunNowBody = {
   payload?: unknown;
 };
@@ -257,10 +253,9 @@ export const API_ADMIN_CRON = {
     }
   },
 
-  async pauseJob(req: Request<{ jobId: string }, unknown, PauseBody>, res: Response) {
+  async pauseJob(req: Request<{ jobId: string }>, res: Response) {
     try {
       const { jobId } = req.params;
-      const reason = req.body?.reason;
 
       if (!jobId) {
         return res.status(400).json({
@@ -269,15 +264,8 @@ export const API_ADMIN_CRON = {
         });
       }
 
-      if (typeof reason !== 'string') {
-        return res.status(400).json({
-          success: false,
-          message: 'reason is required and must be a string',
-        });
-      }
-
       const updatedBy = getUpdatedByFromRequest(req);
-      const definition = await SERVICES_CRON.pauseDefinition(jobId, reason, updatedBy);
+      const definition = await SERVICES_CRON.pauseDefinition(jobId, updatedBy);
 
       return res.status(200).json({
         success: true,

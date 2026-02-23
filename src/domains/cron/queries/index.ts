@@ -94,16 +94,11 @@ export const QUERIES_CRON_JOB_DEFINITIONS = {
     return result || null;
   },
 
-  async pauseDefinition(
-    id: string,
-    reason: string,
-    updatedBy: string = 'system'
-  ): Promise<DB_SelectCronJobDefinition | null> {
+  async pauseDefinition(id: string, updatedBy: string = 'system'): Promise<DB_SelectCronJobDefinition | null> {
     const [result] = await db
       .update(T_CronJobDefinitions)
       .set({
         status: 'paused',
-        pauseReason: reason,
         updatedBy,
         updatedAt: new Date(),
       })
@@ -118,7 +113,6 @@ export const QUERIES_CRON_JOB_DEFINITIONS = {
       .update(T_CronJobDefinitions)
       .set({
         status: 'active',
-        pauseReason: null,
         updatedBy,
         updatedAt: new Date(),
       })

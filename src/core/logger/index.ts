@@ -11,7 +11,7 @@
  */
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
-import * as pc from 'picocolors';
+import { createColors, isColorSupported } from 'picocolors';
 import { LogTags, LogExtra } from './types';
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -19,6 +19,7 @@ const SENTRY_DSN = process.env.SENTRY_DSN || '';
 
 // Determine if Sentry should be enabled
 const isSentryEnabled = ['production', 'staging', 'demo'].includes(NODE_ENV) && SENTRY_DSN.trim().length > 0;
+const pc = createColors(NODE_ENV === 'development' || isColorSupported);
 
 // Initialize Sentry if enabled
 if (isSentryEnabled) {
@@ -32,19 +33,31 @@ if (isSentryEnabled) {
 }
 
 class LoggerService {
+  private buildOptionalContext(context?: LogExtra): LogExtra | undefined {
+    if (!context || Object.keys(context).length === 0) {
+      return undefined;
+    }
+
+    return { ...context, timestamp: new Date().toISOString() };
+  }
+
   /**
    * Logs an informational message.
    * @param message - The main log message.
    * @param context - Optional structured data.
    */
   public info(message: string, context?: LogExtra): void {
-    const finalContext = { ...context, timestamp: new Date().toISOString() };
-    console.log(pc.blue(`[INFO] ${message}`), finalContext);
+    const finalContext = this.buildOptionalContext(context);
+    if (finalContext) {
+      console.log(`${pc.blue('[INFO]')} ${message}`, finalContext);
+    } else {
+      console.log(`${pc.blue('[INFO]')} ${message}`);
+    }
 
     if (isSentryEnabled) {
       Sentry.captureMessage(message, {
         level: 'info',
-        extra: finalContext,
+        extra: finalContext || undefined,
       });
     }
   }
@@ -55,13 +68,17 @@ class LoggerService {
    * @param context - Optional structured data.
    */
   public warn(message: string, context?: LogExtra): void {
-    const finalContext = { ...context, timestamp: new Date().toISOString() };
-    console.warn(pc.yellow(`[WARN] ${message}`), finalContext);
+    const finalContext = this.buildOptionalContext(context);
+    if (finalContext) {
+      console.warn(`${pc.yellow('[WARN]')} ${message}`, finalContext);
+    } else {
+      console.warn(`${pc.yellow('[WARN]')} ${message}`);
+    }
 
     if (isSentryEnabled) {
       Sentry.captureMessage(message, {
         level: 'warning',
-        extra: finalContext,
+        extra: finalContext || undefined,
       });
     }
   }

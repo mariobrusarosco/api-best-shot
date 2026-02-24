@@ -68,7 +68,7 @@ const createMember = async (req: Request, res: Response) => {
         domain: DOMAINS.MEMBER,
         component: 'api',
         operation: 'createMember',
-        errors: errors as any,
+        errors: JSON.stringify(errors),
         receivedBody: req.body,
         contentType: req.get('content-type'),
       });

@@ -1,5 +1,4 @@
 import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
 import { CRON_RUN_SERVICE } from '@/domains/cron/services';
 import { STARTUP_DEFERRED_FAILURE_CODE, STARTUP_DEFERRED_FAILURE_MESSAGE } from './config';
 

@@ -87,10 +87,6 @@ const getDefinitionById = async (id: string): Promise<DB_SelectCronJobDefinition
   return QUERIES_CRON_JOB_DEFINITIONS.getDefinitionById(id);
 };
 
-const getLatestDefinitionByJobKey = async (jobKey: string): Promise<DB_SelectCronJobDefinition | null> => {
-  return QUERIES_CRON_JOB_DEFINITIONS.getLatestDefinitionByJobKey(jobKey);
-};
-
 const listDefinitions = async (options?: ListCronDefinitionsOptions): Promise<DB_SelectCronJobDefinition[]> => {
   return QUERIES_CRON_JOB_DEFINITIONS.listDefinitions(options);
 };
@@ -128,7 +124,6 @@ const resumeDefinition = async (id: string, updatedBy: string = 'system'): Promi
 export const CRON_DEFINITION_SERVICE = {
   createDefinition,
   getDefinitionById,
-  getLatestDefinitionByJobKey,
   listDefinitions,
   pauseDefinition,
   resumeDefinition,

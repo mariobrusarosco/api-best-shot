@@ -212,9 +212,9 @@ export const CRON_RUN_SERVICE = {
   executePendingRun,
 };
 
-export type QueueRunOutcome = 'pending' | 'skipped' | 'duplicate';
+type QueueRunOutcome = 'pending' | 'skipped' | 'duplicate';
 
-export type QueueRunResult = {
+type QueueRunResult = {
   outcome: QueueRunOutcome;
   run: DB_SelectCronJobRun | null;
 };
@@ -225,7 +225,7 @@ type MarkRunFailedInput = {
   failureDetails?: Record<string, unknown> | null;
 };
 
-export type MarkRunsSkippedInput = {
+type MarkRunsSkippedInput = {
   failureCode: string;
   failureMessage: string;
   failureDetails?: Record<string, unknown> | null;

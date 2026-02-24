@@ -1,11 +1,10 @@
 import db from '@/core/database';
-import { and, asc, desc, eq, lt } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import {
   DB_InsertCronJobDefinition,
   DB_InsertCronJobRun,
   DB_SelectCronJobDefinition,
   DB_SelectCronJobRun,
-  DB_UpdateCronJobRun,
   T_CronJobRuns,
   DB_UpdateCronJobDefinition,
   T_CronJobDefinitions,
@@ -123,10 +122,6 @@ export const QUERIES_CRON_JOB_DEFINITIONS = {
   },
 };
 
-export const QUERIES_CRON = {
-  definitions: QUERIES_CRON_JOB_DEFINITIONS,
-};
-
 type ListCronJobRunsOptions = {
   jobDefinitionId?: string;
   jobKey?: string;
@@ -203,24 +198,6 @@ export const QUERIES_CRON_JOB_RUNS = {
     return await baseQuery;
   },
 
-  async listPendingRuns(limit: number = 100): Promise<DB_SelectCronJobRun[]> {
-    return await db
-      .select()
-      .from(T_CronJobRuns)
-      .where(eq(T_CronJobRuns.status, 'pending'))
-      .orderBy(asc(T_CronJobRuns.scheduledAt))
-      .limit(limit);
-  },
-
-  async listDuePendingRuns(now: Date, limit: number = 100): Promise<DB_SelectCronJobRun[]> {
-    return await db
-      .select()
-      .from(T_CronJobRuns)
-      .where(and(eq(T_CronJobRuns.status, 'pending'), lt(T_CronJobRuns.scheduledAt, now)))
-      .orderBy(asc(T_CronJobRuns.scheduledAt))
-      .limit(limit);
-  },
-
   async findActiveRunByDefinitionVersion(
     jobDefinitionId: string,
     jobVersion: number
@@ -244,16 +221,6 @@ export const QUERIES_CRON_JOB_RUNS = {
   async hasActiveRunByDefinitionVersion(jobDefinitionId: string, jobVersion: number): Promise<boolean> {
     const result = await this.findActiveRunByDefinitionVersion(jobDefinitionId, jobVersion);
     return !!result;
-  },
-
-  async markRun(id: string, updates: Partial<DB_UpdateCronJobRun>): Promise<DB_SelectCronJobRun | null> {
-    const [result] = await db
-      .update(T_CronJobRuns)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(T_CronJobRuns.id, id))
-      .returning();
-
-    return result || null;
   },
 
   async markRunning(id: string, runnerInstanceId?: string): Promise<DB_SelectCronJobRun | null> {
@@ -355,5 +322,3 @@ export const QUERIES_CRON_JOB_RUNS = {
       .returning();
   },
 };
-
-export const QUERIES_CRON_RUNS = QUERIES_CRON_JOB_RUNS;

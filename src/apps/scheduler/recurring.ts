@@ -4,10 +4,7 @@ import { DB_SelectCronJobDefinition } from '@/domains/cron/schema';
 import { CRON_DEFINITION_SERVICE, CRON_RUN_SERVICE } from '@/domains/cron/services';
 import type { ScheduledTask } from 'node-cron';
 import * as cron from 'node-cron';
-import {
-  ACTIVE_RECURRING_DEFINITION_MAX_PAGES,
-  ACTIVE_RECURRING_DEFINITION_PAGE_SIZE,
-} from './config';
+import { ACTIVE_RECURRING_DEFINITION_MAX_PAGES, ACTIVE_RECURRING_DEFINITION_PAGE_SIZE } from './config';
 
 type RecurringTickSource = 'startup_catch_up' | 'cron_tick';
 

@@ -3,13 +3,7 @@ import { DB_InsertCronJobRun, DB_SelectCronJobDefinition, DB_SelectCronJobRun } 
 import { CRON_JOB_SCHEDULE_TYPES, CRON_RUN_TRIGGER_TYPES, ICronRunTriggerType } from '@/domains/cron/typing';
 import { CRON_EXECUTOR_SERVICE, CronTargetPayload } from './executor';
 
-const assertDefinitionIsRunnable = (definition: DB_SelectCronJobDefinition): void => {
-  if (definition.status === 'retired') {
-    throw new Error(`Cron definition "${definition.id}" is retired`);
-  }
-};
-
-const buildRunInsert = (params: {
+const buildRunRecordInput = (params: {
   definition: DB_SelectCronJobDefinition;
   triggerType: ICronRunTriggerType;
   scheduledAt: Date;
@@ -38,7 +32,7 @@ const buildRunInsert = (params: {
   };
 };
 
-const insertRunByTrigger = async (
+const createRunRecord = async (
   triggerType: ICronRunTriggerType,
   run: DB_InsertCronJobRun
 ): Promise<DB_SelectCronJobRun | null> => {
@@ -49,7 +43,7 @@ const insertRunByTrigger = async (
   return QUERIES_CRON_JOB_RUNS.createRun(run);
 };
 
-const queueRunWithOverlapPolicy = async (params: {
+const queueRunForActiveDefinition = async (params: {
   jobDefinitionId: string;
   triggerType: ICronRunTriggerType;
   scheduledAt?: Date;
@@ -60,8 +54,6 @@ const queueRunWithOverlapPolicy = async (params: {
     throw new Error(`Cron definition "${params.jobDefinitionId}" not found`);
   }
 
-  assertDefinitionIsRunnable(definition);
-
   if (definition.status !== 'active') {
     return {
       outcome: 'skipped',
@@ -71,19 +63,22 @@ const queueRunWithOverlapPolicy = async (params: {
 
   const scheduledAt = params.scheduledAt || new Date();
   const payloadSnapshot = params.payloadSnapshot ?? (definition.payload as CronTargetPayload);
-  const hasActiveRun = await QUERIES_CRON_JOB_RUNS.hasActiveRunByDefinitionVersion(definition.id, definition.version);
+  const hasRunningRunForDefinitionVersion = await QUERIES_CRON_JOB_RUNS.hasActiveRunByDefinitionVersion(
+    definition.id,
+    definition.version
+  );
 
-  if (hasActiveRun) {
-    const skippedRun = await insertRunByTrigger(
+  if (hasRunningRunForDefinitionVersion) {
+    const skippedRun = await createRunRecord(
       params.triggerType,
-      buildRunInsert({
+      buildRunRecordInput({
         definition,
         triggerType: params.triggerType,
         scheduledAt,
         payloadSnapshot,
         status: 'skipped',
-        failureCode: 'overlap_skipped',
-        failureMessage: 'Run skipped due to overlap policy',
+        failureCode: 'skipped_due_duplication',
+        failureMessage: 'Run skipped because another run is already running for this job version',
       })
     );
 
@@ -93,9 +88,9 @@ const queueRunWithOverlapPolicy = async (params: {
     };
   }
 
-  const pendingRun = await insertRunByTrigger(
+  const pendingRun = await createRunRecord(
     params.triggerType,
-    buildRunInsert({
+    buildRunRecordInput({
       definition,
       triggerType: params.triggerType,
       scheduledAt,
@@ -111,7 +106,7 @@ const queueRunWithOverlapPolicy = async (params: {
 };
 
 const queueScheduledRun = async (jobDefinitionId: string, scheduledAt: Date): Promise<QueueRunResult> => {
-  return queueRunWithOverlapPolicy({
+  return queueRunForActiveDefinition({
     jobDefinitionId,
     triggerType: CRON_RUN_TRIGGER_TYPES.SCHEDULED,
     scheduledAt,
@@ -119,16 +114,12 @@ const queueScheduledRun = async (jobDefinitionId: string, scheduledAt: Date): Pr
 };
 
 const queueRunNow = async (jobDefinitionId: string, payloadSnapshot?: CronTargetPayload): Promise<QueueRunResult> => {
-  return queueRunWithOverlapPolicy({
+  return queueRunForActiveDefinition({
     jobDefinitionId,
     triggerType: CRON_RUN_TRIGGER_TYPES.MANUAL,
     scheduledAt: new Date(),
     payloadSnapshot,
   });
-};
-
-const listPendingRuns = async (limit: number = 100): Promise<DB_SelectCronJobRun[]> => {
-  return QUERIES_CRON_JOB_RUNS.listPendingRuns(limit);
 };
 
 const markRunRunning = async (runId: string, runnerInstanceId?: string): Promise<DB_SelectCronJobRun> => {
@@ -158,16 +149,20 @@ const markRunFailed = async (runId: string, failure: MarkRunFailedInput): Promis
   return updated;
 };
 
-const failStaleRunningRuns = async (input: FailStaleRunningRunsInput): Promise<DB_SelectCronJobRun[]> => {
-  return QUERIES_CRON_JOB_RUNS.markStaleRunningRunsAsFailed(
-    input.staleBefore,
-    {
-      failureCode: input.failureCode,
-      failureMessage: input.failureMessage,
-      failureDetails: input.failureDetails || null,
-    },
-    input.limit
-  );
+const skipPendingRuns = async (input: MarkRunsSkippedInput): Promise<DB_SelectCronJobRun[]> => {
+  return QUERIES_CRON_JOB_RUNS.markPendingRunsAsSkipped({
+    failureCode: input.failureCode,
+    failureMessage: input.failureMessage,
+    failureDetails: input.failureDetails || null,
+  });
+};
+
+const skipRunningRuns = async (input: MarkRunsSkippedInput): Promise<DB_SelectCronJobRun[]> => {
+  return QUERIES_CRON_JOB_RUNS.markRunningRunsAsSkipped({
+    failureCode: input.failureCode,
+    failureMessage: input.failureMessage,
+    failureDetails: input.failureDetails || null,
+  });
 };
 
 const retireOneTimeDefinitionAfterSuccess = async (run: DB_SelectCronJobRun): Promise<void> => {
@@ -191,16 +186,6 @@ const retireOneTimeDefinitionAfterSuccess = async (run: DB_SelectCronJobRun): Pr
 const executePendingRun = async (runId: string, runnerInstanceId?: string): Promise<DB_SelectCronJobRun> => {
   const runningRun = await markRunRunning(runId, runnerInstanceId);
 
-  if (!CRON_EXECUTOR_SERVICE.resolveTargetHandler(runningRun.target)) {
-    return markRunFailed(runId, {
-      failureCode: 'unknown_target',
-      failureMessage: `No handler registered for target "${runningRun.target}"`,
-      failureDetails: {
-        target: runningRun.target,
-      },
-    });
-  }
-
   try {
     await CRON_EXECUTOR_SERVICE.executeRunTarget(runningRun);
     const terminalRun = await markRunSucceeded(runId);
@@ -222,8 +207,8 @@ const executePendingRun = async (runId: string, runnerInstanceId?: string): Prom
 export const CRON_RUN_SERVICE = {
   queueScheduledRun,
   queueRunNow,
-  listPendingRuns,
-  failStaleRunningRuns,
+  skipPendingRuns,
+  skipRunningRuns,
   executePendingRun,
 };
 
@@ -240,9 +225,7 @@ type MarkRunFailedInput = {
   failureDetails?: Record<string, unknown> | null;
 };
 
-export type FailStaleRunningRunsInput = {
-  staleBefore: Date;
-  limit?: number;
+export type MarkRunsSkippedInput = {
   failureCode: string;
   failureMessage: string;
   failureDetails?: Record<string, unknown> | null;

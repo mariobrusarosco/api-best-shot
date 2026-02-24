@@ -1,5 +1,5 @@
 import db from '@/core/database';
-import { and, asc, desc, eq, inArray, lt } from 'drizzle-orm';
+import { and, asc, desc, eq, lt } from 'drizzle-orm';
 import {
   DB_InsertCronJobDefinition,
   DB_InsertCronJobRun,
@@ -309,48 +309,49 @@ export const QUERIES_CRON_JOB_RUNS = {
     return result || null;
   },
 
-  async findStaleRunningRuns(staleBefore: Date, limit: number = 100): Promise<DB_SelectCronJobRun[]> {
-    return await db
-      .select()
-      .from(T_CronJobRuns)
-      .where(and(eq(T_CronJobRuns.status, 'running'), lt(T_CronJobRuns.startedAt, staleBefore)))
-      .orderBy(asc(T_CronJobRuns.startedAt))
-      .limit(limit);
-  },
-
-  async markStaleRunningRunsAsFailed(
-    staleBefore: Date,
+  async markPendingRunsAsSkipped(
     failure: {
       failureCode: string;
       failureMessage: string;
       failureDetails?: Record<string, unknown> | null;
-    },
-    limit: number = 100
-  ): Promise<DB_SelectCronJobRun[]> {
-    const staleIds = await db
-      .select({ id: T_CronJobRuns.id })
-      .from(T_CronJobRuns)
-      .where(and(eq(T_CronJobRuns.status, 'running'), lt(T_CronJobRuns.startedAt, staleBefore)))
-      .orderBy(asc(T_CronJobRuns.startedAt))
-      .limit(limit);
-
-    if (staleIds.length === 0) {
-      return [];
     }
-
-    const ids = staleIds.map(item => item.id);
+  ): Promise<DB_SelectCronJobRun[]> {
+    const now = new Date();
 
     return await db
       .update(T_CronJobRuns)
       .set({
-        status: 'failed',
+        status: 'skipped',
         failureCode: failure.failureCode,
         failureMessage: failure.failureMessage,
         failureDetails: failure.failureDetails || null,
-        finishedAt: new Date(),
-        updatedAt: new Date(),
+        finishedAt: now,
+        updatedAt: now,
       })
-      .where(and(inArray(T_CronJobRuns.id, ids), eq(T_CronJobRuns.status, 'running')))
+      .where(eq(T_CronJobRuns.status, 'pending'))
+      .returning();
+  },
+
+  async markRunningRunsAsSkipped(
+    failure: {
+      failureCode: string;
+      failureMessage: string;
+      failureDetails?: Record<string, unknown> | null;
+    }
+  ): Promise<DB_SelectCronJobRun[]> {
+    const now = new Date();
+
+    return await db
+      .update(T_CronJobRuns)
+      .set({
+        status: 'skipped',
+        failureCode: failure.failureCode,
+        failureMessage: failure.failureMessage,
+        failureDetails: failure.failureDetails || null,
+        finishedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(T_CronJobRuns.status, 'running'))
       .returning();
   },
 };

@@ -1,5 +1,4 @@
 import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
 import { DB_SelectCronJobRun } from '@/domains/cron/schema';
 import { ICronRunTriggerType } from '@/domains/cron/typing';
 
@@ -15,15 +14,7 @@ const systemPrintMessageHandler: CronTargetHandler = async context => {
       ? rawMessage.trim()
       : `[CRON] ${context.jobKey}#${context.jobVersion} executed`;
 
-  Logger.info(`[CRON_TARGET:system.print_message] ${message}`, {
-    domain: DOMAINS.DATA_PROVIDER,
-    component: 'cron-executor',
-    operation: 'system_print_message',
-    runId: context.runId,
-    jobDefinitionId: context.jobDefinitionId,
-    jobKey: context.jobKey,
-    jobVersion: context.jobVersion,
-  });
+  Logger.info(`[CRON_TARGET:system.print_message] run=${context.runId} job=${context.jobKey}#${context.jobVersion} ${message}`);
 };
 
 const CRON_TARGET_REGISTRY: Record<string, CronTargetHandler> = {

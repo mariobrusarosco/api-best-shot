@@ -5,12 +5,16 @@ config({ path: process.env.ENV_PATH || '.env' });
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import type { ScheduledTask } from 'node-cron';
-import { buildRunnerInstanceId, NODE_ENV } from './config';
+import { buildRunnerInstanceId, NODE_ENV, ONE_TIME_SWEEP_INTERVAL_MS } from './config';
 import { startHeartbeat } from './heartbeat';
 import { registerProcessErrorHandlers, registerShutdownHandlers } from './lifecycle';
-import { processDueOneTimeDefinitions, startOneTimeSweep } from './one-time';
-import { registerRecurringDefinitionsOnStartup, stopAllRegisteredRecurringTasks } from './recurring';
-import { recoverPendingRunsOnStartup, recoverStaleRunningRunsOnStartup } from './startup-recovery';
+import { processDueOneTimeDefinitions } from './one-time';
+import {
+  registerRecurringDefinitionsOnStartup,
+  stopAllRegisteredRecurringTasks,
+  syncRecurringDefinitions,
+} from './recurring';
+import { deferInFlightRunsOnStartup } from './startup-recovery';
 
 let isShuttingDown = false;
 let heartbeatTimer: NodeJS.Timeout | null = null;
@@ -21,12 +25,7 @@ const shutdown = (signal: NodeJS.Signals) => {
   if (isShuttingDown) return;
   isShuttingDown = true;
 
-  Logger.info('Scheduler shutdown requested', {
-    domain: DOMAINS.DATA_PROVIDER,
-    component: 'scheduler',
-    operation: 'shutdown',
-    signal,
-  });
+  Logger.info(`Scheduler shutdown requested: ${signal}`);
 
   if (heartbeatTimer) {
     clearInterval(heartbeatTimer);
@@ -38,30 +37,19 @@ const shutdown = (signal: NodeJS.Signals) => {
     oneTimeSweepTimer = null;
   }
 
-  const stoppedTasksCount = stopAllRegisteredRecurringTasks(recurringTaskRegistry);
+  void stopAllRegisteredRecurringTasks(recurringTaskRegistry);
 
-  Logger.info('Scheduler shutdown completed', {
-    domain: DOMAINS.DATA_PROVIDER,
-    component: 'scheduler',
-    operation: 'shutdown',
-    stoppedTasksCount,
-  });
+  Logger.info('Scheduler shutdown completed');
 
   process.exit(0);
 };
 
 const bootstrap = async (): Promise<void> => {
-  Logger.info('Starting Best Shot Scheduler runtime', {
-    domain: DOMAINS.DATA_PROVIDER,
-    component: 'scheduler',
-    operation: 'bootstrap_start',
-    environment: NODE_ENV,
-  });
+  Logger.info(`Starting Best Shot Scheduler runtime env=${NODE_ENV}`);
 
   const runnerInstanceId = buildRunnerInstanceId();
 
-  await recoverStaleRunningRunsOnStartup();
-  await recoverPendingRunsOnStartup(runnerInstanceId);
+  await deferInFlightRunsOnStartup();
   await processDueOneTimeDefinitions(runnerInstanceId);
   await registerRecurringDefinitionsOnStartup({
     runnerInstanceId,
@@ -69,18 +57,20 @@ const bootstrap = async (): Promise<void> => {
     isShuttingDown: () => isShuttingDown,
   });
 
-  Logger.info('Scheduler runtime initialized', {
-    domain: DOMAINS.DATA_PROVIDER,
-    component: 'scheduler',
-    operation: 'bootstrap',
-    activeRecurringTaskHandles: recurringTaskRegistry.size,
-    runnerInstanceId,
-  });
+  Logger.info(
+    `Scheduler runtime initialized activeRecurringTaskHandles=${recurringTaskRegistry.size} runnerInstanceId=${runnerInstanceId}`
+  );
 
-  oneTimeSweepTimer = startOneTimeSweep({
-    runnerInstanceId,
-    isShuttingDown: () => isShuttingDown,
-  });
+  oneTimeSweepTimer = setInterval(() => {
+    if (isShuttingDown) return;
+
+    void processDueOneTimeDefinitions(runnerInstanceId);
+    void syncRecurringDefinitions({
+      runnerInstanceId,
+      recurringTaskRegistry,
+      isShuttingDown: () => isShuttingDown,
+    });
+  }, ONE_TIME_SWEEP_INTERVAL_MS);
   heartbeatTimer = startHeartbeat();
 };
 

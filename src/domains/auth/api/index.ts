@@ -20,7 +20,7 @@ const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) =
         domain: DOMAINS.AUTH,
         component: 'api',
         operation: 'authenticate',
-        errors: errors as any,
+        errors: errors as unknown,
       });
 
       return res.status(ErrorMapper.VALIDATION_ERROR.status).send({

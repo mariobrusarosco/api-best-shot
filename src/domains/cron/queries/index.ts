@@ -276,13 +276,11 @@ export const QUERIES_CRON_JOB_RUNS = {
     return result || null;
   },
 
-  async markPendingRunsAsSkipped(
-    failure: {
-      failureCode: string;
-      failureMessage: string;
-      failureDetails?: Record<string, unknown> | null;
-    }
-  ): Promise<DB_SelectCronJobRun[]> {
+  async markPendingRunsAsSkipped(failure: {
+    failureCode: string;
+    failureMessage: string;
+    failureDetails?: Record<string, unknown> | null;
+  }): Promise<DB_SelectCronJobRun[]> {
     const now = new Date();
 
     return await db
@@ -299,13 +297,11 @@ export const QUERIES_CRON_JOB_RUNS = {
       .returning();
   },
 
-  async markRunningRunsAsSkipped(
-    failure: {
-      failureCode: string;
-      failureMessage: string;
-      failureDetails?: Record<string, unknown> | null;
-    }
-  ): Promise<DB_SelectCronJobRun[]> {
+  async markRunningRunsAsSkipped(failure: {
+    failureCode: string;
+    failureMessage: string;
+    failureDetails?: Record<string, unknown> | null;
+  }): Promise<DB_SelectCronJobRun[]> {
     const now = new Date();
 
     return await db

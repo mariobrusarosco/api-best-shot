@@ -2,22 +2,25 @@ import { DB_InsertMatch } from '@/domains/match/schema';
 import { DB_InsertTeam } from '@/domains/team/schema';
 import { DB_InsertTournamentRound, DB_SelectTournamentRound } from '@/domains/tournament-round/schema';
 import { TournamentQuery } from '@/domains/tournament/queries';
-import { DB_InsertTournament, DB_InsertTournamentStandings, DB_SelectTournament } from '@/domains/tournament/schema';
+import { DB_InsertTournamentStandings, DB_SelectTournament, DB_UpdateTournament } from '@/domains/tournament/schema';
 import { FetchAndStoreAssetPayload } from '@/utils';
 import { Request } from 'express';
 
 export type IApiProvider = {
   tournament: {
-    fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
-    createOnDatabase: (data: any & { logo: string }) => Promise<DB_SelectTournament>;
-    updateOnDatabase: (data: DB_InsertTournament) => Promise<DB_SelectTournament>;
+    fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<string>;
+    createOnDatabase: (data: CreateTournamentInput & { logo: string }) => Promise<DB_SelectTournament>;
+    updateOnDatabase: (data: DB_UpdateTournament) => Promise<DB_SelectTournament>;
   };
   rounds: {
     fetchRoundFromProvider: (providerUrl: string) => Promise<API_SOFASCORE_ROUND>;
     fetchShallowListOfRoundsFromProvider: (baseUrl: string) => Promise<API_SOFASCORE_ROUNDS>;
-    mapShallowListOfRounds: (data: API_SOFASCORE_ROUNDS, tournament: NonNullable<TournamentQuery>) => Promise<any[]>;
+    mapShallowListOfRounds: (
+      data: API_SOFASCORE_ROUNDS,
+      tournament: NonNullable<TournamentQuery>
+    ) => Promise<DB_InsertTournamentRound[]>;
     createOnDatabase: (rounds: DB_InsertTournamentRound[]) => Promise<DB_SelectTournamentRound[]>;
-    upsertOnDatabase: (rounds: DB_InsertTournamentRound[]) => Promise<any>;
+    upsertOnDatabase: (rounds: DB_InsertTournamentRound[]) => Promise<DB_SelectTournamentRound[]>;
   };
   matches: {
     mapRoundMatches: (data: {
@@ -25,28 +28,32 @@ export type IApiProvider = {
       roundSlug: string;
       tournamentId: string;
     }) => DB_InsertMatch[];
-    upsertOnDatabase: (matches: DB_InsertMatch[]) => Promise<any>;
-    createOnDatabase: (matches: DB_InsertMatch[]) => Promise<any>;
+    upsertOnDatabase: (matches: DB_InsertMatch[]) => Promise<number>;
+    createOnDatabase: (matches: DB_InsertMatch[]) => Promise<unknown>;
   };
   teams: {
-    fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<any>;
-    mapTeamsFromStandings: (standings: any, provider: string) => Promise<DB_InsertTeam[]>;
+    fetchAndStoreLogo: (data: FetchAndStoreAssetPayload) => Promise<string>;
+    mapTeamsFromStandings: (standings: API_SOFASCORE_STANDINGS, provider: string) => Promise<DB_InsertTeam[]>;
     mapTeamsFromRound: (round: API_SOFASCORE_ROUND, provider: string) => Promise<DB_InsertTeam[]>;
     createOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[]>;
-    upsertOnDatabase: (teams: DB_InsertTeam[]) => Promise<any>;
+    upsertOnDatabase: (teams: DB_InsertTeam[]) => Promise<DB_InsertTeam[]>;
   };
   standings: {
     fetchStandingsFromProvider: (baseUrl: string) => Promise<API_SOFASCORE_STANDINGS | null>;
-    mapStandings: (data: any, tournamentId: string, tournamentStandingsMode: string) => Promise<any>;
-    createOnDatabase: (standings: any) => Promise<DB_InsertTournamentStandings[]>;
-    upsertOnDatabase: (standings: any) => Promise<any>;
+    mapStandings: (
+      data: API_SOFASCORE_STANDINGS,
+      tournamentId: string,
+      tournamentStandingsMode: string
+    ) => Promise<DB_InsertTournamentStandings[]>;
+    createOnDatabase: (standings: DB_InsertTournamentStandings[]) => Promise<DB_InsertTournamentStandings[]>;
+    upsertOnDatabase: (standings: DB_InsertTournamentStandings[]) => Promise<DB_InsertTournamentStandings[]>;
   };
 };
 
 export interface IDataProviderTournamentRound {
   fetchRoundFromProvider: (providerUrl: string) => Promise<API_SOFASCORE_ROUND>;
   fetchRoundsFromProvider: (providerUrl: string) => Promise<API_SOFASCORE_ROUNDS>;
-  createRoundsOnDatabase: (data: API_SOFASCORE_ROUNDS, tournamentId: string) => Promise<any>;
+  createRoundsOnDatabase: (data: API_SOFASCORE_ROUNDS, tournamentId: string) => Promise<DB_SelectTournamentRound[]>;
 }
 
 export interface IDataProviderMatch {

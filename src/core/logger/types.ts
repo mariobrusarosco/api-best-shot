@@ -16,7 +16,6 @@ export interface LogTags {
   domain: Domain;
   operation: string;
   component?: string;
-  [key: string]: string | undefined;
 }
 
 /**

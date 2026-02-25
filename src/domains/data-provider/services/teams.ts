@@ -307,6 +307,12 @@ export class TeamsDataProviderService {
       return rawContent as API_SOFASCORE_STANDINGS;
     } catch (error) {
       const errorMessage = (error as Error).message;
+      if (errorMessage.includes('status 404')) {
+        this.reporter.addOperation('scraping', 'fetch_teams_from_standings', 'completed', {
+          info: 'Standings not found (404). This can be expected before the regular season starts.',
+        });
+        return null;
+      }
       this.reporter.addOperation('scraping', 'fetch_teams_from_standings', 'failed', {
         error: errorMessage,
       });
@@ -460,15 +466,15 @@ export class TeamsDataProviderService {
   }
 
   private async mapTeams(
-    fetchedTeams: { fromStandings?: API_SOFASCORE_STANDINGS; fromKnockout?: API_SOFASCORE_ROUND[] },
+    fetchedTeams: { fromStandings?: API_SOFASCORE_STANDINGS | null; fromKnockout?: API_SOFASCORE_ROUND[] },
     tournamentMode: TournamentMode
   ) {
     this.reporter.addOperation('transformation', 'map_teams', 'started');
 
     if (tournamentMode === 'regular-season-and-knockout') {
-      const teamsFromStandings = await this.mapTeamsFromStandings(
-        fetchedTeams.fromStandings as API_SOFASCORE_STANDINGS
-      );
+      const teamsFromStandings = fetchedTeams.fromStandings 
+        ? await this.mapTeamsFromStandings(fetchedTeams.fromStandings as API_SOFASCORE_STANDINGS)
+        : [];
       const teamsFromKnockout = await this.mapTeamsFromKnockoutRounds(fetchedTeams.fromKnockout);
       this.reporter.addOperation('transformation', 'map_teams', 'completed', {
         teamsFromStandingsCount: teamsFromStandings.length,
@@ -476,9 +482,9 @@ export class TeamsDataProviderService {
       });
       return [...teamsFromStandings, ...teamsFromKnockout];
     } else if (tournamentMode === 'regular-season-only') {
-      const teamsFromStandings = await this.mapTeamsFromStandings(
-        fetchedTeams.fromStandings as API_SOFASCORE_STANDINGS
-      );
+      const teamsFromStandings = fetchedTeams.fromStandings
+        ? await this.mapTeamsFromStandings(fetchedTeams.fromStandings as API_SOFASCORE_STANDINGS)
+        : [];
       this.reporter.addOperation('transformation', 'map_teams', 'completed', {
         teamsFromStandingsCount: teamsFromStandings.length,
       });

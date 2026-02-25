@@ -2,8 +2,8 @@ import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import { QUERIES_MATCH } from '@/domains/match/queries';
 import { DB_SelectMatch } from '@/domains/match/schema';
-import { API_SOFASCORE_MATCH } from '../typing';
 import { BaseScraper } from '../providers/playwright/base-scraper';
+import { API_SOFASCORE_MATCH } from '../typing';
 
 const OPEN_MATCH_SYNC_BATCH_SIZE = 30;
 const OPEN_MATCH_SYNC_STALE_INTERVAL_MS = 2 * 60 * 1000;
@@ -104,6 +104,10 @@ const syncOpenMatchesFromProvider = async (): Promise<SyncOpenMatchesSummary> =>
     open: 0,
     notDefined: 0,
     failed: 0,
+    matches: dueMatches.map(match => ({
+      id: match.id,
+      tournamentId: match.tournamentId,
+    })),
   };
 
   if (dueMatches.length === 0) {
@@ -187,6 +191,10 @@ type SyncOpenMatchesSummary = {
   open: number;
   notDefined: number;
   failed: number;
+  matches: {
+    id: string;
+    tournamentId: string;
+  }[];
 };
 
 type SyncSingleMatchResult = {

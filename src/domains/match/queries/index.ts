@@ -157,6 +157,7 @@ const listDueOpenMatchesForPolling = async (params: {
       status: T_Match.status,
       date: T_Match.date,
       lastCheckedAt: T_Match.lastCheckedAt,
+      tournamentId: T_Match.tournamentId,
     })
     .from(T_Match)
     .where(

@@ -72,11 +72,7 @@
   "homepage": "https://github.com/mariobrusarosco/api-best-shot/#readme",
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "src/**/*.{test,spec}.{ts,tsx}": [
-      "echo 'Skipping test files'"
+      "eslint --fix"
     ]
   },
   "dependencies": {

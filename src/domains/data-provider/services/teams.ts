@@ -1,11 +1,11 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { QUERIES_TEAMS } from '@/domains/team/queries';
 import { DB_InsertTeam } from '@/domains/team/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import type { TournamentMode } from '@/domains/tournament/typing';
 import { TournamentWithTypedMode } from '@/domains/tournament/typing';
-import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
 import { safeString } from '@/utils';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { API_SOFASCORE_ROUND, API_SOFASCORE_STANDINGS, DataProviderExecutionOperationType } from '../typing';
@@ -472,7 +472,7 @@ export class TeamsDataProviderService {
     this.reporter.addOperation('transformation', 'map_teams', 'started');
 
     if (tournamentMode === 'regular-season-and-knockout') {
-      const teamsFromStandings = fetchedTeams.fromStandings 
+      const teamsFromStandings = fetchedTeams.fromStandings
         ? await this.mapTeamsFromStandings(fetchedTeams.fromStandings as API_SOFASCORE_STANDINGS)
         : [];
       const teamsFromKnockout = await this.mapTeamsFromKnockoutRounds(fetchedTeams.fromKnockout);

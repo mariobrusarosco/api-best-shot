@@ -38,6 +38,7 @@ const systemPrintMessageHandler: CronTargetHandler = async context => {
 
 const matchesSyncOpenHandler: CronTargetHandler = async context => {
   const summary = await SERVICES_DATA_PROVIDER_MATCH_SYNC.syncOpenMatchesFromProvider();
+  // TODO(realtime): Emit a WebSocket event here so clients can refresh match/tournament views without polling.
 
   Logger.info(
     `[CRON_TARGET:matches.sync_open] run=${context.runId} job=${context.jobKey}#${context.jobVersion} scanned=${summary.scanned} updated=${summary.updated} ended=${summary.ended} open=${summary.open} notDefined=${summary.notDefined} failed=${summary.failed}`

@@ -94,6 +94,8 @@ const syncOpenMatchesFromProvider = async (): Promise<SyncOpenMatchesSummary> =>
     staleBefore,
     limit: OPEN_MATCH_SYNC_BATCH_SIZE,
   });
+  // TODO(realtime): Emit "tournament_update_started" via WebSocket for each affected tournament.
+  // NOTE: listDueOpenMatchesForPolling currently returns no tournamentId, so this needs that field first.
 
   const summary: SyncOpenMatchesSummary = {
     scanned: dueMatches.length,
@@ -150,6 +152,9 @@ const syncOpenMatchesFromProvider = async (): Promise<SyncOpenMatchesSummary> =>
       await scraper.close();
     }
   }
+
+  // TODO(realtime): Emit per-tournament "tournament_update_completed" / "tournament_update_failed"
+  // events after sync + scoreboard recalculation state transitions are finalized.
 
   return summary;
 };

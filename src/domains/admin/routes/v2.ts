@@ -40,6 +40,7 @@ router.patch(
   AdminMiddleware,
   API_ADMIN_TOURNAMENTS.updateMatchesByRound
 );
+router.patch('/matches/:matchId/sync', AdminMiddleware, API_ADMIN_TOURNAMENTS.syncMatchById);
 
 // Tournament Standings Management (admin only)
 router.post('/tournaments/:tournamentId/standings', AdminMiddleware, API_ADMIN_TOURNAMENTS.createStandings);

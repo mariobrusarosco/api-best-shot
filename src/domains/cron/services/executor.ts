@@ -1,9 +1,11 @@
 import Logger from '@/core/logger';
 import { DB_SelectCronJobRun } from '@/domains/cron/schema';
 import { ICronRunTriggerType } from '@/domains/cron/typing';
+import { SERVICES_DATA_PROVIDER_MATCH_SYNC } from '@/domains/data-provider/services/matches-sync';
 
 const CRON_TARGET_IDS = {
   SYSTEM_PRINT_MESSAGE: 'system.print_message',
+  MATCHES_SYNC_OPEN: 'matches.sync_open',
 } as const;
 
 export type CronTargetPayload = Record<string, unknown> | null | undefined;
@@ -34,8 +36,17 @@ const systemPrintMessageHandler: CronTargetHandler = async context => {
   );
 };
 
+const matchesSyncOpenHandler: CronTargetHandler = async context => {
+  const summary = await SERVICES_DATA_PROVIDER_MATCH_SYNC.syncOpenMatchesFromProvider();
+
+  Logger.info(
+    `[CRON_TARGET:matches.sync_open] run=${context.runId} job=${context.jobKey}#${context.jobVersion} scanned=${summary.scanned} updated=${summary.updated} ended=${summary.ended} open=${summary.open} notDefined=${summary.notDefined} failed=${summary.failed}`
+  );
+};
+
 const CRON_TARGET_REGISTRY: Record<string, CronTargetHandler> = {
   [CRON_TARGET_IDS.SYSTEM_PRINT_MESSAGE]: systemPrintMessageHandler,
+  [CRON_TARGET_IDS.MATCHES_SYNC_OPEN]: matchesSyncOpenHandler,
 };
 
 const isValidTarget = (target: string): boolean => !!CRON_TARGET_REGISTRY[target];

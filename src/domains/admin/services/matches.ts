@@ -1,10 +1,11 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
+import { SERVICES_DATA_PROVIDER_MATCH_SYNC } from '@/domains/data-provider/services/matches-sync';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
 import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
 
@@ -184,6 +185,58 @@ class AdminMatchesService {
           source: 'admin_service',
         });
       }
+    }
+  }
+
+  static async syncMatchById(req: Request, res: Response) {
+    const requestId = randomUUID();
+
+    try {
+      const matchId = req.params.matchId;
+
+      if (!matchId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Match ID is required',
+        });
+      }
+
+      const result = await SERVICES_DATA_PROVIDER_MATCH_SYNC.syncMatchById(matchId);
+
+      if (!result) {
+        return res.status(404).json({
+          success: false,
+          error: 'Match not found',
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+        message: result.updated
+          ? 'Match synced successfully'
+          : 'Match checked but provider response had no event payload',
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sync match';
+
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        operation: 'syncMatchById',
+        component: 'service',
+        requestId,
+        adminUser: req.authenticatedUser?.nickName,
+        matchId: req.params.matchId,
+      });
+
+      if (errorMessage.includes('Unsupported match provider')) {
+        return res.status(400).json({
+          success: false,
+          error: errorMessage,
+        });
+      }
+
+      return handleInternalServerErrorResponse(res, error);
     }
   }
 }

@@ -47,6 +47,10 @@ export const API_ADMIN_TOURNAMENTS = {
     return await AdminMatchesService.updateMatchesByRound(req, res);
   },
 
+  async syncMatchById(req: Request, res: Response) {
+    return await AdminMatchesService.syncMatchById(req, res);
+  },
+
   async createStandings(req: Request, res: Response) {
     return await AdminStandingsService.createStandings(req, res);
   },

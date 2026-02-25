@@ -7,7 +7,7 @@ import { BaseScraper } from '../providers/playwright/base-scraper';
 
 const OPEN_MATCH_SYNC_BATCH_SIZE = 30;
 const OPEN_MATCH_SYNC_STALE_INTERVAL_MS = 2 * 60 * 1000;
-const OPEN_MATCH_SYNC_LOOKBACK_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const OPEN_MATCH_SYNC_LOOKBACK_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
 const mapSofaScoreEvent = (event: API_SOFASCORE_MATCH) => {
   const statusType = event.status?.type;

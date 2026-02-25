@@ -8,8 +8,10 @@ Audience: Backend engineers working on cron jobs
 1. We support recurring and one-time cron job definitions.
 2. Cron definitions are created via admin API.
 3. Scheduler executes definitions and writes run history.
-4. Right now, only one target is registered:
+4. Registered targets today:
    - `system.print_message`
+   - `matches.sync_open`
+   - `tournaments.current_round_sync`
 
 ## 2) Core mental model
 
@@ -64,6 +66,26 @@ Example payload:
 }
 ```
 
+Example payload for `tournaments.current_round_sync`:
+
+```json
+{
+  "jobKey": "sync_current_round_tournament_x",
+  "target": "tournaments.current_round_sync",
+  "payload": {},
+  "scheduleType": "recurring",
+  "cronExpression": "0 0 * * *",
+  "timezone": "UTC"
+}
+```
+
+Behavior:
+1. Uses UTC day window.
+2. Loads matches scheduled for today from `MatchQueries.currentDayMatchesOnDatabase()`.
+3. Deduplicates tournaments by `tournamentId`.
+4. Syncs each tournament current round via data-provider execution.
+5. If any tournament fails, the cron run fails.
+
 ### Step B: What API does
 
 1. Validates fields.
@@ -112,15 +134,17 @@ Source file:
 src/domains/cron/services/executor.ts
 ```
 
-Current target constant:
+Current target constants:
 
 ```ts
-export const CRON_TARGETS = {
+export const CRON_TARGET_IDS = {
   SYSTEM_PRINT_MESSAGE: 'system.print_message',
+  MATCHES_SYNC_OPEN: 'matches.sync_open',
+  TOURNAMENTS_CURRENT_ROUND_SYNC: 'tournaments.current_round_sync',
 } as const;
 ```
 
-Current handler behavior:
+`system.print_message` handler behavior:
 
 1. Reads `payload.message`.
 2. If message exists, prints it.
@@ -150,7 +174,9 @@ Registry mapping:
 
 ```ts
 const CRON_TARGET_REGISTRY: Record<string, CronTargetHandler> = {
-  [CRON_TARGETS.SYSTEM_PRINT_MESSAGE]: systemPrintMessageHandler,
+  [CRON_TARGET_IDS.SYSTEM_PRINT_MESSAGE]: systemPrintMessageHandler,
+  [CRON_TARGET_IDS.MATCHES_SYNC_OPEN]: matchesSyncOpenHandler,
+  [CRON_TARGET_IDS.TOURNAMENTS_CURRENT_ROUND_SYNC]: tournamentsCurrentRoundSyncHandler,
 };
 ```
 
@@ -171,7 +197,7 @@ The cron system does not care about business meaning of target; it only routes t
 
 Use this checklist:
 
-1. Add a new constant in `CRON_TARGETS`.
+1. Add a new constant in `CRON_TARGET_IDS`.
 2. Implement handler function `(context) => Promise<void>`.
 3. Register it in `CRON_TARGET_REGISTRY`.
 4. Deploy API + scheduler.

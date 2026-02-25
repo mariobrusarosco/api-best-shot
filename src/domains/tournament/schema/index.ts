@@ -11,6 +11,7 @@ export const T_Tournament = pgTable(
     slug: text('slug').notNull().default(''),
     provider: text('provider').notNull(),
     season: text('season').notNull(),
+    currentRound: text('current_round'),
     mode: text('mode', {
       enum: ['regular-season-and-knockout', 'regular-season-only', 'knockout-only'],
     }).notNull(),

@@ -260,6 +260,13 @@
       "when": 1771869841608,
       "tag": "0036_magenta_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1772048762404,
+      "tag": "0037_add_tournament_current_round",
+      "breakpoints": true
     }
   ]
 }

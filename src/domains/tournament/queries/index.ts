@@ -7,6 +7,7 @@ import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import {
   DB_InsertTournament,
   DB_InsertTournamentStandings,
+  DB_SelectTournament,
   T_Tournament,
   T_TournamentMember,
   T_TournamentStandings,
@@ -72,6 +73,7 @@ const allTournaments = async () => {
         mode: T_Tournament.mode,
         standingsMode: T_Tournament.standingsMode,
         season: T_Tournament.season,
+        currentRound: T_Tournament.currentRound,
       })
       .from(T_Tournament);
   } catch (error: unknown) {
@@ -93,6 +95,7 @@ const tournament = async (tournamentId: string) => {
         mode: T_Tournament.mode,
         standingsMode: T_Tournament.standingsMode,
         season: T_Tournament.season,
+        currentRound: T_Tournament.currentRound,
       })
       .from(T_Tournament)
       .where(eq(T_Tournament.id, tournamentId));
@@ -215,6 +218,25 @@ const createTournament = async (input: DB_InsertTournament) => {
   }
 };
 
+const updateTournamentCurrentRound = async (
+  tournamentId: string,
+  currentRound: string
+): Promise<DB_SelectTournament | null> => {
+  try {
+    const [tournament] = await db
+      .update(T_Tournament)
+      .set({ currentRound })
+      .where(eq(T_Tournament.id, tournamentId))
+      .returning();
+
+    return tournament || null;
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    console.error('[TournamentQueries] - [updateTournamentCurrentRound]', dbError);
+    throw error;
+  }
+};
+
 const upsertTournamentStandings = async (standings: DB_InsertTournamentStandings[]) => {
   if (standings.length === 0) {
     return [];
@@ -257,6 +279,7 @@ export const QUERIES_TOURNAMENT = {
 
   getTournamentStandings,
   createTournament,
+  updateTournamentCurrentRound,
   upsertTournamentStandings,
   updateMemberPoints,
   bulkUpdateMemberPoints,

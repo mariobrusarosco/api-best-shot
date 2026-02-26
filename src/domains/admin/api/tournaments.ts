@@ -62,8 +62,4 @@ export const API_ADMIN_TOURNAMENTS = {
   async getTournamentExecutionJobs(req: Request, res: Response) {
     return await AdminTournamentService.getTournamentExecutionJobs(req, res);
   },
-
-  async updateKnockoutRounds(req: Request, res: Response) {
-    return await AdminRoundsService.updateKnockoutRounds(req, res);
-  },
 };

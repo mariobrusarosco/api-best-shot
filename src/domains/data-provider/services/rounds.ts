@@ -4,7 +4,6 @@ import { API_SOFASCORE_ROUNDS, DataProviderExecutionOperationType } from '@/doma
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
 import type { ITournamentRoundType } from '@/domains/tournament-round/typing';
-import { ITournament } from '@/domains/tournament/typing';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import { DataProviderReport } from './report';
@@ -385,103 +384,6 @@ export class RoundsDataProviderService {
         component: 'service',
         operation: 'updateOnDatabase',
       });
-      throw error;
-    }
-  }
-
-  public async checkForNewKnockoutRounds(tournament: ITournament) {
-    try {
-      this.reporter.addOperation('database', 'check_for_new_knockout_rounds', 'started', {
-        tournamentId: tournament.id,
-      });
-
-      const allRoundsOnDatabase = await QUERIES_TOURNAMENT_ROUND.getKnockoutRounds(tournament.id);
-      const allRoundsOnProvider = await this.fetchRounds(tournament.baseUrl);
-
-      const existingProviderIds = new Set(allRoundsOnDatabase.map(r => r.providerId));
-      // Filter rounds that don't exist in database
-      const newRounds = allRoundsOnProvider.rounds.filter((round: unknown) => {
-        const roundData = round as { round: number };
-        return !existingProviderIds.has(roundData.round.toString());
-      });
-
-      this.reporter.addOperation('database', 'check_for_new_knockout_rounds', 'completed', {
-        allRoundsOnDatabase,
-        allRoundsOnProvider,
-        newRounds,
-      });
-
-      return newRounds;
-    } catch (error) {
-      const errorMessage = (error as Error).message;
-      this.reporter.addOperation('database', 'check_for_new_knockout_rounds', 'failed', {
-        error: errorMessage,
-      });
-      throw error;
-    }
-  }
-
-  public async updateKnockoutRounds(tournament: ITournament) {
-    try {
-      this.reporter.addOperation('database', 'update_knockout_rounds', 'started', {
-        tournamentId: tournament.id,
-      });
-
-      const newRounds = await this.checkForNewKnockoutRounds(tournament);
-      console.log('rawNewRounds', newRounds);
-
-      const enhancedNewRounds = this.enhanceRounds(tournament.baseUrl, tournament.id, {
-        currentRound: { round: 0, name: '', slug: '' },
-        rounds: newRounds,
-      });
-      console.log('newRound', enhancedNewRounds);
-
-      const updatedRounds = await this.createOnDatabase(enhancedNewRounds);
-      return updatedRounds;
-    } catch (error) {
-      const errorMessage = (error as Error).message;
-
-      // ------ GENERATE REPORT EVEN ON FAILURE (with fallback) ------
-      let reportUploadResult: { s3Key?: string; s3Url?: string } = {};
-      try {
-        reportUploadResult = await this.reporter.createFileAndUpload();
-      } catch (reportError) {
-        console.error('Failed to upload report file:', reportError);
-        Logger.error(reportError as Error, {
-          domain: DOMAINS.DATA_PROVIDER,
-          component: 'service',
-          operation: 'updateKnockoutRounds',
-          context: 'report_upload_failed',
-          requestId: this.requestId,
-          originalError: errorMessage,
-        });
-      }
-
-      // ------ MARK EXECUTION AS FAILED (always notify) ------
-      const reportSummaryResult = this.reporter.getSummary();
-      try {
-        await this.execution?.failure({
-          reportFileKey: reportUploadResult.s3Key,
-          reportFileUrl: reportUploadResult.s3Url,
-          tournamentLabel: tournament.label,
-          error: errorMessage,
-          summary: {
-            error: errorMessage,
-            ...reportSummaryResult,
-          },
-        });
-      } catch (notificationError) {
-        console.error('Failed to send failure notification:', notificationError);
-        Logger.error(notificationError as Error, {
-          domain: DOMAINS.DATA_PROVIDER,
-          component: 'service',
-          operation: 'updateKnockoutRounds',
-          context: 'notification_failed',
-          requestId: this.requestId,
-          originalError: errorMessage,
-        });
-      }
-
       throw error;
     }
   }

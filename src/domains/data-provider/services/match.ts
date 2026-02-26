@@ -6,12 +6,18 @@ import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/core/database';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
-import { safeString, toNumberOrNull } from '@/utils';
+import { safeString } from '@/utils';
 import { and, eq, inArray } from 'drizzle-orm';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { API_SOFASCORE_ROUND } from '../typing';
+import { API_SOFASCORE_ROUND, DataProviderExecutionOperationType } from '../typing';
+import { DataProviderExecution } from './execution';
+import {
+  extractSofaScoreMainScore,
+  extractSofaScorePenaltiesScore,
+  mapSofaScoreStatusTypeToMatchStatus,
+} from '../utils/sofascore-match-mapper';
 import { S3FileStorage } from './file-storage';
 
 const safeSofaDate = (date: unknown): Date | null => {
@@ -76,6 +82,7 @@ interface MatchesOperationReport {
 export class MatchesDataProviderService {
   private scraper: BaseScraper;
   private report: MatchesOperationReport;
+  private execution: DataProviderExecution | null = null;
 
   constructor(scraper: BaseScraper, requestId: string) {
     this.scraper = scraper;
@@ -125,7 +132,7 @@ export class MatchesDataProviderService {
     }
   }
 
-  private async generateOperationReport(): Promise<void> {
+  private async generateOperationReport(): Promise<{ s3Key?: string; s3Url?: string }> {
     this.report.endTime = new Date().toISOString();
     const filename = `matches-operation-${this.report.requestId}`;
     const jsonContent = JSON.stringify(this.report, null, 2);
@@ -147,6 +154,8 @@ export class MatchesDataProviderService {
           domain: DOMAINS.DATA_PROVIDER,
           component: 'service',
         });
+
+        return {};
       } else {
         // Store in S3 for demo/production environments
         const s3Storage = new S3FileStorage();
@@ -164,6 +173,9 @@ export class MatchesDataProviderService {
           domain: DOMAINS.DATA_PROVIDER,
           component: 'service',
         });
+
+        const s3Url = s3Storage.getCloudFrontUrl(s3Key);
+        return { s3Key, s3Url };
       }
     } catch (error: unknown) {
       Logger.error(error as Error, {
@@ -174,6 +186,7 @@ export class MatchesDataProviderService {
         filename,
       });
       console.error('Failed to write matches operation report file:', (error as Error).message);
+      return {};
     }
   }
 
@@ -343,10 +356,10 @@ export class MatchesDataProviderService {
           roundSlug,
           externalHomeTeamId: safeString(event.homeTeam.id),
           externalAwayTeamId: safeString(event.awayTeam.id),
-          homeScore: toNumberOrNull(safeString(event.homeScore.display, null)),
-          homePenaltiesScore: toNumberOrNull(safeString(event.homeScore.penalties, null)),
-          awayScore: toNumberOrNull(safeString(event.awayScore.display, null)),
-          awayPenaltiesScore: toNumberOrNull(safeString(event.awayScore.penalties, null)),
+          homeScore: extractSofaScoreMainScore(event.homeScore),
+          homePenaltiesScore: extractSofaScorePenaltiesScore(event.homeScore),
+          awayScore: extractSofaScoreMainScore(event.awayScore),
+          awayPenaltiesScore: extractSofaScorePenaltiesScore(event.awayScore),
           date: safeSofaDate(event.startTimestamp! * 1000),
           status: this.getMatchStatus(event),
         } as DB_InsertMatch;
@@ -361,12 +374,7 @@ export class MatchesDataProviderService {
 
   public getMatchStatus(match: API_SOFASCORE_ROUND['events'][number]) {
     try {
-      const matchWasPostponed = match.status.type === 'postponed';
-      const matcheEnded = match.status.type === 'finished';
-
-      if (matchWasPostponed) return 'not-defined';
-      if (matcheEnded) return 'ended';
-      return 'open';
+      return mapSofaScoreStatusTypeToMatchStatus(match.status?.type);
     } catch (error: unknown) {
       console.error('[SOFASCORE] - [ERROR] - [GET MATCH STATUS]', error);
       throw error;
@@ -484,6 +492,12 @@ export class MatchesDataProviderService {
     rounds: DB_SelectTournamentRound[],
     tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
   ) {
+    this.execution = new DataProviderExecution({
+      requestId: this.report.requestId,
+      tournamentId: tournament.id,
+      operationType: DataProviderExecutionOperationType.MATCHES_CREATE,
+    });
+
     // Initialize report tournament data
     this.report.tournament = {
       id: tournament.id,
@@ -506,14 +520,30 @@ export class MatchesDataProviderService {
       const query = await this.createOnDatabase(rawMatches);
 
       // Generate invoice file at the very end
-      await this.generateOperationReport();
+      const reportUploadResult = await this.generateOperationReport();
+      await this.execution.complete({
+        reportFileKey: reportUploadResult.s3Key,
+        reportFileUrl: reportUploadResult.s3Url,
+        tournamentLabel: tournament.label,
+        summary: this.report.summary as any,
+      });
 
       return query;
     } catch (error) {
       this.addOperation('initialization', 'process_matches', 'failed', {
         error: (error as Error).message,
       });
-      await this.generateOperationReport();
+      const reportUploadResult = await this.generateOperationReport();
+      await this.execution.failure({
+        reportFileKey: reportUploadResult.s3Key,
+        reportFileUrl: reportUploadResult.s3Url,
+        tournamentLabel: tournament.label,
+        error: (error as Error).message,
+        summary: {
+          error: (error as Error).message,
+          ...this.report.summary,
+        } as any,
+      });
       Logger.error(error as Error, {
         domain: DOMAINS.DATA_PROVIDER,
         component: 'service',
@@ -523,7 +553,78 @@ export class MatchesDataProviderService {
     }
   }
 
+  public async updateMatches(
+    rounds: DB_SelectTournamentRound[],
+    tournament: Awaited<ReturnType<typeof SERVICES_TOURNAMENT.getTournament>>
+  ) {
+    this.execution = new DataProviderExecution({
+      requestId: this.report.requestId,
+      tournamentId: tournament.id,
+      operationType: DataProviderExecutionOperationType.MATCHES_UPDATE,
+    });
+
+    // Initialize report tournament data
+    this.report.tournament = {
+      id: tournament.id,
+      label: tournament.label,
+    };
+    this.report.operationType = 'update';
+
+    this.addOperation('initialization', 'validate_input', 'started', {
+      tournamentId: tournament.id,
+      tournamentLabel: tournament.label,
+      roundsCount: rounds.length,
+    });
+
+    try {
+      this.addOperation('initialization', 'validate_input', 'completed', {
+        tournamentId: tournament.id,
+      });
+
+      const rawMatches = await this.getTournamentMatches(rounds, tournament.id);
+      const query = await this.updateOnDatabase(rawMatches);
+
+      // Generate invoice file at the very end
+      const reportUploadResult = await this.generateOperationReport();
+      await this.execution.complete({
+        reportFileKey: reportUploadResult.s3Key,
+        reportFileUrl: reportUploadResult.s3Url,
+        tournamentLabel: tournament.label,
+        summary: this.report.summary as any,
+      });
+
+      return query;
+    } catch (error) {
+      this.addOperation('initialization', 'process_matches', 'failed', {
+        error: (error as Error).message,
+      });
+      const reportUploadResult = await this.generateOperationReport();
+      await this.execution.failure({
+        reportFileKey: reportUploadResult.s3Key,
+        reportFileUrl: reportUploadResult.s3Url,
+        tournamentLabel: tournament.label,
+        error: (error as Error).message,
+        summary: {
+          error: (error as Error).message,
+          ...this.report.summary,
+        } as any,
+      });
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'updateMatches',
+      });
+      throw error;
+    }
+  }
+
   public async updateRound(round: DB_SelectTournamentRound) {
+    this.execution = new DataProviderExecution({
+      requestId: this.report.requestId,
+      tournamentId: round.tournamentId,
+      operationType: DataProviderExecutionOperationType.MATCHES_UPDATE,
+    });
+
     // Initialize report for update operation
     this.report.tournament = {
       id: round.tournamentId,
@@ -544,21 +645,43 @@ export class MatchesDataProviderService {
 
       const rawMatches = await this.getTournamentMatchesByRound(round);
       if (!rawMatches) {
-        await this.generateOperationReport();
+        const reportUploadResult = await this.generateOperationReport();
+        await this.execution.complete({
+          reportFileKey: reportUploadResult.s3Key,
+          reportFileUrl: reportUploadResult.s3Url,
+          tournamentLabel: 'Tournament (Update Round)',
+          summary: this.report.summary as any,
+        });
         return [];
       }
       const matches = this.mapMatches(rawMatches, round.tournamentId, round.slug);
       const query = await this.updateOnDatabase(matches);
 
       // Generate invoice file at the very end
-      await this.generateOperationReport();
+      const reportUploadResult = await this.generateOperationReport();
+      await this.execution.complete({
+        reportFileKey: reportUploadResult.s3Key,
+        reportFileUrl: reportUploadResult.s3Url,
+        tournamentLabel: 'Tournament (Update Round)',
+        summary: this.report.summary as any,
+      });
 
       return query;
     } catch (error) {
       this.addOperation('update', 'process_round_matches', 'failed', {
         error: (error as Error).message,
       });
-      await this.generateOperationReport();
+      const reportUploadResult = await this.generateOperationReport();
+      await this.execution.failure({
+        reportFileKey: reportUploadResult.s3Key,
+        reportFileUrl: reportUploadResult.s3Url,
+        tournamentLabel: 'Tournament (Update Round)',
+        error: (error as Error).message,
+        summary: {
+          error: (error as Error).message,
+          ...this.report.summary,
+        } as any,
+      });
       Logger.error(error as Error, {
         domain: DOMAINS.DATA_PROVIDER,
         component: 'service',
@@ -575,6 +698,12 @@ export class MatchesDataProviderService {
     label: string;
     provider: string;
   }) {
+    this.execution = new DataProviderExecution({
+      requestId: this.report.requestId,
+      tournamentId: payload.tournamentId,
+      operationType: DataProviderExecutionOperationType.MATCHES_UPDATE,
+    });
+
     // Initialize report for update operation
     this.report.tournament = {
       id: payload.tournamentId,
@@ -594,7 +723,13 @@ export class MatchesDataProviderService {
 
       const rawMatch = await this.scraper.getMatchData(payload.matchExternalId);
       if (!rawMatch) {
-        await this.generateOperationReport();
+        const reportUploadResult = await this.generateOperationReport();
+        await this.execution.complete({
+          reportFileKey: reportUploadResult.s3Key,
+          reportFileUrl: reportUploadResult.s3Url,
+          tournamentLabel: payload.label,
+          summary: this.report.summary as any,
+        });
         return {} as DB_InsertMatch;
       }
       const match = this.mapMatches(
@@ -605,14 +740,30 @@ export class MatchesDataProviderService {
       const query = await this.updateOnDatabase([match]);
 
       // Generate invoice file at the very end
-      await this.generateOperationReport();
+      const reportUploadResult = await this.generateOperationReport();
+      await this.execution.complete({
+        reportFileKey: reportUploadResult.s3Key,
+        reportFileUrl: reportUploadResult.s3Url,
+        tournamentLabel: payload.label,
+        summary: this.report.summary as any,
+      });
 
       return query;
     } catch (error) {
       this.addOperation('update', 'process_single_match', 'failed', {
         error: (error as Error).message,
       });
-      await this.generateOperationReport();
+      const reportUploadResult = await this.generateOperationReport();
+      await this.execution.failure({
+        reportFileKey: reportUploadResult.s3Key,
+        reportFileUrl: reportUploadResult.s3Url,
+        tournamentLabel: payload.label,
+        error: (error as Error).message,
+        summary: {
+          error: (error as Error).message,
+          ...this.report.summary,
+        } as any,
+      });
       Logger.error(error as Error, {
         domain: DOMAINS.DATA_PROVIDER,
         component: 'service',

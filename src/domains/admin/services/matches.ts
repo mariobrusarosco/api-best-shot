@@ -91,7 +91,7 @@ class AdminMatchesService {
       scraper = await BaseScraper.createInstance();
       const dataProviderService = new MatchesDataProviderService(scraper, requestId);
 
-      const matches = await dataProviderService.init(rounds, tournament);
+      const matches = await dataProviderService.updateMatches(rounds, tournament);
 
       return res.status(200).json({
         success: true,

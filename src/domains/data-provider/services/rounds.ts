@@ -1,11 +1,11 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { DataProviderExecution } from '@/domains/data-provider/services/execution';
 import { API_SOFASCORE_ROUNDS, DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
 import type { ITournamentRoundType } from '@/domains/tournament-round/typing';
-import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
 import { DataProviderReport } from './report';
 
 export interface CreateRoundsInput {

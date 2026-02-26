@@ -4,37 +4,11 @@ import { QUERIES_MATCH } from '@/domains/match/queries';
 import { DB_SelectMatch } from '@/domains/match/schema';
 import { BaseScraper } from '../providers/playwright/base-scraper';
 import { API_SOFASCORE_MATCH } from '../typing';
+import { mapSofaScoreEventToMatchPollingPayload } from '../utils/sofascore-match-mapper';
 
 const OPEN_MATCH_SYNC_BATCH_SIZE = 30;
 const OPEN_MATCH_SYNC_STALE_INTERVAL_MS = 2 * 60 * 1000;
 const OPEN_MATCH_SYNC_LOOKBACK_INTERVAL_MS = 12 * 60 * 60 * 1000;
-
-const mapSofaScoreEvent = (event: API_SOFASCORE_MATCH) => {
-  const statusType = event.status?.type;
-  const status = statusType === 'finished' ? 'ended' : statusType === 'postponed' ? 'not-defined' : 'open';
-
-  const homeScore =
-    typeof event.homeScore?.display === 'number'
-      ? event.homeScore.display
-      : typeof event.homeScore?.current === 'number'
-        ? event.homeScore.current
-        : null;
-
-  const awayScore =
-    typeof event.awayScore?.display === 'number'
-      ? event.awayScore.display
-      : typeof event.awayScore?.current === 'number'
-        ? event.awayScore.current
-        : null;
-
-  return {
-    status,
-    homeScore,
-    awayScore,
-    homePenaltiesScore: typeof event.homeScore?.penalties === 'number' ? event.homeScore.penalties : null,
-    awayPenaltiesScore: typeof event.awayScore?.penalties === 'number' ? event.awayScore.penalties : null,
-  };
-};
 
 const syncSingleMatch = async (
   scraper: BaseScraper,
@@ -59,7 +33,7 @@ const syncSingleMatch = async (
     };
   }
 
-  const mappedEvent = mapSofaScoreEvent(event);
+  const mappedEvent = mapSofaScoreEventToMatchPollingPayload(event);
   const updatedMatch = await QUERIES_MATCH.updateMatchFromPolling({
     matchId: match.id,
     ...mappedEvent,

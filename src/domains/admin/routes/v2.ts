@@ -46,9 +46,6 @@ router.patch('/matches/:matchId/sync', AdminMiddleware, API_ADMIN_TOURNAMENTS.sy
 router.post('/tournaments/:tournamentId/standings', AdminMiddleware, API_ADMIN_TOURNAMENTS.createStandings);
 router.patch('/tournaments/:tournamentId/standings', AdminMiddleware, API_ADMIN_TOURNAMENTS.updateStandings);
 
-// Tournament Knockout Rounds Management (admin only)
-router.patch('/tournaments/:tournamentId/knockout-rounds', AdminMiddleware, API_ADMIN_TOURNAMENTS.updateKnockoutRounds);
-
 // Tournament Execution Jobs (admin only)
 router.get(
   '/tournaments/:tournamentId/execution-jobs',

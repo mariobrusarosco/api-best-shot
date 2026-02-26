@@ -1,16 +1,7 @@
 import { MatchQueries } from '@/domains/match/queries';
-import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
 
 const getDashboard = async () => {
   const currentDayMatches = await MatchQueries.currentDayMatchesOnDatabase();
-
-  Logger.info(`[Current day matches: ${currentDayMatches.length}]`, {
-    domain: DOMAINS.DASHBOARD,
-    component: 'service',
-    currentDayMatches,
-  });
-
   const uniqueMatches = new Map();
 
   currentDayMatches.forEach((match: (typeof currentDayMatches)[number]) => {

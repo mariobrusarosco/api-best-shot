@@ -1,5 +1,6 @@
+import { CRON_TARGET_IDS } from '@/domains/cron/constants';
+import { QUERIES_CRON_JOB_DEFINITIONS, QUERIES_CRON_JOB_RUNS } from '@/domains/cron/queries';
 import { CRON_DEFINITION_SERVICE, CRON_RUN_SERVICE } from '@/domains/cron/services';
-import { QUERIES_CRON_JOB_RUNS, QUERIES_CRON_JOB_DEFINITIONS } from '@/domains/cron/queries';
 import {
   CRON_JOB_DEFINITION_STATUSES,
   CRON_JOB_SCHEDULE_TYPES,
@@ -203,6 +204,22 @@ const getUpdatedByFromRequest = (req: { authenticatedUser?: { nickName?: string 
 };
 
 export const API_ADMIN_CRON = {
+  getTargetIds(_req: Request, res: Response) {
+    try {
+      const targetIds = Object.values(CRON_TARGET_IDS);
+      return res.status(200).json({
+        success: true,
+        data: targetIds,
+        message: 'Cron target IDs retrieved successfully',
+      });
+    } catch (error) {
+      return res.status(getErrorStatus(error)).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to get cron target IDs',
+      });
+    }
+  },
+
   async createJob(req: Request<unknown, unknown, CronDefinitionBody>, res: Response) {
     try {
       const { jobKey, target, scheduleType, cronExpression, runAt, payload, timezone } = req.body || {};

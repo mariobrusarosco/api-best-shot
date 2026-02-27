@@ -5,11 +5,7 @@ import { SERVICES_DATA_PROVIDER_MATCH_SYNC } from '@/domains/data-provider/servi
 import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import { MatchQueries } from '@/domains/match/queries';
 
-export const CRON_TARGET_IDS = {
-  SYSTEM_PRINT_MESSAGE: 'system.print_message',
-  MATCHES_SYNC_OPEN: 'matches.sync_open',
-  TOURNAMENTS_CURRENT_ROUND_SYNC: 'tournaments.current_round_sync',
-} as const;
+import { CRON_TARGET_IDS } from '@/domains/cron/constants';
 
 export type CronTargetPayload = Record<string, unknown> | null | undefined;
 

@@ -1,13 +1,13 @@
 import db from '@/core/database';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import {
   DB_InsertCronJobDefinition,
   DB_InsertCronJobRun,
   DB_SelectCronJobDefinition,
   DB_SelectCronJobRun,
-  T_CronJobRuns,
   DB_UpdateCronJobDefinition,
   T_CronJobDefinitions,
+  T_CronJobRuns,
 } from '../schema';
 
 type ListCronJobDefinitionsOptions = {
@@ -42,42 +42,34 @@ export const QUERIES_CRON_JOB_DEFINITIONS = {
   },
 
   async listDefinitions(options?: ListCronJobDefinitionsOptions): Promise<DB_SelectCronJobDefinition[]> {
-    const conditions = [];
+    const filters = buildDefinitionFilters(options);
 
-    if (options?.jobKey) {
-      conditions.push(eq(T_CronJobDefinitions.jobKey, options.jobKey));
-    }
+    const baseQuery = db
+      .select()
+      .from(T_CronJobDefinitions)
+      .where(filters)
+      .orderBy(desc(T_CronJobDefinitions.createdAt));
 
-    if (options?.status) {
-      conditions.push(eq(T_CronJobDefinitions.status, options.status));
-    }
-
-    if (options?.target) {
-      conditions.push(eq(T_CronJobDefinitions.target, options.target));
-    }
-
-    if (options?.scheduleType) {
-      conditions.push(eq(T_CronJobDefinitions.scheduleType, options.scheduleType));
-    }
-
-    const baseQuery =
-      conditions.length > 0
-        ? db
-            .select()
-            .from(T_CronJobDefinitions)
-            .where(and(...conditions))
-            .orderBy(desc(T_CronJobDefinitions.createdAt))
-        : db.select().from(T_CronJobDefinitions).orderBy(desc(T_CronJobDefinitions.createdAt));
-
-    if (options?.limit && options?.offset) {
+    if (options?.limit !== undefined && options?.offset !== undefined) {
       return await baseQuery.limit(options.limit).offset(options.offset);
-    } else if (options?.limit) {
+    } else if (options?.limit !== undefined) {
       return await baseQuery.limit(options.limit);
-    } else if (options?.offset) {
+    } else if (options?.offset !== undefined) {
       return await baseQuery.offset(options.offset);
     }
 
     return await baseQuery;
+  },
+
+  async countDefinitions(options?: Omit<ListCronJobDefinitionsOptions, 'limit' | 'offset'>): Promise<number> {
+    const filters = buildDefinitionFilters(options);
+
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(T_CronJobDefinitions)
+      .where(filters);
+
+    return Number(result?.count || 0);
   },
 
   async updateDefinition(
@@ -132,6 +124,54 @@ type ListCronJobRunsOptions = {
   offset?: number;
 };
 
+const buildRunFilters = (options?: Omit<ListCronJobRunsOptions, 'limit' | 'offset'>) => {
+  const conditions = [];
+
+  if (options?.jobDefinitionId) {
+    conditions.push(eq(T_CronJobRuns.jobDefinitionId, options.jobDefinitionId));
+  }
+
+  if (options?.jobKey) {
+    conditions.push(eq(T_CronJobRuns.jobKey, options.jobKey));
+  }
+
+  if (options?.status) {
+    conditions.push(eq(T_CronJobRuns.status, options.status));
+  }
+
+  if (options?.triggerType) {
+    conditions.push(eq(T_CronJobRuns.triggerType, options.triggerType));
+  }
+
+  if (options?.target) {
+    conditions.push(eq(T_CronJobRuns.target, options.target));
+  }
+
+  return conditions.length > 0 ? and(...conditions) : undefined;
+};
+
+const buildDefinitionFilters = (options?: Omit<ListCronJobDefinitionsOptions, 'limit' | 'offset'>) => {
+  const conditions = [];
+
+  if (options?.jobKey) {
+    conditions.push(eq(T_CronJobDefinitions.jobKey, options.jobKey));
+  }
+
+  if (options?.status) {
+    conditions.push(eq(T_CronJobDefinitions.status, options.status));
+  }
+
+  if (options?.target) {
+    conditions.push(eq(T_CronJobDefinitions.target, options.target));
+  }
+
+  if (options?.scheduleType) {
+    conditions.push(eq(T_CronJobDefinitions.scheduleType, options.scheduleType));
+  }
+
+  return conditions.length > 0 ? and(...conditions) : undefined;
+};
+
 export const QUERIES_CRON_JOB_RUNS = {
   async createRun(run: DB_InsertCronJobRun): Promise<DB_SelectCronJobRun> {
     const [result] = await db.insert(T_CronJobRuns).values(run).returning();
@@ -156,46 +196,30 @@ export const QUERIES_CRON_JOB_RUNS = {
   },
 
   async listRuns(options?: ListCronJobRunsOptions): Promise<DB_SelectCronJobRun[]> {
-    const conditions = [];
+    const filters = buildRunFilters(options);
 
-    if (options?.jobDefinitionId) {
-      conditions.push(eq(T_CronJobRuns.jobDefinitionId, options.jobDefinitionId));
-    }
+    const baseQuery = db.select().from(T_CronJobRuns).where(filters).orderBy(desc(T_CronJobRuns.createdAt));
 
-    if (options?.jobKey) {
-      conditions.push(eq(T_CronJobRuns.jobKey, options.jobKey));
-    }
-
-    if (options?.status) {
-      conditions.push(eq(T_CronJobRuns.status, options.status));
-    }
-
-    if (options?.triggerType) {
-      conditions.push(eq(T_CronJobRuns.triggerType, options.triggerType));
-    }
-
-    if (options?.target) {
-      conditions.push(eq(T_CronJobRuns.target, options.target));
-    }
-
-    const baseQuery =
-      conditions.length > 0
-        ? db
-            .select()
-            .from(T_CronJobRuns)
-            .where(and(...conditions))
-            .orderBy(desc(T_CronJobRuns.createdAt))
-        : db.select().from(T_CronJobRuns).orderBy(desc(T_CronJobRuns.createdAt));
-
-    if (options?.limit && options?.offset) {
+    if (options?.limit !== undefined && options?.offset !== undefined) {
       return await baseQuery.limit(options.limit).offset(options.offset);
-    } else if (options?.limit) {
+    } else if (options?.limit !== undefined) {
       return await baseQuery.limit(options.limit);
-    } else if (options?.offset) {
+    } else if (options?.offset !== undefined) {
       return await baseQuery.offset(options.offset);
     }
 
     return await baseQuery;
+  },
+
+  async countRuns(options?: Omit<ListCronJobRunsOptions, 'limit' | 'offset'>): Promise<number> {
+    const filters = buildRunFilters(options);
+
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(T_CronJobRuns)
+      .where(filters);
+
+    return Number(result?.count || 0);
   },
 
   async findActiveRunByDefinitionVersion(

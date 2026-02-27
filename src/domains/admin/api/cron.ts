@@ -1,5 +1,5 @@
 import { CRON_DEFINITION_SERVICE, CRON_RUN_SERVICE } from '@/domains/cron/services';
-import { QUERIES_CRON_JOB_RUNS } from '@/domains/cron/queries';
+import { QUERIES_CRON_JOB_RUNS, QUERIES_CRON_JOB_DEFINITIONS } from '@/domains/cron/queries';
 import {
   CRON_JOB_DEFINITION_STATUSES,
   CRON_JOB_SCHEDULE_TYPES,
@@ -352,19 +352,27 @@ export const API_ADMIN_CRON = {
       const target = parseOptionalString(req.query.target, 'target');
       const scheduleType = parseOptionalScheduleType(req.query.scheduleType);
 
-      const jobs = await CRON_DEFINITION_SERVICE.listDefinitions({
-        jobKey,
-        status,
-        target,
-        scheduleType,
-        limit,
-        offset,
-      });
+      const [jobs, total] = await Promise.all([
+        CRON_DEFINITION_SERVICE.listDefinitions({
+          jobKey,
+          status,
+          target,
+          scheduleType,
+          limit,
+          offset,
+        }),
+        QUERIES_CRON_JOB_DEFINITIONS.countDefinitions({
+          jobKey,
+          status,
+          target,
+          scheduleType,
+        }),
+      ]);
 
       return res.status(200).json({
         success: true,
         data: jobs,
-        total: jobs.length,
+        total,
         limit,
         offset,
         message: 'Cron jobs retrieved successfully',
@@ -428,20 +436,29 @@ export const API_ADMIN_CRON = {
       const triggerType = parseOptionalRunTriggerType(req.query.triggerType);
       const target = parseOptionalString(req.query.target, 'target');
 
-      const runs = await QUERIES_CRON_JOB_RUNS.listRuns({
-        jobDefinitionId,
-        jobKey,
-        status,
-        triggerType,
-        target,
-        limit,
-        offset,
-      });
+      const [runs, total] = await Promise.all([
+        QUERIES_CRON_JOB_RUNS.listRuns({
+          jobDefinitionId,
+          jobKey,
+          status,
+          triggerType,
+          target,
+          limit,
+          offset,
+        }),
+        QUERIES_CRON_JOB_RUNS.countRuns({
+          jobDefinitionId,
+          jobKey,
+          status,
+          triggerType,
+          target,
+        }),
+      ]);
 
       return res.status(200).json({
         success: true,
         data: runs,
-        total: runs.length,
+        total,
         limit,
         offset,
         message: 'Cron runs retrieved successfully',

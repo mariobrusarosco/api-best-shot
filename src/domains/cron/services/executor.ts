@@ -1,6 +1,7 @@
 import Logger from '@/core/logger';
 import { DB_SelectCronJobRun } from '@/domains/cron/schema';
 import { ICronRunTriggerType } from '@/domains/cron/typing';
+import { SERVICES_DATA_PROVIDER_KNOCKOUT_ROUNDS_SYNC } from '@/domains/data-provider/services/knockout-rounds-sync';
 import { SERVICES_DATA_PROVIDER_MATCH_SYNC } from '@/domains/data-provider/services/matches-sync';
 import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import { MatchQueries } from '@/domains/match/queries';
@@ -71,10 +72,26 @@ const tournamentsCurrentRoundSyncHandler: CronTargetHandler = async context => {
   }
 };
 
+const tournamentsKnockoutRoundsSyncHandler: CronTargetHandler = async context => {
+  const payload = (context.payload || {}) as Record<string, unknown>;
+  const tournamentId = typeof payload['tournamentId'] === 'string' ? payload['tournamentId'].trim() : '';
+
+  if (!tournamentId) {
+    throw new Error('Missing payload.tournamentId for tournaments.knockout_rounds_sync target');
+  }
+
+  const summary = await SERVICES_DATA_PROVIDER_KNOCKOUT_ROUNDS_SYNC.syncTournamentKnockoutRounds(tournamentId);
+
+  Logger.info(
+    `[CRON_TARGET:tournaments.knockout_rounds_sync] run=${context.runId} job=${context.jobKey}#${context.jobVersion} tournamentId=${summary.tournamentId} eligible=${summary.eligible} scanned=${summary.scannedKnockoutRounds} discovered=${summary.discoveredNewKnockoutRounds} created=${summary.createdRounds.length} deferred=${summary.deferredRounds.length} upsertedMatches=${summary.upsertedMatches} failed=${summary.failedRounds.length}`
+  );
+};
+
 const CRON_TARGET_REGISTRY: Record<string, CronTargetHandler> = {
   [CRON_TARGET_IDS.SYSTEM_PRINT_MESSAGE]: systemPrintMessageHandler,
   [CRON_TARGET_IDS.MATCHES_SYNC_OPEN]: matchesSyncOpenHandler,
   [CRON_TARGET_IDS.TOURNAMENTS_CURRENT_ROUND_SYNC]: tournamentsCurrentRoundSyncHandler,
+  [CRON_TARGET_IDS.TOURNAMENTS_KNOCKOUT_ROUNDS_SYNC]: tournamentsKnockoutRoundsSyncHandler,
 };
 
 const isValidTarget = (target: string): boolean => !!CRON_TARGET_REGISTRY[target];

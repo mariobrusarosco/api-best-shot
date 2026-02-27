@@ -3,8 +3,6 @@ import { DB_InsertCronJobDefinition, DB_SelectCronJobDefinition } from '@/domain
 import { CRON_JOB_SCHEDULE_TYPES, ICronJobScheduleType } from '@/domains/cron/typing';
 import { CRON_EXECUTOR_SERVICE } from './executor';
 
-const MAX_RECURRING_DEFINITIONS = 50;
-
 const hasValue = (value: unknown): boolean => value !== undefined && value !== null;
 
 const validateScheduleShape = (definition: {
@@ -41,18 +39,6 @@ const ensureTargetIsValid = (target: string): void => {
   }
 };
 
-const ensureRecurringDefinitionCapacity = async (): Promise<void> => {
-  const recurringDefinitions = await QUERIES_CRON_JOB_DEFINITIONS.listDefinitions({
-    scheduleType: CRON_JOB_SCHEDULE_TYPES.RECURRING,
-    limit: MAX_RECURRING_DEFINITIONS + 1,
-    offset: 0,
-  });
-
-  if (recurringDefinitions.length >= MAX_RECURRING_DEFINITIONS) {
-    throw new Error(`Recurring jobs limit reached (${MAX_RECURRING_DEFINITIONS})`);
-  }
-};
-
 const createDefinition = async (input: CreateCronDefinitionInput): Promise<DB_SelectCronJobDefinition> => {
   ensureTargetIsValid(input.target);
   validateScheduleShape({
@@ -60,10 +46,6 @@ const createDefinition = async (input: CreateCronDefinitionInput): Promise<DB_Se
     cronExpression: input.cronExpression,
     runAt: input.runAt,
   });
-
-  if (input.scheduleType === CRON_JOB_SCHEDULE_TYPES.RECURRING) {
-    await ensureRecurringDefinitionCapacity();
-  }
 
   const latest = await QUERIES_CRON_JOB_DEFINITIONS.getLatestDefinitionByJobKey(input.jobKey);
   if (latest) {

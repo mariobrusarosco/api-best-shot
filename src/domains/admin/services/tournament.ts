@@ -1,15 +1,63 @@
+import db from '@/core/database';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
+import { CRON_TARGET_IDS } from '@/domains/cron/constants';
+import { CRON_DEFINITION_SERVICE } from '@/domains/cron/services';
+import { CRON_JOB_SCHEDULE_TYPES } from '@/domains/cron/typing';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { T_DataProviderExecutions } from '@/domains/data-provider/schema';
 import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import type { TournamentRequestIn } from '@/domains/data-provider/typing';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { DB_SelectTournament } from '@/domains/tournament/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import db from '@/core/database';
-import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
+import type { TournamentMode } from '@/domains/tournament/typing';
 import { randomUUID } from 'crypto';
 import { desc, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
+
+const KNOCKOUT_DISCOVERY_ELIGIBLE_MODES: TournamentMode[] = ['regular-season-and-knockout', 'knockout-only'];
+const KNOCKOUT_DISCOVERY_CRON_EXPRESSION = '0 0 */2 * *';
+const KNOCKOUT_DISCOVERY_TIMEZONE = 'UTC';
+
+const isKnockoutDiscoveryEligibleMode = (mode: TournamentMode): boolean => {
+  return KNOCKOUT_DISCOVERY_ELIGIBLE_MODES.includes(mode);
+};
+
+const buildKnockoutDiscoveryJobKey = (tournamentId: string): string => {
+  return `tournaments.knockout-rounds-sync.${tournamentId}`;
+};
+
+const ensureKnockoutDiscoveryCronDefinition = async (tournament: DB_SelectTournament): Promise<void> => {
+  if (!isKnockoutDiscoveryEligibleMode(tournament.mode)) {
+    return;
+  }
+
+  try {
+    await CRON_DEFINITION_SERVICE.createDefinition({
+      jobKey: buildKnockoutDiscoveryJobKey(tournament.id),
+      target: CRON_TARGET_IDS.TOURNAMENTS_KNOCKOUT_ROUNDS_SYNC,
+      scheduleType: CRON_JOB_SCHEDULE_TYPES.RECURRING,
+      cronExpression: KNOCKOUT_DISCOVERY_CRON_EXPRESSION,
+      runAt: null,
+      timezone: KNOCKOUT_DISCOVERY_TIMEZONE,
+      payload: {
+        tournamentId: tournament.id,
+      },
+      status: 'active',
+      updatedBy: 'system',
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // Idempotent path: tournament create may be replayed and job key already exists.
+    if (errorMessage.includes('already exists')) {
+      return;
+    }
+
+    throw error;
+  }
+};
 
 class AdminTournamentService {
   // Create tournament with admin context
@@ -22,6 +70,19 @@ class AdminTournamentService {
       const dataProviderService = new TournamentDataProvider(scraper, requestId);
 
       const tournament = await dataProviderService.init(req.body);
+      try {
+        await ensureKnockoutDiscoveryCronDefinition(tournament);
+      } catch (cronProvisionError) {
+        Logger.error(cronProvisionError as Error, {
+          domain: DOMAINS.ADMIN,
+          component: 'service',
+          operation: 'create',
+          resource: 'TOURNAMENTS',
+          requestId,
+          note: 'Tournament created but knockout recurring cron provisioning failed',
+          tournamentId: tournament.id,
+        });
+      }
 
       return res.status(201).json({
         success: true,
@@ -41,10 +102,6 @@ class AdminTournamentService {
     } finally {
       if (scraper) {
         await scraper.close();
-        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
-          requestId,
-          source: 'admin_service',
-        });
       }
     }
   }

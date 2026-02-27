@@ -73,18 +73,20 @@ const tournamentsCurrentRoundSyncHandler: CronTargetHandler = async context => {
 };
 
 const tournamentsKnockoutRoundsSyncHandler: CronTargetHandler = async context => {
-  const payload = (context.payload || {}) as Record<string, unknown>;
-  const tournamentId = typeof payload['tournamentId'] === 'string' ? payload['tournamentId'].trim() : '';
-
-  if (!tournamentId) {
-    throw new Error('Missing payload.tournamentId for tournaments.knockout_rounds_sync target');
-  }
-
-  const summary = await SERVICES_DATA_PROVIDER_KNOCKOUT_ROUNDS_SYNC.syncTournamentKnockoutRounds(tournamentId);
+  const summary = await SERVICES_DATA_PROVIDER_KNOCKOUT_ROUNDS_SYNC.syncEligibleTournamentsKnockoutRounds();
 
   Logger.info(
-    `[CRON_TARGET:tournaments.knockout_rounds_sync] run=${context.runId} job=${context.jobKey}#${context.jobVersion} tournamentId=${summary.tournamentId} eligible=${summary.eligible} scanned=${summary.scannedKnockoutRounds} discovered=${summary.discoveredNewKnockoutRounds} created=${summary.createdRounds.length} deferred=${summary.deferredRounds.length} upsertedMatches=${summary.upsertedMatches} failed=${summary.failedRounds.length}`
+    `[CRON_TARGET:tournaments.knockout_rounds_sync] run=${context.runId} job=${context.jobKey}#${context.jobVersion} scannedTournaments=${summary.scannedTournaments} failedTournaments=${summary.failedTournaments.length}`
   );
+
+  if (summary.failedTournaments.length > 0) {
+    const failures = summary.failedTournaments
+      .map(failure => `tournamentId=${failure.tournamentId} error=${failure.error}`)
+      .join(' | ');
+    throw new Error(
+      `Knockout rounds sync failed for ${summary.failedTournaments.length}/${summary.scannedTournaments} tournaments: ${failures}`
+    );
+  }
 };
 
 const CRON_TARGET_REGISTRY: Record<string, CronTargetHandler> = {

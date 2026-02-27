@@ -112,6 +112,11 @@ export type SyncTournamentKnockoutRoundsSummary = {
   failedRounds: Array<{ slug: string; error: string }>;
 };
 
+export type SyncEligibleTournamentsKnockoutRoundsSummary = {
+  scannedTournaments: number;
+  failedTournaments: Array<{ tournamentId: string; error: string }>;
+};
+
 const syncTournamentKnockoutRounds = async (tournamentId: string): Promise<SyncTournamentKnockoutRoundsSummary> => {
   const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
 
@@ -204,6 +209,37 @@ const syncTournamentKnockoutRounds = async (tournamentId: string): Promise<SyncT
   }
 };
 
+const syncEligibleTournamentsKnockoutRounds = async (): Promise<SyncEligibleTournamentsKnockoutRoundsSummary> => {
+  const tournaments = await SERVICES_TOURNAMENT.listActiveTournamentsByModes(KNOCKOUT_DISCOVERY_ELIGIBLE_MODES);
+
+  const summary: SyncEligibleTournamentsKnockoutRoundsSummary = {
+    scannedTournaments: tournaments.length,
+    failedTournaments: [],
+  };
+
+  for (const tournament of tournaments) {
+    try {
+      await syncTournamentKnockoutRounds(tournament.id);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      summary.failedTournaments.push({
+        tournamentId: tournament.id,
+        error: errorMessage,
+      });
+
+      Logger.error(error instanceof Error ? error : new Error(errorMessage), {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'syncEligibleTournamentsKnockoutRounds',
+        tournamentId: tournament.id,
+      });
+    }
+  }
+
+  return summary;
+};
+
 export const SERVICES_DATA_PROVIDER_KNOCKOUT_ROUNDS_SYNC = {
   syncTournamentKnockoutRounds,
+  syncEligibleTournamentsKnockoutRounds,
 };

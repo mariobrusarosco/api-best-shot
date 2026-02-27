@@ -13,8 +13,8 @@ import {
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
 import db from '@/core/database';
-import { and, eq, sql, SQL } from 'drizzle-orm';
-import { TournamentWithTypedMode } from '../typing';
+import { and, eq, inArray, sql, SQL } from 'drizzle-orm';
+import { TournamentMode, TournamentWithTypedMode } from '../typing';
 
 const updateMemberPoints = async (memberId: string, tournamentId: string, delta: number) => {
   try {
@@ -79,6 +79,25 @@ const allTournaments = async () => {
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
     console.error('[Query_Tournament] - [queryAllMemberTournaments]', dbError);
+    throw error;
+  }
+};
+
+const listActiveTournamentsByModes = async (modes: TournamentMode[]) => {
+  if (modes.length === 0) {
+    return [];
+  }
+
+  try {
+    return db
+      .select({
+        id: T_Tournament.id,
+      })
+      .from(T_Tournament)
+      .where(and(eq(T_Tournament.status, 'active'), inArray(T_Tournament.mode, modes)));
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    console.error('[Query_Tournament] - [listActiveTournamentsByModes]', dbError);
     throw error;
   }
 };
@@ -270,6 +289,7 @@ export type TournamentQuery = Awaited<ReturnType<typeof tournament>>;
 
 export const QUERIES_TOURNAMENT = {
   allTournaments,
+  listActiveTournamentsByModes,
   tournament,
   knockoutRounds,
 

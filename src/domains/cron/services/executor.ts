@@ -1,13 +1,9 @@
 import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
 import { DB_SelectCronJobRun } from '@/domains/cron/schema';
 import { ICronRunTriggerType } from '@/domains/cron/typing';
-import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { SERVICES_DATA_PROVIDER_MATCH_SYNC } from '@/domains/data-provider/services/matches-sync';
-import { TournamentCurrentRoundDataProviderService } from '@/domains/data-provider/services/tournament-current-round';
+import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import { MatchQueries } from '@/domains/match/queries';
-import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import { randomUUID } from 'crypto';
 
 export const CRON_TARGET_IDS = {
   SYSTEM_PRINT_MESSAGE: 'system.print_message',
@@ -55,58 +51,27 @@ const matchesSyncOpenHandler: CronTargetHandler = async context => {
 const tournamentsCurrentRoundSyncHandler: CronTargetHandler = async context => {
   const todayMatches = await MatchQueries.currentDayMatchesOnDatabase();
   const uniqueTournamentIds = new Set(todayMatches.map(match => match.tournamentId).filter(Boolean));
+  const { results, failures } = await TournamentDataProvider.syncCurrentRoundsForTournamentIds([
+    ...uniqueTournamentIds,
+  ]);
 
-  if (uniqueTournamentIds.size === 0) {
-    Logger.info(`[CRON_TARGET:tournaments.current_round_sync] run=${context.runId} no tournaments with matches today`);
-    return;
+  for (const result of results) {
+    Logger.info(
+      `[CRON_TARGET:tournaments.current_round_sync] run=${context.runId} job=${context.jobKey}#${context.jobVersion} requestId=${result.requestId} tournament=${result.tournamentSlug} currentRoundSlug=${result.currentRoundSlug} roundsCount=${result.roundsCount}`
+    );
   }
 
-  let scraper: BaseScraper | null = null;
-  const failures: string[] = [];
+  if (failures.length > 0) {
+    const failureMessages: string[] = [];
 
-  try {
-    scraper = await BaseScraper.createInstance();
-
-    for (const tournamentId of uniqueTournamentIds) {
-      const requestId = randomUUID();
-
-      try {
-        const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
-        const service = new TournamentCurrentRoundDataProviderService(scraper, requestId);
-        const result = await service.init({
-          tournamentId: tournament.id,
-          baseUrl: tournament.baseUrl,
-          label: tournament.label,
-          provider: tournament.provider,
-        });
-
-        Logger.info(
-          `[CRON_TARGET:tournaments.current_round_sync] run=${context.runId} job=${context.jobKey}#${context.jobVersion} requestId=${requestId} tournamentId=${result.tournamentId} currentRoundSlug=${result.currentRoundSlug} roundsCount=${result.roundsCount}`
-        );
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        failures.push(`tournamentId=${tournamentId} requestId=${requestId} error=${message}`);
-
-        Logger.error(error as Error, {
-          domain: DOMAINS.DATA_PROVIDER,
-          component: 'cron_executor',
-          operation: 'tournaments_current_round_sync',
-          runId: context.runId,
-          requestId,
-          tournamentId,
-        });
-      }
+    for (const failure of failures) {
+      const message = failure.error.message || String(failure.error);
+      failureMessages.push(`tournamentId=${failure.tournamentId} requestId=${failure.requestId} error=${message}`);
     }
 
-    if (failures.length > 0) {
-      throw new Error(
-        `Current round sync failed for ${failures.length}/${uniqueTournamentIds.size} tournaments: ${failures.join(' | ')}`
-      );
-    }
-  } finally {
-    if (scraper) {
-      await scraper.close();
-    }
+    throw new Error(
+      `Current round sync failed for ${failures.length}/${uniqueTournamentIds.size} tournaments: ${failureMessages.join(' | ')}`
+    );
   }
 };
 

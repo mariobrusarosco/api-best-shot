@@ -26,12 +26,11 @@
  * - No other exports allowed from this file
  */
 
+import db from '@/core/database';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
-import db from '@/core/database';
-import { QUERIES_TOURNAMENT } from '../queries';
-
 import type { ITournamentStadingsMode } from '@/domains/tournament/typing';
+import { QUERIES_TOURNAMENT } from '../queries';
 import { DB_InsertTournament } from '../schema';
 import { parseStandingsByMode } from '../utils/standing-mode-mapper';
 

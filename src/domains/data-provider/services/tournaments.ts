@@ -331,18 +331,18 @@ export class TournamentDataProvider {
   private extractCurrentRoundSlug(roundsResponse: API_SOFASCORE_ROUNDS): string {
     this.reporter.addOperation('transformation', 'extract_current_round_slug', 'started');
 
-    const currentRoundSlug = roundsResponse?.currentRound?.slug;
+    const currentRoundSlug = roundsResponse?.currentRound?.slug || roundsResponse?.currentRound?.round.toString();
 
-    if (typeof currentRoundSlug !== 'string' || !currentRoundSlug.trim()) {
-      this.reporter.addOperation('transformation', 'extract_current_round_slug', 'failed', {
-        error: 'currentRound.slug is missing in rounds response',
+    if (!currentRoundSlug) {
+      this.reporter.addOperation('transformation', 'extract_current_round', 'failed', {
+        error: 'current round is missing in rounds response',
       });
       throw new Error('currentRound.slug is missing in rounds response');
     }
 
     const normalizedSlug = currentRoundSlug.trim().toLowerCase();
 
-    this.reporter.addOperation('transformation', 'extract_current_round_slug', 'completed', {
+    this.reporter.addOperation('transformation', 'extract_current_round', 'completed', {
       currentRoundSlug: normalizedSlug,
     });
 

@@ -92,6 +92,7 @@ const listActiveTournamentsByModes = async (modes: TournamentMode[]) => {
     return db
       .select({
         id: T_Tournament.id,
+        slug: T_Tournament.slug,
       })
       .from(T_Tournament)
       .where(and(eq(T_Tournament.status, 'active'), inArray(T_Tournament.mode, modes)));

@@ -1,8 +1,8 @@
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
-import { API_SOFASCORE_ROUND, API_SOFASCORE_ROUNDS } from '@/domains/data-provider/typing';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
+import { API_SOFASCORE_ROUND, API_SOFASCORE_ROUNDS } from '@/domains/data-provider/typing';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
@@ -47,12 +47,7 @@ const normalizeKnockoutRounds = (input: {
     const isSpecialRound = rawPrefix.length > 0;
     const isKnockoutRound = isSpecialRound || rawName.length > 0;
 
-    if (!isKnockoutRound) {
-      return;
-    }
-
-    // Knockout rounds must have slug to build provider URL.
-    if (!rawSlug) {
+    if (!isKnockoutRound || !rawSlug) {
       return;
     }
 
@@ -101,39 +96,24 @@ const fetchProviderRoundEvents = async (scraper: BaseScraper, providerUrl: strin
 };
 
 export type SyncTournamentKnockoutRoundsSummary = {
-  tournamentId: string;
-  tournamentMode: TournamentMode;
-  eligible: boolean;
-  scannedKnockoutRounds: number;
-  discoveredNewKnockoutRounds: number;
-  createdRounds: string[];
-  deferredRounds: string[];
-  upsertedMatches: number;
-  failedRounds: Array<{ slug: string; error: string }>;
+  tournamentSlug: string;
+  updatedRoundSlugs: string[];
 };
 
 export type SyncEligibleTournamentsKnockoutRoundsSummary = {
-  scannedTournaments: number;
-  failedTournaments: Array<{ tournamentId: string; error: string }>;
+  updatedRounds: Array<{ tournamentSlug: string; roundSlug: string }>;
+  failedTournaments: Array<{ tournamentSlug: string; error: string }>;
 };
 
 const syncTournamentKnockoutRounds = async (tournamentId: string): Promise<SyncTournamentKnockoutRoundsSummary> => {
   const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
-
-  const baseSummary: SyncTournamentKnockoutRoundsSummary = {
-    tournamentId: tournament.id,
-    tournamentMode: tournament.mode,
-    eligible: isEligibleMode(tournament.mode),
-    scannedKnockoutRounds: 0,
-    discoveredNewKnockoutRounds: 0,
-    createdRounds: [],
-    deferredRounds: [],
-    upsertedMatches: 0,
-    failedRounds: [],
+  const summary: SyncTournamentKnockoutRoundsSummary = {
+    tournamentSlug: tournament.slug,
+    updatedRoundSlugs: [],
   };
 
-  if (!baseSummary.eligible) {
-    return baseSummary;
+  if (!isEligibleMode(tournament.mode)) {
+    return summary;
   }
 
   let scraper: BaseScraper | null = null;
@@ -147,16 +127,12 @@ const syncTournamentKnockoutRounds = async (tournamentId: string): Promise<SyncT
       roundsResponse,
     });
 
-    baseSummary.scannedKnockoutRounds = normalizedKnockoutRounds.length;
-
     const databaseRounds = await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournament.id);
     const existingRoundSlugs = new Set(databaseRounds.map(round => round.slug));
     const discoveredRounds = normalizedKnockoutRounds.filter(round => !existingRoundSlugs.has(round.slug));
 
-    baseSummary.discoveredNewKnockoutRounds = discoveredRounds.length;
-
     if (discoveredRounds.length === 0) {
-      return baseSummary;
+      return summary;
     }
 
     const matchesProvider = new MatchesDataProviderService(scraper, randomUUID());
@@ -166,30 +142,20 @@ const syncTournamentKnockoutRounds = async (tournamentId: string): Promise<SyncT
         const rawRound = await fetchProviderRoundEvents(scraper, discoveredRound.providerUrl);
         const hasEvents = Array.isArray(rawRound.events) && rawRound.events.length > 0;
 
-        // Expected state: round exists on provider but events are not hydrated yet.
         if (!hasEvents) {
-          baseSummary.deferredRounds.push(discoveredRound.slug);
           continue;
         }
 
         const persistedRounds = await QUERIES_TOURNAMENT_ROUND.upsertTournamentRounds([discoveredRound]);
-        const persistedRound = persistedRounds[0];
-
-        if (!persistedRound) {
+        if (!persistedRounds[0]) {
           throw new Error(`Could not persist round "${discoveredRound.slug}"`);
         }
 
-        const mappedMatches = matchesProvider.mapMatches(rawRound, tournament.id, persistedRound.slug);
-        const upsertedMatches = await matchesProvider.updateOnDatabase(mappedMatches);
-
-        baseSummary.createdRounds.push(persistedRound.slug);
-        baseSummary.upsertedMatches += upsertedMatches;
+        const mappedMatches = matchesProvider.mapMatches(rawRound, tournament.id, discoveredRound.slug);
+        await matchesProvider.updateOnDatabase(mappedMatches);
+        summary.updatedRoundSlugs.push(discoveredRound.slug);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        baseSummary.failedRounds.push({
-          slug: discoveredRound.slug,
-          error: errorMessage,
-        });
 
         Logger.error(error instanceof Error ? error : new Error(errorMessage), {
           domain: DOMAINS.DATA_PROVIDER,
@@ -201,7 +167,7 @@ const syncTournamentKnockoutRounds = async (tournamentId: string): Promise<SyncT
       }
     }
 
-    return baseSummary;
+    return summary;
   } finally {
     if (scraper) {
       await scraper.close();
@@ -211,19 +177,24 @@ const syncTournamentKnockoutRounds = async (tournamentId: string): Promise<SyncT
 
 const syncEligibleTournamentsKnockoutRounds = async (): Promise<SyncEligibleTournamentsKnockoutRoundsSummary> => {
   const tournaments = await SERVICES_TOURNAMENT.listActiveTournamentsByModes(KNOCKOUT_DISCOVERY_ELIGIBLE_MODES);
-
   const summary: SyncEligibleTournamentsKnockoutRoundsSummary = {
-    scannedTournaments: tournaments.length,
+    updatedRounds: [],
     failedTournaments: [],
   };
 
   for (const tournament of tournaments) {
     try {
-      await syncTournamentKnockoutRounds(tournament.id);
+      const tournamentSummary = await syncTournamentKnockoutRounds(tournament.id);
+      for (const roundSlug of tournamentSummary.updatedRoundSlugs) {
+        summary.updatedRounds.push({
+          tournamentSlug: tournamentSummary.tournamentSlug,
+          roundSlug,
+        });
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       summary.failedTournaments.push({
-        tournamentId: tournament.id,
+        tournamentSlug: tournament.slug,
         error: errorMessage,
       });
 

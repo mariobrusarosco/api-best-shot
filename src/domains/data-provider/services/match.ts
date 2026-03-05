@@ -138,28 +138,12 @@ export class MatchesDataProviderService {
     const jsonContent = JSON.stringify(this.report, null, 2);
 
     try {
-      const isLocal = process.env.NODE_ENV === 'development';
+      let s3Key: string | undefined;
+      let s3Url: string | undefined;
 
-      if (isLocal) {
-        // Store locally for development
-        const reportsDir = join(process.cwd(), 'data-provider-operation-reports');
-        const filepath = join(reportsDir, `${filename}.json`);
-
-        mkdirSync(reportsDir, { recursive: true });
-        writeFileSync(filepath, jsonContent);
-
-        Logger.info(`[REPORT] Matches operation report generated successfully (local)`, {
-          filepath,
-          requestId: this.report.requestId,
-          domain: DOMAINS.DATA_PROVIDER,
-          component: 'service',
-        });
-
-        return {};
-      } else {
-        // Store in S3 for demo/production environments
+      try {
         const s3Storage = new S3FileStorage();
-        const s3Key = await s3Storage.uploadFile({
+        s3Key = await s3Storage.uploadFile({
           buffer: Buffer.from(jsonContent, 'utf8'),
           filename,
           contentType: 'application/json',
@@ -174,9 +158,35 @@ export class MatchesDataProviderService {
           component: 'service',
         });
 
-        const s3Url = s3Storage.getCloudFrontUrl(s3Key);
-        return { s3Key, s3Url };
+        s3Url = s3Storage.getCloudFrontUrl(s3Key);
+      } catch (s3Error) {
+        Logger.info(`[REPORT] S3 upload failed, saving locally only`, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          error: String(s3Error),
+          requestId: this.report.requestId,
+        });
       }
+
+      const reportsDir = join(process.cwd(), 'data-provider-operation-reports');
+      const filepath = join(reportsDir, `${filename}.json`);
+
+      mkdirSync(reportsDir, { recursive: true });
+      writeFileSync(filepath, jsonContent);
+
+      const logMessage = s3Key
+        ? `[REPORT] Matches operation report saved locally and uploaded to S3`
+        : `[REPORT] Matches operation report saved locally only`;
+
+      Logger.info(logMessage, {
+        filepath,
+        s3Key,
+        requestId: this.report.requestId,
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+      });
+
+      return { s3Key, s3Url };
     } catch (error: unknown) {
       Logger.error(error as Error, {
         domain: DOMAINS.DATA_PROVIDER,
@@ -618,7 +628,7 @@ export class MatchesDataProviderService {
     }
   }
 
-  public async updateRound(round: DB_SelectTournamentRound) {
+  public async updateRound(round: DB_SelectTournamentRound, tournamentLabel = 'Tournament (Update Round)') {
     this.execution = new DataProviderExecution({
       requestId: this.report.requestId,
       tournamentId: round.tournamentId,
@@ -628,7 +638,7 @@ export class MatchesDataProviderService {
     // Initialize report for update operation
     this.report.tournament = {
       id: round.tournamentId,
-      label: 'Tournament (Update Round)',
+      label: tournamentLabel,
     };
     this.report.operationType = 'update';
 
@@ -649,7 +659,7 @@ export class MatchesDataProviderService {
         await this.execution.complete({
           reportFileKey: reportUploadResult.s3Key,
           reportFileUrl: reportUploadResult.s3Url,
-          tournamentLabel: 'Tournament (Update Round)',
+          tournamentLabel,
           summary: this.report.summary as any,
         });
         return [];
@@ -662,7 +672,7 @@ export class MatchesDataProviderService {
       await this.execution.complete({
         reportFileKey: reportUploadResult.s3Key,
         reportFileUrl: reportUploadResult.s3Url,
-        tournamentLabel: 'Tournament (Update Round)',
+        tournamentLabel,
         summary: this.report.summary as any,
       });
 
@@ -675,7 +685,7 @@ export class MatchesDataProviderService {
       await this.execution.failure({
         reportFileKey: reportUploadResult.s3Key,
         reportFileUrl: reportUploadResult.s3Url,
-        tournamentLabel: 'Tournament (Update Round)',
+        tournamentLabel,
         error: (error as Error).message,
         summary: {
           error: (error as Error).message,

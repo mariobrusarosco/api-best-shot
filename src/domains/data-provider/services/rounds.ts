@@ -2,10 +2,18 @@ import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { DataProviderExecution } from '@/domains/data-provider/services/execution';
-import { API_SOFASCORE_ROUNDS, DataProviderExecutionOperationType } from '@/domains/data-provider/typing';
+import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
+import {
+  API_SOFASCORE_ROUND,
+  API_SOFASCORE_ROUNDS,
+  DataProviderExecutionOperationType,
+} from '@/domains/data-provider/typing';
 import { QUERIES_TOURNAMENT_ROUND } from '@/domains/tournament-round/queries';
 import { DB_InsertTournamentRound } from '@/domains/tournament-round/schema';
 import type { ITournamentRoundType } from '@/domains/tournament-round/typing';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
+import type { TournamentMode } from '@/domains/tournament/typing';
+import { randomUUID } from 'crypto';
 import { DataProviderReport } from './report';
 
 export interface CreateRoundsInput {
@@ -14,6 +22,18 @@ export interface CreateRoundsInput {
   label: string;
   provider: string;
 }
+
+const KNOCKOUT_DISCOVERY_ELIGIBLE_MODES: TournamentMode[] = ['regular-season-and-knockout', 'knockout-only'];
+
+export type SyncTournamentKnockoutRoundsSummary = {
+  tournamentSlug: string;
+  updatedRoundSlugs: string[];
+};
+
+export type SyncEligibleTournamentsKnockoutRoundsSummary = {
+  updatedRounds: Array<{ tournamentSlug: string; roundSlug: string }>;
+  failedTournaments: Array<{ tournamentSlug: string; error: string }>;
+};
 
 export class RoundsDataProviderService {
   private scraper: BaseScraper;
@@ -25,6 +45,110 @@ export class RoundsDataProviderService {
     this.scraper = scraper;
     this.requestId = requestId;
     this.reporter = new DataProviderReport(requestId);
+  }
+
+  public static async updateKnockoutsForTournament(
+    tournamentId: string,
+    tournamentSlug?: string
+  ): Promise<SyncTournamentKnockoutRoundsSummary> {
+    const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
+    const summary: SyncTournamentKnockoutRoundsSummary = {
+      tournamentSlug: tournamentSlug || tournamentId,
+      updatedRoundSlugs: [],
+    };
+
+    if (!KNOCKOUT_DISCOVERY_ELIGIBLE_MODES.includes(tournament.mode as TournamentMode)) {
+      return summary;
+    }
+
+    let scraper: BaseScraper | null = null;
+
+    try {
+      scraper = await BaseScraper.createInstance();
+      const roundsProvider = new RoundsDataProviderService(scraper, randomUUID());
+      const roundsResponse = await roundsProvider.fetchRounds(tournament.baseUrl);
+      const normalizedRounds = roundsProvider.enhanceRounds(tournament.baseUrl, tournament.id, roundsResponse);
+      const normalizedKnockoutRounds = normalizedRounds.filter(round => round.type === 'knockout');
+
+      const databaseRounds = await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournament.id);
+      const existingRoundSlugs = new Set(databaseRounds.map(round => round.slug));
+      const discoveredRounds = normalizedKnockoutRounds.filter(round => !existingRoundSlugs.has(round.slug));
+
+      if (discoveredRounds.length === 0) {
+        return summary;
+      }
+
+      const matchesProvider = new MatchesDataProviderService(scraper, randomUUID());
+
+      for (const discoveredRound of discoveredRounds) {
+        try {
+          const rawRound = await RoundsDataProviderService.fetchRoundEvents(scraper, discoveredRound.providerUrl);
+          const hasEvents = !!rawRound?.events?.length;
+
+          if (!hasEvents) {
+            continue;
+          }
+
+          const [upsertedRound] = await QUERIES_TOURNAMENT_ROUND.upsertTournamentRounds([discoveredRound]);
+
+          if (!upsertedRound) {
+            throw new Error(`Could not persist round "${discoveredRound.slug}"`);
+          }
+
+          await matchesProvider.updateRound(upsertedRound, tournament.label);
+          summary.updatedRoundSlugs.push(upsertedRound.slug);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          if (errorMessage.includes('Received status 404')) {
+            continue;
+          }
+        }
+      }
+
+      return summary;
+    } finally {
+      if (scraper) {
+        await scraper.close();
+      }
+    }
+  }
+
+  public static async updateKnockouts(): Promise<SyncEligibleTournamentsKnockoutRoundsSummary> {
+    const tournaments = await SERVICES_TOURNAMENT.listActiveTournamentsByModes(KNOCKOUT_DISCOVERY_ELIGIBLE_MODES);
+    const summary: SyncEligibleTournamentsKnockoutRoundsSummary = {
+      updatedRounds: [],
+      failedTournaments: [],
+    };
+
+    for (const tournament of tournaments) {
+      try {
+        const tournamentSummary = await RoundsDataProviderService.updateKnockoutsForTournament(
+          tournament.id,
+          tournament.slug
+        );
+        for (const roundSlug of tournamentSummary.updatedRoundSlugs) {
+          summary.updatedRounds.push({
+            tournamentSlug: tournamentSummary.tournamentSlug,
+            roundSlug,
+          });
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        summary.failedTournaments.push({
+          tournamentSlug: tournament.slug,
+          error: errorMessage,
+        });
+
+        Logger.error(error instanceof Error ? error : new Error(errorMessage), {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'updateKnockouts',
+          tournamentId: tournament.id,
+        });
+      }
+    }
+
+    return summary;
   }
 
   public async init(payload: CreateRoundsInput) {
@@ -386,5 +510,19 @@ export class RoundsDataProviderService {
       });
       throw error;
     }
+  }
+
+  private static async fetchRoundEvents(
+    scraper: BaseScraper,
+    providerUrl: string
+  ): Promise<API_SOFASCORE_ROUND | null> {
+    await scraper.goto(providerUrl);
+    const roundPayload = (await scraper.getPageContent()) as API_SOFASCORE_ROUND | null;
+
+    if (!roundPayload || !Array.isArray(roundPayload.events)) {
+      return null;
+    }
+
+    return roundPayload;
   }
 }

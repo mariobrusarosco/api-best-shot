@@ -2,8 +2,8 @@ import Logger from '@/core/logger';
 import { CRON_TARGET_IDS } from '@/domains/cron/constants';
 import { DB_SelectCronJobRun } from '@/domains/cron/schema';
 import { ICronRunTriggerType } from '@/domains/cron/typing';
-import { SERVICES_DATA_PROVIDER_KNOCKOUT_ROUNDS_SYNC } from '@/domains/data-provider/services/knockout-rounds-sync';
 import { SERVICES_DATA_PROVIDER_MATCH_SYNC } from '@/domains/data-provider/services/matches-sync';
+import { RoundsDataProviderService } from '@/domains/data-provider/services/rounds';
 import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import { MatchQueries } from '@/domains/match/queries';
 
@@ -51,7 +51,7 @@ const tournamentsCurrentRoundSyncHandler: CronTargetHandler = async () => {
 };
 
 const tournamentsKnockoutRoundsSyncHandler: CronTargetHandler = async () => {
-  const summary = await SERVICES_DATA_PROVIDER_KNOCKOUT_ROUNDS_SYNC.syncEligibleTournamentsKnockoutRounds();
+  const summary = await RoundsDataProviderService.updateKnockouts();
 
   Logger.info(`[CRON_TARGET:tournaments.knockout_rounds_sync]`, {
     updatedRounds: summary.updatedRounds,

@@ -95,7 +95,7 @@ export const API_ADMIN_MATCHES = {
       }
 
       // #7 Update Matches
-      const result = await provider.updateRound(rounds[0]); // Note: updateRound takes single round
+      const result = await provider.updateRound(rounds[0], tournament.label); // Note: updateRound takes single round
 
       return res.status(200).json({
         success: true,

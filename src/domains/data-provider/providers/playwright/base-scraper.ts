@@ -154,7 +154,6 @@ export class BaseScraper {
         return response;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-
         attempt++;
         if (attempt <= retries) {
           Logger.info(`Navigation retry ${attempt}/${retries} for ${url}`, {

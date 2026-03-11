@@ -154,6 +154,11 @@ export class BaseScraper {
         return response;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
+
+        if (lastError.message.includes('Received status 404')) {
+          throw lastError;
+        }
+
         attempt++;
         if (attempt <= retries) {
           Logger.info(`Navigation retry ${attempt}/${retries} for ${url}`, {

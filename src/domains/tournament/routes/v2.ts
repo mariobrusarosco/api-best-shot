@@ -14,6 +14,5 @@ router.get('/:tournamentId/guess', API_GUESS.getMemberGuesses);
 router.get('/:tournamentId/score', API_TOURNAMENT.getTournamentScore);
 
 router.get('/:tournamentId/standings', API_TOURNAMENT.getTournamentStandings);
-router.post('/:tournamentId/setup', API_TOURNAMENT.setupTournament);
 
 export default router;

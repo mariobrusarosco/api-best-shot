@@ -32,21 +32,6 @@ const getTournamentScore = async (req: Request, res: Response) => {
   }
 };
 
-const setupTournament = async (req: Request, res: Response) => {
-  try {
-    const memberId = Utils.getAuthenticatedUserId(req, res);
-    const { tournamentId } = req.params;
-    await SERVICES_TOURNAMENT.setupTournament(memberId, tournamentId);
-    return res.status(200).send('SUCCESS');
-  } catch (error: unknown) {
-    const apiError = error as ApiError;
-    console.error('[TOURNAMENT - setupTournament]', apiError);
-    return res
-      .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
-      .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
-  }
-};
-
 const getMatchesWithNullGuess = async (req: Request, res: Response) => {
   try {
     const memberId = Utils.getAuthenticatedUserId(req, res);
@@ -129,8 +114,6 @@ const getTournamentStandings = async (req: Request, res: Response) => {
 export const API_TOURNAMENT = {
   getAllTournaments,
   getTournamentScore,
-  setupTournament,
-
   getMatchesWithNullGuess,
   getTournamentDetails,
   getTournamentRounds,

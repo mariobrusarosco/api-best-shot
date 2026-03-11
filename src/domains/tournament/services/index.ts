@@ -26,9 +26,6 @@
  * - No other exports allowed from this file
  */
 
-import db from '@/core/database';
-import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
-import { DB_InsertGuess, T_Guess } from '@/domains/guess/schema';
 import type { ITournamentStadingsMode, TournamentMode } from '@/domains/tournament/typing';
 import { QUERIES_TOURNAMENT } from '../queries';
 import { DB_InsertTournament } from '../schema';
@@ -55,25 +52,6 @@ const getTournamentScore = async (memberId: string, tournamentId: string) => {
 const getTotalPoints = (guesses?: ReturnType<typeof runGuessAnalysis>[]) => {
   if (!guesses) return null;
   return guesses.reduce((acc, value) => acc + value.total, 0);
-};
-
-const setupTournament = async (memberId: string, tournamentId: string) => {
-  const matches = await QUERIES_TOURNAMENT.getTournamentMatches(tournamentId);
-
-  const guessesToInsert = matches.map(
-    (match: (typeof matches)[number]) =>
-      ({
-        matchId: match.id,
-        roundSlug: match.roundSlug,
-        memberId,
-        awayScore: null,
-        homeScore: null,
-      }) satisfies DB_InsertGuess
-  );
-
-  await db.insert(T_Guess).values(guessesToInsert);
-
-  return true;
 };
 
 const getMatchesWithNullGuess = async (memberId: string, tournamentId: string, round: string) => {
@@ -132,8 +110,6 @@ export const SERVICES_TOURNAMENT = {
   getAllTournaments,
   listActiveTournamentsByModes,
   getTournamentScore,
-  setupTournament,
-
   getMatchesWithNullGuess,
   getTournamentDetails,
   getKnockoutRounds,

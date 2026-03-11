@@ -26,6 +26,7 @@
  * - No other exports allowed from this file
  */
 
+import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import type { ITournamentStadingsMode, TournamentMode } from '@/domains/tournament/typing';
 import { QUERIES_TOURNAMENT } from '../queries';
 import { DB_InsertTournament } from '../schema';

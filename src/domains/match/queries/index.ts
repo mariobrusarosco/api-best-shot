@@ -4,7 +4,7 @@ import { defineTimebox } from '@/utils/timebox';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
-import { aliasedTable, and, asc, desc, eq, gte, isNull, lte, or, sql } from 'drizzle-orm';
+import { aliasedTable, and, asc, desc, eq, gte, lte, sql } from 'drizzle-orm';
 import type { DB_InsertMatch, DB_SelectMatch } from '../schema';
 
 dayjs.extend(utc);
@@ -143,12 +143,7 @@ const getMatchById = async (matchId: string) => {
   return match || null;
 };
 
-const listDueOpenMatchesForPolling = async (params: {
-  now: Date;
-  lookbackStart: Date;
-  staleBefore: Date;
-  limit: number;
-}) => {
+const listDueOpenMatchesForPolling = async (params: { now: Date; lookbackStart: Date; limit: number }) => {
   return db
     .select({
       id: T_Match.id,
@@ -165,8 +160,7 @@ const listDueOpenMatchesForPolling = async (params: {
         eq(T_Match.status, 'open'),
         eq(T_Match.provider, 'sofascore'),
         gte(T_Match.date, params.lookbackStart),
-        lte(T_Match.date, params.now),
-        or(isNull(T_Match.lastCheckedAt), lte(T_Match.lastCheckedAt, params.staleBefore))
+        lte(T_Match.date, params.now)
       )
     )
     .orderBy(desc(T_Match.date), asc(T_Match.lastCheckedAt))

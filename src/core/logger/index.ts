@@ -6,13 +6,13 @@
  * current environment.
  *
  * - In 'development', logs are printed to the console with colors.
- * - In 'production', 'staging', or 'demo', logs are sent to Sentry and
- *   also printed to the console.
+ * - In 'production', 'staging', or 'demo', only events/warnings/errors are sent to Sentry.
  */
+
+import type { LogExtra, LogTags } from '@/core/logger/types';
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { createColors, isColorSupported } from 'picocolors';
-import { LogTags, LogExtra } from './types';
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const SENTRY_DSN = process.env.SENTRY_DSN || '';
@@ -33,31 +33,22 @@ if (isSentryEnabled) {
 }
 
 class LoggerService {
-  private buildOptionalContext(context?: LogExtra): LogExtra | undefined {
-    if (!context || Object.keys(context).length === 0) {
-      return undefined;
-    }
-
-    return { ...context, timestamp: new Date().toISOString() };
-  }
-
   /**
    * Logs an informational message.
    * @param message - The main log message.
    * @param context - Optional structured data.
    */
   public info(message: string, context?: LogExtra): void {
-    const finalContext = this.buildOptionalContext(context);
-    if (finalContext) {
-      console.log(`${pc.blue('[INFO]')} ${message}`, finalContext);
-    } else {
-      console.log(`${pc.blue('[INFO]')} ${message}`);
-    }
+    console.log(`${pc.blue('[INFO]')} ${message}`, context);
+  }
+
+  public audit(message: string, context?: LogExtra): void {
+    console.log(`${pc.magenta('[AUDIT]')}`, message, context);
 
     if (isSentryEnabled) {
-      Sentry.captureMessage(message, {
+      Sentry.captureMessage('AUDIT_EVENT', {
         level: 'info',
-        extra: finalContext || undefined,
+        extra: context,
       });
     }
   }
@@ -68,17 +59,12 @@ class LoggerService {
    * @param context - Optional structured data.
    */
   public warn(message: string, context?: LogExtra): void {
-    const finalContext = this.buildOptionalContext(context);
-    if (finalContext) {
-      console.warn(`${pc.yellow('[WARN]')} ${message}`, finalContext);
-    } else {
-      console.warn(`${pc.yellow('[WARN]')} ${message}`);
-    }
+    console.warn(`${pc.yellow('[WARN]')} ${message}`, context);
 
     if (isSentryEnabled) {
       Sentry.captureMessage(message, {
         level: 'warning',
-        extra: finalContext || undefined,
+        extra: context || undefined,
       });
     }
   }
@@ -92,8 +78,7 @@ class LoggerService {
    *                 - component: Optional, flexible string
    */
   public error(error: Error, context: LogTags & LogExtra): void {
-    const { domain, component, operation, ...restOfContext } = context;
-    const finalContext = { ...restOfContext, timestamp: new Date().toISOString() };
+    const { domain, component, operation } = context;
 
     // Build tags object, only including component if provided
     const finalTags: Record<string, string> = {
@@ -105,16 +90,12 @@ class LoggerService {
       finalTags.component = component;
     }
 
-    console.error(pc.red(`[ERROR] ${error.message}`), {
-      tags: finalTags,
-      extra: finalContext,
-      stack: error.stack,
-    });
+    console.error(pc.red(`[ERROR] ${error.message} /// ${error.stack}`));
 
     if (isSentryEnabled) {
       Sentry.captureException(error, {
         tags: finalTags,
-        extra: finalContext,
+        extra: context,
       });
     }
   }

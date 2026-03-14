@@ -25,10 +25,7 @@ type CronTargetHandler = (context: CronTargetContext) => Promise<void>;
 const matchesSyncOpenHandler: CronTargetHandler = async () => {
   const summary = await SERVICES_DATA_PROVIDER_MATCH_SYNC.syncOpenMatchesFromProvider();
   // TODO(realtime): Emit a WebSocket event here so clients can refresh match/tournament views without polling.
-  Logger.info(
-    `[CRON_TARGET:matches.sync_open] scanned=${summary.scanned} updated=${summary.updated}  failed=${summary.failed}`,
-    { matches: summary.matches }
-  );
+  Logger.audit(`[CRON_TARGET:matches.sync_open]`, summary);
 };
 
 const tournamentsCurrentRoundSyncHandler: CronTargetHandler = async () => {

@@ -1,23 +1,18 @@
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import { QUERIES_MATCH } from '@/domains/match/queries';
-import { DB_SelectMatch } from '@/domains/match/schema';
+import type { DB_SelectMatch } from '@/domains/match/schema';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { API_SOFASCORE_MATCH } from '../typing';
+import type { API_SOFASCORE_MATCH } from '../typing';
 import { mapSofaScoreEventToMatchPollingPayload } from '../utils/sofascore-match-mapper';
 
 const OPEN_MATCH_SYNC_BATCH_SIZE = 30;
-const OPEN_MATCH_SYNC_STALE_INTERVAL_MS = 2 * 60 * 1000;
 const OPEN_MATCH_SYNC_LOOKBACK_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
 const syncSingleMatch = async (
   scraper: BaseScraper,
   match: Pick<DB_SelectMatch, 'id' | 'externalId' | 'provider'>
 ): Promise<SyncSingleMatchResult> => {
-  if (match.provider !== 'sofascore') {
-    throw new Error(`Unsupported match provider "${match.provider}" for manual sync`);
-  }
-
   const checkedAt = new Date();
   const rawMatch = await scraper.getMatchData(match.externalId);
   const event = (rawMatch as { event?: API_SOFASCORE_MATCH } | null)?.event;
@@ -34,6 +29,18 @@ const syncSingleMatch = async (
   }
 
   const mappedEvent = mapSofaScoreEventToMatchPollingPayload(event);
+  if (mappedEvent.status !== 'ended') {
+    await QUERIES_MATCH.touchMatchCheckedAt(match.id, checkedAt);
+
+    return {
+      matchId: match.id,
+      externalId: match.externalId,
+      updated: false,
+      status: mappedEvent.status,
+      reason: 'provider_status_not_ended',
+    };
+  }
+
   const updatedMatch = await QUERIES_MATCH.updateMatchFromPolling({
     matchId: match.id,
     ...mappedEvent,
@@ -60,12 +67,10 @@ const syncSingleMatch = async (
 const syncOpenMatchesFromProvider = async (): Promise<SyncOpenMatchesSummary> => {
   const now = new Date();
   const lookbackStart = new Date(now.getTime() - OPEN_MATCH_SYNC_LOOKBACK_INTERVAL_MS);
-  const staleBefore = new Date(now.getTime() - OPEN_MATCH_SYNC_STALE_INTERVAL_MS);
 
   const dueMatches = await QUERIES_MATCH.listDueOpenMatchesForPolling({
     now,
     lookbackStart,
-    staleBefore,
     limit: OPEN_MATCH_SYNC_BATCH_SIZE,
   });
   // TODO(realtime): Emit "tournament_update_started" via WebSocket for each affected tournament.
@@ -98,19 +103,18 @@ const syncOpenMatchesFromProvider = async (): Promise<SyncOpenMatchesSummary> =>
         const result = await syncSingleMatch(scraper, match);
 
         if (!result.updated) {
-          summary.failed++;
+          if (result.status === 'ended') summary.ended++;
+          else if (result.status === 'not-defined') summary.notDefined++;
+          else if (result.status === 'open') summary.open++;
+          else summary.failed++;
           continue;
         }
 
         summary.updated++;
 
-        if (result.status === 'ended') {
-          summary.ended++;
-        } else if (result.status === 'not-defined') {
-          summary.notDefined++;
-        } else {
-          summary.open++;
-        }
+        if (result.status === 'ended') summary.ended++;
+        else if (result.status === 'not-defined') summary.notDefined++;
+        else summary.open++;
       } catch (error) {
         summary.failed++;
 

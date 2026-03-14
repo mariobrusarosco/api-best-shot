@@ -1,9 +1,10 @@
 import Logger from '@/core/logger';
 import { CRON_TARGET_IDS } from '@/domains/cron/constants';
-import { DB_SelectCronJobRun } from '@/domains/cron/schema';
-import { ICronRunTriggerType } from '@/domains/cron/typing';
+import type { DB_SelectCronJobRun } from '@/domains/cron/schema';
+import type { ICronRunTriggerType } from '@/domains/cron/typing';
 import { SERVICES_DATA_PROVIDER_MATCH_SYNC } from '@/domains/data-provider/services/matches-sync';
 import { RoundsDataProviderService } from '@/domains/data-provider/services/rounds';
+import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import { MatchQueries } from '@/domains/match/queries';
 
@@ -23,9 +24,13 @@ type CronTargetContext = {
 type CronTargetHandler = (context: CronTargetContext) => Promise<void>;
 
 const matchesSyncOpenHandler: CronTargetHandler = async () => {
-  const summary = await SERVICES_DATA_PROVIDER_MATCH_SYNC.syncOpenMatchesFromProvider();
+  const matchSyncSummary = await SERVICES_DATA_PROVIDER_MATCH_SYNC.syncOpenMatchesFromProvider();
+  const standingsSyncSummary = await StandingsDataProviderService.updateForTournamentIds(
+    matchSyncSummary.tournamentsToRefresh
+  );
   // TODO(realtime): Emit a WebSocket event here so clients can refresh match/tournament views without polling.
-  Logger.audit(`[CRON_TARGET:matches.sync_open]`, summary);
+
+  Logger.audit('[CRON_TARGET:matches.sync_open', { standingsSyncSummary, matchSyncSummary });
 };
 
 const tournamentsCurrentRoundSyncHandler: CronTargetHandler = async () => {
@@ -40,7 +45,7 @@ const tournamentsCurrentRoundSyncHandler: CronTargetHandler = async () => {
     currentRoundSlug: result.currentRoundSlug,
   }));
 
-  Logger.info(`[CRON_TARGET:tournaments.current_round_sync]`, { tournaments });
+  Logger.audit(`[CRON_TARGET:tournaments.current_round_sync]`, { todayMatches, tournaments });
 
   if (failures.length > 0) {
     throw new Error(`Current round sync failed for ${failures.length}/${uniqueTournamentIds.size} tournaments`);
@@ -50,9 +55,7 @@ const tournamentsCurrentRoundSyncHandler: CronTargetHandler = async () => {
 const tournamentsKnockoutRoundsSyncHandler: CronTargetHandler = async () => {
   const summary = await RoundsDataProviderService.updateKnockouts();
 
-  Logger.info(`[CRON_TARGET:tournaments.knockout_rounds_sync]`, {
-    updatedRounds: summary.updatedRounds,
-  });
+  Logger.audit(`[CRON_TARGET:tournaments.knockout_rounds_sync]`, summary);
 
   if (summary.failedTournaments.length > 0) {
     const failures = summary.failedTournaments

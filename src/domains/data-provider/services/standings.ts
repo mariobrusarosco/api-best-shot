@@ -1,14 +1,18 @@
 import { DataProviderReport } from '@/domains/data-provider/services/report';
 import { T_Team } from '@/domains/team/schema';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
-import { DB_InsertTournamentStandings, T_TournamentStandings } from '@/domains/tournament/schema';
+import type { DB_InsertTournamentStandings } from '@/domains/tournament/schema';
+import { T_TournamentStandings } from '@/domains/tournament/schema';
+import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
 import db from '@/core/database';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import { safeNumber, safeString } from '@/utils';
+import { randomUUID } from 'crypto';
 import { inArray } from 'drizzle-orm';
 import { BaseScraper } from '../providers/playwright/base-scraper';
-import { API_SOFASCORE_STANDINGS, DataProviderExecutionOperationType } from '../typing';
+import type { API_SOFASCORE_STANDINGS } from '../typing';
+import { DataProviderExecutionOperationType } from '../typing';
 import { DataProviderExecution } from './execution';
 
 export interface CreateStandingsInput {
@@ -430,4 +434,53 @@ export class StandingsDataProviderService {
       throw error;
     }
   }
+
+  public static async updateForTournamentIds(tournamentIds: string[]): Promise<StandingsRefreshSummary> {
+    const uniqueTournamentIds = [...new Set(tournamentIds.filter(Boolean))];
+    let updated = 0;
+    let failed = 0;
+
+    for (const tournamentId of uniqueTournamentIds) {
+      let scraper: BaseScraper | null = null;
+
+      try {
+        const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
+        scraper = await BaseScraper.createInstance();
+        const service = new StandingsDataProviderService(scraper, randomUUID());
+
+        await service.update({
+          tournamentId,
+          baseUrl: tournament.baseUrl,
+          label: tournament.label,
+          provider: tournament.provider,
+        });
+
+        updated++;
+      } catch (error) {
+        failed++;
+        Logger.error(error as Error, {
+          domain: DOMAINS.DATA_PROVIDER,
+          component: 'service',
+          operation: 'updateForTournamentIds',
+          tournamentId,
+        });
+      } finally {
+        if (scraper) {
+          await scraper.close();
+        }
+      }
+    }
+
+    return {
+      queued: uniqueTournamentIds.length,
+      updated,
+      failed,
+    };
+  }
 }
+
+type StandingsRefreshSummary = {
+  queued: number;
+  updated: number;
+  failed: number;
+};

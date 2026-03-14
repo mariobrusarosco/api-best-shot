@@ -7,7 +7,7 @@ import type { API_SOFASCORE_MATCH } from '../typing';
 import { mapSofaScoreEventToMatchPollingPayload } from '../utils/sofascore-match-mapper';
 
 const OPEN_MATCH_SYNC_BATCH_SIZE = 30;
-const OPEN_MATCH_SYNC_LOOKBACK_INTERVAL_MS = 12 * 60 * 60 * 1000;
+// const OPEN_MATCH_SYNC_LOOKBACK_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
 const syncSingleMatch = async (
   scraper: BaseScraper,
@@ -66,11 +66,10 @@ const syncSingleMatch = async (
 
 const syncOpenMatchesFromProvider = async (): Promise<SyncOpenMatchesSummary> => {
   const now = new Date();
-  const lookbackStart = new Date(now.getTime() - OPEN_MATCH_SYNC_LOOKBACK_INTERVAL_MS);
+  const tournamentsToRefresh = new Set<string>();
 
   const dueMatches = await QUERIES_MATCH.listDueOpenMatchesForPolling({
     now,
-    lookbackStart,
     limit: OPEN_MATCH_SYNC_BATCH_SIZE,
   });
   // TODO(realtime): Emit "tournament_update_started" via WebSocket for each affected tournament.
@@ -87,6 +86,7 @@ const syncOpenMatchesFromProvider = async (): Promise<SyncOpenMatchesSummary> =>
       id: match.id,
       tournamentId: match.tournamentId,
     })),
+    tournamentsToRefresh: [],
   };
 
   if (dueMatches.length === 0) {
@@ -111,6 +111,9 @@ const syncOpenMatchesFromProvider = async (): Promise<SyncOpenMatchesSummary> =>
         }
 
         summary.updated++;
+        if (result.status === 'ended' && match.tournamentId) {
+          tournamentsToRefresh.add(match.tournamentId);
+        }
 
         if (result.status === 'ended') summary.ended++;
         else if (result.status === 'not-defined') summary.notDefined++;
@@ -137,6 +140,7 @@ const syncOpenMatchesFromProvider = async (): Promise<SyncOpenMatchesSummary> =>
 
   // TODO(realtime): Emit per-tournament "tournament_update_completed" / "tournament_update_failed"
   // events after sync + scoreboard recalculation state transitions are finalized.
+  summary.tournamentsToRefresh = [...tournamentsToRefresh];
 
   return summary;
 };
@@ -173,6 +177,7 @@ type SyncOpenMatchesSummary = {
     id: string;
     tournamentId: string;
   }[];
+  tournamentsToRefresh: string[];
 };
 
 type SyncSingleMatchResult = {

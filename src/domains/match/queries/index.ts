@@ -143,7 +143,7 @@ const getMatchById = async (matchId: string) => {
   return match || null;
 };
 
-const listDueOpenMatchesForPolling = async (params: { now: Date; lookbackStart: Date; limit: number }) => {
+const listDueOpenMatchesForPolling = async (params: { now: Date; limit: number }) => {
   return db
     .select({
       id: T_Match.id,
@@ -159,7 +159,7 @@ const listDueOpenMatchesForPolling = async (params: { now: Date; lookbackStart: 
       and(
         eq(T_Match.status, 'open'),
         eq(T_Match.provider, 'sofascore'),
-        gte(T_Match.date, params.lookbackStart),
+        // gte(T_Match.date, params.lookbackStart),
         lte(T_Match.date, params.now)
       )
     )

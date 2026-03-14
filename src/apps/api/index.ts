@@ -1,15 +1,16 @@
 import { config } from 'dotenv';
+
 config({ path: process.env.ENV_PATH || '.env' });
 
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
-import requestLogger from '@/middlewares/logger';
-import apiRouter from '@/router';
 
 import accessControl from '@/domains/shared/middlewares/access-control';
-import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
+import requestLogger from '@/middlewares/logger';
+import apiRouter from '@/router';
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const API_VERSION = process.env.API_VERSION || '/v2';
@@ -36,7 +37,7 @@ app.get('/health', (_req, res) => {
   });
 });
 
-Logger.info('Registered /health endpoint');
+Logger.info('/health endpoint: ✅');
 
 // Root endpoint for testing
 app.get('/', (_req, res) => {
@@ -67,19 +68,16 @@ app.get('/debug/env', (_req, res) => {
   res.status(200).json({
     message: 'Environment Check - Remove this endpoint in production!',
     secrets: envCheck,
-    timestamp: new Date().toISOString(),
   });
 });
 
-Logger.info('Registered root endpoint');
-
 // JSON Parser Middleware
 app.use(express.json());
-Logger.info('Registered JSON parser middleware');
+Logger.info('[JSON parser] middleware: ✅');
 
 app.set('trust proxy', 1);
 app.use(cookieParser());
-Logger.info('Registered cookie parser');
+Logger.info('[Cookie Parser] middleware: ✅');
 
 const corsConfig = {
   origin: ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -87,15 +85,15 @@ const corsConfig = {
 };
 app.use(cors(corsConfig));
 app.options('*', cors(corsConfig));
-Logger.info('Registered CORS');
+Logger.info('[CORS] middleware: ✅');
 
 app.use(requestLogger);
 app.use(accessControl);
-Logger.info('Registered logger and access control');
+Logger.info('[Logger and access control] middleware: ✅');
 
 // Mount the central API router at /api
 app.use('/api', apiRouter);
-Logger.info('Registered /api router');
+Logger.info('[API router] mounted: ✅');
 
 app.listen(port, '0.0.0.0', () => {
   Logger.info(`Server running on port ${port} in ${NODE_ENV} mode`, {

@@ -6,7 +6,6 @@ import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import type { ScheduledTask } from 'node-cron';
 import { buildRunnerInstanceId, NODE_ENV, ONE_TIME_SWEEP_INTERVAL_MS } from './config';
-import { startHeartbeat } from './heartbeat';
 import { registerProcessErrorHandlers, registerShutdownHandlers } from './lifecycle';
 import { processDueOneTimeDefinitions } from './one-time';
 import {
@@ -71,7 +70,6 @@ const bootstrap = async (): Promise<void> => {
       isShuttingDown: () => isShuttingDown,
     });
   }, ONE_TIME_SWEEP_INTERVAL_MS);
-  heartbeatTimer = startHeartbeat();
 };
 
 registerShutdownHandlers(shutdown);

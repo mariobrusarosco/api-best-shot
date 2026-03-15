@@ -1,6 +1,6 @@
+import db from '@/core/database';
 import { T_DataProviderExecutions } from '@/domains/data-provider/schema';
 import { T_Tournament } from '@/domains/tournament/schema';
-import db from '@/core/database';
 import { desc, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 

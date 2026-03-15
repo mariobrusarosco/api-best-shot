@@ -46,7 +46,7 @@ class LoggerService {
     console.log(`${pc.magenta('[AUDIT]')}`, message, context);
 
     if (isSentryEnabled) {
-      Sentry.captureMessage('AUDIT_EVENT', {
+      Sentry.captureMessage(message, {
         level: 'info',
         extra: context,
       });

@@ -164,7 +164,6 @@ export class TournamentDataProvider {
       try {
         reportUploadResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
-        console.error('Failed to upload report file:', reportError);
         Logger.error(reportError as Error, {
           domain: DOMAINS.DATA_PROVIDER,
           component: 'service',
@@ -191,7 +190,6 @@ export class TournamentDataProvider {
           },
         });
       } catch (notificationError) {
-        console.error('Failed to send failure notification:', notificationError);
         Logger.error(notificationError as Error, {
           domain: DOMAINS.DATA_PROVIDER,
           component: 'service',
@@ -437,7 +435,6 @@ export class TournamentDataProvider {
       try {
         reportResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
-        console.error('Failed to upload report file:', reportError);
         Logger.error(reportError as Error, {
           domain: DOMAINS.DATA_PROVIDER,
           component: 'service',
@@ -465,7 +462,6 @@ export class TournamentDataProvider {
           duration,
         });
       } catch (notificationError) {
-        console.error('Failed to send failure notification:', notificationError);
         Logger.error(notificationError as Error, {
           domain: DOMAINS.DATA_PROVIDER,
           component: 'service',

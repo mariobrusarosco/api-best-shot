@@ -73,7 +73,11 @@ export class S3FileStorage {
       });
       return key;
     } catch (error) {
-      console.error('[S3FileStorage] Error uploading file:', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'uploadFile',
+      });
       throw error; // Re-throw to let caller handle fallback
     }
   }

@@ -195,7 +195,6 @@ export class MatchesDataProviderService {
         requestId: this.report.requestId,
         filename,
       });
-      console.error('Failed to write matches operation report file:', (error as Error).message);
       return {};
     }
   }
@@ -377,7 +376,11 @@ export class MatchesDataProviderService {
 
       return matches as DB_InsertMatch[];
     } catch (error: unknown) {
-      console.error('[SOFASCORE] - [ERROR] - [MAP MATCHES]', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'mapMatches',
+      });
       throw error;
     }
   }
@@ -386,7 +389,11 @@ export class MatchesDataProviderService {
     try {
       return mapSofaScoreStatusTypeToMatchStatus(match.status?.type);
     } catch (error: unknown) {
-      console.error('[SOFASCORE] - [ERROR] - [GET MATCH STATUS]', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'getMatchStatus',
+      });
       throw error;
     }
   }

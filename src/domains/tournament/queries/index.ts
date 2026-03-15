@@ -1,6 +1,8 @@
+import db from '@/core/database';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
-
 import { DatabaseError } from '@/domains/shared/error-handling/database';
 import { T_Team } from '@/domains/team/schema';
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
@@ -12,9 +14,8 @@ import {
   T_TournamentMember,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
-import db from '@/core/database';
-import { and, eq, inArray, sql, SQL } from 'drizzle-orm';
-import { TournamentMode, TournamentWithTypedMode } from '../typing';
+import { TournamentMode, TournamentWithTypedMode } from '@/domains/tournament/typing';
+import { and, eq, inArray, SQL, sql } from 'drizzle-orm';
 
 const updateMemberPoints = async (memberId: string, tournamentId: string, delta: number) => {
   try {
@@ -26,7 +27,11 @@ const updateMemberPoints = async (memberId: string, tournamentId: string, delta:
       .where(and(eq(T_TournamentMember.memberId, memberId), eq(T_TournamentMember.tournamentId, tournamentId)));
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[TournamentQueries] - [updateMemberPoints]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'updateMemberPoints',
+    });
     throw error;
   }
 };
@@ -98,7 +103,11 @@ const listActiveTournamentsByModes = async (modes: TournamentMode[]) => {
       .where(and(eq(T_Tournament.status, 'active'), inArray(T_Tournament.mode, modes)));
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[Query_Tournament] - [listActiveTournamentsByModes]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'listActiveTournamentsByModes',
+    });
     throw error;
   }
 };

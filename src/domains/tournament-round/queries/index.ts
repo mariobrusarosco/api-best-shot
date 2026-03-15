@@ -1,13 +1,13 @@
 import db from '@/core/database';
-import {
-  T_TournamentRound,
-  DB_InsertTournamentRound,
-  DB_UpdateTournamentRound,
-} from '@/domains/tournament-round/schema';
-import { and, asc, eq } from 'drizzle-orm';
-import { DatabaseError } from '@/domains/shared/error-handling/database';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
+import { DatabaseError } from '@/domains/shared/error-handling/database';
+import {
+  DB_InsertTournamentRound,
+  DB_UpdateTournamentRound,
+  T_TournamentRound,
+} from '@/domains/tournament-round/schema';
+import { and, asc, eq } from 'drizzle-orm';
 
 const getRound = async (tournamentId: string, roundSlug: string) => {
   try {
@@ -19,7 +19,11 @@ const getRound = async (tournamentId: string, roundSlug: string) => {
     return round || null;
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[QUERIES_TOURNAMENT_ROUND] - [getRound]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'getRound',
+    });
     throw error;
   }
 };
@@ -35,7 +39,11 @@ const getRegularSeasonRounds = async (tournamentId: string) => {
     return rounds;
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[QUERIES_TOURNAMENT_ROUND] - [getRegularSeasonRounds]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'getRegularSeasonRounds',
+    });
     throw error;
   }
 };
@@ -51,7 +59,11 @@ const getKnockoutRounds = async (tournamentId: string) => {
     return rounds;
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[QUERIES_TOURNAMENT_ROUND] - [getKnockoutRounds]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'getKnockoutRounds',
+    });
     throw error;
   }
 };
@@ -67,7 +79,11 @@ const getAllRounds = async (tournamentId: string) => {
     return rounds;
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[QUERIES_TOURNAMENT_ROUND] - [getAllRounds]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'getAllRounds',
+    });
     throw error;
   }
 };

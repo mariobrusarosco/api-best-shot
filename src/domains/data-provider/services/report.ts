@@ -175,7 +175,6 @@ export class DataProviderReport {
         requestId: this.report.requestId,
         filename,
       });
-      console.error('Failed to write operation report file:', (error as Error).message);
 
       // Return empty object on error
       return {};

@@ -1,3 +1,6 @@
+import db from '@/core/database';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { Utils } from '@/domains/auth/utils';
 import { ErrorMapper } from '@/domains/guess/error-handling/mapper';
 import { DB_SelectGuess, T_Guess } from '@/domains/guess/schema';
@@ -5,9 +8,6 @@ import { runGuessAnalysis } from '@/domains/guess/services/guess-analysis-v2';
 import { CreateGuessRequest, GuessInput } from '@/domains/guess/typing';
 import { DB_SelectMatch, T_Match } from '@/domains/match/schema';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
-import db from '@/core/database';
-import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
 import { randomUUID } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { Response } from 'express';
@@ -54,8 +54,6 @@ async function getMemberGuesses({
       const guess = row.guess || buildExpiredGuess(memberId, row.match.id, round);
       return runGuessAnalysis(guess, row.match);
     });
-
-    console.log('-----------------', parsedGuesses);
 
     return parsedGuesses;
   } catch (error: unknown) {

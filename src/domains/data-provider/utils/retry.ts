@@ -5,7 +5,8 @@
  * (scraping, API calls, etc.)
  */
 
-import * as Sentry from '@sentry/node';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { retryWithBackoff } from '@/utils/retry-with-backoff';
 
 /**
@@ -33,28 +34,21 @@ export async function retryMatchOperation<T>(operation: () => Promise<T>, contex
     maxAttempts: 3,
     delays: [30, 60, 120],
     onRetry: (attempt, error, delay) => {
-      console.warn(`[Retry] ${context}`);
-      console.warn(`  Attempt ${attempt} failed: ${error.message}`);
-      console.warn(`  Retrying in ${delay} seconds...`);
+      Logger.warn(`[Retry] ${context} — Attempt ${attempt} failed: ${error.message}. Retrying in ${delay}s...`, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'retryMatchOperation',
+        attempt: attempt.toString(),
+        delay: delay.toString(),
+      });
     },
     onFinalFailure: (error, attempts) => {
-      console.error(`[Retry] ${context}`);
-      console.error(`  All ${attempts} attempts failed!`);
-      console.error(`  Final error: ${error.message}`);
-
-      // Report to Sentry with context
-      Sentry.captureException(error, {
-        tags: {
-          retry_context: context,
-          retry_attempts: attempts.toString(),
-        },
-        level: 'error',
-        extra: {
-          context,
-          totalAttempts: attempts,
-          errorMessage: error.message,
-          errorStack: error.stack,
-        },
+      Logger.error(error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'service',
+        operation: 'retryMatchOperation',
+        context: 'final_failure',
+        totalAttempts: attempts.toString(),
       });
     },
   });

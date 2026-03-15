@@ -1,5 +1,7 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
+import { SERVICES_TOURNAMENT_ROUND } from '@/domains/tournament-round/services';
 import type { Request, Response } from 'express';
-import { SERVICES_TOURNAMENT_ROUND } from '../services';
 import type { DB_InsertTournamentRound } from '../schema';
 
 const getAllRounds = async (req: Request, res: Response) => {
@@ -20,7 +22,11 @@ const getAllRounds = async (req: Request, res: Response) => {
       data: rounds,
     });
   } catch (error) {
-    console.error('[API_TOURNAMENT_ROUND] - [getAllRounds]', error);
+    Logger.error(error as Error, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'api',
+      operation: 'getAllRounds',
+    });
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch tournament rounds',
@@ -46,7 +52,11 @@ const getRound = async (req: Request, res: Response) => {
       data: round,
     });
   } catch (error) {
-    console.error('[API_TOURNAMENT_ROUND] - [getRound]', error);
+    Logger.error(error as Error, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'api',
+      operation: 'getRound',
+    });
 
     if (error instanceof Error && error.message === 'Tournament round not found') {
       return res.status(404).json({
@@ -80,7 +90,11 @@ const getKnockoutRounds = async (req: Request, res: Response) => {
       data: rounds,
     });
   } catch (error) {
-    console.error('[API_TOURNAMENT_ROUND] - [getKnockoutRounds]', error);
+    Logger.error(error as Error, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'api',
+      operation: 'getKnockoutRounds',
+    });
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch knockout rounds',

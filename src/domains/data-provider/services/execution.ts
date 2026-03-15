@@ -148,7 +148,6 @@ export class DataProviderExecution {
       await slackService.sendNotification(this.webhookUrl, payload);
       console.log('[DEBUG] Slack notification sent successfully');
     } catch (error) {
-      console.error('[DEBUG] Slack notification error:', error);
       Logger.error(error as Error, {
         domain: DOMAINS.DATA_PROVIDER,
         component: 'service',

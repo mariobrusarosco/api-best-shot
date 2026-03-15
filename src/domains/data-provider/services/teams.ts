@@ -77,7 +77,6 @@ export class TeamsDataProviderService {
       try {
         reportUploadResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
-        console.error('Failed to upload report file:', reportError);
         Logger.error(reportError as Error, {
           domain: DOMAINS.DATA_PROVIDER,
           component: 'service',
@@ -102,7 +101,6 @@ export class TeamsDataProviderService {
           },
         });
       } catch (notificationError) {
-        console.error('Failed to send failure notification:', notificationError);
         Logger.error(notificationError as Error, {
           domain: DOMAINS.DATA_PROVIDER,
           component: 'service',
@@ -166,7 +164,6 @@ export class TeamsDataProviderService {
       try {
         reportUploadResult = await this.reporter.createFileAndUpload();
       } catch (reportError) {
-        console.error('Failed to upload report file:', reportError);
         Logger.error(reportError as Error, {
           domain: DOMAINS.DATA_PROVIDER,
           component: 'service',
@@ -191,7 +188,6 @@ export class TeamsDataProviderService {
           },
         });
       } catch (notificationError) {
-        console.error('Failed to send failure notification:', notificationError);
         Logger.error(notificationError as Error, {
           domain: DOMAINS.DATA_PROVIDER,
           component: 'service',

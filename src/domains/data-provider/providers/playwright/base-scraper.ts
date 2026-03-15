@@ -238,14 +238,22 @@ export class BaseScraper {
 
       return data;
     } catch (error) {
-      Logger.error(error as Error, {
+      // Playwright page.evaluate errors cross the browser→Node boundary and lose
+      // their prototype / .stack, which causes Sentry to silently drop them.
+      // Re-wrap into a standard Node.js Error so captureException works correctly.
+      const nodeError =
+        error instanceof Error && error.stack
+          ? error
+          : new Error(error instanceof Error ? error.message : String(error));
+
+      Logger.error(nodeError, {
         component: 'scraper',
         operation: 'getMatchData',
         domain: DOMAINS.DATA_PROVIDER,
         matchExternalId,
         apiUrl,
       });
-      throw error;
+      throw nodeError;
     }
   }
 
@@ -280,7 +288,12 @@ export class BaseScraper {
         directory: 'data-providers',
       });
     } catch (error) {
-      console.error('[BaseScraper] Error uploading asset:', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'scraper',
+        operation: 'uploadAsset',
+        filename: payload.filename,
+      });
       return `dummy-path/${payload.filename}`;
     }
   }

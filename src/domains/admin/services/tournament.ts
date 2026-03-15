@@ -56,7 +56,11 @@ class AdminTournamentService {
         message: 'Tournaments retrieved successfully',
       });
     } catch (error) {
-      console.error('Error fetching tournaments for admin:', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'service',
+        operation: 'getAllTournaments',
+      });
       return handleInternalServerErrorResponse(res, error);
     }
   }
@@ -84,7 +88,11 @@ class AdminTournamentService {
         message: 'Tournament retrieved successfully',
       });
     } catch (error) {
-      console.error('Error fetching tournament for admin:', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'service',
+        operation: 'getTournamentById',
+      });
       if (error instanceof Error && error.message === 'Tournament not found') {
         return res.status(404).json({
           success: false,
@@ -168,7 +176,11 @@ class AdminTournamentService {
         message: 'Tournament execution jobs retrieved successfully',
       });
     } catch (error) {
-      console.error('Error fetching tournament execution jobs:', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'service',
+        operation: 'getTournamentExecutionJobs',
+      });
       if (error instanceof Error && error.message === 'Tournament not found') {
         return res.status(404).json({
           success: false,

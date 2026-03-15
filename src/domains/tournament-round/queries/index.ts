@@ -132,7 +132,11 @@ const upsertTournamentRounds = async (rounds: DB_UpdateTournamentRound[]) => {
     return query;
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[QUERIES_TOURNAMENT_ROUND] - [upsertTournamentRounds]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'upsertTournamentRounds',
+    });
     throw error;
   }
 };

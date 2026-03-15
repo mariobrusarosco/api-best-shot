@@ -113,7 +113,11 @@ const createTournamentRounds = async (req: Request, res: Response) => {
       data: rounds,
     });
   } catch (error) {
-    console.error('[API_TOURNAMENT_ROUND] - [createTournamentRounds]', error);
+    Logger.error(error as Error, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'api',
+      operation: 'createTournamentRounds',
+    });
 
     if (
       error instanceof Error &&

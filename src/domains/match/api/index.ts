@@ -1,3 +1,5 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { Request, Response } from 'express';
 import { SERVICES_MATCH } from '../services';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
@@ -8,7 +10,11 @@ const getMatchesByTournament = async (req: Request, res: Response) => {
     const matches = await SERVICES_MATCH.getMatchesByTournament(tournamentId, roundId);
     return res.status(200).send(matches);
   } catch (error: unknown) {
-    console.error('[MATCH - getMatchesByTournament]', error);
+    Logger.error(error as Error, {
+      domain: DOMAINS.MATCH,
+      component: 'api',
+      operation: 'getMatchesByTournament',
+    });
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);

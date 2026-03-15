@@ -1,5 +1,7 @@
 import { T_Member } from '@/domains/member/schema';
 import db from '@/core/database';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
@@ -18,7 +20,11 @@ export const API_ADMIN = {
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error('Error checking health:', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'api',
+        operation: 'healthCheck',
+      });
       res.status(500).json({
         success: false,
         error: 'Failed to check health',
@@ -53,7 +59,12 @@ export const API_ADMIN = {
           });
         }
       } catch (error) {
-        console.error('Token verification failed:', error);
+        Logger.error(error as Error, {
+          domain: DOMAINS.ADMIN,
+          component: 'api',
+          operation: 'seedDatabase',
+          context: 'token_verification_failed',
+        });
         return res.status(403).json({
           error: 'Invalid token',
           message: error instanceof Error ? error.message : 'Unknown error during token verification',
@@ -122,7 +133,11 @@ export const API_ADMIN = {
         environment: NODE_ENV,
       });
     } catch (error) {
-      console.error('❌ Error seeding database:', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'api',
+        operation: 'seedDatabase',
+      });
       res.status(500).json({
         success: false,
         error: 'Failed to seed database',

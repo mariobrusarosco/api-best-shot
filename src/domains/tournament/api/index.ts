@@ -1,3 +1,5 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { Utils } from '@/domains/auth/utils';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import { ApiError } from '@/domains/shared/error-handling/types';
@@ -10,7 +12,11 @@ const getAllTournaments = async (_: Request, res: Response) => {
     return res.status(200).send(tournaments);
   } catch (error: unknown) {
     const apiError = error as ApiError;
-    console.error('[TOURNAMENT - getAllTournaments]', apiError);
+    Logger.error(apiError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'api',
+      operation: 'getAllTournaments',
+    });
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
@@ -25,7 +31,11 @@ const getTournamentScore = async (req: Request, res: Response) => {
     return res.status(200).send(score);
   } catch (error: unknown) {
     const apiError = error as ApiError;
-    console.error('[TOURNAMENT - getTournamentScore]', apiError);
+    Logger.error(apiError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'api',
+      operation: 'getTournamentScore',
+    });
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
@@ -40,7 +50,11 @@ const getMatchesWithNullGuess = async (req: Request, res: Response) => {
     return res.status(200).send(matches);
   } catch (error: unknown) {
     const apiError = error as ApiError;
-    console.error('[TOURNAMENT - getMatchesWithNullGuess]', apiError);
+    Logger.error(apiError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'api',
+      operation: 'getMatchesWithNullGuess',
+    });
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
@@ -56,7 +70,11 @@ const getTournamentDetails = async (req: Request, res: Response) => {
     return res.status(200).send({ ...tournament, onboardingCompleted: onboardingStatus, memberId });
   } catch (error: unknown) {
     const apiError = error as ApiError;
-    console.error('[TOURNAMENT - getTournamentDetails]', apiError);
+    Logger.error(apiError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'api',
+      operation: 'getTournamentDetails',
+    });
     if (apiError.message === 'Tournament not found') {
       return res.status(404).send({ message: 'Tournament not found' });
     }
@@ -73,7 +91,11 @@ const getTournamentRounds = async (req: Request, res: Response) => {
     return res.status(200).send(rounds);
   } catch (error: unknown) {
     const apiError = error as ApiError;
-    console.error('[TOURNAMENT - getTournamentRounds]', apiError);
+    Logger.error(apiError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'api',
+      operation: 'getTournamentRounds',
+    });
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
@@ -87,7 +109,11 @@ const getKnockoutRounds = async (req: Request, res: Response) => {
     return res.status(200).send(rounds);
   } catch (error: unknown) {
     const apiError = error as ApiError;
-    console.error('[TOURNAMENT - getKnockoutRounds]', apiError);
+    Logger.error(apiError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'api',
+      operation: 'getKnockoutRounds',
+    });
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
@@ -101,7 +127,11 @@ const getTournamentStandings = async (req: Request, res: Response) => {
     return res.status(200).send(standings);
   } catch (error: unknown) {
     const apiError = error as ApiError;
-    console.error('[TOURNAMENT - getTournamentStandings]', apiError);
+    Logger.error(apiError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'api',
+      operation: 'getTournamentStandings',
+    });
     if (apiError.message === 'Tournament not found') {
       return res.status(404).send({ message: 'Tournament not found' });
     }

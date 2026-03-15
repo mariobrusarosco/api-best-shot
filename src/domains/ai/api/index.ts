@@ -1,3 +1,5 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { Request, Response } from 'express';
 import { getAIPredictionForMatch } from '../services/prediction-service';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
@@ -28,7 +30,11 @@ export const API_AI = {
         data: prediction,
       });
     } catch (error) {
-      console.error('Error getting AI prediction:', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.AI,
+        component: 'api',
+        operation: 'getMatchPrediction',
+      });
       return handleInternalServerErrorResponse(res, error);
     }
   },

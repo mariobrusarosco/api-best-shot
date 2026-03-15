@@ -1,4 +1,6 @@
 import db from '@/core/database';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { T_Match, T_Team, T_Tournament } from '@/core/database/schema';
 import { defineTimebox } from '@/utils/timebox';
 import dayjs from 'dayjs';
@@ -133,7 +135,11 @@ const getMatchesByTournament = async (tournamentId: string, roundId: string) => 
       .leftJoin(awayTeam, eq(T_Match.awayTeamId, awayTeam.id))
       .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, roundId)));
   } catch (error: unknown) {
-    console.error('[MATCH QUERIES] - [getMatchesByTournament]', error);
+    Logger.error(error as Error, {
+      domain: DOMAINS.MATCH,
+      component: 'database',
+      operation: 'getMatchesByTournament',
+    });
     throw error;
   }
 };
@@ -215,7 +221,11 @@ const createMatches = async (matches: DB_InsertMatch[]) => {
     const result = await db.insert(T_Match).values(matches).returning();
     return result;
   } catch (error: unknown) {
-    console.error('[MATCH QUERIES] - [createMatches]', error);
+    Logger.error(error as Error, {
+      domain: DOMAINS.MATCH,
+      component: 'database',
+      operation: 'createMatches',
+    });
     throw error;
   }
 };
@@ -247,7 +257,11 @@ const upsertMatches = async (matches: DB_InsertMatch[]) => {
 
     return result;
   } catch (error: unknown) {
-    console.error('[MATCH QUERIES] - [upsertMatches]', error);
+    Logger.error(error as Error, {
+      domain: DOMAINS.MATCH,
+      component: 'database',
+      operation: 'upsertMatches',
+    });
     throw error;
   }
 };

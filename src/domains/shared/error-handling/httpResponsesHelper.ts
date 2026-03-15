@@ -4,9 +4,6 @@ import { Response } from 'express';
 import { GlobalErrorMapper } from './mapper';
 
 export function handleInternalServerErrorResponse(res: Response, error: unknown) {
-  // Log to both Sentry and console for debugging
-  console.error('🚨 Internal Server Error:', error);
-
   Logger.error(error as Error, {
     domain: DOMAINS.DASHBOARD,
     component: 'api',

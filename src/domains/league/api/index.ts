@@ -1,3 +1,5 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { Request, Response } from 'express';
 import { SERVICES_LEAGUE } from '../services';
 
@@ -11,7 +13,11 @@ const getLeagues = async (req: Request, res: Response) => {
     const leagues = await SERVICES_LEAGUE.getMemberLeagues(memberId);
     return res.status(200).send(leagues);
   } catch (error: unknown) {
-    console.error(`[LEAGUE - getLeagues] ${error}`);
+    Logger.error(error as Error, {
+      domain: DOMAINS.LEAGUE,
+      component: 'api',
+      operation: 'getLeagues',
+    });
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
@@ -31,7 +37,11 @@ const createLeague = async (req: Request, res: Response) => {
 
     return res.status(201).send(league);
   } catch (error: unknown) {
-    console.error(`[LEAGUE - createLeague] ${error}`);
+    Logger.error(error as Error, {
+      domain: DOMAINS.LEAGUE,
+      component: 'api',
+      operation: 'createLeague',
+    });
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
@@ -47,7 +57,11 @@ const inviteToLeague = async (req: Request, res: Response) => {
     if (error instanceof Error && 'status' in error && 'user' in error) {
       return res.status((error as { status: number }).status).send((error as { user: string }).user);
     }
-    console.error(`[LEAGUE - inviteToLeague] ${error}`);
+    Logger.error(error as Error, {
+      domain: DOMAINS.LEAGUE,
+      component: 'api',
+      operation: 'inviteToLeague',
+    });
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
@@ -77,7 +91,11 @@ const getLeague = async (req: Request, res: Response) => {
       throw error;
     }
   } catch (error: unknown) {
-    console.error(`[LEAGUE - getLeague] ${error}`);
+    Logger.error(error as Error, {
+      domain: DOMAINS.LEAGUE,
+      component: 'api',
+      operation: 'getLeague',
+    });
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
@@ -90,7 +108,11 @@ const updateLeagueTournaments = async (req: Request, res: Response) => {
     const result = await SERVICES_LEAGUE.updateLeagueTournaments(updateInput);
     return res.status(200).send(result);
   } catch (error: unknown) {
-    console.error(`[LEAGUE - updateLeagueTournaments] ${error}`);
+    Logger.error(error as Error, {
+      domain: DOMAINS.LEAGUE,
+      component: 'api',
+      operation: 'updateLeagueTournaments',
+    });
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
       .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);

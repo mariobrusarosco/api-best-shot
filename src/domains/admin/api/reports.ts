@@ -1,3 +1,5 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { T_DataProviderExecutions } from '@/domains/data-provider/schema';
 import { T_Tournament } from '@/domains/tournament/schema';
 import db from '@/core/database';
@@ -68,7 +70,11 @@ export const API_ADMIN_REPORTS = {
         limit: validLimit,
       });
     } catch (error) {
-      console.error('Error fetching reports:', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'api',
+        operation: 'getReports',
+      });
       return res.status(500).json({
         success: false,
         message: 'Failed to fetch reports',

@@ -19,7 +19,11 @@ const getMember = async (req: Request, res: Response) => {
 
     return res.status(200).send(member);
   } catch (error: unknown) {
-    console.error('[ERROR] [getMember]', error);
+    Logger.error(error as Error, {
+      domain: DOMAINS.MEMBER,
+      component: 'api',
+      operation: 'getMember',
+    });
     return handleInternalServerErrorResponse(res, error);
   }
 };

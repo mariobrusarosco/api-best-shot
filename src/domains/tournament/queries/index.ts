@@ -61,7 +61,11 @@ const bulkUpdateMemberPoints = async (tournamentId: string, updates: Map<string,
     await db.execute(sql.join(sqlChunks, sql` `));
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[TournamentQueries] - [bulkUpdateMemberPoints]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'bulkUpdateMemberPoints',
+    });
     throw error;
   }
 };
@@ -83,7 +87,11 @@ const allTournaments = async () => {
       .from(T_Tournament);
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[Query_Tournament] - [queryAllMemberTournaments]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'allTournaments',
+    });
     throw error;
   }
 };
@@ -145,7 +153,11 @@ const tournament = async (tournamentId: string) => {
     return { ...(tournament as TournamentWithTypedMode), rounds };
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[Query_Tournament] - [queryTournament]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'tournament',
+    });
     throw error;
   }
 };
@@ -158,7 +170,11 @@ const knockoutRounds = async (tournamentId: string) => {
       .where(and(eq(T_TournamentRound.tournamentId, tournamentId), eq(T_TournamentRound.type, 'knockout')));
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[TournamentQueries] - [allKnockoutRounds]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'knockoutRounds',
+    });
     throw error;
   }
 };
@@ -168,7 +184,11 @@ const getTournamentMatches = async (tournamentId: string) => {
     return db.select().from(T_Match).where(eq(T_Match.tournamentId, tournamentId));
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[TournamentQueries] - [getTournamentMatches]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'getTournamentMatches',
+    });
     throw error;
   }
 };
@@ -182,7 +202,11 @@ const getTournamentGuesses = async (memberId: string, tournamentId: string) => {
       .where(and(eq(T_Guess.memberId, memberId), eq(T_Match.tournamentId, tournamentId)));
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[TournamentQueries] - [getTournamentGuesses]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'getTournamentGuesses',
+    });
     throw error;
   }
 };
@@ -198,7 +222,11 @@ const getMatchesWithNullGuess = async (memberId: string, tournamentId: string, r
     return rows.filter((row: (typeof rows)[number]) => row.guess === null);
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[TournamentQueries] - [getMatchesWithNullGuess]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'getMatchesWithNullGuess',
+    });
     throw error;
   }
 };
@@ -231,7 +259,11 @@ const getTournamentStandings = async (tournamentId: string) => {
       .orderBy(sql`cast(${T_TournamentStandings.order} as integer)`);
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[TournamentQueries] - [getTournamentStandings]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'getTournamentStandings',
+    });
     throw error;
   }
 };
@@ -242,7 +274,11 @@ const createTournament = async (input: DB_InsertTournament) => {
     return tournament;
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[TournamentQueries] - [createTournament]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'createTournament',
+    });
     throw error;
   }
 };
@@ -261,7 +297,11 @@ const updateTournamentCurrentRound = async (
     return tournament || null;
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[TournamentQueries] - [updateTournamentCurrentRound]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'updateTournamentCurrentRound',
+    });
     throw error;
   }
 };
@@ -290,7 +330,11 @@ const upsertTournamentStandings = async (standings: DB_InsertTournamentStandings
     return standings;
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
-    console.error('[TournamentQueries] - [upsertTournamentStandings]', dbError);
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'upsertTournamentStandings',
+    });
     throw error;
   }
 };

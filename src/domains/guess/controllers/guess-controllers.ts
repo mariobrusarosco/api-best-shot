@@ -89,7 +89,12 @@ async function createGuess(req: CreateGuessRequest, res: Response) {
       .returning();
 
     if (!guess) {
-      console.error(ErrorMapper.FAILED_GUESS_CRETION.debug);
+      Logger.error(new Error(ErrorMapper.FAILED_GUESS_CRETION.debug), {
+        domain: DOMAINS.GUESS,
+        component: 'controller',
+        operation: 'createGuess',
+        context: 'guess_creation_failed',
+      });
       res.status(ErrorMapper.FAILED_GUESS_CRETION.status).send(ErrorMapper.FAILED_GUESS_CRETION.user);
       return;
     }
@@ -104,7 +109,11 @@ async function createGuess(req: CreateGuessRequest, res: Response) {
 
     res.status(200).send(parsed);
   } catch (error: unknown) {
-    console.error('[ERROR] [GUESS] [CREATING GUESS]');
+    Logger.error(error as Error, {
+      domain: DOMAINS.GUESS,
+      component: 'controller',
+      operation: 'createGuess',
+    });
     return handleInternalServerErrorResponse(res, error);
   }
 }

@@ -1,3 +1,5 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { Utils } from '@/domains/auth/utils';
 import { T_Member } from '@/domains/member/schema';
 import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
@@ -17,7 +19,11 @@ async function authenticateUser(req: AuthenticateMemberRequest, res: Response) {
 
     return res.status(200).send(token);
   } catch (error: unknown) {
-    console.error(`[AUTH - authenticateUser] ${error}`);
+    Logger.error(error as Error, {
+      domain: DOMAINS.AUTH,
+      component: 'controller',
+      operation: 'authenticateUser',
+    });
 
     return res
       .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)

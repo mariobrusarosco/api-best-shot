@@ -1,5 +1,7 @@
 import { DashboardController } from '@/domains/dashboard/controller';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { type Request, Response } from 'express';
 import { DashboardService } from '../services';
 
@@ -9,7 +11,11 @@ const getDashboardDeprecated = async (_: Request, res: Response) => {
 
     res.status(200).send(dashboard);
   } catch (error: unknown) {
-    console.error('Error fetching matches:', error);
+    Logger.error(error as Error, {
+      domain: DOMAINS.DASHBOARD,
+      component: 'api',
+      operation: 'getDashboardDeprecated',
+    });
     return handleInternalServerErrorResponse(res, error);
   }
 };

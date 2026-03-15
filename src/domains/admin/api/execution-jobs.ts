@@ -1,4 +1,6 @@
 import db from '@/core/database';
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { T_DataProviderExecutions } from '@/domains/data-provider/schema';
 import { T_Tournament } from '@/domains/tournament/schema';
 import { desc, eq } from 'drizzle-orm';
@@ -62,7 +64,11 @@ export const API_ADMIN_EXECUTION_JOBS = {
         limit: validLimit,
       });
     } catch (error) {
-      console.error('Error fetching execution jobs:', error);
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'api',
+        operation: 'getExecutionJobs',
+      });
       return res.status(500).json({
         success: false,
         message: 'Failed to fetch execution jobs',

@@ -1,7 +1,7 @@
 import db from '@/core/database';
+import { T_Match, T_Team, T_Tournament } from '@/core/database/schema';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
-import { T_Match, T_Team, T_Tournament } from '@/core/database/schema';
 import { defineTimebox } from '@/utils/timebox';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
@@ -159,6 +159,7 @@ const listDueOpenMatchesForPolling = async (params: { now: Date; limit: number }
       date: T_Match.date,
       lastCheckedAt: T_Match.lastCheckedAt,
       tournamentId: T_Match.tournamentId,
+      roundSlug: T_Match.roundSlug,
     })
     .from(T_Match)
     .where(

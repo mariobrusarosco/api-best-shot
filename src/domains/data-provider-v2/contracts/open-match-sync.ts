@@ -42,3 +42,19 @@ export type OpenMatchSyncCheckedMatch = {
   status: DB_SelectMatch['status'];
   checkedAt: Date | null;
 };
+
+export type TournamentOpenMatchSyncSummary = {
+  totalOperations: number;
+  successfulOperations: number;
+  failedOperations: number;
+  scannedMatches: number;
+  updatedMatches: number;
+  openMatches: number;
+  endedMatches: number;
+  providerNotFoundMatches: number;
+  providerMissingEventMatches: number;
+  unexpectedFailureMatches: number;
+  updatedMatchIdsPreview?: string[];
+  providerNotFoundMatchIdsPreview?: string[];
+  unexpectedFailureMatchIdsPreview?: string[];
+};

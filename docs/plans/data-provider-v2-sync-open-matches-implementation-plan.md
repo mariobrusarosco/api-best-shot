@@ -388,7 +388,7 @@ Build the V2 persistence adapters required for `sync-open-matches`, including to
 #### Task 4.3 - Create V2 adapter to touch `lastCheckedAt` where the current design still requires it [x]
 
 ### Task 5 - Implement execution/report persistence adapters []
-#### Task 5.1 - Create V2-local execution-job store against the existing `data_provider_executions` table []
+#### Task 5.1 - Create V2-local execution-job store against the existing `data_provider_executions` table [x]
 #### Task 5.2 - Create V2-local report uploader for JSON operation artifacts []
 #### Task 5.3 - Ensure V2 does not import V1 `execution.ts`, `report.ts`, or `file-storage.ts` []
 

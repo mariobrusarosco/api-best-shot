@@ -7,7 +7,7 @@ Freeze the V2 implementation contract for `sync-open-matches` before writing run
 ## Tasks
 
 ### Task 1 - Define the implementation boundary []
-#### Task 1.1 - Lock the V2 file map for this workflow only []
+#### Task 1.1 - Lock the V2 file map for this workflow only [x]
 #### Task 1.2 - Define V2-local contracts for provider errors, match outcomes, summaries, and operation envelope []
 #### Task 1.3 - Decide the cutover entrypoint for V2 (`new target` vs `replace existing target`) [x]
 
@@ -23,13 +23,61 @@ Freeze the V2 implementation contract for `sync-open-matches` before writing run
 - This keeps V1 and V2 operationally separable during validation and makes rollback trivial.
 - The scheduler integration phase must preserve that separation and must not route `matches.sync_ended` back into V1 orchestration.
 
+## Locked File Map
+
+This vertical slice is allowed to create only the following V2 workflow files:
+
+```text
+src/domains/data-provider-v2/
+├── contracts/
+│   ├── errors.ts
+│   └── open-match-sync.ts
+├── transport/
+│   └── playwright/
+│       ├── runtime.ts
+│       ├── browser-session.ts
+│       └── browser-request.ts
+├── providers/
+│   └── sofascore/
+│       ├── endpoints.ts
+│       └── match-provider.ts
+├── persistence/
+│   └── open-match-sync/
+│       ├── list-due-open-matches.ts
+│       ├── update-match-from-polling.ts
+│       └── touch-match-checked-at.ts
+├── operations/
+│   └── open-match-sync/
+│       ├── execution-job-store.ts
+│       ├── report-uploader.ts
+│       ├── slack-notifier.ts
+│       └── tournament-operation-runner.ts
+└── use-cases/
+    └── open-match-sync/
+        ├── classify-match-sync-outcome.ts
+        ├── run-tournament-open-match-sync.ts
+        └── run-open-match-sync-batch.ts
+```
+
+Scheduler integration files are intentionally excluded from this map until Phase 6.
+
+This slice explicitly does **not** create:
+
+1. a new top-level `assets/` layer
+2. a new top-level `notifications/` layer
+3. a new top-level `reporting/` layer
+4. `BaseScraperV2`
+5. any V2 files for teams, standings, rounds, or tournaments yet
+
+The purpose of this lock is to keep the first slice small while still proving the V2 architecture.
+
 ## Expected Result
 
 We have one frozen implementation boundary for the first V2 workflow, including the only open integration decision: how the scheduler reaches V2.
 
 ## Next Steps
 
-After review, start Task 1.1.
+After review, start Task 1.2.
 
 # Phase 2
 

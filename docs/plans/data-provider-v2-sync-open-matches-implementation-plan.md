@@ -383,7 +383,7 @@ Build the V2 persistence adapters required for `sync-open-matches`, including to
 ## Tasks
 
 ### Task 4 - Implement match-state persistence []
-#### Task 4.1 - Create V2 adapter to list due open matches with the required fields []
+#### Task 4.1 - Create V2 adapter to list due open matches with the required fields [x]
 #### Task 4.2 - Create V2 adapter to update match state from polling []
 #### Task 4.3 - Create V2 adapter to touch `lastCheckedAt` where the current design still requires it []
 

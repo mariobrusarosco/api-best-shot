@@ -35,8 +35,10 @@ These constraints are non-negotiable for V2:
    - V2 must preserve browser-context access through Playwright.
 2. **Tournament-scoped operations must create tournament-scoped execution jobs**
    - If an operation acts on tournament `X`, it must create an execution job for tournament `X`.
-3. **Every operation must create and upload a report**
+3. **Every operation must create a report and attempt upload**
    - The report is the detailed operational artifact for debugging and auditability.
+   - The upload outcome must always be observable.
+   - Report upload failure must not silently disappear.
 4. **Every operation must send a Slack notification**
    - Success/failure notifications are part of the operation lifecycle.
 5. **V2 must be written from scratch**
@@ -181,7 +183,7 @@ Owns the required operation envelope:
 1. create execution job
 2. run use case
 3. build summary
-4. create and upload report
+4. create report and attempt upload
 5. complete/fail execution job
 6. send Slack notification
 
@@ -195,12 +197,20 @@ Every tournament-scoped data-provider V2 operation must follow this lifecycle:
 create execution job
 -> execute provider use case
 -> collect operation summary and details
--> create and upload report
+-> create report
+-> attempt report upload
 -> complete or fail execution job
 -> send Slack notification
 ```
 
 This envelope is part of the architecture, not an implementation detail.
+
+Report-upload rule:
+
+1. the operation must always attempt report upload
+2. the upload outcome must be reflected in operation metadata
+3. a failed report upload must emit an observable error signal
+4. report upload failure alone must not redefine a successful core workflow as a failed domain workflow
 
 ## Error Contract Rules
 

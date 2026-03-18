@@ -30,7 +30,8 @@ These are fixed for this workflow:
    - Match-event requests must run in browser context through Playwright.
 2. **Execution jobs are tournament-scoped**
    - A tournament’s open-match sync results must be traceable under that tournament in admin.
-3. **Every tournament operation must upload a report**
+3. **Every tournament operation must create a report and attempt upload**
+   - Upload outcome must be observable.
 4. **Every tournament operation must send Slack notifications**
 5. **V2 must not import anything from `src/domains/data-provider/**`**
 
@@ -44,7 +45,7 @@ In scope:
 4. classify outcomes with stable contracts
 5. persist match updates
 6. persist tournament-scoped execution jobs
-7. upload per-tournament reports
+7. create and attempt upload of per-tournament reports
 8. send per-tournament Slack notifications
 9. return batch-level summary for scheduler use
 
@@ -171,7 +172,8 @@ Recommended shape:
 - `TournamentOperationRunner`
   - creates execution job
   - runs tournament use case
-  - uploads report
+  - attempts report upload
+  - records report upload outcome
   - completes/fails execution job
   - sends Slack notification
 
@@ -201,7 +203,8 @@ create execution job
    -> classify outcome
    -> persist when needed
    -> collect summary/details
--> upload report
+-> build report
+-> attempt report upload
 -> complete or fail execution job
 -> send Slack notification
 ```
@@ -394,6 +397,9 @@ Therefore V2 summary must include at minimum:
   updatedMatchIdsPreview?: string[];
   providerNotFoundMatchIdsPreview?: string[];
   unexpectedFailureMatchIdsPreview?: string[];
+  reportUploadStatus?: 'uploaded' | 'failed';
+  reportAvailable?: boolean;
+  reportUploadError?: string;
 }
 ```
 
@@ -405,6 +411,13 @@ Recommended interpretation:
 
 Expected-provider outcomes such as `provider_match_not_found` count as processed, not failed.
 
+Report upload interpretation:
+
+1. `reportUploadStatus = 'uploaded'` means the report artifact reached S3 successfully
+2. `reportUploadStatus = 'failed'` means the report artifact could not be uploaded
+3. report upload failure does not by itself turn a successful domain operation into a failed domain operation
+4. `reportAvailable` controls whether Slack/admin can safely expose a report link
+
 Summary preview rule:
 
 1. execution-job summary may include small preview ID lists for fast debugging
@@ -414,7 +427,7 @@ Summary preview rule:
 
 ## Report Contract
 
-Each tournament operation must produce a detailed uploaded report.
+Each tournament operation must produce a detailed report artifact and attempt upload.
 
 The report should contain:
 
@@ -452,9 +465,15 @@ The report may also include full ID collections such as:
 
 Report detail rule:
 
-1. the uploaded report is the source of truth for full detail lists
+1. the report artifact is the source of truth for full detail lists
 2. if we need to answer "which exact matches were affected?", the report should answer that completely
 3. execution summary should expose only counts and bounded previews
+
+If report upload fails:
+
+1. the operation still keeps its in-memory report artifact
+2. Slack must clearly say that the report is unavailable
+3. an observable error signal must be emitted for debugging
 
 ## Slack Contract
 
@@ -466,11 +485,16 @@ Slack message should include:
 2. operation type
 3. final status
 4. compact counts from summary
-5. report URL
+5. report URL when available
 6. request ID
 
 Expected provider misses must not produce failure notifications by themselves.
 Only tournament operations with `unexpected_failure` outcomes should fail.
+
+If report upload fails but the domain workflow succeeds:
+
+1. Slack should still report the operation as successful
+2. Slack should replace the report link with an explicit "report unavailable" indicator
 
 ## Logging Rules
 
@@ -480,6 +504,8 @@ Logging should follow these rules:
 2. provider `404` gets recorded in the report details and summary counts
 3. unexpected provider/persistence/runtime failures are error logs with structured metadata
 4. batch-level scheduler output should summarize tournament operations, not dump raw internal objects
+5. successful report upload should emit an audit-style success signal
+6. failed report upload should emit an error signal with request/tournament/report context
 
 Observability layering rule:
 
@@ -519,7 +545,7 @@ The batch entrypoint returns a scheduler-facing summary such as:
 5. invalid matches skipped
 
 This summary is for scheduler logs only.  
-Detailed operational visibility remains in execution jobs and uploaded reports.
+Detailed operational visibility remains in execution jobs and report artifacts.
 
 ## Explicit Non-Goals
 

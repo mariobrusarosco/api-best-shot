@@ -8,7 +8,7 @@ This layer wraps a use-case in the operational flow required by the product:
 
 1. create execution job
 2. run the use-case
-3. create and upload report
+3. create report and attempt upload
 4. complete or fail the execution job
 5. send Slack notification
 
@@ -59,6 +59,17 @@ For `sync-open-matches`, files here may include:
 
 The use-case produces the workflow result.  
 The operation turns that result into an observable run.
+
+## Report Upload Rule
+
+Operations must always attempt report upload, but upload failure is an observability outcome, not automatically a domain failure.
+
+That means:
+
+- a successful domain workflow may still complete even if report upload fails
+- the missing report must be visible in summary metadata
+- Slack should say when the report is unavailable
+- an error signal should still be emitted for debugging
 
 ## Execution Job Flow
 

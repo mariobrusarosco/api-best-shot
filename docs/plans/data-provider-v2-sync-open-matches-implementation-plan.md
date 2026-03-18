@@ -140,7 +140,7 @@ Rules:
 The tournament-scoped workflow result is the source of truth for:
 
 1. execution-job summary
-2. uploaded report summary
+2. report artifact summary
 3. Slack summary
 
 The summary contract is locked to:
@@ -160,6 +160,9 @@ type TournamentOpenMatchSyncSummary = {
   updatedMatchIdsPreview?: string[];
   providerNotFoundMatchIdsPreview?: string[];
   unexpectedFailureMatchIdsPreview?: string[];
+  reportUploadStatus?: 'uploaded' | 'failed';
+  reportAvailable?: boolean;
+  reportUploadError?: string;
 };
 ```
 
@@ -176,16 +179,17 @@ Interpretation rules:
 6. preview fields are optional and bounded
 7. preview fields must contain internal `matchId` values, not full detail objects
 8. preview fields are for fast admin/debug visibility, not for full forensic detail
+9. report-upload fields describe observability outcome, not domain-work outcome
 
 Preview list rule:
 
 1. summary preview arrays must be capped at a small fixed size
 2. recommended cap for this slice: `10`
-3. anything beyond the cap belongs only in the uploaded report
+3. anything beyond the cap belongs only in the report artifact
 
 ### 4. Report Detail Contract
 
-The uploaded report must keep the same summary contract and add detail buckets.
+The report artifact must keep the same summary contract and add detail buckets.
 
 The report detail buckets are locked to:
 
@@ -230,9 +234,16 @@ type OpenMatchSyncReportData = {
 
 Full-list rule:
 
-1. full ID collections belong in the uploaded report, not in the execution-job summary
+1. full ID collections belong in the report artifact, not in the execution-job summary
 2. if the workflow needs to answer "which matches failed?" completely, the report is the source of truth
 3. execution summary may expose only bounded previews of those collections
+
+Report upload rule:
+
+1. the operation must always attempt report upload
+2. report upload success should populate `reportFileKey` and `reportFileUrl`
+3. report upload failure should leave link fields empty and populate summary/report-upload metadata
+4. report upload failure alone must not convert a successful domain workflow into a failed domain workflow
 
 ### 5. Batch Summary Contract
 
@@ -265,7 +276,8 @@ Additional context is encouraged, but it must be added at the correct layer.
 1. provider errors may carry request diagnostics only
 2. use-case details may carry match-level workflow context such as `matchId` and `roundSlug`
 3. execution summaries may carry bounded preview lists only
-4. uploaded reports may carry full detail arrays and complete per-match records
+4. report artifacts may carry full detail arrays and complete per-match records
+5. report-upload outcome belongs in execution summary / Slack context, not in provider errors
 
 This rule exists to keep:
 
@@ -290,7 +302,8 @@ The tournament operation envelope is locked to:
 ```text
 create execution job (status=in_progress)
 -> run tournament open-match sync use-case
--> create and upload tournament report
+-> create tournament report
+-> attempt report upload
 -> complete or fail execution job with summary
 -> send Slack notification
 ```
@@ -313,6 +326,8 @@ Operation status rules:
 1. tournament operation `completed` means the use-case finished without operation-level failure
 2. tournament operation `failed` means the use-case raised an unrecovered failure or the operation envelope itself failed
 3. expected per-match outcomes like `provider_match_not_found` do not fail the tournament operation by themselves
+4. report upload failure alone does not fail a successful tournament operation
+5. report upload failure must still be visible in summary metadata and notifications
 
 ### 7. Admin Compatibility Rule
 
@@ -389,7 +404,7 @@ Build the V2 persistence adapters required for `sync-open-matches`, including to
 
 ### Task 5 - Implement execution/report persistence adapters []
 #### Task 5.1 - Create V2-local execution-job store against the existing `data_provider_executions` table [x]
-#### Task 5.2 - Create V2-local report uploader for JSON operation artifacts []
+#### Task 5.2 - Create V2-local report uploader for JSON operation artifacts [x]
 #### Task 5.3 - Ensure V2 does not import V1 `execution.ts`, `report.ts`, or `file-storage.ts` []
 
 ## Dependencies
@@ -438,7 +453,7 @@ After review, start Task 6.1.
 
 ## Goal
 
-Wrap the use-case in the required operation envelope: execution job, report upload, Slack notification, and final status handling.
+Wrap the use-case in the required operation envelope: execution job, report upload attempt, Slack notification, and final status handling.
 
 ## Tasks
 
@@ -454,7 +469,7 @@ Wrap the use-case in the required operation envelope: execution job, report uplo
 
 ## Expected Result
 
-Each tournament-scoped V2 open-match sync run produces one execution job, one uploaded report, one Slack lifecycle, and one clear summary contract.
+Each tournament-scoped V2 open-match sync run produces one execution job, one report artifact with an observable upload outcome, one Slack lifecycle, and one clear summary contract.
 
 ## Next Steps
 

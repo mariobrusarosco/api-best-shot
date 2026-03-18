@@ -1,4 +1,5 @@
 export type ProviderRequestErrorKind = 'provider_request_error';
+export type ReportUploadErrorKind = 'report_upload_error';
 export type ProviderName = 'sofascore';
 export type ProviderResource = 'match_event';
 
@@ -34,5 +35,34 @@ export class ProviderRequestError extends Error {
     this.status = props.status;
     this.causeMessage = props.causeMessage;
     this.responseBodySnippet = props.responseBodySnippet;
+  }
+}
+
+export type ReportUploadErrorProps = {
+  message: string;
+  requestId: string;
+  operationType: string;
+  tournamentId: string;
+  reportFilename: string;
+  causeMessage?: string;
+};
+
+export class ReportUploadError extends Error {
+  public readonly kind: ReportUploadErrorKind;
+  public readonly requestId: string;
+  public readonly operationType: string;
+  public readonly tournamentId: string;
+  public readonly reportFilename: string;
+  public readonly causeMessage?: string;
+
+  constructor(props: ReportUploadErrorProps) {
+    super(props.message);
+    this.name = 'ReportUploadError';
+    this.kind = 'report_upload_error';
+    this.requestId = props.requestId;
+    this.operationType = props.operationType;
+    this.tournamentId = props.tournamentId;
+    this.reportFilename = props.reportFilename;
+    this.causeMessage = props.causeMessage;
   }
 }

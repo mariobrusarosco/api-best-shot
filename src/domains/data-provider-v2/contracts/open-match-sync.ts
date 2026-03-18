@@ -57,4 +57,62 @@ export type TournamentOpenMatchSyncSummary = {
   updatedMatchIdsPreview?: string[];
   providerNotFoundMatchIdsPreview?: string[];
   unexpectedFailureMatchIdsPreview?: string[];
+  reportUploadStatus?: 'uploaded' | 'failed';
+  reportAvailable?: boolean;
+  reportUploadError?: string;
+};
+
+export type OpenMatchSyncOutcome =
+  | 'updated'
+  | 'provider_status_not_ended'
+  | 'provider_response_missing_event'
+  | 'provider_match_not_found'
+  | 'unexpected_failure';
+
+export type OpenMatchSyncDetail = {
+  matchId: string;
+  externalId: string;
+  roundSlug?: string;
+  requestUrl?: string;
+  providerStatus?: string;
+  reason: OpenMatchSyncOutcome;
+  errorMessage?: string;
+  responseBodySnippet?: string;
+};
+
+export type OpenMatchSyncReportData = {
+  updatedMatchIds: string[];
+  providerNotFoundMatchIds: string[];
+  providerMissingEventMatchIds: string[];
+  unexpectedFailureMatchIds: string[];
+};
+
+export type OpenMatchSyncReport = {
+  requestId: string;
+  operationType: 'matches_sync_open_v2';
+  status: 'completed' | 'failed';
+  tournament: {
+    tournamentId: string;
+    tournamentLabel: string;
+    provider: 'sofascore';
+  };
+  startedAt: string;
+  completedAt: string;
+  summary: TournamentOpenMatchSyncSummary;
+  details: {
+    updated: OpenMatchSyncDetail[];
+    providerStatusNotEnded: OpenMatchSyncDetail[];
+    providerResponseMissingEvent: OpenMatchSyncDetail[];
+    providerMatchNotFound: OpenMatchSyncDetail[];
+    unexpectedFailures: OpenMatchSyncDetail[];
+  };
+  data: OpenMatchSyncReportData;
+};
+
+export type OpenMatchSyncReportUploadResult = {
+  reportUploadStatus: 'uploaded' | 'failed';
+  reportAvailable: boolean;
+  reportFileKey?: string;
+  reportFileUrl?: string;
+  reportUploadError?: string;
 };

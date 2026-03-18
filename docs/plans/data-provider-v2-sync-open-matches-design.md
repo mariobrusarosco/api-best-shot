@@ -81,8 +81,7 @@ Recommended file map:
 src/domains/data-provider-v2/
 ├── contracts/
 │   ├── errors.ts
-│   ├── open-match-sync.ts
-│   └── provider.ts
+│   └── open-match-sync.ts
 ├── transport/
 │   └── playwright/
 │       ├── runtime.ts
@@ -111,6 +110,13 @@ src/domains/data-provider-v2/
 │       └── classify-match-sync-outcome.ts
 └── typing.ts
 ```
+
+For the first vertical slice, the contract surface is intentionally limited to:
+
+1. `contracts/errors.ts`
+2. `contracts/open-match-sync.ts`
+
+No separate `contracts/provider.ts` file is planned for this slice.
 
 ## Runtime Architecture
 
@@ -385,6 +391,9 @@ Therefore V2 summary must include at minimum:
   providerNotFoundMatches: number;
   providerMissingEventMatches: number;
   unexpectedFailureMatches: number;
+  updatedMatchIdsPreview?: string[];
+  providerNotFoundMatchIdsPreview?: string[];
+  unexpectedFailureMatchIdsPreview?: string[];
 }
 ```
 
@@ -395,6 +404,13 @@ Recommended interpretation:
 3. `failedOperations` = matches classified as `unexpected_failure`
 
 Expected-provider outcomes such as `provider_match_not_found` count as processed, not failed.
+
+Summary preview rule:
+
+1. execution-job summary may include small preview ID lists for fast debugging
+2. preview lists must be capped
+3. recommended cap for this slice: `10`
+4. full collections must not be stored in the execution summary
 
 ## Report Contract
 
@@ -425,6 +441,20 @@ Each detail record should include when available:
 5. `providerStatus`
 6. `reason`
 7. `errorMessage`
+8. `responseBodySnippet`
+
+The report may also include full ID collections such as:
+
+1. `updatedMatchIds`
+2. `providerNotFoundMatchIds`
+3. `providerMissingEventMatchIds`
+4. `unexpectedFailureMatchIds`
+
+Report detail rule:
+
+1. the uploaded report is the source of truth for full detail lists
+2. if we need to answer "which exact matches were affected?", the report should answer that completely
+3. execution summary should expose only counts and bounded previews
 
 ## Slack Contract
 
@@ -450,6 +480,12 @@ Logging should follow these rules:
 2. provider `404` gets recorded in the report details and summary counts
 3. unexpected provider/persistence/runtime failures are error logs with structured metadata
 4. batch-level scheduler output should summarize tournament operations, not dump raw internal objects
+
+Observability layering rule:
+
+1. provider errors may carry request diagnostics such as `responseBodySnippet`
+2. use-case/report details may carry match workflow context such as `matchId` and `roundSlug`
+3. execution summaries stay compact
 
 ## Playwright Session Strategy
 

@@ -6,9 +6,9 @@ Freeze the V2 implementation contract for `sync-open-matches` before writing run
 
 ## Tasks
 
-### Task 1 - Define the implementation boundary []
+### Task 1 - Define the implementation boundary [x]
 #### Task 1.1 - Lock the V2 file map for this workflow only [x]
-#### Task 1.2 - Define V2-local contracts for provider errors, match outcomes, summaries, and operation envelope []
+#### Task 1.2 - Define V2-local contracts for provider errors, match outcomes, summaries, and operation envelope [x]
 #### Task 1.3 - Decide the cutover entrypoint for V2 (`new target` vs `replace existing target`) [x]
 
 ## Dependencies
@@ -71,13 +71,278 @@ This slice explicitly does **not** create:
 
 The purpose of this lock is to keep the first slice small while still proving the V2 architecture.
 
+## Locked V2 Contracts
+
+Task 1.2 freezes the contract surface for the first vertical slice before runtime code exists.
+
+This slice will use only two contract files:
+
+1. `src/domains/data-provider-v2/contracts/errors.ts`
+2. `src/domains/data-provider-v2/contracts/open-match-sync.ts`
+
+This slice will **not** introduce a separate `provider.ts` contract file.
+The error contract stays generic enough to be reused later, while the workflow contract stays local to `open-match-sync`.
+
+### 1. Provider Error Contract
+
+`contracts/errors.ts` will define the provider-facing request error shape for V2.
+
+For this slice, callers are allowed to depend on these fields only:
+
+```ts
+type ProviderRequestErrorContract = {
+  name: 'ProviderRequestError';
+  kind: 'provider_request_error';
+  provider: 'sofascore';
+  resource: 'match_event';
+  message: string;
+  requestUrl: string;
+  requestIdentifier: string; // matchExternalId
+  status?: number;
+  causeMessage?: string;
+  responseBodySnippet?: string;
+};
+```
+
+Rules:
+
+1. provider/request failures must cross the provider boundary as structured errors, not as raw Playwright strings
+2. `requestIdentifier` is the external provider identifier, not an internal DB ID
+3. `status === 404` must remain a provider fact only
+4. neither transport nor provider code may decide whether `404` is expected
+5. callers must not parse `message` to classify provider outcomes
+6. low-level request diagnostics such as `responseBodySnippet` are allowed only when safely available and must stay transport/provider scoped
+
+### 2. Open-Match Outcome Contract
+
+`contracts/open-match-sync.ts` will define the workflow-local outcome vocabulary.
+
+Per-match outcomes are locked to:
+
+```ts
+type OpenMatchSyncOutcome =
+  | 'updated'
+  | 'provider_status_not_ended'
+  | 'provider_response_missing_event'
+  | 'provider_match_not_found'
+  | 'unexpected_failure';
+```
+
+Rules:
+
+1. `provider_match_not_found` is the use-case classification for provider `404`
+2. `provider_match_not_found` is expected and non-fatal
+3. `provider_match_not_found` must not touch `lastCheckedAt`
+4. `unexpected_failure` is reserved for true provider, persistence, or runtime failures that the use-case does not downgrade
+
+### 3. Tournament Summary Contract
+
+The tournament-scoped workflow result is the source of truth for:
+
+1. execution-job summary
+2. uploaded report summary
+3. Slack summary
+
+The summary contract is locked to:
+
+```ts
+type TournamentOpenMatchSyncSummary = {
+  totalOperations: number;
+  successfulOperations: number;
+  failedOperations: number;
+  scannedMatches: number;
+  updatedMatches: number;
+  openMatches: number;
+  endedMatches: number;
+  providerNotFoundMatches: number;
+  providerMissingEventMatches: number;
+  unexpectedFailureMatches: number;
+  updatedMatchIdsPreview?: string[];
+  providerNotFoundMatchIdsPreview?: string[];
+  unexpectedFailureMatchIdsPreview?: string[];
+};
+```
+
+Interpretation rules:
+
+1. `totalOperations` = number of tournament matches processed by the use-case
+2. `successfulOperations` = processed matches that did not end as `unexpected_failure`
+3. `failedOperations` = processed matches classified as `unexpected_failure`
+4. `provider_match_not_found` counts as processed, not failed
+5. the current admin UI compatibility requirement is preserved by keeping:
+   - `totalOperations`
+   - `successfulOperations`
+   - `failedOperations`
+6. preview fields are optional and bounded
+7. preview fields must contain internal `matchId` values, not full detail objects
+8. preview fields are for fast admin/debug visibility, not for full forensic detail
+
+Preview list rule:
+
+1. summary preview arrays must be capped at a small fixed size
+2. recommended cap for this slice: `10`
+3. anything beyond the cap belongs only in the uploaded report
+
+### 4. Report Detail Contract
+
+The uploaded report must keep the same summary contract and add detail buckets.
+
+The report detail buckets are locked to:
+
+1. `updated`
+2. `providerStatusNotEnded`
+3. `providerResponseMissingEvent`
+4. `providerMatchNotFound`
+5. `unexpectedFailures`
+
+Each detail record may include:
+
+```ts
+type OpenMatchSyncDetail = {
+  matchId: string;
+  externalId: string;
+  roundSlug?: string;
+  requestUrl?: string;
+  providerStatus?: string;
+  reason: OpenMatchSyncOutcome;
+  errorMessage?: string;
+  responseBodySnippet?: string;
+};
+```
+
+Rules:
+
+1. expected provider misses belong in report details, not in error stacks
+2. `requestUrl` is required when the outcome came from a provider request error
+3. `roundSlug` belongs here because it is caller/use-case context, not provider context
+4. report details are allowed to carry richer debugging fields than execution summaries
+
+The report contract may also include full, unbounded ID collections such as:
+
+```ts
+type OpenMatchSyncReportData = {
+  updatedMatchIds: string[];
+  providerNotFoundMatchIds: string[];
+  providerMissingEventMatchIds: string[];
+  unexpectedFailureMatchIds: string[];
+};
+```
+
+Full-list rule:
+
+1. full ID collections belong in the uploaded report, not in the execution-job summary
+2. if the workflow needs to answer "which matches failed?" completely, the report is the source of truth
+3. execution summary may expose only bounded previews of those collections
+
+### 5. Batch Summary Contract
+
+`run-open-match-sync-batch.ts` will return a scheduler-facing batch summary.
+
+The batch summary is locked to:
+
+```ts
+type OpenMatchSyncBatchSummary = {
+  schedulerTarget: 'matches.sync_ended';
+  scannedMatches: number;
+  skippedInvalidMatches: number;
+  tournamentsQueued: number;
+  tournamentsCompleted: number;
+  tournamentsFailed: number;
+};
+```
+
+Rules:
+
+1. batch summary is scheduler-facing and compact
+2. batch summary must not dump raw per-match detail arrays
+3. due matches missing `tournamentId` count under `skippedInvalidMatches`
+4. tournament-scoped rich detail belongs in reports, not batch logs
+
+### 5.1 Observability Enrichment Rule
+
+Additional context is encouraged, but it must be added at the correct layer.
+
+1. provider errors may carry request diagnostics only
+2. use-case details may carry match-level workflow context such as `matchId` and `roundSlug`
+3. execution summaries may carry bounded preview lists only
+4. uploaded reports may carry full detail arrays and complete per-match records
+
+This rule exists to keep:
+
+1. provider contracts reusable
+2. execution rows compact
+3. reports comprehensive
+
+### 6. Operation Envelope Contract
+
+The first V2 operation will use:
+
+1. scheduler target: `matches.sync_ended`
+2. execution-job `operationType`: `matches_sync_open_v2`
+
+This distinction is intentional:
+
+1. `matches.sync_ended` is the rollout/cutover entrypoint
+2. `matches_sync_open_v2` is the more accurate description of the underlying workflow
+
+The tournament operation envelope is locked to:
+
+```text
+create execution job (status=in_progress)
+-> run tournament open-match sync use-case
+-> create and upload tournament report
+-> complete or fail execution job with summary
+-> send Slack notification
+```
+
+Execution-job persistence must write:
+
+1. `requestId`
+2. `tournamentId`
+3. `operationType`
+4. `status`
+5. `startedAt`
+6. `completedAt`
+7. `duration`
+8. `reportFileUrl`
+9. `reportFileKey`
+10. `summary`
+
+Operation status rules:
+
+1. tournament operation `completed` means the use-case finished without operation-level failure
+2. tournament operation `failed` means the use-case raised an unrecovered failure or the operation envelope itself failed
+3. expected per-match outcomes like `provider_match_not_found` do not fail the tournament operation by themselves
+
+### 7. Admin Compatibility Rule
+
+The current admin execution-jobs pages read only:
+
+1. `operationType`
+2. `status`
+3. `summary.totalOperations`
+4. `summary.successfulOperations`
+5. `summary.failedOperations`
+6. timestamps and report URL
+
+Therefore V2 is allowed to enrich execution summaries, but it must not remove or rename those three summary keys.
+
 ## Expected Result
 
-We have one frozen implementation boundary for the first V2 workflow, including the only open integration decision: how the scheduler reaches V2.
+We have one frozen implementation boundary for the first V2 workflow, including:
+
+1. the file map
+2. the scheduler cutover entrypoint
+3. the provider error contract
+4. the outcome vocabulary
+5. the tournament and batch summary contracts
+6. the tournament operation envelope
 
 ## Next Steps
 
-After review, start Task 1.2.
+Phase 1 is complete.
+
+After review, start Task 2.1.
 
 # Phase 2
 

@@ -429,8 +429,8 @@ Implement the domain workflow for `sync-open-matches` and keep business classifi
 
 ### Task 6 - Implement match outcome classification []
 #### Task 6.1 - Create the V2 outcome set for open-match sync [x]
-#### Task 6.2 - Classify provider `404` as `provider_match_not_found` in the use-case layer []
-#### Task 6.3 - Preserve the rule that `provider_match_not_found` does not touch `lastCheckedAt` []
+#### Task 6.2 - Classify provider `404` as `provider_match_not_found` in the use-case layer [x]
+#### Task 6.3 - Preserve the rule that `provider_match_not_found` does not touch `lastCheckedAt` [x]
 
 ### Task 7 - Implement the workflow []
 #### Task 7.1 - Create `run-tournament-open-match-sync.ts` []

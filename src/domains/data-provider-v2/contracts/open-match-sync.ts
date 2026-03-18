@@ -87,6 +87,21 @@ export type OpenMatchSyncReportData = {
   unexpectedFailureMatchIds: string[];
 };
 
+export type TournamentOpenMatchSyncDetails = {
+  updated: OpenMatchSyncDetail[];
+  providerStatusNotEnded: OpenMatchSyncDetail[];
+  providerResponseMissingEvent: OpenMatchSyncDetail[];
+  providerMatchNotFound: OpenMatchSyncDetail[];
+  unexpectedFailures: OpenMatchSyncDetail[];
+};
+
+export type TournamentOpenMatchSyncResult = {
+  tournamentId: string;
+  summary: TournamentOpenMatchSyncSummary;
+  details: TournamentOpenMatchSyncDetails;
+  data: OpenMatchSyncReportData;
+};
+
 export type OpenMatchSyncReport = {
   requestId: string;
   operationType: 'matches_sync_open_v2';
@@ -99,13 +114,7 @@ export type OpenMatchSyncReport = {
   startedAt: string;
   completedAt: string;
   summary: TournamentOpenMatchSyncSummary;
-  details: {
-    updated: OpenMatchSyncDetail[];
-    providerStatusNotEnded: OpenMatchSyncDetail[];
-    providerResponseMissingEvent: OpenMatchSyncDetail[];
-    providerMatchNotFound: OpenMatchSyncDetail[];
-    unexpectedFailures: OpenMatchSyncDetail[];
-  };
+  details: TournamentOpenMatchSyncDetails;
   data: OpenMatchSyncReportData;
 };
 

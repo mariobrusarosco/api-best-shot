@@ -30,3 +30,15 @@ export type OpenMatchSyncUpdatedMatch = {
   awayPenaltiesScore: number | null;
   checkedAt: Date | null;
 };
+
+export type OpenMatchCheckedAtTouchInput = {
+  matchId: string;
+  checkedAt: Date;
+};
+
+export type OpenMatchSyncCheckedMatch = {
+  id: string;
+  externalId: string;
+  status: DB_SelectMatch['status'];
+  checkedAt: Date | null;
+};

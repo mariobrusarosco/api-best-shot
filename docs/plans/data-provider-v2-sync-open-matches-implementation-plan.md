@@ -385,7 +385,7 @@ Build the V2 persistence adapters required for `sync-open-matches`, including to
 ### Task 4 - Implement match-state persistence []
 #### Task 4.1 - Create V2 adapter to list due open matches with the required fields [x]
 #### Task 4.2 - Create V2 adapter to update match state from polling [x]
-#### Task 4.3 - Create V2 adapter to touch `lastCheckedAt` where the current design still requires it []
+#### Task 4.3 - Create V2 adapter to touch `lastCheckedAt` where the current design still requires it [x]
 
 ### Task 5 - Implement execution/report persistence adapters []
 #### Task 5.1 - Create V2-local execution-job store against the existing `data_provider_executions` table []

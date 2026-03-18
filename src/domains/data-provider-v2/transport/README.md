@@ -158,3 +158,87 @@ This split also protects the boundaries we agreed on:
 - later, `browser-request.ts` will use a session
 - later, `match-provider.ts` will use the request helper
 - `use-cases/` and `operations/` do not need to know Playwright internals
+
+## Request Flow
+
+Current request flow:
+
+```text
+use-case / provider
+    |
+    v
+BrowserRequest.fetchJson(...)
+    |
+    v
+BrowserSession.getPage()
+    |
+    v
+page.evaluate(() => fetch(...))
+    |
+    +--> browser/request failure
+    |      example: fetch throws, page context issue, network failure
+    |      -> throw BrowserRequestTransportError
+    |
+    +--> HTTP response received
+           |
+           +--> response.ok === false
+           |      example: 404, 500
+           |      -> return structured response
+           |         { ok: false, status, requestUrl, responseUrl, data?, responseBodySnippet? }
+           |
+           +--> response.ok === true
+                  |
+                  +--> valid JSON
+                  |      -> return structured response
+                  |         { ok: true, status, requestUrl, responseUrl, data, responseBodySnippet? }
+                  |
+                  +--> invalid JSON
+                         -> throw BrowserRequestTransportError
+```
+
+Meaning:
+
+- transport asks: "Did the browser-context request technically work?"
+- transport asks: "What status came back?"
+- transport asks: "Was the body valid JSON?"
+
+It does **not** ask whether `404` is expected for any particular workflow.
+
+## Layered Flow
+
+Once the provider and use-case layers sit on top of transport, the full flow becomes:
+
+```text
+runTournamentOpenMatchSync (use-case)
+    |
+    v
+SofaScoreMatchProvider.fetchMatchEvent(...)
+    |
+    v
+BrowserRequest.fetchJson(...)
+    |
+    v
+page.evaluate(() => fetch(...))
+    |
+    +--> BrowserRequestTransportError
+    |      -> provider turns this into ProviderRequestError
+    |      -> use-case may classify it as unexpected_failure
+    |
+    +--> structured HTTP response with status/data
+           |
+           +--> provider layer
+           |      - "This is SofaScore match-event data"
+           |      - "Build the endpoint URL"
+           |      - "Turn transport errors/results into provider errors"
+           |
+           +--> use-case layer
+                  - "Is 404 expected here?"
+                  - "Does this become provider_match_not_found?"
+                  - "Should this affect summary/report/Slack?"
+```
+
+Short version:
+
+- `transport` = mechanics
+- `provider` = provider meaning
+- `use-case` = business meaning

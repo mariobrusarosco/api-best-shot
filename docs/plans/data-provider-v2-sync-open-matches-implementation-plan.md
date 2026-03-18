@@ -354,7 +354,7 @@ Build the V2 Playwright transport foundation and the SofaScore match provider fr
 
 ### Task 2 - Implement transport foundation []
 #### Task 2.1 - Create `transport/playwright/` runtime and session primitives [x]
-#### Task 2.2 - Create a generic browser-context JSON request primitive []
+#### Task 2.2 - Create a generic browser-context JSON request primitive [x]
 #### Task 2.3 - Preserve the hard constraint that SofaScore requests run through Playwright browser context []
 
 ### Task 3 - Implement provider foundation []

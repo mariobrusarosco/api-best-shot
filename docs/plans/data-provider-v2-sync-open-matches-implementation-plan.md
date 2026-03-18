@@ -355,12 +355,12 @@ Build the V2 Playwright transport foundation and the SofaScore match provider fr
 ### Task 2 - Implement transport foundation []
 #### Task 2.1 - Create `transport/playwright/` runtime and session primitives [x]
 #### Task 2.2 - Create a generic browser-context JSON request primitive [x]
-#### Task 2.3 - Preserve the hard constraint that SofaScore requests run through Playwright browser context []
+#### Task 2.3 - Preserve the hard constraint that SofaScore requests run through Playwright browser context [x]
 
-### Task 3 - Implement provider foundation []
-#### Task 3.1 - Create `providers/sofascore/endpoints.ts` for match event URL construction []
-#### Task 3.2 - Create `providers/sofascore/match-provider.ts` for event fetching []
-#### Task 3.3 - Normalize provider request failures into V2-local structured errors []
+### Task 3 - Implement provider foundation [x]
+#### Task 3.1 - Create `providers/sofascore/endpoints.ts` for match event URL construction [x]
+#### Task 3.2 - Create `providers/sofascore/match-provider.ts` for event fetching [x]
+#### Task 3.3 - Normalize provider request failures into V2-local structured errors [x]
 
 ## Dependencies
 

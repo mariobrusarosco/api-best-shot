@@ -125,3 +125,12 @@ export type OpenMatchSyncReportUploadResult = {
   reportFileUrl?: string;
   reportUploadError?: string;
 };
+
+export type OpenMatchSyncBatchSummary = {
+  schedulerTarget: 'matches.sync_ended';
+  scannedMatches: number;
+  skippedInvalidMatches: number;
+  tournamentsQueued: number;
+  tournamentsCompleted: number;
+  tournamentsFailed: number;
+};

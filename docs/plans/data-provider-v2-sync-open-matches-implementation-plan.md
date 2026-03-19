@@ -433,8 +433,8 @@ Implement the domain workflow for `sync-open-matches` and keep business classifi
 #### Task 6.3 - Preserve the rule that `provider_match_not_found` does not touch `lastCheckedAt` [x]
 
 ### Task 7 - Implement the workflow []
-#### Task 7.1 - Create `run-tournament-open-match-sync.ts` []
-#### Task 7.2 - Create `run-open-match-sync-batch.ts` with grouping by `tournamentId` []
+#### Task 7.1 - Create `run-tournament-open-match-sync.ts` [x]
+#### Task 7.2 - Create `run-open-match-sync-batch.ts` with grouping by `tournamentId` [x]
 #### Task 7.3 - Return compact workflow results that operations can turn into reports and execution summaries []
 
 ## Dependencies

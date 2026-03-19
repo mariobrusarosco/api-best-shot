@@ -63,6 +63,7 @@ export const runTournamentOpenMatchSync = async (input: {
 
   return {
     tournamentId: input.tournamentId,
+    status: deriveWorkflowStatus(summary),
     summary,
     details,
     data,
@@ -239,4 +240,16 @@ const createEmptyReportData = (): TournamentOpenMatchSyncResult['data'] => {
     providerMissingEventMatchIds: [],
     unexpectedFailureMatchIds: [],
   };
+};
+
+const deriveWorkflowStatus = (summary: TournamentOpenMatchSyncSummary): TournamentOpenMatchSyncResult['status'] => {
+  if (summary.failedOperations === 0) {
+    return 'completed';
+  }
+
+  if (summary.successfulOperations === 0) {
+    return 'failed';
+  }
+
+  return 'partial_failure';
 };

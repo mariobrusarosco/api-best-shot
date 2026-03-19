@@ -57,8 +57,8 @@ export const runOpenMatchSyncBatch = async (
           provider,
         });
 
-        if (result.summary.failedOperations > 0) summary.tournamentsFailed++;
-        else summary.tournamentsCompleted++;
+        if (result.status === 'completed') summary.tournamentsCompleted++;
+        else summary.tournamentsFailed++;
       } catch (error) {
         summary.tournamentsFailed++;
 

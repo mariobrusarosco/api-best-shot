@@ -94,7 +94,7 @@ export class DataProviderExecution {
 
   async update(data: {
     tournamentId?: string;
-    status?: 'completed' | 'failed' | 'in_progress';
+    status?: 'completed' | 'partial_failure' | 'failed' | 'in_progress';
     reportFileUrl?: string;
     reportFileKey?: string;
     summary?: Record<string, unknown>;
@@ -337,7 +337,7 @@ export class DataProviderExecution {
   static async completeExecution(
     requestId: string,
     data: {
-      status: 'completed' | 'failed';
+      status: 'completed' | 'partial_failure' | 'failed';
       reportFileUrl?: string;
       reportFileKey?: string;
       summary?: Record<string, unknown>;
@@ -359,7 +359,7 @@ export class DataProviderExecution {
     requestId: string,
     data: {
       tournamentId?: string;
-      status?: 'completed' | 'failed' | 'in_progress';
+      status?: 'completed' | 'partial_failure' | 'failed' | 'in_progress';
       reportFileUrl?: string;
       reportFileKey?: string;
       summary?: Record<string, unknown>;
@@ -419,7 +419,7 @@ export class DataProviderExecution {
 
     executions.forEach(execution => {
       if (execution.status === 'completed') stats.completed++;
-      else if (execution.status === 'failed') stats.failed++;
+      else if (execution.status === 'failed' || execution.status === 'partial_failure') stats.failed++;
       else if (execution.status === 'in_progress') stats.in_progress++;
 
       if (!stats.byOperationType[execution.operationType]) {
@@ -433,7 +433,7 @@ export class DataProviderExecution {
       stats.byOperationType[execution.operationType].total++;
       if (execution.status === 'completed') {
         stats.byOperationType[execution.operationType].completed++;
-      } else if (execution.status === 'failed') {
+      } else if (execution.status === 'failed' || execution.status === 'partial_failure') {
         stats.byOperationType[execution.operationType].failed++;
       }
     });

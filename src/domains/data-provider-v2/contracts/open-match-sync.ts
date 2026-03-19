@@ -87,6 +87,8 @@ export type OpenMatchSyncReportData = {
   unexpectedFailureMatchIds: string[];
 };
 
+export type OpenMatchSyncWorkflowStatus = 'completed' | 'partial_failure' | 'failed';
+
 export type TournamentOpenMatchSyncDetails = {
   updated: OpenMatchSyncDetail[];
   providerStatusNotEnded: OpenMatchSyncDetail[];
@@ -97,6 +99,7 @@ export type TournamentOpenMatchSyncDetails = {
 
 export type TournamentOpenMatchSyncResult = {
   tournamentId: string;
+  status: OpenMatchSyncWorkflowStatus;
   summary: TournamentOpenMatchSyncSummary;
   details: TournamentOpenMatchSyncDetails;
   data: OpenMatchSyncReportData;
@@ -105,7 +108,7 @@ export type TournamentOpenMatchSyncResult = {
 export type OpenMatchSyncReport = {
   requestId: string;
   operationType: 'matches_sync_open_v2';
-  status: 'completed' | 'failed';
+  status: OpenMatchSyncWorkflowStatus;
   tournament: {
     tournamentId: string;
     tournamentLabel: string;

@@ -68,6 +68,7 @@ export interface IDataProviderStandings {
 export enum DataProviderExecutionStatus {
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
+  PARTIAL_FAILURE = 'partial_failure',
   FAILED = 'failed',
 }
 
@@ -285,6 +286,7 @@ export const DATA_PROVIDER_EXECUTION_STATUS = {
   STARTED: 'started',
   FAILED: 'failed',
   COMPLETED: 'completed',
+  PARTIAL_FAILURE: 'partial_failure',
 } as const;
 
 export type IDataProviderExecutionStatus =

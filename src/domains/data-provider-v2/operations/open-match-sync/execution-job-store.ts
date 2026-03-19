@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 
 export const OPEN_MATCH_SYNC_EXECUTION_OPERATION_TYPE = 'matches_sync_open_v2' as const;
 
-export type OpenMatchSyncExecutionJobStatus = 'in_progress' | 'completed' | 'failed';
+export type OpenMatchSyncExecutionJobStatus = 'in_progress' | 'completed' | 'partial_failure' | 'failed';
 
 export type OpenMatchSyncExecutionJob = {
   id: string;
@@ -73,10 +73,39 @@ export const failOpenMatchSyncExecutionJob = async (input: {
   reportFileKey?: string;
   summary?: TournamentOpenMatchSyncSummary;
 }): Promise<OpenMatchSyncExecutionJob | null> => {
+  return updateOpenMatchSyncExecutionJobStatus({
+    ...input,
+    status: 'failed',
+  });
+};
+
+export const partialFailOpenMatchSyncExecutionJob = async (input: {
+  requestId: string;
+  completedAt?: Date;
+  duration?: number;
+  reportFileUrl?: string;
+  reportFileKey?: string;
+  summary?: TournamentOpenMatchSyncSummary;
+}): Promise<OpenMatchSyncExecutionJob | null> => {
+  return updateOpenMatchSyncExecutionJobStatus({
+    ...input,
+    status: 'partial_failure',
+  });
+};
+
+const updateOpenMatchSyncExecutionJobStatus = async (input: {
+  requestId: string;
+  status: Exclude<OpenMatchSyncExecutionJobStatus, 'in_progress'>;
+  completedAt?: Date;
+  duration?: number;
+  reportFileUrl?: string;
+  reportFileKey?: string;
+  summary?: TournamentOpenMatchSyncSummary;
+}): Promise<OpenMatchSyncExecutionJob | null> => {
   const [executionJob] = await db
     .update(T_DataProviderExecutions)
     .set({
-      status: 'failed',
+      status: input.status,
       completedAt: input.completedAt ?? new Date(),
       duration: input.duration,
       reportFileUrl: input.reportFileUrl,

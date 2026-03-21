@@ -506,7 +506,7 @@ Expose the first V2 workflow to the scheduler in a controlled way and verify the
 
 ### Task 9 - Integrate V2 entrypoint []
 #### Task 9.1 - Add the chosen V2 scheduler entrypoint/cutover path [x]
-#### Task 9.2 - Keep scheduler-facing logs compact and batch-oriented []
+#### Task 9.2 - Keep scheduler-facing logs compact and batch-oriented [x]
 #### Task 9.3 - Avoid importing V1 data-provider orchestration into the integration layer []
 
 ### Task 10 - Bounded verification []

@@ -9,6 +9,7 @@ import type {
 import { OPEN_MATCH_SYNC_EXECUTION_OPERATION_TYPE } from './execution-job-store';
 
 const webhookUrl = process.env.SLACK_JOB_EXECUTIONS_WEBHOOK || '';
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 export const notifyOpenMatchSyncExecution = async (input: {
   requestId: string;
@@ -71,6 +72,10 @@ export const buildOpenMatchSyncSlackPayload = (input: {
         {
           type: 'mrkdwn',
           text: `*Status:*\n${statusMeta.label}`,
+        },
+        {
+          type: 'mrkdwn',
+          text: `*Environment:*\n${formatEnvironmentLabel(NODE_ENV)}`,
         },
       ],
     },
@@ -171,6 +176,10 @@ const buildReportText = (reportUpload?: OpenMatchSyncReportUploadResult): string
   }
 
   return 'Report uploaded but public link unavailable';
+};
+
+const formatEnvironmentLabel = (environment: string): string => {
+  return environment.trim().replace(/[-_]+/g, ' ').toUpperCase();
 };
 
 const formatSummary = (summary: TournamentOpenMatchSyncSummary): string => {

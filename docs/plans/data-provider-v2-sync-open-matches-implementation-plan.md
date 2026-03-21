@@ -459,7 +459,7 @@ Wrap the use-case in the required operation envelope: execution job, report uplo
 
 ### Task 8 - Implement operations envelope []
 #### Task 8.1 - Create `execution-job-store.ts` behavior for start/complete/fail lifecycle []
-#### Task 8.2 - Create `slack-notifier.ts` for tournament-scoped success/failure notifications []
+#### Task 8.2 - Create `slack-notifier.ts` for tournament-scoped success/failure notifications [x]
 #### Task 8.3 - Create `tournament-operation-runner.ts` that owns the run of the use-case []
 #### Task 8.4 - Ensure the summary shape stays compatible with the current admin execution-jobs UI []
 

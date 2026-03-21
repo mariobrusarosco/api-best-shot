@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 export const OPEN_MATCH_SYNC_EXECUTION_OPERATION_TYPE = 'matches_sync_open_v2' as const;
 
 export type OpenMatchSyncExecutionJobStatus = 'in_progress' | 'completed' | 'partial_failure' | 'failed';
+export type OpenMatchSyncExecutionJobFinalStatus = Exclude<OpenMatchSyncExecutionJobStatus, 'in_progress'>;
 
 export type OpenMatchSyncExecutionJob = {
   id: string;
@@ -73,7 +74,7 @@ export const failOpenMatchSyncExecutionJob = async (input: {
   reportFileKey?: string;
   summary?: TournamentOpenMatchSyncSummary;
 }): Promise<OpenMatchSyncExecutionJob | null> => {
-  return updateOpenMatchSyncExecutionJobStatus({
+  return finalizeOpenMatchSyncExecutionJob({
     ...input,
     status: 'failed',
   });
@@ -87,31 +88,33 @@ export const partialFailOpenMatchSyncExecutionJob = async (input: {
   reportFileKey?: string;
   summary?: TournamentOpenMatchSyncSummary;
 }): Promise<OpenMatchSyncExecutionJob | null> => {
-  return updateOpenMatchSyncExecutionJobStatus({
+  return finalizeOpenMatchSyncExecutionJob({
     ...input,
     status: 'partial_failure',
   });
 };
 
-const updateOpenMatchSyncExecutionJobStatus = async (input: {
+export const finalizeOpenMatchSyncExecutionJob = async (input: {
   requestId: string;
-  status: Exclude<OpenMatchSyncExecutionJobStatus, 'in_progress'>;
+  status: OpenMatchSyncExecutionJobFinalStatus;
   completedAt?: Date;
   duration?: number;
   reportFileUrl?: string;
   reportFileKey?: string;
   summary?: TournamentOpenMatchSyncSummary;
 }): Promise<OpenMatchSyncExecutionJob | null> => {
+  const completedAt = input.completedAt ?? new Date();
+
   const [executionJob] = await db
     .update(T_DataProviderExecutions)
     .set({
       status: input.status,
-      completedAt: input.completedAt ?? new Date(),
+      completedAt,
       duration: input.duration,
       reportFileUrl: input.reportFileUrl,
       reportFileKey: input.reportFileKey,
       summary: input.summary,
-      updatedAt: new Date(),
+      updatedAt: completedAt,
     })
     .where(eq(T_DataProviderExecutions.requestId, input.requestId))
     .returning();

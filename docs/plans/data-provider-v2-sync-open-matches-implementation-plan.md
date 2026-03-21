@@ -458,10 +458,10 @@ Wrap the use-case in the required operation envelope: execution job, report uplo
 ## Tasks
 
 ### Task 8 - Implement operations envelope []
-#### Task 8.1 - Create `execution-job-store.ts` behavior for start/complete/fail lifecycle []
+#### Task 8.1 - Create `execution-job-store.ts` behavior for start/complete/fail lifecycle [x]
 #### Task 8.2 - Create `slack-notifier.ts` for tournament-scoped success/failure notifications [x]
 #### Task 8.3 - Create `tournament-operation-runner.ts` that owns the run of the use-case [x]
-#### Task 8.4 - Ensure the summary shape stays compatible with the current admin execution-jobs UI []
+#### Task 8.4 - Ensure the summary shape stays compatible with the current admin execution-jobs UI [x]
 
 ## Dependencies
 
@@ -471,9 +471,30 @@ Wrap the use-case in the required operation envelope: execution job, report uplo
 
 Each tournament-scoped V2 open-match sync run produces one execution job, one report artifact with an observable upload outcome, one Slack lifecycle, and one clear summary contract.
 
+## Verification Note
+
+Admin compatibility for the summary shape has been verified against the current admin read paths:
+
+1. `src/domains/admin/services/tournament.ts`
+2. `src/domains/admin/api/execution-jobs.ts`
+3. `src/domains/admin/api/reports.ts`
+
+Those paths currently read only:
+
+1. `operationType`
+2. `status`
+3. `summary.totalOperations`
+4. `summary.successfulOperations`
+5. `summary.failedOperations`
+6. report URL / timestamps
+
+The V2 execution summary still writes those three summary keys unchanged, so the summary contract remains compatible with the current admin execution-jobs UI/API shape.
+
 ## Next Steps
 
-After review, start Task 8.1.
+Phase 5 completed.
+
+After review, start Task 9.1.
 
 # Phase 6
 
@@ -484,7 +505,7 @@ Expose the first V2 workflow to the scheduler in a controlled way and verify the
 ## Tasks
 
 ### Task 9 - Integrate V2 entrypoint []
-#### Task 9.1 - Add the chosen V2 scheduler entrypoint/cutover path []
+#### Task 9.1 - Add the chosen V2 scheduler entrypoint/cutover path [x]
 #### Task 9.2 - Keep scheduler-facing logs compact and batch-oriented []
 #### Task 9.3 - Avoid importing V1 data-provider orchestration into the integration layer []
 
@@ -492,6 +513,9 @@ Expose the first V2 workflow to the scheduler in a controlled way and verify the
 #### Task 10.1 - Run `yarn compile` []
 #### Task 10.2 - Review execution summary, report contract, and Slack payload shape manually []
 #### Task 10.3 - Confirm the admin execution-jobs page can still read the V2 summary shape []
+#### Task 10.4 - Confirm the admin execution-jobs UI renders `partial_failure` clearly []
+#### Task 10.5 - If needed, update admin status badge/label mapping for `partial_failure` []
+#### Task 10.6 - Confirm execution job status, Slack wording, and report wording stay aligned with the 3-status model []
 
 ## Dependencies
 

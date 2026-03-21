@@ -36,6 +36,23 @@ When in doubt:
 3. keep domain meaning in `use-cases/`
 4. keep execution/report/Slack logic in `operations/`
 
+## Default Workflow Pattern
+
+For tournament-scoped V2 workflows, the default pattern is:
+
+1. batch discovers work
+2. operation runner owns the operation envelope
+3. use-case owns the domain workflow
+4. provider owns provider meaning
+5. transport owns Playwright/browser mechanics
+6. persistence owns durable reads/writes
+
+This is the stable V2 approach.
+
+- keep the ownership pattern consistent across workflows
+- do not force one generic runner too early
+- prefer workflow-specific implementations until repetition proves a shared abstraction is justified
+
 ## Goal
 
 Make each workflow easier to reason about, easier to debug, and easier to monitor without re-importing V1 architectural debt.

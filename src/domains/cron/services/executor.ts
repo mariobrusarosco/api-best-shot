@@ -3,6 +3,7 @@ import { CRON_TARGET_IDS } from '@/domains/cron/constants';
 import type { DB_SelectCronJobRun } from '@/domains/cron/schema';
 import type { ICronRunTriggerType } from '@/domains/cron/typing';
 import { SERVICES_DATA_PROVIDER_MATCH_SYNC } from '@/domains/data-provider/services/matches-sync';
+import { runOpenMatchSyncBatch } from '@/domains/data-provider-v2/use-cases/open-match-sync/run-open-match-sync-batch';
 import { RoundsDataProviderService } from '@/domains/data-provider/services/rounds';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
@@ -31,6 +32,12 @@ const matchesSyncOpenHandler: CronTargetHandler = async () => {
   // TODO(realtime): Emit a WebSocket event here so clients can refresh match/tournament views without polling.
 
   Logger.audit('[CRON_TARGET:matches.sync_open', { standingsSyncSummary, matchSyncSummary });
+};
+
+const matchesSyncEndedHandler: CronTargetHandler = async () => {
+  const batchSummary = await runOpenMatchSyncBatch();
+
+  Logger.audit('[CRON_TARGET:matches.sync_ended]', { batchSummary });
 };
 
 const tournamentsCurrentRoundSyncHandler: CronTargetHandler = async () => {
@@ -67,6 +74,7 @@ const tournamentsKnockoutRoundsSyncHandler: CronTargetHandler = async () => {
 
 const CRON_TARGET_REGISTRY: Record<string, CronTargetHandler> = {
   [CRON_TARGET_IDS.MATCHES_SYNC_OPEN]: matchesSyncOpenHandler,
+  [CRON_TARGET_IDS.MATCHES_SYNC_ENDED]: matchesSyncEndedHandler,
   [CRON_TARGET_IDS.TOURNAMENTS_CURRENT_ROUND_SYNC]: tournamentsCurrentRoundSyncHandler,
   [CRON_TARGET_IDS.TOURNAMENTS_KNOCKOUT_ROUNDS_SYNC]: tournamentsKnockoutRoundsSyncHandler,
 };

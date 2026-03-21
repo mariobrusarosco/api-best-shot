@@ -60,13 +60,15 @@ Stable rule:
 
 For browser-backed workflows, that also means:
 
-- the batch may own the shared Playwright runtime
-- the operation runner owns the tournament-scoped browser session
+- the operation runner should own the browser workspace for the tournament run
+- the default browser workspace may stay simple: one browser, one context, one page
+- shared browser reuse across multiple operations is an optimization, not a default rule
 
 Why:
 
-- the session belongs to the tournament operation lifecycle
-- execution jobs, report upload, Slack, and browser session cleanup should stay in one owner
+- the browser workspace belongs to the tournament operation lifecycle
+- execution jobs, report upload, Slack, and browser cleanup should stay in one owner
+- most V2 provider flows are browser-context requests, not authenticated multi-tab flows
 
 Important nuance:
 

@@ -53,6 +53,27 @@ This is the stable V2 approach.
 - do not force one generic runner too early
 - prefer workflow-specific implementations until repetition proves a shared abstraction is justified
 
+## Default Browser Lifetime Rule
+
+When a V2 workflow needs Playwright, the default rule is:
+
+1. one operation owns one browser workspace
+2. that workspace may stay simple: one browser, one context, one page reused through the operation
+3. cross-operation browser reuse is an optimization, not a default
+4. extra contexts or stronger isolation should be added only when a workflow proves it needs them
+
+This keeps the V2 architecture modern without forcing more browser isolation than the workflow actually requires.
+
 ## Goal
 
 Make each workflow easier to reason about, easier to debug, and easier to monitor without re-importing V1 architectural debt.
+
+## Naming
+
+- `runtime` = a live Playwright browser process
+- `session` = one browser workspace used by an operation, typically one context plus one page
+
+Plain English:
+
+- runtime = the browser we launched
+- session = the browser workspace we use for one run

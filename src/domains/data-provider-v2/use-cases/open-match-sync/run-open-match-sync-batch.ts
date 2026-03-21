@@ -6,10 +6,7 @@ import type {
 } from '@/domains/data-provider-v2/contracts/open-match-sync';
 import { runTournamentOpenMatchSyncOperation } from '@/domains/data-provider-v2/operations/open-match-sync/tournament-operation-runner';
 import { listDueOpenMatches } from '@/domains/data-provider-v2/persistence/open-match-sync/list-due-open-matches';
-import {
-  PlaywrightRuntime,
-  type PlaywrightRuntimeOptions,
-} from '@/domains/data-provider-v2/transport/playwright/runtime';
+import type { PlaywrightRuntimeOptions } from '@/domains/data-provider-v2/transport/playwright/runtime';
 
 const DEFAULT_OPEN_MATCH_SYNC_BATCH_LIMIT = 30;
 
@@ -38,34 +35,26 @@ export const runOpenMatchSyncBatch = async (
 
   if (groupedMatches.groups.size === 0) return summary;
 
-  let runtime: PlaywrightRuntime | null = null;
+  for (const [tournamentId, tournamentMatches] of groupedMatches.groups.entries()) {
+    try {
+      const result = await runTournamentOpenMatchSyncOperation({
+        tournamentId,
+        dueMatches: tournamentMatches,
+        runtimeOptions: input.runtimeOptions,
+      });
 
-  try {
-    runtime = await PlaywrightRuntime.create(input.runtimeOptions);
+      if (result.status === 'completed') summary.tournamentsCompleted++;
+      else summary.tournamentsFailed++;
+    } catch (error) {
+      summary.tournamentsFailed++;
 
-    for (const [tournamentId, tournamentMatches] of groupedMatches.groups.entries()) {
-      try {
-        const result = await runTournamentOpenMatchSyncOperation({
-          runtime,
-          tournamentId,
-          dueMatches: tournamentMatches,
-        });
-
-        if (result.status === 'completed') summary.tournamentsCompleted++;
-        else summary.tournamentsFailed++;
-      } catch (error) {
-        summary.tournamentsFailed++;
-
-        Logger.error(error as Error, {
-          domain: DOMAINS.DATA_PROVIDER,
-          component: 'use-case',
-          operation: 'runOpenMatchSyncBatch',
-          tournamentId,
-        });
-      }
+      Logger.error(error as Error, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'use-case',
+        operation: 'runOpenMatchSyncBatch',
+        tournamentId,
+      });
     }
-  } finally {
-    await runtime?.close();
   }
 
   return summary;

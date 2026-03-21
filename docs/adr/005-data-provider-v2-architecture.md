@@ -194,9 +194,12 @@ Operation-runner rule:
 1. tournament-scoped V2 workflows should follow the same operation-runner approach
 2. the operation runner owns the operation envelope and its tournament-scoped resources
 3. that includes execution jobs, report/upload flow, Slack notification, and the Playwright browser session when the workflow needs browser access
-4. the batch layer may own a shared Playwright runtime, but it should not own per-tournament sessions or per-tournament execution/report/Slack logic
-5. this rule is intended to stay stable across V2 workflows such as matches, standings, rounds, teams, and current-round sync
-6. V2 should keep this approach stable without forcing a premature generic runner abstraction
+4. the default browser-lifetime rule is one browser workspace per operation
+5. shared browser reuse across multiple operations is an optional optimization, not a default V2 rule
+6. extra Playwright contexts or stronger isolation should be introduced only when a workflow proves it needs them
+7. the batch layer should not own per-tournament browser workspaces or per-tournament execution/report/Slack logic
+8. this rule is intended to stay stable across V2 workflows such as matches, standings, rounds, teams, and current-round sync
+9. V2 should keep this approach stable without forcing a premature generic runner abstraction
 
 ## Required Operation Envelope
 

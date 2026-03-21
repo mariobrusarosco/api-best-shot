@@ -60,15 +60,19 @@ Stable rule:
 
 For browser-backed workflows, that also means:
 
-- the operation runner should own the browser workspace for the tournament run
-- the default browser workspace may stay simple: one browser, one context, one page
-- shared browser reuse across multiple operations is an optimization, not a default rule
+- browser lifetime should stay conservative and workflow-driven
+- one browser workspace per operation is a good default when operation-level isolation matters
+- one shared browser workspace for the batch is also valid when the workflow is mostly browser-context fetching and does not need browser-state isolation between tournament operations
 
 Why:
 
-- the browser workspace belongs to the tournament operation lifecycle
-- execution jobs, report upload, Slack, and browser cleanup should stay in one owner
+- execution jobs, report upload, and Slack should stay in one owner
 - most V2 provider flows are browser-context requests, not authenticated multi-tab flows
+
+Current note for `sync-open-matches`:
+
+- this workflow intentionally reuses one browser workspace for the whole batch
+- tournament operation runners still own execution/report/Slack for each tournament
 
 Important nuance:
 

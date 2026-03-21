@@ -57,12 +57,17 @@ This is the stable V2 approach.
 
 When a V2 workflow needs Playwright, the default rule is:
 
-1. one operation owns one browser workspace
-2. that workspace may stay simple: one browser, one context, one page reused through the operation
-3. cross-operation browser reuse is an optimization, not a default
+1. keep browser lifetime conservative and driven by the workflow
+2. one browser workspace per operation is a good default when operation-level isolation matters
+3. one shared browser workspace for the whole batch is also valid when the workflow is mostly browser-context fetching and does not need browser-state isolation between operations
 4. extra contexts or stronger isolation should be added only when a workflow proves it needs them
 
 This keeps the V2 architecture modern without forcing more browser isolation than the workflow actually requires.
+
+Current note for `sync-open-matches`:
+
+- this workflow intentionally uses one shared browser workspace for the whole batch
+- tournament execution jobs, reports, and Slack notifications remain tournament-scoped
 
 ## Goal
 

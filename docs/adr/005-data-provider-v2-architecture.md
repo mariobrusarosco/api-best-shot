@@ -189,6 +189,15 @@ Owns the required operation envelope:
 
 This layer is the single place that guarantees the operational contract.
 
+Operation-runner rule:
+
+1. tournament-scoped V2 workflows should follow the same operation-runner approach
+2. the operation runner owns the operation envelope and its tournament-scoped resources
+3. that includes execution jobs, report/upload flow, Slack notification, and the Playwright browser session when the workflow needs browser access
+4. the batch layer may own a shared Playwright runtime, but it should not own per-tournament sessions or per-tournament execution/report/Slack logic
+5. this rule is intended to stay stable across V2 workflows such as matches, standings, rounds, teams, and current-round sync
+6. V2 should keep this approach stable without forcing a premature generic runner abstraction
+
 ## Required Operation Envelope
 
 Every tournament-scoped data-provider V2 operation must follow this lifecycle:
@@ -204,6 +213,12 @@ create execution job
 ```
 
 This envelope is part of the architecture, not an implementation detail.
+
+Stability rule:
+
+1. future V2 workflows should reuse this approach
+2. consistency is required at the ownership level, not necessarily through one shared file or one generic framework
+3. workflow-specific runners are preferred until multiple V2 workflows prove a safe generic extraction
 
 Report-upload rule:
 

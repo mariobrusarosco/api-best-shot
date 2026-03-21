@@ -4,14 +4,12 @@ import type {
   OpenMatchSyncBatchSummary,
   OpenMatchSyncDueMatch,
 } from '@/domains/data-provider-v2/contracts/open-match-sync';
+import { runTournamentOpenMatchSyncOperation } from '@/domains/data-provider-v2/operations/open-match-sync/tournament-operation-runner';
 import { listDueOpenMatches } from '@/domains/data-provider-v2/persistence/open-match-sync/list-due-open-matches';
-import { SofaScoreMatchProvider } from '@/domains/data-provider-v2/providers/sofascore/match-provider';
-import type { BrowserSession } from '@/domains/data-provider-v2/transport/playwright/browser-session';
 import {
   PlaywrightRuntime,
   type PlaywrightRuntimeOptions,
 } from '@/domains/data-provider-v2/transport/playwright/runtime';
-import { runTournamentOpenMatchSync } from './run-tournament-open-match-sync';
 
 const DEFAULT_OPEN_MATCH_SYNC_BATCH_LIMIT = 30;
 
@@ -46,15 +44,11 @@ export const runOpenMatchSyncBatch = async (
     runtime = await PlaywrightRuntime.create(input.runtimeOptions);
 
     for (const [tournamentId, tournamentMatches] of groupedMatches.groups.entries()) {
-      let session: BrowserSession | null = null;
-
       try {
-        session = await runtime.createSession();
-        const provider = SofaScoreMatchProvider.fromSession(session);
-        const result = await runTournamentOpenMatchSync({
+        const result = await runTournamentOpenMatchSyncOperation({
+          runtime,
           tournamentId,
           dueMatches: tournamentMatches,
-          provider,
         });
 
         if (result.status === 'completed') summary.tournamentsCompleted++;
@@ -68,8 +62,6 @@ export const runOpenMatchSyncBatch = async (
           operation: 'runOpenMatchSyncBatch',
           tournamentId,
         });
-      } finally {
-        await session?.close();
       }
     }
   } finally {

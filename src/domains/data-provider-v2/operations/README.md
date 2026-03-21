@@ -48,6 +48,32 @@ Default rule:
 
 That keeps execution jobs, reports, and Slack notifications easy to understand.
 
+## Stable V2 Approach
+
+This folder is not just for `sync-open-matches`. It defines the approach V2 should follow across tournament-scoped workflows.
+
+Stable rule:
+
+- the batch layer discovers work
+- the operation runner owns the tournament run
+- the use-case owns the domain workflow
+
+For browser-backed workflows, that also means:
+
+- the batch may own the shared Playwright runtime
+- the operation runner owns the tournament-scoped browser session
+
+Why:
+
+- the session belongs to the tournament operation lifecycle
+- execution jobs, report upload, Slack, and browser session cleanup should stay in one owner
+
+Important nuance:
+
+- keep the approach stable across V2
+- do not rush into one generic runner or a smart framework
+- prefer workflow-specific runners until multiple workflows prove that a shared abstraction is truly justified
+
 ## Example
 
 For `sync-open-matches`, files here may include:

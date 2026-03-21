@@ -20,10 +20,6 @@ import {
 import { uploadOpenMatchSyncReport } from './report-uploader';
 import { runTournamentOpenMatchSync } from '@/domains/data-provider-v2/use-cases/open-match-sync/run-tournament-open-match-sync';
 import { SofaScoreMatchProvider } from '@/domains/data-provider-v2/providers/sofascore/match-provider';
-import {
-  PlaywrightRuntime,
-  type PlaywrightRuntimeOptions,
-} from '@/domains/data-provider-v2/transport/playwright/runtime';
 import type { BrowserSession } from '@/domains/data-provider-v2/transport/playwright/browser-session';
 
 export type TournamentOpenMatchSyncOperationResult = {
@@ -36,18 +32,16 @@ export type TournamentOpenMatchSyncOperationResult = {
 };
 
 export const runTournamentOpenMatchSyncOperation = async (input: {
+  session: BrowserSession;
   tournamentId: string;
   dueMatches: OpenMatchSyncDueMatch[];
   requestId?: string;
   startedAt?: Date;
-  runtimeOptions?: PlaywrightRuntimeOptions;
 }): Promise<TournamentOpenMatchSyncOperationResult> => {
   const requestId = input.requestId ?? randomUUID();
   const startedAt = input.startedAt ?? new Date();
   const tournamentLabel = await getTournamentLabel(input.tournamentId);
 
-  let runtime: PlaywrightRuntime | null = null;
-  let session: BrowserSession | null = null;
   let executionJobCreated = false;
   let tournamentResult: TournamentOpenMatchSyncResult | null = null;
   let reportUpload: OpenMatchSyncReportUploadResult | undefined;
@@ -60,9 +54,7 @@ export const runTournamentOpenMatchSyncOperation = async (input: {
     });
     executionJobCreated = true;
 
-    runtime = await PlaywrightRuntime.create(input.runtimeOptions);
-    session = await runtime.createSession();
-    const provider = SofaScoreMatchProvider.fromSession(session);
+    const provider = SofaScoreMatchProvider.fromSession(input.session);
 
     tournamentResult = await runTournamentOpenMatchSync({
       tournamentId: input.tournamentId,
@@ -155,9 +147,6 @@ export const runTournamentOpenMatchSyncOperation = async (input: {
     });
 
     throw error;
-  } finally {
-    await session?.close();
-    await runtime?.close();
   }
 };
 

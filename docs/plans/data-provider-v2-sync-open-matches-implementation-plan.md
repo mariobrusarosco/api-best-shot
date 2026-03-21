@@ -7,8 +7,11 @@ Freeze the V2 implementation contract for `sync-open-matches` before writing run
 ## Tasks
 
 ### Task 1 - Define the implementation boundary [x]
+
 #### Task 1.1 - Lock the V2 file map for this workflow only [x]
+
 #### Task 1.2 - Define V2-local contracts for provider errors, match outcomes, summaries, and operation envelope [x]
+
 #### Task 1.3 - Decide the cutover entrypoint for V2 (`new target` vs `replace existing target`) [x]
 
 ## Dependencies
@@ -368,13 +371,19 @@ Build the V2 Playwright transport foundation and the SofaScore match provider fr
 ## Tasks
 
 ### Task 2 - Implement transport foundation []
+
 #### Task 2.1 - Create `transport/playwright/` runtime and session primitives [x]
+
 #### Task 2.2 - Create a generic browser-context JSON request primitive [x]
+
 #### Task 2.3 - Preserve the hard constraint that SofaScore requests run through Playwright browser context [x]
 
 ### Task 3 - Implement provider foundation [x]
+
 #### Task 3.1 - Create `providers/sofascore/endpoints.ts` for match event URL construction [x]
+
 #### Task 3.2 - Create `providers/sofascore/match-provider.ts` for event fetching [x]
+
 #### Task 3.3 - Normalize provider request failures into V2-local structured errors [x]
 
 ## Dependencies
@@ -398,13 +407,19 @@ Build the V2 persistence adapters required for `sync-open-matches`, including to
 ## Tasks
 
 ### Task 4 - Implement match-state persistence []
+
 #### Task 4.1 - Create V2 adapter to list due open matches with the required fields [x]
+
 #### Task 4.2 - Create V2 adapter to update match state from polling [x]
+
 #### Task 4.3 - Create V2 adapter to touch `lastCheckedAt` where the current design still requires it [x]
 
 ### Task 5 - Implement execution/report persistence adapters []
+
 #### Task 5.1 - Create V2-local execution-job store against the existing `data_provider_executions` table [x]
+
 #### Task 5.2 - Create V2-local report uploader for JSON operation artifacts [x]
+
 #### Task 5.3 - Ensure V2 does not import V1 `execution.ts`, `report.ts`, or `file-storage.ts` []
 
 ## Dependencies
@@ -428,13 +443,19 @@ Implement the domain workflow for `sync-open-matches` and keep business classifi
 ## Tasks
 
 ### Task 6 - Implement match outcome classification []
+
 #### Task 6.1 - Create the V2 outcome set for open-match sync [x]
+
 #### Task 6.2 - Classify provider `404` as `provider_match_not_found` in the use-case layer [x]
+
 #### Task 6.3 - Preserve the rule that `provider_match_not_found` does not touch `lastCheckedAt` [x]
 
 ### Task 7 - Implement the workflow []
+
 #### Task 7.1 - Create `run-tournament-open-match-sync.ts` [x]
+
 #### Task 7.2 - Create `run-open-match-sync-batch.ts` with grouping by `tournamentId` [x]
+
 #### Task 7.3 - Return compact workflow results that operations can turn into reports and execution summaries [x]
 
 ## Dependencies
@@ -458,9 +479,13 @@ Wrap the use-case in the required operation envelope: execution job, report uplo
 ## Tasks
 
 ### Task 8 - Implement operations envelope []
+
 #### Task 8.1 - Create `execution-job-store.ts` behavior for start/complete/fail lifecycle [x]
+
 #### Task 8.2 - Create `slack-notifier.ts` for tournament-scoped success/failure notifications [x]
+
 #### Task 8.3 - Create `tournament-operation-runner.ts` that owns the run of the use-case [x]
+
 #### Task 8.4 - Ensure the summary shape stays compatible with the current admin execution-jobs UI [x]
 
 ## Dependencies
@@ -504,17 +529,26 @@ Expose the first V2 workflow to the scheduler in a controlled way and verify the
 
 ## Tasks
 
-### Task 9 - Integrate V2 entrypoint []
+### Task 9 - Integrate V2 entrypoint [x]
+
 #### Task 9.1 - Add the chosen V2 scheduler entrypoint/cutover path [x]
+
 #### Task 9.2 - Keep scheduler-facing logs compact and batch-oriented [x]
+
 #### Task 9.3 - Avoid importing V1 data-provider orchestration into the integration layer [x]
 
 ### Task 10 - Bounded verification []
-#### Task 10.1 - Run `yarn compile` []
+
+#### Task 10.1 - Run `yarn compile` [x]
+
 #### Task 10.2 - Review execution summary, report contract, and Slack payload shape manually []
+
 #### Task 10.3 - Confirm the admin execution-jobs page can still read the V2 summary shape []
+
 #### Task 10.4 - Confirm the admin execution-jobs UI renders `partial_failure` clearly []
+
 #### Task 10.5 - If needed, update admin status badge/label mapping for `partial_failure` []
+
 #### Task 10.6 - Confirm execution job status, Slack wording, and report wording stay aligned with the 3-status model []
 
 ## Dependencies

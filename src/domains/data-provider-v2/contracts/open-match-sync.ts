@@ -50,6 +50,7 @@ export type TournamentOpenMatchSyncSummary = {
   scannedMatches: number;
   updatedMatches: number;
   openMatches: number;
+  postponedMatches: number;
   endedMatches: number;
   providerNotFoundMatches: number;
   providerMissingEventMatches: number;
@@ -65,6 +66,7 @@ export type TournamentOpenMatchSyncSummary = {
 export type OpenMatchSyncOutcome =
   | 'updated'
   | 'provider_status_not_ended'
+  | 'provider_status_postponed'
   | 'provider_response_missing_event'
   | 'provider_match_not_found'
   | 'unexpected_failure';
@@ -82,6 +84,7 @@ export type OpenMatchSyncDetail = {
 
 export type OpenMatchSyncReportData = {
   updatedMatchIds: string[];
+  postponedMatchIds: string[];
   providerNotFoundMatchIds: string[];
   providerMissingEventMatchIds: string[];
   unexpectedFailureMatchIds: string[];
@@ -92,6 +95,7 @@ export type OpenMatchSyncWorkflowStatus = 'completed' | 'partial_failure' | 'fai
 export type TournamentOpenMatchSyncDetails = {
   updated: OpenMatchSyncDetail[];
   providerStatusNotEnded: OpenMatchSyncDetail[];
+  providerStatusPostponed: OpenMatchSyncDetail[];
   providerResponseMissingEvent: OpenMatchSyncDetail[];
   providerMatchNotFound: OpenMatchSyncDetail[];
   unexpectedFailures: OpenMatchSyncDetail[];

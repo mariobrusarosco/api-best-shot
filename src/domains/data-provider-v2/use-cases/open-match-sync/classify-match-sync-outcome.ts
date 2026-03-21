@@ -22,6 +22,11 @@ export type OpenMatchSyncClassification =
       providerStatus: MappedMatchStatus;
     }
   | {
+      outcome: Extract<OpenMatchSyncOutcome, 'provider_status_postponed'>;
+      providerStatus: MappedMatchStatus;
+      pollingUpdate: Omit<OpenMatchPollingUpdateInput, 'matchId'>;
+    }
+  | {
       outcome: Extract<OpenMatchSyncOutcome, 'provider_response_missing_event'>;
     }
   | {
@@ -60,6 +65,21 @@ export const classifyMatchSyncOutcome = (
   }
 
   const providerStatus = mapSofaScoreStatusTypeToMatchStatus(event.status?.type);
+
+  if (providerStatus === 'postponed') {
+    return {
+      outcome: 'provider_status_postponed',
+      providerStatus,
+      pollingUpdate: {
+        status: providerStatus,
+        homeScore: extractSofaScoreMainScore(event.homeScore),
+        awayScore: extractSofaScoreMainScore(event.awayScore),
+        homePenaltiesScore: extractSofaScorePenaltiesScore(event.homeScore),
+        awayPenaltiesScore: extractSofaScorePenaltiesScore(event.awayScore),
+        checkedAt: input.checkedAt,
+      },
+    };
+  }
 
   if (providerStatus !== 'ended') {
     return {
@@ -113,7 +133,7 @@ const mapSofaScoreStatusTypeToMatchStatus = (statusType: SofaScoreStatusType): M
   }
 
   if (statusType === 'postponed') {
-    return 'not-defined';
+    return 'postponed';
   }
 
   return 'open';

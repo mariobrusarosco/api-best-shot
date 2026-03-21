@@ -8,7 +8,7 @@ import type {
 } from '@/domains/data-provider-v2/contracts/open-match-sync';
 import { OPEN_MATCH_SYNC_EXECUTION_OPERATION_TYPE } from './execution-job-store';
 
-const OPEN_MATCH_SYNC_WEBHOOK_URL = process.env.SLACK_JOB_EXECUTIONS_WEBHOOK || '';
+const webhookUrl = process.env.SLACK_JOB_EXECUTIONS_WEBHOOK || '';
 
 export const notifyOpenMatchSyncExecution = async (input: {
   requestId: string;
@@ -22,7 +22,7 @@ export const notifyOpenMatchSyncExecution = async (input: {
   const payload = buildOpenMatchSyncSlackPayload(input);
 
   try {
-    await slackService.sendNotification(OPEN_MATCH_SYNC_WEBHOOK_URL, payload);
+    await slackService.sendNotification(webhookUrl, payload);
   } catch (error) {
     Logger.error(error as Error, {
       domain: DOMAINS.DATA_PROVIDER,
@@ -184,6 +184,10 @@ const formatSummary = (summary: TournamentOpenMatchSyncSummary): string => {
 
   if (summary.updatedMatches > 0) {
     parts.push(`${summary.updatedMatches} updated`);
+  }
+
+  if (summary.postponedMatches > 0) {
+    parts.push(`${summary.postponedMatches} postponed`);
   }
 
   if (summary.providerNotFoundMatches > 0) {

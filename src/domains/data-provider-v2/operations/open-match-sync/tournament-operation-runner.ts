@@ -204,6 +204,7 @@ const createOperationFailureSummary = (input: {
     scannedMatches: input.dueMatchCount,
     updatedMatches: 0,
     openMatches: 0,
+    postponedMatches: 0,
     endedMatches: 0,
     providerNotFoundMatches: 0,
     providerMissingEventMatches: 0,

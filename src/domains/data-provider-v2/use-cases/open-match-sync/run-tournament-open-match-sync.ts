@@ -129,6 +129,37 @@ const applyClassification = async (input: {
       return;
     }
 
+    case 'provider_status_postponed': {
+      const updatedMatch = await updateMatchFromPolling({
+        matchId: input.match.id,
+        ...input.classification.pollingUpdate,
+      });
+
+      if (!updatedMatch) {
+        await recordUnexpectedFailure({
+          match: input.match,
+          checkedAt: input.checkedAt,
+          details: input.details,
+          data: input.data,
+          summary: input.summary,
+          errorMessage: `Match "${input.match.id}" could not be updated as postponed`,
+        });
+        return;
+      }
+
+      input.summary.successfulOperations++;
+      input.summary.postponedMatches++;
+      input.data.postponedMatchIds.push(updatedMatch.id);
+      input.details.providerStatusPostponed.push({
+        matchId: updatedMatch.id,
+        externalId: updatedMatch.externalId,
+        roundSlug: input.match.roundSlug,
+        providerStatus: input.classification.providerStatus,
+        reason: 'provider_status_postponed',
+      });
+      return;
+    }
+
     case 'provider_response_missing_event': {
       await touchMatchCheckedAt({
         matchId: input.match.id,
@@ -216,6 +247,7 @@ const createEmptySummary = (): TournamentOpenMatchSyncSummary => {
     scannedMatches: 0,
     updatedMatches: 0,
     openMatches: 0,
+    postponedMatches: 0,
     endedMatches: 0,
     providerNotFoundMatches: 0,
     providerMissingEventMatches: 0,
@@ -227,6 +259,7 @@ const createEmptyDetails = (): TournamentOpenMatchSyncDetails => {
   return {
     updated: [],
     providerStatusNotEnded: [],
+    providerStatusPostponed: [],
     providerResponseMissingEvent: [],
     providerMatchNotFound: [],
     unexpectedFailures: [],
@@ -236,6 +269,7 @@ const createEmptyDetails = (): TournamentOpenMatchSyncDetails => {
 const createEmptyReportData = (): TournamentOpenMatchSyncResult['data'] => {
   return {
     updatedMatchIds: [],
+    postponedMatchIds: [],
     providerNotFoundMatchIds: [],
     providerMissingEventMatchIds: [],
     unexpectedFailureMatchIds: [],

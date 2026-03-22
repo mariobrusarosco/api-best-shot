@@ -28,7 +28,7 @@ If the question is:
 
 - "How do we execute this in Playwright?"
 - "How do we manage sessions safely?"
-- "How do we run this request in browser context?"
+- "How do we navigate and read provider JSON safely?"
 
 it probably belongs in `transport/`.
 
@@ -68,10 +68,10 @@ A good mental model is:
 Why that matters:
 
 - browser launch is expensive
-- we do not want to launch a brand new browser per match
-- for a scheduler batch, we can launch once and reuse it
+- some workflows are naturally batch-oriented
+- shared runtime ownership can be valid when the workflow benefits from reuse
 
-So `runtime` is the batch-level resource.
+So `runtime` is a workflow-owned browser resource whose lifetime depends on the workflow shape.
 
 ### Why We Need Session
 
@@ -85,11 +85,11 @@ So `runtime` is the batch-level resource.
 
 Why that matters:
 
-- contexts isolate cookies, storage, page state, and request side effects
-- if tournament A dirties page/session state, tournament B should not inherit it
-- operations are tournament-scoped, so one tournament should get one isolated browser session
+- sessions isolate cookies, storage, page state, and request side effects
+- they are the shared Playwright workspace abstraction used by providers
+- a workflow may choose one session per operation or one shared session for a batch, depending on the workflow
 
-So `session` is the operation-level resource.
+So `session` is the reusable browser workspace abstraction.
 
 ### Why Not Just One Class
 
@@ -100,15 +100,27 @@ We could have shoved both into one object, but then we would mix two lifecycles:
 
 Those are different.
 
-We want this shape:
+We keep both because browser lifetime and browser workspace lifetime are separate decisions.
+
+Two valid shapes now exist in V2:
 
 ```text
-one scheduler batch
--> create one runtime
--> for each tournament operation:
-   -> create one session
-   -> do provider work
-   -> close session
+single operation
+-> create runtime
+-> create session
+-> do provider work
+-> close session
+-> close runtime
+```
+
+and
+
+```text
+batch
+-> create runtime
+-> create session
+-> run many tournament operations through that shared session
+-> close session
 -> close runtime
 ```
 
@@ -116,38 +128,29 @@ That is why both exist.
 
 ### Concrete Example
 
-Imagine the batch finds due matches for 3 tournaments:
-
-- tournament A
-- tournament B
-- tournament C
-
-What we want:
+`open-match-sync` and `standings-update` currently use:
 
 ```text
 runtime = launch browser once
+session = create one shared workspace
 
-session A = isolated context/page
--> process tournament A
--> close session A
+process tournament A
+process tournament B
+process tournament C
 
-session B = isolated context/page
--> process tournament B
--> close session B
-
-session C = isolated context/page
--> process tournament C
--> close session C
-
+close session
 close runtime
 ```
 
-Benefits:
+`standings-create` currently uses:
 
-- only one browser launch
-- each tournament still gets isolation
-- easier cleanup
-- easier future concurrency if we ever want it
+```text
+runtime = launch browser once
+session = create one workspace
+process one tournament
+close session
+close runtime
+```
 
 ### Architectural Reason
 
@@ -161,7 +164,7 @@ This split also protects the boundaries we agreed on:
 
 ## Request Flow
 
-Current request flow:
+Current shared request flow:
 
 ```text
 use-case / provider
@@ -173,24 +176,25 @@ BrowserRequest.fetchJson(...)
 BrowserSession.getPage()
     |
     v
-page.evaluate(() => fetch(...))
+page.goto(url)
     |
-    +--> browser/request failure
-    |      example: fetch throws, page context issue, network failure
+    +--> navigation failure
     |      -> throw BrowserRequestTransportError
+    |
+    +--> 403 challenge response
+    |      -> wait briefly
+    |      -> navigate once more
     |
     +--> HTTP response received
            |
            +--> response.ok === false
-           |      example: 404, 500
            |      -> return structured response
            |         { ok: false, status, requestUrl, responseUrl, data?, responseBodySnippet? }
            |
            +--> response.ok === true
                   |
-                  +--> valid JSON
+                  +--> valid JSON in <pre> or body
                   |      -> return structured response
-                  |         { ok: true, status, requestUrl, responseUrl, data, responseBodySnippet? }
                   |
                   +--> invalid JSON
                          -> throw BrowserRequestTransportError
@@ -198,9 +202,9 @@ page.evaluate(() => fetch(...))
 
 Meaning:
 
-- transport asks: "Did the browser-context request technically work?"
+- transport asks: "Did browser navigation technically work?"
 - transport asks: "What status came back?"
-- transport asks: "Was the body valid JSON?"
+- transport asks: "Did the page contain valid JSON?"
 
 It does **not** ask whether `404` is expected for any particular workflow.
 
@@ -218,7 +222,7 @@ SofaScoreMatchProvider.fetchMatchEvent(...)
 BrowserRequest.fetchJson(...)
     |
     v
-page.evaluate(() => fetch(...))
+page.goto(url)
     |
     +--> BrowserRequestTransportError
     |      -> provider turns this into ProviderRequestError

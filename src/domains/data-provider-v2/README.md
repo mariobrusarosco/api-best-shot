@@ -18,6 +18,13 @@ It exists to replace the V1 subsystem with a clearer internal architecture:
 2. Keep Playwright/browser-context access for SofaScore requests
 3. Keep execution jobs, reports, and Slack notifications as first-class operational requirements
 4. Keep ownership boundaries explicit across layers
+5. Do not create a new transport path just because a workflow is new
+
+## Proven Reference
+
+Before starting a new V2 workflow, read:
+
+- [PROVEN_PATTERNS.md](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider-v2/PROVEN_PATTERNS.md)
 
 ## Layer Summary
 
@@ -64,6 +71,13 @@ When a V2 workflow needs Playwright, the default rule is:
 
 This keeps the V2 architecture modern without forcing more browser isolation than the workflow actually requires.
 
+Current proven variants:
+
+1. single-operation browser workspace
+   - example: `standings-create`
+2. batch-scoped browser workspace with tournament-scoped execution/report/Slack
+   - examples: `open-match-sync`, `standings-update`
+
 ## Goal
 
 Make each workflow easier to reason about, easier to debug, and easier to monitor without re-importing V1 architectural debt.
@@ -77,65 +91,3 @@ Plain English:
 
 - runtime = the browser we launched
 - session = the browser workspace we use for one run
-
-Current wrong flow
-runOpenMatchSyncBatch
-|
-+-> tournament A
-| |
-| +-> create runtime/browser
-| +-> create session (context + page)
-| +-> run tournament operation
-| +-> close session
-| +-> close runtime/browser
-|
-+-> tournament B
-|
-+-> create runtime/browser
-+-> create session (context + page)
-+-> run tournament operation
-+-> close session
-+-> close runtime/browser
-That means:
-
-many tournaments
-= many Chromium launches
-= many Chromium shutdowns
-Target flow
-runOpenMatchSyncBatch
-|
-+-> create runtime/browser ONCE
-+-> create session (context + page) ONCE
-|
-+-> tournament A
-| |
-| +-> create execution job
-| +-> run tournament operation using shared session
-| +-> upload report
-| +-> finalize execution
-| +-> send Slack
-|
-+-> tournament B
-| |
-| +-> create execution job
-| +-> run tournament operation using same shared session
-| +-> upload report
-| +-> finalize execution
-| +-> send Slack
-|
-+-> tournament C
-| |
-| +-> same pattern
-|
-+-> close session ONCE
-+-> close runtime/browser ONCE
-Meaning
-browser lifetime
-= batch-scoped
-
-execution/report/slack lifetime
-= tournament-scoped
-In one sentence
-One browser workspace does the whole batch,
-while each tournament still gets its own operational envelope.
-That is the flow I would implement next.

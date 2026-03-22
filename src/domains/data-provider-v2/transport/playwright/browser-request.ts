@@ -85,6 +85,18 @@ export class BrowserRequest {
       }
     >(
       async request => {
+        const safeParseJson = <TData>(value: string): TData | null => {
+          if (!value) {
+            return null;
+          }
+
+          try {
+            return JSON.parse(value) as TData;
+          } catch {
+            return null;
+          }
+        };
+
         try {
           const response = await fetch(request.url, {
             method: request.method,
@@ -213,16 +225,4 @@ const serializeRequestBody = (body: unknown): string | undefined => {
   }
 
   return JSON.stringify(body);
-};
-
-const safeParseJson = <TData>(value: string): TData | null => {
-  if (!value) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(value) as TData;
-  } catch {
-    return null;
-  }
 };

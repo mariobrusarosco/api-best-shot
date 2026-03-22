@@ -31,9 +31,9 @@ Rules:
 Stable ownership for this slice:
 
 1. `transport/`
-   - Playwright browser lifecycle
-   - generic page navigation
-   - generic page JSON extraction
+   - reuse the existing Playwright transport path already implemented for V2
+   - browser/runtime/session mechanics
+   - generic navigation / JSON extraction primitives that are already part of the shared transport
 2. `providers/sofascore/`
    - standings endpoint construction
    - provider-specific standings response access
@@ -44,7 +44,7 @@ Stable ownership for this slice:
    - mapping provider standings to DB insert rows
    - classification of missing teams / empty standings / provider outcomes
 4. `persistence/standings/`
-   - list teams by external ID
+   - list teams by provider + external ID
    - insert standings rows
 5. `operations/standings-create/`
    - execution job lifecycle
@@ -96,6 +96,16 @@ That means:
 
 This preserves the stable V2 approach without forcing a premature generic framework.
 
+### Transport split rule
+
+V2 transports must be split by **technical access mechanism**, not by workflow.
+
+That means:
+
+1. a new use-case does **not** automatically justify a new transport path
+2. standings must reuse the existing Playwright transport path unless a real mechanism change is proven
+3. this slice must not create a standings-only transport helper just to make the standings workflow feel cleaner
+
 ## Locked File Map
 
 This slice is allowed to create only the following V2 workflow files:
@@ -104,9 +114,6 @@ This slice is allowed to create only the following V2 workflow files:
 src/domains/data-provider-v2/
 ├── contracts/
 │   └── standings.ts
-├── transport/
-│   └── playwright/
-│       └── browser-page-json.ts
 ├── providers/
 │   └── sofascore/
 │       └── standings-provider.ts
@@ -261,29 +268,18 @@ This report should be the forensic artifact for:
 
 ## Goal
 
-Implement the transport/provider path for standings page JSON extraction without changing the mechanism V1 already proved.
+Implement the standings provider on top of the existing V2 Playwright transport path.
 
 ## Tasks
 
-### Task 2.1 - Add a generic browser page JSON helper [ ]
+### Task 2.1 - Reuse the existing Playwright transport path [ ]
 
-Create:
+Rules:
 
-```text
-src/domains/data-provider-v2/transport/playwright/browser-page-json.ts
-```
-
-This helper should own only:
-
-1. `page.goto(url)`
-2. extracting JSON from `<pre>` or `document.body`
-3. transport-level navigation/content errors
-
-It must not own:
-
-1. SofaScore endpoint knowledge
-2. standings semantics
-3. tournament-mode decisions
+1. this slice must reuse the existing shared Playwright transport already used by V2
+2. do **not** create a standings-only transport helper
+3. do **not** fork transport by workflow
+4. if the existing transport needs a truly generic improvement, that improvement must stay shared and mechanism-oriented
 
 ### Task 2.2 - Add the SofaScore standings provider [ ]
 
@@ -296,14 +292,14 @@ src/domains/data-provider-v2/providers/sofascore/standings-provider.ts
 This provider should:
 
 1. build `${baseUrl}/standings/total`
-2. call the generic browser page JSON helper
+2. call the existing shared Playwright transport
 3. normalize provider request failures into the V2 provider error contract
 4. return the raw standings payload needed by the use-case
 
 Important rule:
 
-1. do **not** switch this slice to a different transport mechanism just because matches use browser-context `fetch(...)`
-2. standings should preserve the proven V1 mechanism unless we explicitly redesign it later
+1. do **not** create a parallel transport path just because standings is a different workflow
+2. standings should preserve the proven V1 mechanism unless we explicitly redesign the shared transport later
 
 # Phase 3
 
@@ -324,7 +320,7 @@ src/domains/data-provider-v2/persistence/standings/insert-tournament-standings.t
 
 Responsibilities:
 
-1. list teams by provider external ID
+1. list teams by provider + external ID
 2. insert standings rows
 
 Rules:
@@ -351,7 +347,8 @@ Rules:
 
 1. teams remain a hard prerequisite for this create workflow
 2. this slice does **not** create teams automatically
-3. mapping should preserve:
+3. team resolution must use `provider + externalId`, not `externalId` alone
+4. mapping should preserve:
    - `groupName`
    - `order`
    - `shortName`

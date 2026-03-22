@@ -1,3 +1,5 @@
+import type { StandingsCreateTournamentContext } from '@/domains/data-provider-v2/contracts/standings';
+import { runTournamentStandingsCreateOperation } from '@/domains/data-provider-v2/operations/standings-create/tournament-operation-runner';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
@@ -10,10 +12,8 @@ import { Request, Response } from 'express';
 class AdminStandingsService {
   static async createStandings(req: Request, res: Response) {
     const requestId = randomUUID();
-    let scraper: BaseScraper | null = null;
 
     try {
-      // Get tournament ID from URL params
       const tournamentId = req.params.tournamentId;
       if (!tournamentId) {
         return res.status(400).json({
@@ -22,8 +22,7 @@ class AdminStandingsService {
         });
       }
 
-      // Get tournament data to build payload
-      const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
+      const tournament = await SERVICES_TOURNAMENT.getTournamentDetails(tournamentId);
       if (!tournament) {
         return res.status(404).json({
           success: false,
@@ -31,22 +30,38 @@ class AdminStandingsService {
         });
       }
 
-      scraper = await BaseScraper.createInstance();
-      const dataProviderService = new StandingsDataProviderService(scraper, requestId);
+      if (tournament.provider !== 'sofascore') {
+        return res.status(422).json({
+          success: false,
+          error: `V2 standings create only supports provider "${'sofascore'}"`,
+        });
+      }
 
-      // Build proper payload for standings service
-      const payload = {
+      const tournamentContext: StandingsCreateTournamentContext = {
         tournamentId: tournamentId,
         baseUrl: tournament.baseUrl,
-        label: tournament.label,
-        provider: tournament.provider,
+        tournamentLabel: tournament.label,
+        provider: 'sofascore',
+        mode: tournament.mode,
+        standingsMode: tournament.standingsMode,
       };
 
-      const standings = await dataProviderService.init(payload);
+      const operation = await runTournamentStandingsCreateOperation({
+        requestId,
+        tournament: tournamentContext,
+      });
+
+      if (operation.status !== 'completed') {
+        return res.status(422).json({
+          success: false,
+          message: 'Standings create operation failed',
+          data: { standings: operation.result },
+        });
+      }
 
       return res.status(201).json({
         success: true,
-        data: { standings },
+        data: { standings: operation.result },
         message: `Standings created successfully`,
       });
     } catch (error) {
@@ -59,14 +74,6 @@ class AdminStandingsService {
         adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
-    } finally {
-      if (scraper) {
-        await scraper.close();
-        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
-          requestId,
-          source: 'admin_service',
-        });
-      }
     }
   }
 

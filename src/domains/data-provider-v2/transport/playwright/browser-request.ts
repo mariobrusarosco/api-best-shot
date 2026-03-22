@@ -1,4 +1,5 @@
-import { BrowserSession } from './browser-session';
+import type { Response } from 'playwright';
+import type { BrowserSession } from './browser-session';
 
 const RESPONSE_BODY_SNIPPET_MAX_LENGTH = 1_000;
 const CHALLENGE_RETRY_DELAY_MS = 500;
@@ -48,7 +49,7 @@ export class BrowserRequest {
     const page = this.session.getPage();
 
     for (let attempt = 0; attempt < 2; attempt++) {
-      let response;
+      let response: Response | null = null;
 
       try {
         response = await page.goto(url, {

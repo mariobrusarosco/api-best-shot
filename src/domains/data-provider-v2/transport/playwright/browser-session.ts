@@ -20,12 +20,10 @@ const DEFAULT_NAVIGATION_TIMEOUT_MS = 30_000;
 export class BrowserSession {
   private context: BrowserContext | null;
   private page: Page | null;
-  private readonly markers: Set<string>;
 
   private constructor(props: { context: BrowserContext; page: Page }) {
     this.context = props.context;
     this.page = props.page;
-    this.markers = new Set();
   }
 
   public static async create(
@@ -58,14 +56,6 @@ export class BrowserSession {
     if (!this.page) throw new Error('Browser session page is not available');
 
     return this.page;
-  }
-
-  public hasMarker(marker: string): boolean {
-    return this.markers.has(marker);
-  }
-
-  public mark(marker: string): void {
-    this.markers.add(marker);
   }
 
   public async close(): Promise<void> {

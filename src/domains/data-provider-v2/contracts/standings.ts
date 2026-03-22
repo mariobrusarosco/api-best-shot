@@ -10,6 +10,8 @@ export type StandingsCreateTournamentContext = {
   standingsMode: DB_SelectTournament['standingsMode'];
 };
 
+export type StandingsUpdateTournamentContext = StandingsCreateTournamentContext;
+
 export type SofaScoreStandingsRow = {
   team: {
     id: number;
@@ -123,3 +125,90 @@ export type StandingsCreateReportUploadResult = {
   reportFileUrl?: string;
   reportUploadError?: string;
 };
+
+export type StandingsUpdateOutcome =
+  | 'updated'
+  | 'tournament_mode_not_supported'
+  | 'provider_response_missing_standings'
+  | 'provider_team_not_found_in_db'
+  | 'unexpected_failure';
+
+export type TournamentStandingsUpdateSummary = {
+  totalOperations: number;
+  successfulOperations: number;
+  failedOperations: number;
+  fetchedGroups: number;
+  fetchedRows: number;
+  updatedRows: number;
+  missingTeamsCount: number;
+  providerMissingStandingsCount: number;
+  updatedTeamIdsPreview?: string[];
+  missingTeamExternalIdsPreview?: string[];
+  reportUploadStatus?: 'uploaded' | 'failed';
+  reportAvailable?: boolean;
+  reportUploadError?: string;
+};
+
+export type StandingsUpdateDetail = {
+  teamId?: string;
+  teamExternalId?: string;
+  teamName?: string;
+  shortName?: string;
+  groupName?: string;
+  order?: number;
+  requestUrl?: string;
+  reason: StandingsUpdateOutcome;
+  errorMessage?: string;
+  causeMessage?: string;
+  responseBodySnippet?: string;
+};
+
+export type TournamentStandingsUpdateDetails = {
+  updated: StandingsUpdateDetail[];
+  unsupportedTournamentMode: StandingsUpdateDetail[];
+  providerMissingStandings: StandingsUpdateDetail[];
+  missingTeams: StandingsUpdateDetail[];
+  unexpectedFailures: StandingsUpdateDetail[];
+};
+
+export type StandingsUpdateReportData = {
+  updatedTeamIds: string[];
+  missingTeamExternalIds: string[];
+};
+
+export type StandingsUpdateWorkflowStatus = 'completed' | 'partial_failure' | 'failed';
+
+export type TournamentStandingsUpdateResult = {
+  tournamentId: string;
+  status: StandingsUpdateWorkflowStatus;
+  summary: TournamentStandingsUpdateSummary;
+  details: TournamentStandingsUpdateDetails;
+  data: StandingsUpdateReportData;
+};
+
+export type StandingsUpdateReport = {
+  requestId: string;
+  operationType: 'standings_update_v2';
+  status: StandingsUpdateWorkflowStatus;
+  tournament: {
+    tournamentId: string;
+    tournamentLabel: string;
+    provider: 'sofascore';
+  };
+  startedAt: string;
+  completedAt: string;
+  summary: TournamentStandingsUpdateSummary;
+  details: TournamentStandingsUpdateDetails;
+  data: StandingsUpdateReportData;
+};
+
+export type StandingsUpdateBatchSummary = {
+  totalRequestedTournaments: number;
+  queuedTournaments: number;
+  completedTournaments: number;
+  failedTournaments: number;
+  skippedInvalidTournaments: number;
+  skippedTournamentIdsPreview?: string[];
+};
+
+export type StandingsUpdateReportUploadResult = StandingsCreateReportUploadResult;

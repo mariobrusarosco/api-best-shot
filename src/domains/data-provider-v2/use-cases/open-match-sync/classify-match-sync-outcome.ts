@@ -33,12 +33,14 @@ export type OpenMatchSyncClassification =
       outcome: Extract<OpenMatchSyncOutcome, 'provider_match_not_found'>;
       errorMessage: string;
       requestUrl: string;
+      causeMessage?: string;
       responseBodySnippet?: string;
     }
   | {
       outcome: Extract<OpenMatchSyncOutcome, 'unexpected_failure'>;
       errorMessage: string;
       requestUrl?: string;
+      causeMessage?: string;
       responseBodySnippet?: string;
     };
 
@@ -109,6 +111,7 @@ const classifyMatchSyncError = (error: unknown): OpenMatchSyncClassification => 
         outcome: 'provider_match_not_found',
         errorMessage: error.message,
         requestUrl: error.requestUrl,
+        causeMessage: error.causeMessage,
         responseBodySnippet: error.responseBodySnippet,
       };
     }
@@ -117,6 +120,7 @@ const classifyMatchSyncError = (error: unknown): OpenMatchSyncClassification => 
       outcome: 'unexpected_failure',
       errorMessage: error.message,
       requestUrl: error.requestUrl,
+      causeMessage: error.causeMessage,
       responseBodySnippet: error.responseBodySnippet,
     };
   }

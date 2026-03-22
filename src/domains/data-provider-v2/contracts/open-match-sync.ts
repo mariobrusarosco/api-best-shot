@@ -79,6 +79,7 @@ export type OpenMatchSyncDetail = {
   providerStatus?: string;
   reason: OpenMatchSyncOutcome;
   errorMessage?: string;
+  causeMessage?: string;
   responseBodySnippet?: string;
 };
 

@@ -203,6 +203,7 @@ const applyClassification = async (input: {
         summary: input.summary,
         errorMessage: input.classification.errorMessage,
         requestUrl: input.classification.requestUrl,
+        causeMessage: input.classification.causeMessage,
         responseBodySnippet: input.classification.responseBodySnippet,
       });
       return;
@@ -218,6 +219,7 @@ const recordUnexpectedFailure = async (input: {
   summary: TournamentOpenMatchSyncSummary;
   errorMessage: string;
   requestUrl?: string;
+  causeMessage?: string;
   responseBodySnippet?: string;
 }): Promise<void> => {
   await touchMatchCheckedAt({
@@ -235,6 +237,7 @@ const recordUnexpectedFailure = async (input: {
     requestUrl: input.requestUrl,
     reason: 'unexpected_failure',
     errorMessage: input.errorMessage,
+    causeMessage: input.causeMessage,
     responseBodySnippet: input.responseBodySnippet,
   });
 };

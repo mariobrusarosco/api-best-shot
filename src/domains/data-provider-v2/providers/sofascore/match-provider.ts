@@ -1,10 +1,12 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { ProviderRequestError } from '@/domains/data-provider-v2/contracts/errors';
 import {
   BrowserRequest,
   BrowserRequestTransportError,
 } from '@/domains/data-provider-v2/transport/playwright/browser-request';
 import { BrowserSession } from '@/domains/data-provider-v2/transport/playwright/browser-session';
-import { buildSofaScoreMatchEventUrl } from './endpoints';
+import { buildSofaScoreMatchEventUrl, buildSofaScoreWarmupUrl } from './endpoints';
 
 export type SofaScoreMatchEvent = {
   id: number;
@@ -70,18 +72,24 @@ export type SofaScoreMatchEventPayload = {
   event?: SofaScoreMatchEvent | null;
 };
 
+const SOFASCORE_MATCH_PROVIDER_WARMUP_MARKER = 'sofascore:match-provider:warmed';
+
 export class SofaScoreMatchProvider {
+  private readonly session: BrowserSession;
   private readonly browserRequest: BrowserRequest;
 
-  private constructor(browserRequest: BrowserRequest) {
+  private constructor(session: BrowserSession, browserRequest: BrowserRequest) {
+    this.session = session;
     this.browserRequest = browserRequest;
   }
 
   public static fromSession(session: BrowserSession): SofaScoreMatchProvider {
-    return new SofaScoreMatchProvider(new BrowserRequest(session));
+    return new SofaScoreMatchProvider(session, new BrowserRequest(session));
   }
 
   public async fetchMatchEvent(input: { matchExternalId: string }): Promise<SofaScoreMatchEventPayload> {
+    await this.ensureSessionWarmed();
+
     const requestUrl = buildSofaScoreMatchEventUrl(input.matchExternalId);
 
     try {
@@ -124,6 +132,32 @@ export class SofaScoreMatchProvider {
         message: `SofaScore match event request failed unexpectedly for ${input.matchExternalId}`,
         requestUrl,
         requestIdentifier: input.matchExternalId,
+        causeMessage: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private async ensureSessionWarmed(): Promise<void> {
+    if (this.session.hasMarker(SOFASCORE_MATCH_PROVIDER_WARMUP_MARKER)) {
+      return;
+    }
+
+    const warmupUrl = buildSofaScoreWarmupUrl();
+    const page = this.session.getPage();
+
+    try {
+      await page.goto(warmupUrl, {
+        waitUntil: 'networkidle',
+        timeout: 30_000,
+      });
+
+      this.session.mark(SOFASCORE_MATCH_PROVIDER_WARMUP_MARKER);
+    } catch (error) {
+      Logger.warn('SofaScore session warm-up failed; continuing with direct event request', {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'provider',
+        operation: 'SofaScoreMatchProvider.ensureSessionWarmed',
+        warmupUrl,
         causeMessage: error instanceof Error ? error.message : String(error),
       });
     }

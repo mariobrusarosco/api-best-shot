@@ -89,6 +89,16 @@ export const runTournamentOpenMatchSyncOperation = async (input: {
       summary,
     });
 
+    if (tournamentResult.status === 'failed') {
+      logTournamentOperationFailure({
+        requestId,
+        tournamentId: input.tournamentId,
+        tournamentLabel,
+        summary,
+        reportUpload,
+      });
+    }
+
     await notifyOpenMatchSyncExecution({
       requestId,
       tournamentId: input.tournamentId,
@@ -135,6 +145,20 @@ export const runTournamentOpenMatchSyncOperation = async (input: {
         });
       }
     }
+
+    Logger.error(error instanceof Error ? error : new Error(errorMessage), {
+      domain: DOMAINS.DATA_PROVIDER,
+      component: 'operations',
+      operation: 'runTournamentOpenMatchSyncOperation.failed',
+      requestId,
+      tournamentId: input.tournamentId,
+      tournamentLabel,
+      reportFileUrl: reportUpload?.reportFileUrl,
+      reportAvailable: stringifyOptionalBoolean(reportUpload?.reportAvailable),
+      failedOperations: String(summary.failedOperations),
+      unexpectedFailureMatches: String(summary.unexpectedFailureMatches),
+      unexpectedFailureMatchIdsPreview: stringifyOptionalStringArray(summary.unexpectedFailureMatchIdsPreview),
+    });
 
     await notifyOpenMatchSyncExecution({
       requestId,
@@ -233,4 +257,42 @@ const getTournamentLabel = async (tournamentId: string): Promise<string> => {
   }
 
   return tournamentId;
+};
+
+const logTournamentOperationFailure = (input: {
+  requestId: string;
+  tournamentId: string;
+  tournamentLabel: string;
+  summary: TournamentOpenMatchSyncSummary;
+  reportUpload?: OpenMatchSyncReportUploadResult;
+}): void => {
+  Logger.error(new Error(`Open match sync tournament operation failed for ${input.tournamentId}`), {
+    domain: DOMAINS.DATA_PROVIDER,
+    component: 'operations',
+    operation: 'runTournamentOpenMatchSyncOperation.failedSummary',
+    requestId: input.requestId,
+    tournamentId: input.tournamentId,
+    tournamentLabel: input.tournamentLabel,
+    reportFileUrl: input.reportUpload?.reportFileUrl,
+    reportAvailable: stringifyOptionalBoolean(input.reportUpload?.reportAvailable),
+    failedOperations: String(input.summary.failedOperations),
+    unexpectedFailureMatches: String(input.summary.unexpectedFailureMatches),
+    unexpectedFailureMatchIdsPreview: stringifyOptionalStringArray(input.summary.unexpectedFailureMatchIdsPreview),
+  });
+};
+
+const stringifyOptionalBoolean = (value: boolean | undefined): string | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return String(value);
+};
+
+const stringifyOptionalStringArray = (value: string[] | undefined): string | undefined => {
+  if (!value || value.length === 0) {
+    return undefined;
+  }
+
+  return value.join(',');
 };

@@ -267,6 +267,13 @@
       "when": 1772048762404,
       "tag": "0037_add_tournament_current_round",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1774267947412,
+      "tag": "0038_past_shinobi_shaw",
+      "breakpoints": true
     }
   ]
 }

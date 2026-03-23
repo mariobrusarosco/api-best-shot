@@ -89,6 +89,7 @@ export enum DataProviderExecutionOperationType {
 export type CreateTournamentInput = {
   tournamentPublicId: string;
   baseUrl: string;
+  publicUrl: string;
   slug: string;
   provider: string;
   season: string;

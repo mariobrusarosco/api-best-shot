@@ -276,6 +276,14 @@ export class TournamentDataProvider {
       throw new Error('Tournament ID is null');
     }
 
+    if (!payload.publicUrl || !payload.publicUrl.trim()) {
+      this.reporter.addOperation('initialization', 'validate_input', 'failed', {
+        error: 'Tournament publicUrl is required',
+      });
+
+      throw new Error('Tournament publicUrl is required');
+    }
+
     this.reporter.addOperation('initialization', 'validate_input', 'completed');
   }
 
@@ -391,6 +399,7 @@ export class TournamentDataProvider {
       const tournament = await this.createOnDatabase({
         externalId: payload.tournamentPublicId,
         baseUrl: payload.baseUrl,
+        publicUrl: payload.publicUrl,
         provider: 'sofascore',
         season: payload.season,
         mode: payload.mode,

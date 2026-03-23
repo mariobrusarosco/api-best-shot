@@ -8,6 +8,7 @@ export const T_Tournament = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     externalId: text('external_id').notNull(),
     baseUrl: text('base_url').notNull(),
+    publicUrl: text('public_url'),
     slug: text('slug').notNull().default(''),
     provider: text('provider').notNull(),
     season: text('season').notNull(),

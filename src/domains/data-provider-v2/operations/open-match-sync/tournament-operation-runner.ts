@@ -40,7 +40,8 @@ export const runTournamentOpenMatchSyncOperation = async (input: {
 }): Promise<TournamentOpenMatchSyncOperationResult> => {
   const requestId = input.requestId ?? randomUUID();
   const startedAt = input.startedAt ?? new Date();
-  const tournamentLabel = await getTournamentLabel(input.tournamentId);
+  const tournamentContext = await getTournamentContext(input.tournamentId);
+  const tournamentLabel = tournamentContext.tournamentLabel;
 
   let executionJobCreated = false;
   let tournamentResult: TournamentOpenMatchSyncResult | null = null;
@@ -54,7 +55,9 @@ export const runTournamentOpenMatchSyncOperation = async (input: {
     });
     executionJobCreated = true;
 
-    const provider = SofaScoreMatchProvider.fromSession(input.session);
+    const provider = SofaScoreMatchProvider.fromSession(input.session, {
+      tournamentPublicUrl: tournamentContext.tournamentPublicUrl,
+    });
 
     tournamentResult = await runTournamentOpenMatchSync({
       tournamentId: input.tournamentId,
@@ -238,25 +241,34 @@ const createOperationFailureSummary = (input: {
   };
 };
 
-const getTournamentLabel = async (tournamentId: string): Promise<string> => {
+const getTournamentContext = async (
+  tournamentId: string
+): Promise<{
+  tournamentLabel: string;
+  tournamentPublicUrl?: string;
+}> => {
   try {
     const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
     const tournamentLabel = tournament?.label?.trim();
+    const tournamentPublicUrl = tournament?.publicUrl?.trim();
 
-    if (tournamentLabel) {
-      return tournamentLabel;
-    }
+    return {
+      tournamentLabel: tournamentLabel || tournamentId,
+      tournamentPublicUrl: tournamentPublicUrl || undefined,
+    };
   } catch (error) {
-    Logger.warn('Open match sync operation could not load tournament label; falling back to tournamentId', {
+    Logger.warn('Open match sync operation could not load tournament context; falling back to tournamentId only', {
       domain: DOMAINS.DATA_PROVIDER,
       component: 'operations',
-      operation: 'runTournamentOpenMatchSyncOperation.getTournamentLabel',
+      operation: 'runTournamentOpenMatchSyncOperation.getTournamentContext',
       tournamentId,
       causeMessage: error instanceof Error ? error.message : String(error),
     });
   }
 
-  return tournamentId;
+  return {
+    tournamentLabel: tournamentId,
+  };
 };
 
 const logTournamentOperationFailure = (input: {

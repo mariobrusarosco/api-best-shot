@@ -1,0 +1,2 @@
+ALTER TABLE "tournament"
+ADD COLUMN "public_url" text;

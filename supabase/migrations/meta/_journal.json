@@ -288,6 +288,13 @@
       "when": 1774444839156,
       "tag": "0040_glamorous_wind_dancer",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1774445218201,
+      "tag": "0041_dapper_lucky_pierre",
+      "breakpoints": true
     }
   ]
 }

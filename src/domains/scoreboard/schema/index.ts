@@ -1,8 +1,9 @@
+import { SCOREBOARD_EXECUTION_STATUSES, type ScoreboardExecutionStatus } from '@/domains/scoreboard/contracts';
 import { T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
 import { T_Member } from '@/domains/member/schema';
 import { T_Tournament } from '@/domains/tournament/schema';
-import { index, integer, pgTable, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_ScoreboardLedger = pgTable(
   'scoreboard_ledger',
@@ -40,3 +41,40 @@ export const T_ScoreboardLedger = pgTable(
 export type DB_InsertScoreboardLedger = typeof T_ScoreboardLedger.$inferInsert;
 export type DB_UpdateScoreboardLedger = typeof T_ScoreboardLedger.$inferInsert;
 export type DB_SelectScoreboardLedger = typeof T_ScoreboardLedger.$inferSelect;
+
+export const T_ScoreboardExecutions = pgTable(
+  'scoreboard_executions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    requestId: uuid('request_id').notNull(),
+    tournamentId: uuid('tournament_id')
+      .notNull()
+      .references(() => T_Tournament.id, { onDelete: 'cascade' }),
+    operationType: text('operation_type').notNull(),
+    status: text('status', {
+      enum: Object.values(SCOREBOARD_EXECUTION_STATUSES) as [ScoreboardExecutionStatus, ...ScoreboardExecutionStatus[]],
+    }).notNull(),
+    startedAt: timestamp('started_at').notNull().defaultNow(),
+    completedAt: timestamp('completed_at'),
+    duration: integer('duration'),
+    reportFileUrl: text('report_file_url'),
+    reportFileKey: text('report_file_key'),
+    summary: jsonb('summary'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  table => ({
+    tournamentIdx: index('scoreboard_executions_tournament_idx').on(table.tournamentId),
+    operationTypeIdx: index('scoreboard_executions_operation_type_idx').on(table.operationType),
+    statusIdx: index('scoreboard_executions_status_idx').on(table.status),
+    startedAtIdx: index('scoreboard_executions_started_at_idx').on(table.startedAt),
+    requestIdIdx: index('scoreboard_executions_request_id_idx').on(table.requestId),
+  })
+);
+
+export type DB_InsertScoreboardExecution = typeof T_ScoreboardExecutions.$inferInsert;
+export type DB_UpdateScoreboardExecution = typeof T_ScoreboardExecutions.$inferInsert;
+export type DB_SelectScoreboardExecution = typeof T_ScoreboardExecutions.$inferSelect;

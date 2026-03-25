@@ -308,10 +308,10 @@ The first scoreboard implementation will **not** do these things:
 #### Task 2.2 - Add uniqueness constraint for `(matchId, memberId, ruleVersion)` [x]
 #### Task 2.3 - Add query helpers for ledger inserts and conflict-safe checks [x]
 
-### Task 3 - Add scoreboard execution schema [ ]
-#### Task 3.1 - Create scoreboard execution table(s) [ ]
-#### Task 3.2 - Add query helpers to create, update, and fetch executions [ ]
-#### Task 3.3 - Define summary and report fields for per-tournament runs [ ]
+### Task 3 - Add scoreboard execution schema [x]
+#### Task 3.1 - Create scoreboard execution table(s) [x]
+#### Task 3.2 - Add query helpers to create, update, and fetch executions [x]
+#### Task 3.3 - Define summary and report fields for per-tournament runs [x]
 
 ### Task 4 - Prepare tournament aggregate writes [ ]
 #### Task 4.1 - Add helper to upsert missing `tournament_member` rows [ ]

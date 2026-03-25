@@ -8,7 +8,6 @@ import type {
   TournamentOpenMatchSyncResult,
   TournamentOpenMatchSyncSummary,
 } from '@/domains/data-provider-v2/contracts/open-match-sync';
-import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
 import { randomUUID } from 'crypto';
 import { notifyOpenMatchSyncExecution } from './slack-notifier';
 import {
@@ -40,7 +39,10 @@ export const runTournamentOpenMatchSyncOperation = async (input: {
 }): Promise<TournamentOpenMatchSyncOperationResult> => {
   const requestId = input.requestId ?? randomUUID();
   const startedAt = input.startedAt ?? new Date();
-  const tournamentContext = await getTournamentContext(input.tournamentId);
+  const tournamentContext = getTournamentContextFromDueMatches({
+    tournamentId: input.tournamentId,
+    dueMatches: input.dueMatches,
+  });
   const tournamentLabel = tournamentContext.tournamentLabel;
 
   let executionJobCreated = false;
@@ -241,33 +243,21 @@ const createOperationFailureSummary = (input: {
   };
 };
 
-const getTournamentContext = async (
-  tournamentId: string
-): Promise<{
+const getTournamentContextFromDueMatches = (input: {
+  tournamentId: string;
+  dueMatches: OpenMatchSyncDueMatch[];
+}): {
   tournamentLabel: string;
   tournamentPublicUrl?: string;
-}> => {
-  try {
-    const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
-    const tournamentLabel = tournament?.label?.trim();
-    const tournamentPublicUrl = tournament?.publicUrl?.trim();
-
-    return {
-      tournamentLabel: tournamentLabel || tournamentId,
-      tournamentPublicUrl: tournamentPublicUrl || undefined,
-    };
-  } catch (error) {
-    Logger.warn('Open match sync operation could not load tournament context; falling back to tournamentId only', {
-      domain: DOMAINS.DATA_PROVIDER,
-      component: 'operations',
-      operation: 'runTournamentOpenMatchSyncOperation.getTournamentContext',
-      tournamentId,
-      causeMessage: error instanceof Error ? error.message : String(error),
-    });
-  }
+} => {
+  const referenceMatch =
+    input.dueMatches.find(match => match.tournamentId?.trim() === input.tournamentId) ?? input.dueMatches[0];
+  const tournamentLabel = referenceMatch?.tournamentLabel?.trim();
+  const tournamentPublicUrl = referenceMatch?.tournamentPublicUrl?.trim();
 
   return {
-    tournamentLabel: tournamentId,
+    tournamentLabel: tournamentLabel || input.tournamentId,
+    tournamentPublicUrl: tournamentPublicUrl || undefined,
   };
 };
 

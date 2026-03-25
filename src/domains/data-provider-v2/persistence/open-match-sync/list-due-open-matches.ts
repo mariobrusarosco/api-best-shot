@@ -14,6 +14,8 @@ export const listDueOpenMatches = async (params: { now: Date; limit: number }): 
     status: match.status,
     date: match.date,
     tournamentId: match.tournamentId,
+    tournamentLabel: match.tournamentLabel ?? undefined,
+    tournamentPublicUrl: match.tournamentPublicUrl ?? undefined,
     roundSlug: match.roundSlug,
   }));
 };

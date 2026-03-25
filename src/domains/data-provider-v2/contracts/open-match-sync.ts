@@ -7,6 +7,8 @@ export type OpenMatchSyncDueMatch = {
   status: DB_SelectMatch['status'];
   date: Date | null;
   tournamentId: string;
+  tournamentLabel?: string;
+  tournamentPublicUrl?: string;
   roundSlug: string;
 };
 

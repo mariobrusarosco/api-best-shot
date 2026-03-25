@@ -159,9 +159,12 @@ const listDueOpenMatchesForPolling = async (params: { now: Date; limit: number }
       date: T_Match.date,
       lastCheckedAt: T_Match.lastCheckedAt,
       tournamentId: T_Match.tournamentId,
+      tournamentLabel: T_Tournament.label,
+      tournamentPublicUrl: T_Tournament.publicUrl,
       roundSlug: T_Match.roundSlug,
     })
     .from(T_Match)
+    .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
     .where(
       and(
         eq(T_Match.status, 'open'),

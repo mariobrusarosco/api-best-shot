@@ -25,6 +25,7 @@ It exists to replace the V1 subsystem with a clearer internal architecture:
 Before starting a new V2 workflow, read:
 
 - [PROVEN_PATTERNS.md](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider-v2/PROVEN_PATTERNS.md)
+- [V1_EQUIVALENTS.md](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider-v2/V1_EQUIVALENTS.md)
 
 ## Layer Summary
 

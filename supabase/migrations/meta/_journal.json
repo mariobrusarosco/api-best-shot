@@ -274,6 +274,13 @@
       "when": 1774267947412,
       "tag": "0038_past_shinobi_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1774443480114,
+      "tag": "0039_mighty_timeslip",
+      "breakpoints": true
     }
   ]
 }

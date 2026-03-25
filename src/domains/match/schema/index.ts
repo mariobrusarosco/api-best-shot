@@ -31,6 +31,7 @@ export const T_Match = pgTable(
     status: text('status', { enum: Object.values(MATCH_STATUSES) as [string, ...string[]] }).notNull(),
     tournamentMatch: text('tournament_match'),
     lastCheckedAt: timestamp('last_checked_at'),
+    scoreboardAppliedAt: timestamp('scoreboard_applied_at'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .notNull()

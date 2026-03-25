@@ -39,7 +39,7 @@ Build the first durable scoreboard system for Best Shot using:
 
 ## Phase 0 - Architecture Boundary
 
-### Task 0.1 - Lock the persisted state
+### Task 0.1 - Lock the persisted state [x]
 
 The scoreboard system will use three kinds of persisted state.
 
@@ -124,7 +124,7 @@ Important distinction:
 2. **Scoreboard execution**
    - one tournament-scoped processing attempt inside that cron run
 
-### Task 0.2 - Lock the trigger model
+### Task 0.2 - Lock the trigger model [x]
 
 The trigger model must be explicit and mechanical.
 
@@ -180,7 +180,7 @@ This is the durable source of truth.
 
 Queue payloads or in-memory worker state are not the source of truth.
 
-### Task 0.3 - Lock the execution contract
+### Task 0.3 - Lock the execution contract [x]
 
 The scoreboard system needs one tournament-scoped execution contract.
 
@@ -245,7 +245,7 @@ An execution stops when one of these is true:
 2. the execution fails
 3. an explicit runtime limit is reached and the execution exits cleanly, leaving remaining matches pending
 
-### Task 0.4 - Lock the read model contract
+### Task 0.4 - Lock the read model contract [x]
 
 #### A. Tournament reads
 
@@ -284,7 +284,7 @@ It should be derived from durable conditions such as:
 
 League under-calculation state is derived from its included tournaments.
 
-### Task 0.5 - Lock the non-goals
+### Task 0.5 - Lock the non-goals [x]
 
 The first scoreboard implementation will **not** do these things:
 
@@ -298,15 +298,15 @@ The first scoreboard implementation will **not** do these things:
 
 ## Phase 1 - Schema And Persistence
 
-### Task 1 - Add backlog marker to match [ ]
-#### Task 1.1 - Add `scoreboardAppliedAt` to `match` schema [ ]
-#### Task 1.2 - Generate migration with Drizzle workflow (`yarn db:generate`) [ ]
-#### Task 1.3 - Apply migration and verify index/typing exposure [ ]
+### Task 1 - Add backlog marker to match [x]
+#### Task 1.1 - Add `scoreboardAppliedAt` to `match` schema [x]
+#### Task 1.2 - Generate migration with Drizzle workflow (`yarn db:generate`) [x]
+#### Task 1.3 - Apply migration and verify index/typing exposure [x]
 
-### Task 2 - Add scoreboard ledger schema [ ]
-#### Task 2.1 - Create `scoreboard_ledger` schema [ ]
-#### Task 2.2 - Add uniqueness constraint for `(matchId, memberId, ruleVersion)` [ ]
-#### Task 2.3 - Add query helpers for ledger inserts and conflict-safe checks [ ]
+### Task 2 - Add scoreboard ledger schema [x]
+#### Task 2.1 - Create `scoreboard_ledger` schema [x]
+#### Task 2.2 - Add uniqueness constraint for `(matchId, memberId, ruleVersion)` [x]
+#### Task 2.3 - Add query helpers for ledger inserts and conflict-safe checks [x]
 
 ### Task 3 - Add scoreboard execution schema [ ]
 #### Task 3.1 - Create scoreboard execution table(s) [ ]

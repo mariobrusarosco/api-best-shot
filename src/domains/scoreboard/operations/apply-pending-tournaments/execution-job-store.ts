@@ -5,13 +5,17 @@ import {
   type ScoreboardExecutionStatus,
 } from '@/domains/scoreboard/contracts';
 import { QUERIES_SCOREBOARD } from '@/domains/scoreboard/queries';
-import type { DatabaseError } from '@/domains/shared/error-handling/database';
 import type { DB_SelectScoreboardExecution } from '@/domains/scoreboard/schema';
+import type { DatabaseError } from '@/domains/shared/error-handling/database';
 
 export const SCOREBOARD_APPLY_PENDING_TOURNAMENT_EXECUTION_OPERATION_TYPE =
   SCOREBOARD_OPERATION_TYPES.APPLY_PENDING_TOURNAMENT;
 
 export type ScoreboardApplyPendingTournamentExecutionJobStatus = ScoreboardExecutionStatus;
+export type ScoreboardApplyPendingTournamentExecutionJobFinalStatus = Exclude<
+  ScoreboardApplyPendingTournamentExecutionJobStatus,
+  typeof SCOREBOARD_EXECUTION_STATUSES.IN_PROGRESS
+>;
 
 export type ScoreboardApplyPendingTournamentExecutionJob = {
   id: string;
@@ -78,6 +82,53 @@ export const tryAcquireScoreboardApplyPendingTournamentExecutionLock = async (in
     throw error;
   }
 };
+
+export const finalizeScoreboardApplyPendingTournamentExecutionJob = async (input: {
+  requestId: string;
+  status: ScoreboardApplyPendingTournamentExecutionJobFinalStatus;
+  completedAt?: Date;
+  duration?: number;
+  reportFileUrl?: string;
+  reportFileKey?: string;
+  summary?: ScoreboardApplyPendingTournamentSummary;
+}): Promise<ScoreboardApplyPendingTournamentExecutionJob | null> => {
+  const completedAt = input.completedAt ?? new Date();
+  const executionJob = await QUERIES_SCOREBOARD.updateExecutionByRequestId(input.requestId, {
+    status: input.status,
+    completedAt,
+    duration: input.duration,
+    reportFileUrl: input.reportFileUrl,
+    reportFileKey: input.reportFileKey,
+    summary: input.summary,
+  });
+
+  return executionJob ? mapExecutionJob(executionJob) : null;
+};
+
+// TODO START: Evaluate if we really need these functions.
+// They're doing pretty much the same work
+export const completeScoreboardApplyPendingTournamentExecutionJob = async (input: {
+  requestId: string;
+  completedAt?: Date;
+  duration?: number;
+}): Promise<ScoreboardApplyPendingTournamentExecutionJob | null> => {
+  return finalizeScoreboardApplyPendingTournamentExecutionJob({
+    ...input,
+    status: SCOREBOARD_EXECUTION_STATUSES.COMPLETED,
+  });
+};
+
+export const failScoreboardApplyPendingTournamentExecutionJob = async (input: {
+  requestId: string;
+  completedAt?: Date;
+  duration?: number;
+}): Promise<ScoreboardApplyPendingTournamentExecutionJob | null> => {
+  return finalizeScoreboardApplyPendingTournamentExecutionJob({
+    ...input,
+    status: SCOREBOARD_EXECUTION_STATUSES.FAILED,
+  });
+};
+// TODO END
 
 const mapExecutionJob = (executionJob: DB_SelectScoreboardExecution): ScoreboardApplyPendingTournamentExecutionJob => {
   return {

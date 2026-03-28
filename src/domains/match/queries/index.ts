@@ -195,6 +195,35 @@ const listTournamentsWithPendingScoreboardMatches = async (params?: { limit?: nu
   return await baseQuery;
 };
 
+const listPendingScoreboardMatchesForTournament = async (params: { tournamentId: string; limit?: number }) => {
+  const baseQuery = db
+    .select({
+      id: T_Match.id,
+      externalId: T_Match.externalId,
+      tournamentId: T_Match.tournamentId,
+      tournamentLabel: T_Tournament.label,
+      roundSlug: T_Match.roundSlug,
+      date: T_Match.date,
+      updatedAt: T_Match.updatedAt,
+    })
+    .from(T_Match)
+    .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
+    .where(
+      and(
+        eq(T_Match.tournamentId, params.tournamentId),
+        eq(T_Match.status, 'ended'),
+        isNull(T_Match.scoreboardAppliedAt)
+      )
+    )
+    .orderBy(asc(T_Match.date), asc(T_Match.updatedAt), asc(T_Match.id));
+
+  if (params.limit !== undefined) {
+    return await baseQuery.limit(params.limit);
+  }
+
+  return await baseQuery;
+};
+
 const updateMatchFromPolling = async (params: {
   matchId: string;
   status: DB_SelectMatch['status'];
@@ -300,6 +329,7 @@ export const QUERIES_MATCH = {
   getMatchById,
   listDueOpenMatchesForPolling,
   listTournamentsWithPendingScoreboardMatches,
+  listPendingScoreboardMatchesForTournament,
   updateMatchFromPolling,
   touchMatchCheckedAt,
   createMatches,

@@ -32,8 +32,18 @@ const getGuessesByMatchId = async (matchId: string) => {
     .where(eq(T_Guess.matchId, matchId));
 };
 
+const listGuessesToScoreForEndedMatch = async (matchId: string) => {
+  return db
+    .select()
+    .from(T_Guess)
+    .innerJoin(T_Match, eq(T_Match.id, T_Guess.matchId))
+    .where(and(eq(T_Guess.matchId, matchId), eq(T_Match.status, 'ended')))
+    .orderBy(T_Guess.memberId, T_Guess.id);
+};
+
 export const QUERIES_GUESS = {
   selectMemberGuessesForTournament,
   getAllMemberGuesses,
   getGuessesByMatchId,
+  listGuessesToScoreForEndedMatch,
 };

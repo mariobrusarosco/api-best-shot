@@ -385,7 +385,7 @@ The first scoreboard implementation will **not** do these things:
 
 ### Task 3 - Implement per-match application [ ]
 
-#### Task 3.1 - Load match guesses [ ]
+#### Task 3.1 - Load match guesses [x]
 
 #### Task 3.2 - Score guesses with `runGuessAnalysis(...)` [ ]
 

@@ -391,7 +391,7 @@ The first scoreboard implementation will **not** do these things:
 
 #### Task 3.3 - Insert ledger rows transactionally [x]
 
-#### Task 3.4 - Update tournament aggregate transactionally [ ]
+#### Task 3.4 - Update tournament aggregate transactionally [x]
 
 #### Task 3.5 - Mark `scoreboardAppliedAt` transactionally [ ]
 

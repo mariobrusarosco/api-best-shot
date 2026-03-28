@@ -3,21 +3,21 @@ import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import { T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
-import { DatabaseError } from '@/domains/shared/error-handling/database';
+import type { DatabaseError } from '@/domains/shared/error-handling/database';
 import { T_Team } from '@/domains/team/schema';
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import {
-  DB_InsertTournamentScoreboard,
-  DB_InsertTournament,
-  DB_InsertTournamentStandings,
-  DB_SelectTournament,
-  DB_SelectTournamentScoreboard,
+  type DB_InsertTournament,
+  type DB_InsertTournamentScoreboard,
+  type DB_InsertTournamentStandings,
+  type DB_SelectTournament,
+  type DB_SelectTournamentScoreboard,
   T_Tournament,
   T_TournamentScoreboard,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
-import { TournamentMode, TournamentWithTypedMode } from '@/domains/tournament/typing';
-import { and, eq, inArray, SQL, sql } from 'drizzle-orm';
+import type { TournamentMode, TournamentWithTypedMode } from '@/domains/tournament/typing';
+import { and, eq, inArray, type SQL, sql } from 'drizzle-orm';
 
 type TournamentQueryExecutor = typeof db;
 
@@ -78,9 +78,10 @@ const bulkUpdateTournamentScoreboardPoints = async (
   }
 };
 
-const upsertMissingTournamentScoreboards = async (
+const ensureTournamentScoreboardsExist = async (
   tournamentId: string,
-  memberIds: string[]
+  memberIds: string[],
+  executor: TournamentQueryExecutor = db
 ): Promise<DB_SelectTournamentScoreboard[]> => {
   const uniqueMemberIds = Array.from(new Set(memberIds));
 
@@ -95,7 +96,7 @@ const upsertMissingTournamentScoreboards = async (
       points: 0,
     }));
 
-    return await db
+    return await executor
       .insert(T_TournamentScoreboard)
       .values(values)
       .onConflictDoNothing({
@@ -402,5 +403,5 @@ export const QUERIES_TOURNAMENT = {
   upsertTournamentStandings,
   updateTournamentScoreboardPoints,
   bulkUpdateTournamentScoreboardPoints,
-  upsertMissingTournamentScoreboards,
+  ensureTournamentScoreboardsExist,
 };

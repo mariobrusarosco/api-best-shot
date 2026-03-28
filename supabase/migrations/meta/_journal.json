@@ -302,6 +302,13 @@
       "when": 1774699957183,
       "tag": "0042_tranquil_sleepwalker",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1774703631551,
+      "tag": "0043_complete_blizzard",
+      "breakpoints": true
     }
   ]
 }

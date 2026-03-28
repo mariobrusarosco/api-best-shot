@@ -5,6 +5,7 @@ import {
   type ScoreboardExecutionStatus,
 } from '@/domains/scoreboard/contracts';
 import { QUERIES_SCOREBOARD } from '@/domains/scoreboard/queries';
+import type { DatabaseError } from '@/domains/shared/error-handling/database';
 import type { DB_SelectScoreboardExecution } from '@/domains/scoreboard/schema';
 
 export const SCOREBOARD_APPLY_PENDING_TOURNAMENT_EXECUTION_OPERATION_TYPE =
@@ -26,6 +27,16 @@ export type ScoreboardApplyPendingTournamentExecutionJob = {
   summary: ScoreboardApplyPendingTournamentSummary | null;
 };
 
+export type ScoreboardApplyPendingTournamentLockResult =
+  | {
+      outcome: 'acquired';
+      executionJob: ScoreboardApplyPendingTournamentExecutionJob;
+    }
+  | {
+      outcome: 'already_locked';
+      executionJob: null;
+    };
+
 export const createScoreboardApplyPendingTournamentExecutionJob = async (input: {
   requestId: string;
   tournamentId: string;
@@ -40,6 +51,32 @@ export const createScoreboardApplyPendingTournamentExecutionJob = async (input: 
   });
 
   return mapExecutionJob(executionJob);
+};
+
+export const tryAcquireScoreboardApplyPendingTournamentExecutionLock = async (input: {
+  requestId: string;
+  tournamentId: string;
+  startedAt?: Date;
+}): Promise<ScoreboardApplyPendingTournamentLockResult> => {
+  try {
+    const executionJob = await createScoreboardApplyPendingTournamentExecutionJob(input);
+
+    return {
+      outcome: 'acquired',
+      executionJob,
+    };
+  } catch (error: unknown) {
+    const databaseError = error as DatabaseError;
+
+    if (databaseError.code === '23505') {
+      return {
+        outcome: 'already_locked',
+        executionJob: null,
+      };
+    }
+
+    throw error;
+  }
 };
 
 const mapExecutionJob = (executionJob: DB_SelectScoreboardExecution): ScoreboardApplyPendingTournamentExecutionJob => {

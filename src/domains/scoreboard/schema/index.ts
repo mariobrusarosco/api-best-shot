@@ -3,6 +3,7 @@ import { T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
 import { T_Member } from '@/domains/member/schema';
 import { T_Tournament } from '@/domains/tournament/schema';
+import { sql } from 'drizzle-orm';
 import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const T_ScoreboardLedger = pgTable(
@@ -72,6 +73,9 @@ export const T_ScoreboardExecutions = pgTable(
     statusIdx: index('scoreboard_executions_status_idx').on(table.status),
     startedAtIdx: index('scoreboard_executions_started_at_idx').on(table.startedAt),
     requestIdIdx: index('scoreboard_executions_request_id_idx').on(table.requestId),
+    uniqueInProgressTournamentOperation: uniqueIndex('scoreboard_executions_in_progress_tournament_operation_idx')
+      .on(table.tournamentId, table.operationType)
+      .where(sql`${table.status} = 'in_progress'`),
   })
 );
 

@@ -326,7 +326,7 @@ The first scoreboard implementation will **not** do these things:
 
 ### Task 2 - Implement tournament execution runner [ ]
 #### Task 2.1 - Create one tournament execution record [x]
-#### Task 2.2 - Acquire tournament lock [ ]
+#### Task 2.2 - Acquire tournament lock [x]
 #### Task 2.3 - Loop until tournament backlog is empty or execution fails [ ]
 #### Task 2.4 - Persist success/failure summary and report [ ]
 

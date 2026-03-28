@@ -8,7 +8,7 @@ import {
   tryAcquireTournamentScoreboardExecutionLock,
   type TournamentScoreboardExecutionJob,
 } from './execution-job-store';
-import type { PendingScoreboardMatch, ProcessPendingScoreboardMatchResult } from './types';
+import type { MatchAwaitingScoreboardCalculation, ProcessMatchAwaitingScoreboardCalculationResult } from './types';
 
 export type TournamentScoreboardBacklogExecutionResult =
   | {
@@ -33,7 +33,9 @@ export type RunTournamentScoreboardBacklogExecutionInput = {
   requestId?: string;
   startedAt?: Date;
   batchSize?: number;
-  processPendingMatch: (match: PendingScoreboardMatch) => Promise<ProcessPendingScoreboardMatchResult>;
+  processMatchAwaitingScoreboardCalculation: (
+    match: MatchAwaitingScoreboardCalculation
+  ) => Promise<ProcessMatchAwaitingScoreboardCalculationResult>;
 };
 
 export const runTournamentScoreboardBacklogExecution = async (
@@ -61,24 +63,24 @@ export const runTournamentScoreboardBacklogExecution = async (
   const tournamentExecutionJob = lockAcquisitionResult.executionJob;
   let backlogPassCount = 0;
   let appliedMatchCount = 0;
-  const listPendingScoreboardMatchesForTournament = () =>
-    QUERIES_MATCH.listPendingScoreboardMatchesForTournament({
+  const listMatchesAwaitingScoreboardCalculationForTournament = () =>
+    QUERIES_MATCH.listMatchesAwaitingScoreboardCalculationForTournament({
       tournamentId: input.tournamentId,
       limit: input.batchSize,
     });
 
   try {
-    let pendingScoreboardMatches = await listPendingScoreboardMatchesForTournament();
+    let matchesAwaitingScoreboardCalculation = await listMatchesAwaitingScoreboardCalculationForTournament();
 
-    while (pendingScoreboardMatches.length > 0) {
+    while (matchesAwaitingScoreboardCalculation.length > 0) {
       backlogPassCount += 1;
 
-      for (const pendingScoreboardMatch of pendingScoreboardMatches) {
-        await input.processPendingMatch(pendingScoreboardMatch);
+      for (const matchAwaitingScoreboardCalculation of matchesAwaitingScoreboardCalculation) {
+        await input.processMatchAwaitingScoreboardCalculation(matchAwaitingScoreboardCalculation);
         appliedMatchCount += 1;
       }
 
-      pendingScoreboardMatches = await listPendingScoreboardMatchesForTournament();
+      matchesAwaitingScoreboardCalculation = await listMatchesAwaitingScoreboardCalculationForTournament();
     }
 
     const completedAt = new Date();

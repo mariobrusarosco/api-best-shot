@@ -4,7 +4,7 @@ import { QUERIES_SCOREBOARD } from '@/domains/scoreboard/queries';
 import { SCOREBOARD_OPERATION_TYPES } from '@/domains/scoreboard/contracts';
 
 export const scoreboardApplyPendingTournamentsHandler = async (): Promise<void> => {
-  const query = await QUERIES_MATCH.listTournamentsWithPendingScoreboardMatches();
+  const query = await QUERIES_MATCH.listTournamentsWithMatchesAwaitingScoreboardCalculation();
   const eligibleTournaments = query.map(tournament => ({
     id: tournament.tournamentId,
     label: tournament.tournamentLabel,

@@ -1,10 +1,10 @@
 import { QUERIES_MATCH } from '@/domains/match/queries';
 
-export type PendingScoreboardMatch = Awaited<
-  ReturnType<typeof QUERIES_MATCH.listPendingScoreboardMatchesForTournament>
+export type MatchAwaitingScoreboardCalculation = Awaited<
+  ReturnType<typeof QUERIES_MATCH.listMatchesAwaitingScoreboardCalculationForTournament>
 >[number];
 
-export type ProcessPendingScoreboardMatchResult = {
+export type ProcessMatchAwaitingScoreboardCalculationResult = {
   matchId: string;
   externalId?: string;
   roundSlug?: string;

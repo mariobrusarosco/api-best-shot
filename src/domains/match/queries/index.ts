@@ -177,7 +177,7 @@ const listDueOpenMatchesForPolling = async (params: { now: Date; limit: number }
     .limit(params.limit);
 };
 
-const listTournamentsWithPendingScoreboardMatches = async (params?: { limit?: number }) => {
+const listTournamentsWithMatchesAwaitingScoreboardCalculation = async (params?: { limit?: number }) => {
   const baseQuery = db
     .selectDistinct({
       tournamentId: T_Match.tournamentId,
@@ -195,7 +195,10 @@ const listTournamentsWithPendingScoreboardMatches = async (params?: { limit?: nu
   return await baseQuery;
 };
 
-const listPendingScoreboardMatchesForTournament = async (params: { tournamentId: string; limit?: number }) => {
+const listMatchesAwaitingScoreboardCalculationForTournament = async (params: {
+  tournamentId: string;
+  limit?: number;
+}) => {
   const baseQuery = db
     .select({
       id: T_Match.id,
@@ -328,8 +331,8 @@ export const QUERIES_MATCH = {
   getMatchesByTournament,
   getMatchById,
   listDueOpenMatchesForPolling,
-  listTournamentsWithPendingScoreboardMatches,
-  listPendingScoreboardMatchesForTournament,
+  listTournamentsWithMatchesAwaitingScoreboardCalculation,
+  listMatchesAwaitingScoreboardCalculationForTournament,
   updateMatchFromPolling,
   touchMatchCheckedAt,
   createMatches,

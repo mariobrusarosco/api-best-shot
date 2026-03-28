@@ -8,7 +8,7 @@ import type {
   ScoreboardWorkflowStatus,
 } from '@/domains/scoreboard/contracts';
 import { SCOREBOARD_APPLY_PENDING_TOURNAMENT_EXECUTION_OPERATION_TYPE } from './execution-job-store';
-import type { ProcessPendingScoreboardMatchResult } from './types';
+import type { ProcessMatchAwaitingScoreboardCalculationResult } from './types';
 
 export type UnexpectedFailureMatchInput = {
   matchId: string;
@@ -18,7 +18,7 @@ export type UnexpectedFailureMatchInput = {
 };
 
 export const buildAppliedMatchDetail = (
-  result: ProcessPendingScoreboardMatchResult
+  result: ProcessMatchAwaitingScoreboardCalculationResult
 ): TournamentScoreboardExecutionMatchDetail => {
   return {
     matchId: result.matchId,

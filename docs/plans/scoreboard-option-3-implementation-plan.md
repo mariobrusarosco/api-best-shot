@@ -350,31 +350,37 @@ The first scoreboard implementation will **not** do these things:
 #### Task 2.4 - Persist success/failure summary and report [ ]
 
 ##### Task 2.4.1 - Define the runner-to-match-processor result contract [x]
+
 - decide exactly what `processPendingMatch(...)` returns so the runner can aggregate summary data without owning Task 3 internals
 - keep this focused on per-match metrics and IDs only
 
 ##### Task 2.4.2 - Extract scoreboard summary/report builders out of the runner [x]
+
 - build the tournament summary from per-match results
 - build report `details` and `data`
 - keep aggregation helpers out of `tournament-runner.ts`
 
 ##### Task 2.4.3 - Add a scoreboard report uploader [x]
+
 - create a scoreboard-specific report uploader
 - keep S3/report-upload concerns out of `tournament-runner.ts`
 
 ##### Task 2.4.4 - Extend execution finalization helpers for report persistence [x]
+
 - allow `completed`, `partial_failure`, and `failed` finalization to persist:
   - summary
   - report file key
   - report file URL
 
 ##### Task 2.4.5 - Wire the runner to use the extracted helpers [ ]
+
 - keep `tournament-runner.ts` responsible only for:
   - lock + loop
-  - calling `processPendingMatch(...)`
-  - delegating summary/report/finalization work to helpers
+  - calling `processMatchAwaitingScoreboardCalculation(...)`
+- move summary/report/upload orchestration into a thin wrapper around the runner, not into the runner itself
 
 ##### Task 2.4.6 - Add the minimal failure-path logging for persisted reports [ ]
+
 - log finalize/report-upload failures without hiding the original execution error
 
 ### Task 3 - Implement per-match application [ ]
@@ -407,7 +413,7 @@ The first scoreboard implementation will **not** do these things:
 
 #### Task 2.3 - Return league under-calculation status derived from tournament states [ ]
 
-## Phase 4 - Rollout Safety
+## Phase 4 - Rollout Safety [POSTPONED]
 
 ### Task 1 - Backfill and recovery [ ]
 

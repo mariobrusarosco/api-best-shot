@@ -115,27 +115,63 @@ export const runTournamentScoreboardExecution = async (
       summary: executionSummary,
       reportUpload,
     });
-    const finalizedExecutionJob =
-      executionStatus === SCOREBOARD_EXECUTION_STATUSES.COMPLETED
-        ? await completeTournamentScoreboardExecutionJob({
-            requestId,
-            completedAt,
-            duration: completedAt.getTime() - startedAt.getTime(),
-            summary: executionSummaryWithReportUpload,
-            reportFileKey: reportUpload.reportFileKey,
-            reportFileUrl: reportUpload.reportFileUrl,
-          })
-        : await partiallyFailTournamentScoreboardExecutionJob({
-            requestId,
-            completedAt,
-            duration: completedAt.getTime() - startedAt.getTime(),
-            summary: executionSummaryWithReportUpload,
-            reportFileKey: reportUpload.reportFileKey,
-            reportFileUrl: reportUpload.reportFileUrl,
-          });
+    let finalizedExecutionJob: TournamentScoreboardExecutionJob | null;
+
+    try {
+      finalizedExecutionJob =
+        executionStatus === SCOREBOARD_EXECUTION_STATUSES.COMPLETED
+          ? await completeTournamentScoreboardExecutionJob({
+              requestId,
+              completedAt,
+              duration: completedAt.getTime() - startedAt.getTime(),
+              summary: executionSummaryWithReportUpload,
+              reportFileKey: reportUpload.reportFileKey,
+              reportFileUrl: reportUpload.reportFileUrl,
+            })
+          : await partiallyFailTournamentScoreboardExecutionJob({
+              requestId,
+              completedAt,
+              duration: completedAt.getTime() - startedAt.getTime(),
+              summary: executionSummaryWithReportUpload,
+              reportFileKey: reportUpload.reportFileKey,
+              reportFileUrl: reportUpload.reportFileUrl,
+            });
+    } catch (finalizeError) {
+      Logger.error(finalizeError as Error, {
+        domain: DOMAINS.TOURNAMENT,
+        component: 'scoreboard',
+        operation: 'runTournamentScoreboardExecution.persistFinalStatusFailure',
+        requestId,
+        tournamentId: input.tournamentId,
+        executionStatus,
+        reportUploadStatus: reportUpload.reportUploadStatus,
+        reportFileKey: reportUpload.reportFileKey,
+        reportFileUrl: reportUpload.reportFileUrl,
+        appliedMatchCount: String(backlogProcessingResult.appliedMatchResults.length),
+      });
+
+      throw finalizeError;
+    }
 
     if (!finalizedExecutionJob) {
-      throw new Error(`Tournament scoreboard execution finalization returned no row for requestId=${requestId}`);
+      const finalizeError = new Error(
+        `Tournament scoreboard execution finalization returned no row for requestId=${requestId}`
+      );
+
+      Logger.error(finalizeError, {
+        domain: DOMAINS.TOURNAMENT,
+        component: 'scoreboard',
+        operation: 'runTournamentScoreboardExecution.persistFinalStatusFailure',
+        requestId,
+        tournamentId: input.tournamentId,
+        executionStatus,
+        reportUploadStatus: reportUpload.reportUploadStatus,
+        reportFileKey: reportUpload.reportFileKey,
+        reportFileUrl: reportUpload.reportFileUrl,
+        appliedMatchCount: String(backlogProcessingResult.appliedMatchResults.length),
+      });
+
+      throw finalizeError;
     }
 
     return {

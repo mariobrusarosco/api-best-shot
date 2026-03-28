@@ -25,11 +25,7 @@ export type TournamentScoreboardExecutionSummary = {
   totalOperations: number;
   successfulOperations: number;
   failedOperations: number;
-  pendingMatchesDetected: number;
   appliedMatches: number;
-  remainingPendingMatches: number;
-  appliedMatchIdsPreview?: string[];
-  failedMatchIdsPreview?: string[];
   reportUploadStatus?: 'uploaded' | 'failed';
   reportAvailable?: boolean;
   reportUploadError?: string;

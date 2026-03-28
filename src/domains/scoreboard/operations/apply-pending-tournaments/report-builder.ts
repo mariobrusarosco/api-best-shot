@@ -8,17 +8,10 @@ import type {
   ScoreboardWorkflowStatus,
 } from '@/domains/scoreboard/contracts';
 import { SCOREBOARD_APPLY_PENDING_TOURNAMENT_EXECUTION_OPERATION_TYPE } from './execution-job-store';
-import type { ProcessMatchAwaitingScoreboardCalculationResult } from './types';
-
-export type UnexpectedFailureMatchInput = {
-  matchId: string;
-  externalId?: string;
-  roundSlug?: string;
-  errorMessage: string;
-};
+import type { FailedMatchScoreboardProcessing, ProcessEndedMatchForScoreboardResult } from './types';
 
 export const buildAppliedMatchDetail = (
-  result: ProcessMatchAwaitingScoreboardCalculationResult
+  result: ProcessEndedMatchForScoreboardResult
 ): TournamentScoreboardExecutionMatchDetail => {
   return {
     matchId: result.matchId,
@@ -29,7 +22,7 @@ export const buildAppliedMatchDetail = (
 };
 
 export const buildUnexpectedFailureMatchDetail = (
-  input: UnexpectedFailureMatchInput
+  input: FailedMatchScoreboardProcessing
 ): TournamentScoreboardExecutionMatchDetail => {
   return {
     matchId: input.matchId,
@@ -41,18 +34,14 @@ export const buildUnexpectedFailureMatchDetail = (
 };
 
 export const buildExecutionSummary = (input: {
-  pendingMatchesDetected: number;
   appliedDetails: TournamentScoreboardExecutionMatchDetail[];
   unexpectedFailures: TournamentScoreboardExecutionMatchDetail[];
-  remainingPendingMatches: number;
 }): TournamentScoreboardExecutionSummary => {
   return {
     totalOperations: input.appliedDetails.length + input.unexpectedFailures.length,
     successfulOperations: input.appliedDetails.length,
     failedOperations: input.unexpectedFailures.length,
-    pendingMatchesDetected: input.pendingMatchesDetected,
     appliedMatches: input.appliedDetails.length,
-    remainingPendingMatches: input.remainingPendingMatches,
   };
 };
 

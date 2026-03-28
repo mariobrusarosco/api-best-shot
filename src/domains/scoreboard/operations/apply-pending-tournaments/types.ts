@@ -4,8 +4,15 @@ export type MatchAwaitingScoreboardCalculation = Awaited<
   ReturnType<typeof QUERIES_MATCH.listMatchesAwaitingScoreboardCalculationForTournament>
 >[number];
 
-export type ProcessMatchAwaitingScoreboardCalculationResult = {
+export type ProcessEndedMatchForScoreboardResult = {
   matchId: string;
   externalId?: string;
   roundSlug?: string;
+};
+
+export type FailedMatchScoreboardProcessing = {
+  matchId: string;
+  externalId?: string;
+  roundSlug?: string;
+  errorMessage: string;
 };

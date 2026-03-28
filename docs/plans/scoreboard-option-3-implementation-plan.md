@@ -372,11 +372,11 @@ The first scoreboard implementation will **not** do these things:
   - report file key
   - report file URL
 
-##### Task 2.4.5 - Wire the runner to use the extracted helpers [ ]
+##### Task 2.4.5 - Wire the runner to use the extracted helpers [x]
 
 - keep `tournament-runner.ts` responsible only for:
   - lock + loop
-  - calling `processMatchAwaitingScoreboardCalculation(...)`
+  - calling `processEndedMatchForScoreboard(...)`
 - move summary/report/upload orchestration into a thin wrapper around the runner, not into the runner itself
 
 ##### Task 2.4.6 - Add the minimal failure-path logging for persisted reports [ ]

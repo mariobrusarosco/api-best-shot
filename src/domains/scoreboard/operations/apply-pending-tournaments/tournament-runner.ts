@@ -1,23 +1,23 @@
-import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
 import { QUERIES_MATCH } from '@/domains/match/queries';
-import { randomUUID } from 'crypto';
 import {
-  completeTournamentScoreboardExecutionJob,
-  failTournamentScoreboardExecutionJob,
   tryAcquireTournamentScoreboardExecutionLock,
   type TournamentScoreboardExecutionJob,
 } from './execution-job-store';
-import type { MatchAwaitingScoreboardCalculation, ProcessMatchAwaitingScoreboardCalculationResult } from './types';
+import type {
+  FailedMatchScoreboardProcessing,
+  MatchAwaitingScoreboardCalculation,
+  ProcessEndedMatchForScoreboardResult,
+} from './types';
 
-export type TournamentScoreboardBacklogExecutionResult =
+export type TournamentScoreboardBacklogProcessingResult =
   | {
       outcome: 'already_locked';
       requestId: string;
       tournamentId: string;
       executionJob: null;
       backlogPassCount: number;
-      appliedMatchCount: number;
+      appliedMatchResults: ProcessEndedMatchForScoreboardResult[];
+      failedMatch: null;
     }
   | {
       outcome: 'completed';
@@ -25,99 +25,94 @@ export type TournamentScoreboardBacklogExecutionResult =
       tournamentId: string;
       executionJob: TournamentScoreboardExecutionJob;
       backlogPassCount: number;
-      appliedMatchCount: number;
+      appliedMatchResults: ProcessEndedMatchForScoreboardResult[];
+      failedMatch: null;
+    }
+  | {
+      outcome: 'partial_failure';
+      requestId: string;
+      tournamentId: string;
+      executionJob: TournamentScoreboardExecutionJob;
+      backlogPassCount: number;
+      appliedMatchResults: ProcessEndedMatchForScoreboardResult[];
+      failedMatch: FailedMatchScoreboardProcessing;
     };
 
-export type RunTournamentScoreboardBacklogExecutionInput = {
+export type RunTournamentScoreboardBacklogProcessingInput = {
   tournamentId: string;
-  requestId?: string;
-  startedAt?: Date;
+  requestId: string;
+  startedAt: Date;
   batchSize?: number;
-  processMatchAwaitingScoreboardCalculation: (
+  processEndedMatchForScoreboard: (
     match: MatchAwaitingScoreboardCalculation
-  ) => Promise<ProcessMatchAwaitingScoreboardCalculationResult>;
+  ) => Promise<ProcessEndedMatchForScoreboardResult>;
 };
 
-export const runTournamentScoreboardBacklogExecution = async (
-  input: RunTournamentScoreboardBacklogExecutionInput
-): Promise<TournamentScoreboardBacklogExecutionResult> => {
-  const requestId = input.requestId ?? randomUUID();
-  const startedAt = input.startedAt ?? new Date();
+export const runTournamentScoreboardBacklogProcessing = async (
+  input: RunTournamentScoreboardBacklogProcessingInput
+): Promise<TournamentScoreboardBacklogProcessingResult> => {
   const lockAcquisitionResult = await tryAcquireTournamentScoreboardExecutionLock({
-    requestId,
+    requestId: input.requestId,
     tournamentId: input.tournamentId,
-    startedAt,
+    startedAt: input.startedAt,
   });
 
   if (lockAcquisitionResult.outcome === 'already_locked') {
     return {
       outcome: 'already_locked',
-      requestId,
+      requestId: input.requestId,
       tournamentId: input.tournamentId,
       executionJob: null,
       backlogPassCount: 0,
-      appliedMatchCount: 0,
+      appliedMatchResults: [],
+      failedMatch: null,
     };
   }
 
-  const tournamentExecutionJob = lockAcquisitionResult.executionJob;
+  const appliedMatchResults: ProcessEndedMatchForScoreboardResult[] = [];
   let backlogPassCount = 0;
-  let appliedMatchCount = 0;
   const listMatchesAwaitingScoreboardCalculationForTournament = () =>
     QUERIES_MATCH.listMatchesAwaitingScoreboardCalculationForTournament({
       tournamentId: input.tournamentId,
       limit: input.batchSize,
     });
+  let matchesAwaitingScoreboardCalculation = await listMatchesAwaitingScoreboardCalculationForTournament();
 
-  try {
-    let matchesAwaitingScoreboardCalculation = await listMatchesAwaitingScoreboardCalculationForTournament();
+  while (matchesAwaitingScoreboardCalculation.length > 0) {
+    backlogPassCount += 1;
 
-    while (matchesAwaitingScoreboardCalculation.length > 0) {
-      backlogPassCount += 1;
-
-      for (const matchAwaitingScoreboardCalculation of matchesAwaitingScoreboardCalculation) {
-        await input.processMatchAwaitingScoreboardCalculation(matchAwaitingScoreboardCalculation);
-        appliedMatchCount += 1;
+    for (const matchAwaitingScoreboardCalculation of matchesAwaitingScoreboardCalculation) {
+      try {
+        const processedMatchResult = await input.processEndedMatchForScoreboard(matchAwaitingScoreboardCalculation);
+        appliedMatchResults.push(processedMatchResult);
+      } catch (error: unknown) {
+        return {
+          outcome: 'partial_failure',
+          requestId: input.requestId,
+          tournamentId: input.tournamentId,
+          executionJob: lockAcquisitionResult.executionJob,
+          backlogPassCount,
+          appliedMatchResults,
+          failedMatch: {
+            matchId: matchAwaitingScoreboardCalculation.id,
+            externalId: matchAwaitingScoreboardCalculation.externalId ?? undefined,
+            roundSlug: matchAwaitingScoreboardCalculation.roundSlug ?? undefined,
+            errorMessage: error instanceof Error ? error.message : String(error),
+          },
+        };
       }
-
-      matchesAwaitingScoreboardCalculation = await listMatchesAwaitingScoreboardCalculationForTournament();
     }
 
-    const completedAt = new Date();
-
-    await completeTournamentScoreboardExecutionJob({
-      requestId,
-      completedAt,
-      duration: completedAt.getTime() - startedAt.getTime(),
-    });
-
-    return {
-      outcome: 'completed',
-      requestId,
-      tournamentId: input.tournamentId,
-      executionJob: tournamentExecutionJob,
-      backlogPassCount,
-      appliedMatchCount,
-    };
-  } catch (error) {
-    const completedAt = new Date();
-
-    try {
-      await failTournamentScoreboardExecutionJob({
-        requestId,
-        completedAt,
-        duration: completedAt.getTime() - startedAt.getTime(),
-      });
-    } catch (finalizeError) {
-      Logger.error(finalizeError as Error, {
-        domain: DOMAINS.TOURNAMENT,
-        component: 'scoreboard',
-        operation: 'runTournamentScoreboardBacklogExecution.finalizeFailure',
-        requestId,
-        tournamentId: input.tournamentId,
-      });
-    }
-
-    throw error;
+    matchesAwaitingScoreboardCalculation = await listMatchesAwaitingScoreboardCalculationForTournament();
   }
+
+  return {
+    outcome: 'completed',
+    requestId: input.requestId,
+    tournamentId: input.tournamentId,
+    executionJob: lockAcquisitionResult.executionJob,
+    backlogPassCount,
+    appliedMatchResults,
+    failedMatch: null,
+  };
 };

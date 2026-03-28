@@ -387,9 +387,9 @@ The first scoreboard implementation will **not** do these things:
 
 #### Task 3.1 - Load match guesses [x]
 
-#### Task 3.2 - Score guesses with `runGuessAnalysis(...)` [ ]
+#### Task 3.2 - Score guesses with `runGuessAnalysis(...)` [x]
 
-#### Task 3.3 - Insert ledger rows transactionally [ ]
+#### Task 3.3 - Insert ledger rows transactionally [x]
 
 #### Task 3.4 - Update tournament aggregate transactionally [ ]
 

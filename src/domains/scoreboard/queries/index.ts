@@ -18,14 +18,17 @@ type GetExecutionsByTournamentOptions = {
   offset?: number;
 };
 
+type ScoreboardQueryExecutor = typeof db;
+
 const insertLedgerEntriesConflictSafe = async (
-  entries: DB_InsertScoreboardLedger[]
+  entries: DB_InsertScoreboardLedger[],
+  executor: ScoreboardQueryExecutor = db
 ): Promise<DB_SelectScoreboardLedger[]> => {
   if (entries.length === 0) {
     return [];
   }
 
-  return db
+  return executor
     .insert(T_ScoreboardLedger)
     .values(entries)
     .onConflictDoNothing({

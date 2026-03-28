@@ -1,7 +1,7 @@
 import db from '@/core/database';
 import { T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
-import { eq, and } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 const selectMemberGuessesForTournament = async (memberId: string, tournamentId: string) => {
   const guesses = await db
@@ -32,7 +32,7 @@ const getGuessesByMatchId = async (matchId: string) => {
     .where(eq(T_Guess.matchId, matchId));
 };
 
-const listGuessesToScoreForEndedMatch = async (matchId: string) => {
+const listGuessesForEndedMatch = async (matchId: string) => {
   return db
     .select()
     .from(T_Guess)
@@ -45,5 +45,5 @@ export const QUERIES_GUESS = {
   selectMemberGuessesForTournament,
   getAllMemberGuesses,
   getGuessesByMatchId,
-  listGuessesToScoreForEndedMatch,
+  listGuessesForEndedMatch,
 };

@@ -1,4 +1,5 @@
 import db from '@/core/database';
+import { SCOREBOARD_EXECUTION_STATUSES, type ScoreboardOperationType } from '@/domains/scoreboard/contracts';
 import {
   DB_InsertScoreboardExecution,
   DB_InsertScoreboardLedger,
@@ -8,7 +9,7 @@ import {
   T_ScoreboardExecutions,
   T_ScoreboardLedger,
 } from '@/domains/scoreboard/schema';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 
 type GetExecutionsByTournamentOptions = {
   operationType?: DB_SelectScoreboardExecution['operationType'];
@@ -124,6 +125,31 @@ const getExecutionsByTournament = async (
   return await baseQuery;
 };
 
+const listTournamentIdsWithInProgressExecutions = async (params: {
+  operationType: ScoreboardOperationType;
+  tournamentIds?: string[];
+}): Promise<string[]> => {
+  if (params.tournamentIds && params.tournamentIds.length === 0) {
+    return [];
+  }
+
+  const conditions = [
+    eq(T_ScoreboardExecutions.operationType, params.operationType),
+    eq(T_ScoreboardExecutions.status, SCOREBOARD_EXECUTION_STATUSES.IN_PROGRESS),
+  ];
+
+  if (params.tournamentIds) {
+    conditions.push(inArray(T_ScoreboardExecutions.tournamentId, params.tournamentIds));
+  }
+
+  const rows = await db
+    .selectDistinct({ tournamentId: T_ScoreboardExecutions.tournamentId })
+    .from(T_ScoreboardExecutions)
+    .where(and(...conditions));
+
+  return rows.map(row => row.tournamentId);
+};
+
 export const QUERIES_SCOREBOARD = {
   insertLedgerEntriesConflictSafe,
   listLedgerEntriesByMatch,
@@ -134,4 +160,5 @@ export const QUERIES_SCOREBOARD = {
   getExecutionById,
   getExecutionByRequestId,
   getExecutionsByTournament,
+  listTournamentIdsWithInProgressExecutions,
 };

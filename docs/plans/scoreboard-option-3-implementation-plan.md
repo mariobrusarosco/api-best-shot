@@ -319,10 +319,10 @@ The first scoreboard implementation will **not** do these things:
 
 ## Phase 2 - Processing Contract
 
-### Task 1 - Add scoreboard cron target [ ]
+### Task 1 - Add scoreboard cron target [x]
 #### Task 1.1 - Add `scoreboard.apply_pending_tournaments` to cron constants and registry [x]
 #### Task 1.2 - Implement handler that discovers eligible tournaments [x]
-#### Task 1.3 - Ensure handler respects tournament-level lock rules [ ]
+#### Task 1.3 - Ensure handler respects tournament-level lock rules [x]
 
 ### Task 2 - Implement tournament execution runner [ ]
 #### Task 2.1 - Create one tournament execution record [ ]

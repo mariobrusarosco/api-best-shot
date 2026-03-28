@@ -393,7 +393,7 @@ The first scoreboard implementation will **not** do these things:
 
 #### Task 3.4 - Update tournament aggregate transactionally [x]
 
-#### Task 3.5 - Mark `scoreboardAppliedAt` transactionally [ ]
+#### Task 3.5 - Mark `scoreboardAppliedAt` transactionally [x]
 
 ## Phase 3 - Read Models
 

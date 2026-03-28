@@ -12,6 +12,8 @@ import type { DB_InsertMatch, DB_SelectMatch } from '../schema';
 dayjs.extend(utc);
 dayjs.extend(isToday);
 
+type MatchQueryExecutor = typeof db;
+
 const currentDayMatchesOnDatabase = async (filter?: { tournamentId?: string }) => {
   const startOfDay = dayjs().utc().startOf('day').toDate().toISOString();
   const endOfDay = dayjs().utc().endOf('day').toDate().toISOString();
@@ -147,6 +149,23 @@ const getMatchesByTournament = async (tournamentId: string, roundId: string) => 
 const getMatchById = async (matchId: string) => {
   const [match] = await db.select().from(T_Match).where(eq(T_Match.id, matchId)).limit(1);
   return match || null;
+};
+
+const markMatchScoreboardApplied = async (
+  matchId: string,
+  scoreboardAppliedAt: Date,
+  executor: MatchQueryExecutor = db
+) => {
+  const [updatedMatch] = await executor
+    .update(T_Match)
+    .set({
+      scoreboardAppliedAt,
+      updatedAt: scoreboardAppliedAt,
+    })
+    .where(and(eq(T_Match.id, matchId), isNull(T_Match.scoreboardAppliedAt)))
+    .returning();
+
+  return updatedMatch || null;
 };
 
 const listDueOpenMatchesForPolling = async (params: { now: Date; limit: number }) => {
@@ -330,6 +349,7 @@ export const QUERIES_MATCH = {
   nearestMatch,
   getMatchesByTournament,
   getMatchById,
+  markMatchScoreboardApplied,
   listDueOpenMatchesForPolling,
   listTournamentsWithMatchesAwaitingScoreboardCalculation,
   listMatchesAwaitingScoreboardCalculationForTournament,

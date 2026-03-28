@@ -35,7 +35,8 @@ Build the first durable scoreboard system for Best Shot using:
 9. Do not persist league totals in the first implementation.
    - league totals are computed from tournament aggregates on read
 10. Do not introduce a new queue platform in the first implementation.
-   - use the existing cron platform and DB-backed backlog rule
+
+- use the existing cron platform and DB-backed backlog rule
 
 ## Phase 0 - Architecture Boundary
 
@@ -299,67 +300,131 @@ The first scoreboard implementation will **not** do these things:
 ## Phase 1 - Schema And Persistence
 
 ### Task 1 - Add backlog marker to match [x]
+
 #### Task 1.1 - Add `scoreboardAppliedAt` to `match` schema [x]
+
 #### Task 1.2 - Generate migration with Drizzle workflow (`yarn db:generate`) [x]
+
 #### Task 1.3 - Apply migration and verify index/typing exposure [x]
 
 ### Task 2 - Add scoreboard ledger schema [x]
+
 #### Task 2.1 - Create `scoreboard_ledger` schema [x]
+
 #### Task 2.2 - Add uniqueness constraint for `(matchId, memberId, ruleVersion)` [x]
+
 #### Task 2.3 - Add query helpers for ledger inserts and conflict-safe checks [x]
 
 ### Task 3 - Add scoreboard execution schema [x]
+
 #### Task 3.1 - Create scoreboard execution table(s) [x]
+
 #### Task 3.2 - Add query helpers to create, update, and fetch executions [x]
+
 #### Task 3.3 - Define summary and report fields for per-tournament runs [x]
 
 ### Task 4 - Prepare tournament aggregate writes [x]
+
 #### Task 4.1 - Add helper to upsert missing `tournament_scoreboard` rows [x]
+
 #### Task 4.2 - Reuse or adapt bulk points update helpers [x]
 
 ## Phase 2 - Processing Contract
 
 ### Task 1 - Add scoreboard cron target [x]
+
 #### Task 1.1 - Add `scoreboard.apply_pending_tournaments` to cron constants and registry [x]
+
 #### Task 1.2 - Implement handler that discovers eligible tournaments [x]
+
 #### Task 1.3 - Ensure handler respects tournament-level lock rules [x]
 
 ### Task 2 - Implement tournament execution runner [ ]
+
 #### Task 2.1 - Create one tournament execution record [x]
+
 #### Task 2.2 - Acquire tournament lock [x]
+
 #### Task 2.3 - Loop until tournament backlog is empty or execution fails [x]
+
 #### Task 2.4 - Persist success/failure summary and report [ ]
 
+##### Task 2.4.1 - Define the runner-to-match-processor result contract [x]
+- decide exactly what `processPendingMatch(...)` returns so the runner can aggregate summary data without owning Task 3 internals
+- keep this focused on per-match metrics and IDs only
+
+##### Task 2.4.2 - Extract scoreboard summary/report builders out of the runner [x]
+- build the tournament summary from per-match results
+- build report `details` and `data`
+- keep aggregation helpers out of `tournament-runner.ts`
+
+##### Task 2.4.3 - Add a scoreboard report uploader [x]
+- create a scoreboard-specific report uploader
+- keep S3/report-upload concerns out of `tournament-runner.ts`
+
+##### Task 2.4.4 - Extend execution finalization helpers for report persistence [ ]
+- allow `completed`, `partial_failure`, and `failed` finalization to persist:
+  - summary
+  - report file key
+  - report file URL
+
+##### Task 2.4.5 - Wire the runner to use the extracted helpers [ ]
+- keep `tournament-runner.ts` responsible only for:
+  - lock + loop
+  - calling `processPendingMatch(...)`
+  - delegating summary/report/finalization work to helpers
+
+##### Task 2.4.6 - Add the minimal failure-path logging for persisted reports [ ]
+- log finalize/report-upload failures without hiding the original execution error
+
 ### Task 3 - Implement per-match application [ ]
+
 #### Task 3.1 - Load match guesses [ ]
+
 #### Task 3.2 - Score guesses with `runGuessAnalysis(...)` [ ]
+
 #### Task 3.3 - Insert ledger rows transactionally [ ]
+
 #### Task 3.4 - Update tournament aggregate transactionally [ ]
+
 #### Task 3.5 - Mark `scoreboardAppliedAt` transactionally [ ]
 
 ## Phase 3 - Read Models
 
 ### Task 1 - Tournament score reads [ ]
+
 #### Task 1.1 - Read member tournament score from `tournament_scoreboard.points` [ ]
+
 #### Task 1.2 - Return tournament under-calculation status [ ]
+
 #### Task 1.3 - Keep per-guess detail paths separate from tournament total reads [ ]
 
 ### Task 2 - League score reads [ ]
+
 #### Task 2.1 - Load active league tournaments [ ]
+
 #### Task 2.2 - Sum member tournament totals across included tournaments [ ]
+
 #### Task 2.3 - Return league under-calculation status derived from tournament states [ ]
 
 ## Phase 4 - Rollout Safety
 
 ### Task 1 - Backfill and recovery [ ]
+
 #### Task 1.1 - Define how existing ended matches enter the backlog [ ]
+
 #### Task 1.2 - Add recovery path for failed or partial executions [ ]
+
 #### Task 1.3 - Verify idempotency against duplicate cron runs or retries [ ]
 
 ### Task 2 - Verification [ ]
+
 #### Task 2.1 - Test one ended match with low volume [ ]
+
 #### Task 2.2 - Test many guesses on one match [ ]
+
 #### Task 2.3 - Test multiple ended matches discovered across multiple match-sync runs [ ]
+
 #### Task 2.4 - Test league totals derived from multiple tournaments [ ]
 
 ## Expected Result

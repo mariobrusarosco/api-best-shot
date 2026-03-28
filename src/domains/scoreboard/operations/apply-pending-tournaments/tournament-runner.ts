@@ -6,78 +6,79 @@ import {
   completeScoreboardApplyPendingTournamentExecutionJob,
   failScoreboardApplyPendingTournamentExecutionJob,
   tryAcquireScoreboardApplyPendingTournamentExecutionLock,
-  type ScoreboardApplyPendingTournamentExecutionJob,
+  type ScoreboardApplyPendingTournamentExecutionJob as TournamentScoreboardExecutionJob,
 } from './execution-job-store';
+import type { PendingScoreboardMatch, ProcessPendingScoreboardMatchResult } from './types';
 
-export type PendingScoreboardMatch = Awaited<
-  ReturnType<typeof QUERIES_MATCH.listPendingScoreboardMatchesForTournament>
->[number];
-
-export type ScoreboardApplyPendingTournamentRunnerResult =
+export type TournamentScoreboardBacklogExecutionResult =
   | {
       outcome: 'already_locked';
       requestId: string;
       tournamentId: string;
       executionJob: null;
-      loopCount: number;
-      processedMatches: number;
+      backlogPassCount: number;
+      appliedMatchCount: number;
     }
   | {
       outcome: 'completed';
       requestId: string;
       tournamentId: string;
-      executionJob: ScoreboardApplyPendingTournamentExecutionJob;
-      loopCount: number;
-      processedMatches: number;
+      executionJob: TournamentScoreboardExecutionJob;
+      backlogPassCount: number;
+      appliedMatchCount: number;
     };
 
-export const runScoreboardApplyPendingTournamentLoop = async (input: {
+export type RunTournamentScoreboardBacklogExecutionInput = {
   tournamentId: string;
   requestId?: string;
   startedAt?: Date;
   batchSize?: number;
-  processPendingMatch: (match: PendingScoreboardMatch) => Promise<void>;
-}): Promise<ScoreboardApplyPendingTournamentRunnerResult> => {
+  processPendingMatch: (match: PendingScoreboardMatch) => Promise<ProcessPendingScoreboardMatchResult>;
+};
+
+export const runTournamentScoreboardBacklogExecution = async (
+  input: RunTournamentScoreboardBacklogExecutionInput
+): Promise<TournamentScoreboardBacklogExecutionResult> => {
   const requestId = input.requestId ?? randomUUID();
   const startedAt = input.startedAt ?? new Date();
-  const lockResult = await tryAcquireScoreboardApplyPendingTournamentExecutionLock({
+  const lockAcquisitionResult = await tryAcquireScoreboardApplyPendingTournamentExecutionLock({
     requestId,
     tournamentId: input.tournamentId,
     startedAt,
   });
 
-  if (lockResult.outcome === 'already_locked') {
+  if (lockAcquisitionResult.outcome === 'already_locked') {
     return {
       outcome: 'already_locked',
       requestId,
       tournamentId: input.tournamentId,
       executionJob: null,
-      loopCount: 0,
-      processedMatches: 0,
+      backlogPassCount: 0,
+      appliedMatchCount: 0,
     };
   }
 
-  const executionJob = lockResult.executionJob;
-  let loopCount = 0;
-  let processedMatches = 0;
-  const listPendingMatches = () =>
+  const tournamentExecutionJob = lockAcquisitionResult.executionJob;
+  let backlogPassCount = 0;
+  let appliedMatchCount = 0;
+  const listPendingScoreboardMatchesForTournament = () =>
     QUERIES_MATCH.listPendingScoreboardMatchesForTournament({
       tournamentId: input.tournamentId,
       limit: input.batchSize,
     });
 
   try {
-    let pendingMatches = await listPendingMatches();
+    let pendingScoreboardMatches = await listPendingScoreboardMatchesForTournament();
 
-    while (pendingMatches.length > 0) {
-      loopCount += 1;
+    while (pendingScoreboardMatches.length > 0) {
+      backlogPassCount += 1;
 
-      for (const pendingMatch of pendingMatches) {
-        await input.processPendingMatch(pendingMatch);
-        processedMatches += 1;
+      for (const pendingScoreboardMatch of pendingScoreboardMatches) {
+        await input.processPendingMatch(pendingScoreboardMatch);
+        appliedMatchCount += 1;
       }
 
-      pendingMatches = await listPendingMatches();
+      pendingScoreboardMatches = await listPendingScoreboardMatchesForTournament();
     }
 
     const completedAt = new Date();
@@ -92,9 +93,9 @@ export const runScoreboardApplyPendingTournamentLoop = async (input: {
       outcome: 'completed',
       requestId,
       tournamentId: input.tournamentId,
-      executionJob,
-      loopCount,
-      processedMatches,
+      executionJob: tournamentExecutionJob,
+      backlogPassCount,
+      appliedMatchCount,
     };
   } catch (error) {
     const completedAt = new Date();
@@ -109,7 +110,7 @@ export const runScoreboardApplyPendingTournamentLoop = async (input: {
       Logger.error(finalizeError as Error, {
         domain: DOMAINS.TOURNAMENT,
         component: 'scoreboard',
-        operation: 'runScoreboardApplyPendingTournamentLoop.finalizeFailure',
+        operation: 'runTournamentScoreboardBacklogExecution.finalizeFailure',
         requestId,
         tournamentId: input.tournamentId,
       });

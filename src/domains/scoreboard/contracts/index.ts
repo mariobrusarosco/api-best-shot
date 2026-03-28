@@ -21,62 +21,49 @@ export const SCOREBOARD_OPERATION_TYPES = {
 
 export type ScoreboardOperationType = (typeof SCOREBOARD_OPERATION_TYPES)[keyof typeof SCOREBOARD_OPERATION_TYPES];
 
-export type ScoreboardApplyPendingTournamentSummary = {
+export type TournamentScoreboardExecutionSummary = {
   totalOperations: number;
   successfulOperations: number;
   failedOperations: number;
   pendingMatchesDetected: number;
   appliedMatches: number;
-  guessesProcessed: number;
-  ledgerEntriesInserted: number;
-  membersAffected: number;
-  batchesProcessed: number;
-  totalPointsApplied: number;
   remainingPendingMatches: number;
   appliedMatchIdsPreview?: string[];
   failedMatchIdsPreview?: string[];
-  affectedMemberIdsPreview?: string[];
   reportUploadStatus?: 'uploaded' | 'failed';
   reportAvailable?: boolean;
   reportUploadError?: string;
 };
 
-export type ScoreboardApplyPendingTournamentOutcome = 'applied' | 'unexpected_failure';
+export type TournamentScoreboardExecutionOutcome = 'applied' | 'unexpected_failure';
 
-export type ScoreboardApplyPendingTournamentDetail = {
+export type TournamentScoreboardExecutionMatchDetail = {
   matchId: string;
   externalId?: string;
   roundSlug?: string;
-  guessesProcessed: number;
-  ledgerEntriesInserted: number;
-  membersAffected: number;
-  batchesProcessed: number;
-  pointsApplied: number;
-  reason: ScoreboardApplyPendingTournamentOutcome;
+  reason: TournamentScoreboardExecutionOutcome;
   errorMessage?: string;
-  causeMessage?: string;
 };
 
-export type ScoreboardApplyPendingTournamentDetails = {
-  applied: ScoreboardApplyPendingTournamentDetail[];
-  unexpectedFailures: ScoreboardApplyPendingTournamentDetail[];
+export type TournamentScoreboardExecutionDetails = {
+  applied: TournamentScoreboardExecutionMatchDetail[];
+  unexpectedFailures: TournamentScoreboardExecutionMatchDetail[];
 };
 
-export type ScoreboardApplyPendingTournamentReportData = {
+export type TournamentScoreboardExecutionReportData = {
   appliedMatchIds: string[];
   failedMatchIds: string[];
-  affectedMemberIds: string[];
 };
 
-export type TournamentScoreboardApplyPendingResult = {
+export type TournamentScoreboardExecutionResult = {
   tournamentId: string;
   status: ScoreboardWorkflowStatus;
-  summary: ScoreboardApplyPendingTournamentSummary;
-  details: ScoreboardApplyPendingTournamentDetails;
-  data: ScoreboardApplyPendingTournamentReportData;
+  summary: TournamentScoreboardExecutionSummary;
+  details: TournamentScoreboardExecutionDetails;
+  data: TournamentScoreboardExecutionReportData;
 };
 
-export type ScoreboardApplyPendingTournamentReport = {
+export type TournamentScoreboardExecutionReport = {
   requestId: string;
   operationType: typeof SCOREBOARD_OPERATION_TYPES.APPLY_PENDING_TOURNAMENT;
   status: ScoreboardWorkflowStatus;
@@ -86,12 +73,12 @@ export type ScoreboardApplyPendingTournamentReport = {
   };
   startedAt: string;
   completedAt: string;
-  summary: ScoreboardApplyPendingTournamentSummary;
-  details: ScoreboardApplyPendingTournamentDetails;
-  data: ScoreboardApplyPendingTournamentReportData;
+  summary: TournamentScoreboardExecutionSummary;
+  details: TournamentScoreboardExecutionDetails;
+  data: TournamentScoreboardExecutionReportData;
 };
 
-export type ScoreboardReportUploadResult = {
+export type TournamentScoreboardExecutionReportUploadResult = {
   reportUploadStatus: 'uploaded' | 'failed';
   reportAvailable: boolean;
   reportFileKey?: string;

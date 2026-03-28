@@ -246,6 +246,18 @@ const listMatchesAwaitingScoreboardCalculationForTournament = async (params: {
   return await baseQuery;
 };
 
+const hasMatchesAwaitingScoreboardCalculation = async (tournamentId: string): Promise<boolean> => {
+  const [row] = await db
+    .select({ id: T_Match.id })
+    .from(T_Match)
+    .where(
+      and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.status, 'ended'), isNull(T_Match.scoreboardAppliedAt))
+    )
+    .limit(1);
+
+  return !!row;
+};
+
 const updateMatchFromPolling = async (params: {
   matchId: string;
   status: DB_SelectMatch['status'];
@@ -353,6 +365,7 @@ export const QUERIES_MATCH = {
   listDueOpenMatchesForPolling,
   listTournamentsWithMatchesAwaitingScoreboardCalculation,
   listMatchesAwaitingScoreboardCalculationForTournament,
+  hasMatchesAwaitingScoreboardCalculation,
   updateMatchFromPolling,
   touchMatchCheckedAt,
   createMatches,

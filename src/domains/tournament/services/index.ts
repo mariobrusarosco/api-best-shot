@@ -26,6 +26,9 @@
  * - No other exports allowed from this file
  */
 
+import { QUERIES_MATCH } from '@/domains/match/queries';
+import { SCOREBOARD_OPERATION_TYPES } from '@/domains/scoreboard/contracts';
+import { QUERIES_SCOREBOARD } from '@/domains/scoreboard/queries';
 import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import type { ITournamentStadingsMode, TournamentMode } from '@/domains/tournament/typing';
 import { QUERIES_TOURNAMENT } from '../queries';
@@ -42,12 +45,20 @@ const listActiveTournamentsByModes = async (modes: TournamentMode[]) => {
 
 const getTournamentScore = async (memberId: string, tournamentId: string) => {
   const points = await QUERIES_TOURNAMENT.getMemberTournamentScoreboardPoints(memberId, tournamentId);
+  const [hasMatchesAwaitingScoreboardCalculation, hasInProgressScoreboardExecution] = await Promise.all([
+    QUERIES_MATCH.hasMatchesAwaitingScoreboardCalculation(tournamentId),
+    QUERIES_SCOREBOARD.hasInProgressExecutionForTournament({
+      tournamentId,
+      operationType: SCOREBOARD_OPERATION_TYPES.APPLY_PENDING_TOURNAMENT,
+    }),
+  ]);
   const guesses = await QUERIES_TOURNAMENT.getTournamentGuesses(memberId, tournamentId);
   const parsedGuesses = guesses.map((row: (typeof guesses)[number]) => runGuessAnalysis(row.guess, row.match));
 
   return {
     details: parsedGuesses,
     points,
+    underCalculation: hasMatchesAwaitingScoreboardCalculation || hasInProgressScoreboardExecution,
   };
 };
 

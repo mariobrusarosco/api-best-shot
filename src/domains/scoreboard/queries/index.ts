@@ -153,6 +153,25 @@ const listTournamentIdsWithInProgressExecutions = async (params: {
   return rows.map(row => row.tournamentId);
 };
 
+const hasInProgressExecutionForTournament = async (params: {
+  operationType: ScoreboardOperationType;
+  tournamentId: string;
+}): Promise<boolean> => {
+  const [row] = await db
+    .select({ id: T_ScoreboardExecutions.id })
+    .from(T_ScoreboardExecutions)
+    .where(
+      and(
+        eq(T_ScoreboardExecutions.operationType, params.operationType),
+        eq(T_ScoreboardExecutions.tournamentId, params.tournamentId),
+        eq(T_ScoreboardExecutions.status, SCOREBOARD_EXECUTION_STATUSES.IN_PROGRESS)
+      )
+    )
+    .limit(1);
+
+  return !!row;
+};
+
 export const QUERIES_SCOREBOARD = {
   insertLedgerEntriesConflictSafe,
   listLedgerEntriesByMatch,
@@ -164,4 +183,5 @@ export const QUERIES_SCOREBOARD = {
   getExecutionByRequestId,
   getExecutionsByTournament,
   listTournamentIdsWithInProgressExecutions,
+  hasInProgressExecutionForTournament,
 };

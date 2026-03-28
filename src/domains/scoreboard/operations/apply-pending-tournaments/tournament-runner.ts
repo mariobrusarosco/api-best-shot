@@ -3,10 +3,10 @@ import { DOMAINS } from '@/core/logger/constants';
 import { QUERIES_MATCH } from '@/domains/match/queries';
 import { randomUUID } from 'crypto';
 import {
-  completeScoreboardApplyPendingTournamentExecutionJob,
-  failScoreboardApplyPendingTournamentExecutionJob,
-  tryAcquireScoreboardApplyPendingTournamentExecutionLock,
-  type ScoreboardApplyPendingTournamentExecutionJob as TournamentScoreboardExecutionJob,
+  completeTournamentScoreboardExecutionJob,
+  failTournamentScoreboardExecutionJob,
+  tryAcquireTournamentScoreboardExecutionLock,
+  type TournamentScoreboardExecutionJob,
 } from './execution-job-store';
 import type { PendingScoreboardMatch, ProcessPendingScoreboardMatchResult } from './types';
 
@@ -41,7 +41,7 @@ export const runTournamentScoreboardBacklogExecution = async (
 ): Promise<TournamentScoreboardBacklogExecutionResult> => {
   const requestId = input.requestId ?? randomUUID();
   const startedAt = input.startedAt ?? new Date();
-  const lockAcquisitionResult = await tryAcquireScoreboardApplyPendingTournamentExecutionLock({
+  const lockAcquisitionResult = await tryAcquireTournamentScoreboardExecutionLock({
     requestId,
     tournamentId: input.tournamentId,
     startedAt,
@@ -83,7 +83,7 @@ export const runTournamentScoreboardBacklogExecution = async (
 
     const completedAt = new Date();
 
-    await completeScoreboardApplyPendingTournamentExecutionJob({
+    await completeTournamentScoreboardExecutionJob({
       requestId,
       completedAt,
       duration: completedAt.getTime() - startedAt.getTime(),
@@ -101,7 +101,7 @@ export const runTournamentScoreboardBacklogExecution = async (
     const completedAt = new Date();
 
     try {
-      await failScoreboardApplyPendingTournamentExecutionJob({
+      await failTournamentScoreboardExecutionJob({
         requestId,
         completedAt,
         duration: completedAt.getTime() - startedAt.getTime(),

@@ -362,7 +362,7 @@ The first scoreboard implementation will **not** do these things:
 - create a scoreboard-specific report uploader
 - keep S3/report-upload concerns out of `tournament-runner.ts`
 
-##### Task 2.4.4 - Extend execution finalization helpers for report persistence [ ]
+##### Task 2.4.4 - Extend execution finalization helpers for report persistence [x]
 - allow `completed`, `partial_failure`, and `failed` finalization to persist:
   - summary
   - report file key

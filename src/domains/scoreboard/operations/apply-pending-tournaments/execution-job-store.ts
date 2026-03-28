@@ -11,18 +11,18 @@ import type { DatabaseError } from '@/domains/shared/error-handling/database';
 export const SCOREBOARD_APPLY_PENDING_TOURNAMENT_EXECUTION_OPERATION_TYPE =
   SCOREBOARD_OPERATION_TYPES.APPLY_PENDING_TOURNAMENT;
 
-export type ScoreboardApplyPendingTournamentExecutionJobStatus = ScoreboardExecutionStatus;
-export type ScoreboardApplyPendingTournamentExecutionJobFinalStatus = Exclude<
-  ScoreboardApplyPendingTournamentExecutionJobStatus,
+export type TournamentScoreboardExecutionJobStatus = ScoreboardExecutionStatus;
+export type TournamentScoreboardExecutionJobFinalStatus = Exclude<
+  TournamentScoreboardExecutionJobStatus,
   typeof SCOREBOARD_EXECUTION_STATUSES.IN_PROGRESS
 >;
 
-export type ScoreboardApplyPendingTournamentExecutionJob = {
+export type TournamentScoreboardExecutionJob = {
   id: string;
   requestId: string;
   tournamentId: string;
   operationType: typeof SCOREBOARD_APPLY_PENDING_TOURNAMENT_EXECUTION_OPERATION_TYPE;
-  status: ScoreboardApplyPendingTournamentExecutionJobStatus;
+  status: TournamentScoreboardExecutionJobStatus;
   startedAt: Date;
   completedAt: Date | null;
   duration: number | null;
@@ -31,21 +31,40 @@ export type ScoreboardApplyPendingTournamentExecutionJob = {
   summary: TournamentScoreboardExecutionSummary | null;
 };
 
-export type ScoreboardApplyPendingTournamentLockResult =
+export type TournamentScoreboardExecutionPersistenceFields = {
+  summary?: TournamentScoreboardExecutionSummary;
+  reportFileKey?: string;
+  reportFileUrl?: string;
+};
+
+type FinalizeTournamentScoreboardExecutionJobInput = {
+  requestId: string;
+  status: TournamentScoreboardExecutionJobFinalStatus;
+  completedAt?: Date;
+  duration?: number;
+} & TournamentScoreboardExecutionPersistenceFields;
+
+type FinalizedTournamentScoreboardExecutionJobInput = {
+  requestId: string;
+  completedAt?: Date;
+  duration?: number;
+} & TournamentScoreboardExecutionPersistenceFields;
+
+export type TournamentScoreboardExecutionLockAcquisitionResult =
   | {
       outcome: 'acquired';
-      executionJob: ScoreboardApplyPendingTournamentExecutionJob;
+      executionJob: TournamentScoreboardExecutionJob;
     }
   | {
       outcome: 'already_locked';
       executionJob: null;
     };
 
-export const createScoreboardApplyPendingTournamentExecutionJob = async (input: {
+export const createTournamentScoreboardExecutionJob = async (input: {
   requestId: string;
   tournamentId: string;
   startedAt?: Date;
-}): Promise<ScoreboardApplyPendingTournamentExecutionJob> => {
+}): Promise<TournamentScoreboardExecutionJob> => {
   const executionJob = await QUERIES_SCOREBOARD.createExecution({
     requestId: input.requestId,
     tournamentId: input.tournamentId,
@@ -57,13 +76,13 @@ export const createScoreboardApplyPendingTournamentExecutionJob = async (input: 
   return mapExecutionJob(executionJob);
 };
 
-export const tryAcquireScoreboardApplyPendingTournamentExecutionLock = async (input: {
+export const tryAcquireTournamentScoreboardExecutionLock = async (input: {
   requestId: string;
   tournamentId: string;
   startedAt?: Date;
-}): Promise<ScoreboardApplyPendingTournamentLockResult> => {
+}): Promise<TournamentScoreboardExecutionLockAcquisitionResult> => {
   try {
-    const executionJob = await createScoreboardApplyPendingTournamentExecutionJob(input);
+    const executionJob = await createTournamentScoreboardExecutionJob(input);
 
     return {
       outcome: 'acquired',
@@ -83,23 +102,15 @@ export const tryAcquireScoreboardApplyPendingTournamentExecutionLock = async (in
   }
 };
 
-export const finalizeScoreboardApplyPendingTournamentExecutionJob = async (input: {
-  requestId: string;
-  status: ScoreboardApplyPendingTournamentExecutionJobFinalStatus;
-  completedAt?: Date;
-  duration?: number;
-  reportFileUrl?: string;
-  reportFileKey?: string;
-  summary?: TournamentScoreboardExecutionSummary;
-}): Promise<ScoreboardApplyPendingTournamentExecutionJob | null> => {
+export const finalizeTournamentScoreboardExecutionJob = async (
+  input: FinalizeTournamentScoreboardExecutionJobInput
+): Promise<TournamentScoreboardExecutionJob | null> => {
   const completedAt = input.completedAt ?? new Date();
   const executionJob = await QUERIES_SCOREBOARD.updateExecutionByRequestId(input.requestId, {
     status: input.status,
     completedAt,
     duration: input.duration,
-    reportFileUrl: input.reportFileUrl,
-    reportFileKey: input.reportFileKey,
-    summary: input.summary,
+    ...buildTournamentScoreboardExecutionPersistenceUpdate(input),
   });
 
   return executionJob ? mapExecutionJob(executionJob) : null;
@@ -107,56 +118,49 @@ export const finalizeScoreboardApplyPendingTournamentExecutionJob = async (input
 
 // TODO START: Evaluate if we really need these functions.
 // They're doing pretty much the same work
-export const completeScoreboardApplyPendingTournamentExecutionJob = async (input: {
-  requestId: string;
-  completedAt?: Date;
-  duration?: number;
-  reportFileUrl?: string;
-  reportFileKey?: string;
-  summary?: TournamentScoreboardExecutionSummary;
-}): Promise<ScoreboardApplyPendingTournamentExecutionJob | null> => {
-  return finalizeScoreboardApplyPendingTournamentExecutionJob({
+export const completeTournamentScoreboardExecutionJob = async (
+  input: FinalizedTournamentScoreboardExecutionJobInput
+): Promise<TournamentScoreboardExecutionJob | null> => {
+  return finalizeTournamentScoreboardExecutionJob({
     ...input,
     status: SCOREBOARD_EXECUTION_STATUSES.COMPLETED,
   });
 };
 
-export const failScoreboardApplyPendingTournamentExecutionJob = async (input: {
-  requestId: string;
-  completedAt?: Date;
-  duration?: number;
-  reportFileUrl?: string;
-  reportFileKey?: string;
-  summary?: TournamentScoreboardExecutionSummary;
-}): Promise<ScoreboardApplyPendingTournamentExecutionJob | null> => {
-  return finalizeScoreboardApplyPendingTournamentExecutionJob({
+export const failTournamentScoreboardExecutionJob = async (
+  input: FinalizedTournamentScoreboardExecutionJobInput
+): Promise<TournamentScoreboardExecutionJob | null> => {
+  return finalizeTournamentScoreboardExecutionJob({
     ...input,
     status: SCOREBOARD_EXECUTION_STATUSES.FAILED,
   });
 };
 
-export const partialFailScoreboardApplyPendingTournamentExecutionJob = async (input: {
-  requestId: string;
-  completedAt?: Date;
-  duration?: number;
-  reportFileUrl?: string;
-  reportFileKey?: string;
-  summary?: TournamentScoreboardExecutionSummary;
-}): Promise<ScoreboardApplyPendingTournamentExecutionJob | null> => {
-  return finalizeScoreboardApplyPendingTournamentExecutionJob({
+export const partiallyFailTournamentScoreboardExecutionJob = async (
+  input: FinalizedTournamentScoreboardExecutionJobInput
+): Promise<TournamentScoreboardExecutionJob | null> => {
+  return finalizeTournamentScoreboardExecutionJob({
     ...input,
     status: SCOREBOARD_EXECUTION_STATUSES.PARTIAL_FAILURE,
   });
 };
 // TODO END
 
-const mapExecutionJob = (executionJob: DB_SelectScoreboardExecution): ScoreboardApplyPendingTournamentExecutionJob => {
+const buildTournamentScoreboardExecutionPersistenceUpdate = (input: TournamentScoreboardExecutionPersistenceFields) => {
+  return {
+    reportFileUrl: input.reportFileUrl,
+    reportFileKey: input.reportFileKey,
+    summary: input.summary,
+  };
+};
+
+const mapExecutionJob = (executionJob: DB_SelectScoreboardExecution): TournamentScoreboardExecutionJob => {
   return {
     id: executionJob.id,
     requestId: executionJob.requestId,
     tournamentId: executionJob.tournamentId,
     operationType: SCOREBOARD_APPLY_PENDING_TOURNAMENT_EXECUTION_OPERATION_TYPE,
-    status: executionJob.status as ScoreboardApplyPendingTournamentExecutionJobStatus,
+    status: executionJob.status as TournamentScoreboardExecutionJobStatus,
     startedAt: executionJob.startedAt,
     completedAt: executionJob.completedAt,
     duration: executionJob.duration,

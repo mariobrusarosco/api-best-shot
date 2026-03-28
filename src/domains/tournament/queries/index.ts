@@ -7,15 +7,19 @@ import { DatabaseError } from '@/domains/shared/error-handling/database';
 import { T_Team } from '@/domains/team/schema';
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import {
+  DB_InsertTournamentMember,
   DB_InsertTournament,
   DB_InsertTournamentStandings,
   DB_SelectTournament,
+  DB_SelectTournamentMember,
   T_Tournament,
   T_TournamentMember,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
 import { TournamentMode, TournamentWithTypedMode } from '@/domains/tournament/typing';
 import { and, eq, inArray, SQL, sql } from 'drizzle-orm';
+
+type TournamentQueryExecutor = typeof db;
 
 const updateMemberPoints = async (memberId: string, tournamentId: string, delta: number) => {
   try {
@@ -36,7 +40,11 @@ const updateMemberPoints = async (memberId: string, tournamentId: string, delta:
   }
 };
 
-const bulkUpdateMemberPoints = async (tournamentId: string, updates: Map<string, number>) => {
+const bulkUpdateMemberPoints = async (
+  tournamentId: string,
+  updates: Map<string, number>,
+  executor: TournamentQueryExecutor = db
+) => {
   if (updates.size === 0) return;
 
   try {
@@ -58,13 +66,48 @@ const bulkUpdateMemberPoints = async (tournamentId: string, updates: Map<string,
     sqlChunks.push(sql`) AS v(member_id, delta)`);
     sqlChunks.push(sql`WHERE tm.member_id = v.member_id AND tm.tournament_id = ${tournamentId}`);
 
-    await db.execute(sql.join(sqlChunks, sql` `));
+    await executor.execute(sql.join(sqlChunks, sql` `));
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
     Logger.error(dbError, {
       domain: DOMAINS.TOURNAMENT,
       component: 'database',
       operation: 'bulkUpdateMemberPoints',
+    });
+    throw error;
+  }
+};
+
+const upsertMissingTournamentMembers = async (
+  tournamentId: string,
+  memberIds: string[]
+): Promise<DB_SelectTournamentMember[]> => {
+  const uniqueMemberIds = Array.from(new Set(memberIds));
+
+  if (uniqueMemberIds.length === 0) {
+    return [];
+  }
+
+  try {
+    const values: DB_InsertTournamentMember[] = uniqueMemberIds.map(memberId => ({
+      tournamentId,
+      memberId,
+      points: 0,
+    }));
+
+    return await db
+      .insert(T_TournamentMember)
+      .values(values)
+      .onConflictDoNothing({
+        target: [T_TournamentMember.memberId, T_TournamentMember.tournamentId],
+      })
+      .returning();
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'upsertMissingTournamentMembers',
     });
     throw error;
   }
@@ -359,4 +402,5 @@ export const QUERIES_TOURNAMENT = {
   upsertTournamentStandings,
   updateMemberPoints,
   bulkUpdateMemberPoints,
+  upsertMissingTournamentMembers,
 };

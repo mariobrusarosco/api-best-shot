@@ -6,7 +6,7 @@ import { defineTimebox } from '@/utils/timebox';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
-import { aliasedTable, and, asc, desc, eq, gte, lte, sql } from 'drizzle-orm';
+import { aliasedTable, and, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import type { DB_InsertMatch, DB_SelectMatch } from '../schema';
 
 dayjs.extend(utc);
@@ -177,6 +177,24 @@ const listDueOpenMatchesForPolling = async (params: { now: Date; limit: number }
     .limit(params.limit);
 };
 
+const listTournamentsWithPendingScoreboardMatches = async (params?: { limit?: number }) => {
+  const baseQuery = db
+    .selectDistinct({
+      tournamentId: T_Match.tournamentId,
+      tournamentLabel: T_Tournament.label,
+    })
+    .from(T_Match)
+    .leftJoin(T_Tournament, eq(T_Tournament.id, T_Match.tournamentId))
+    .where(and(eq(T_Match.status, 'ended'), isNull(T_Match.scoreboardAppliedAt)))
+    .orderBy(asc(T_Match.tournamentId));
+
+  if (params?.limit !== undefined) {
+    return await baseQuery.limit(params.limit);
+  }
+
+  return await baseQuery;
+};
+
 const updateMatchFromPolling = async (params: {
   matchId: string;
   status: DB_SelectMatch['status'];
@@ -281,6 +299,7 @@ export const QUERIES_MATCH = {
   getMatchesByTournament,
   getMatchById,
   listDueOpenMatchesForPolling,
+  listTournamentsWithPendingScoreboardMatches,
   updateMatchFromPolling,
   touchMatchCheckedAt,
   createMatches,

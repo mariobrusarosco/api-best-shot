@@ -1,7 +1,14 @@
 import Logger from '@/core/logger';
+import { QUERIES_MATCH } from '@/domains/match/queries';
 
 export const scoreboardApplyPendingTournamentsHandler = async (): Promise<void> => {
-  Logger.warn('[CRON_TARGET:scoreboard.apply_pending_tournaments] target registered but not implemented yet');
+  const query = await QUERIES_MATCH.listTournamentsWithPendingScoreboardMatches();
+  const eligibleTournaments = query.map(tournament => ({
+    id: tournament.tournamentId,
+    label: tournament.tournamentLabel,
+  }));
 
-  throw new Error('scoreboard.apply_pending_tournaments target is not implemented yet');
+  Logger.audit(`[CRON_TARGET:scoreboard.apply_pending_tournaments] eligible=${eligibleTournaments.length}`, {
+    eligibleTournaments,
+  });
 };

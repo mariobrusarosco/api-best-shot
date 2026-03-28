@@ -19,7 +19,7 @@ Build the first durable scoreboard system for Best Shot using:
 
 1. Choose **Option 3**:
    - persist score applications in a ledger
-   - materialize tournament totals into `tournament_member.points`
+   - materialize tournament totals into `tournament_scoreboard.points`
 2. Keep `runGuessAnalysis(...)` as the scoring truth.
 3. Treat the database, not the queue payload, as the durable scoreboard backlog.
 4. A match is pending scoreboard application when:
@@ -100,7 +100,7 @@ Meaning:
 Use the existing table:
 
 1. [schema/index.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/tournament/schema/index.ts)
-   - `tournament_member.points`
+   - `tournament_scoreboard.points`
 
 Meaning:
 
@@ -221,7 +221,7 @@ Per match:
 1. load guesses for that match
 2. score each guess with `runGuessAnalysis(...)`
 3. write ledger rows
-4. update `tournament_member.points`
+4. update `tournament_scoreboard.points`
 5. mark `match.scoreboardAppliedAt`
 
 Required transactional rule:
@@ -253,7 +253,7 @@ Tournament score reads must use the materialized aggregate.
 
 Primary source:
 
-1. `tournament_member.points`
+1. `tournament_scoreboard.points`
 
 Optional detail source:
 
@@ -266,7 +266,7 @@ League totals are derived from tournament aggregates.
 Meaning:
 
 1. league includes tournaments through `league_tournament`
-2. backend loads member tournament totals from `tournament_member`
+2. backend loads member tournament totals from `tournament_scoreboard`
 3. backend or frontend sums them per member
 
 Locked first implementation choice:
@@ -313,15 +313,15 @@ The first scoreboard implementation will **not** do these things:
 #### Task 3.2 - Add query helpers to create, update, and fetch executions [x]
 #### Task 3.3 - Define summary and report fields for per-tournament runs [x]
 
-### Task 4 - Prepare tournament aggregate writes [ ]
-#### Task 4.1 - Add helper to upsert missing `tournament_member` rows [ ]
-#### Task 4.2 - Reuse or adapt bulk points update helpers [ ]
+### Task 4 - Prepare tournament aggregate writes [x]
+#### Task 4.1 - Add helper to upsert missing `tournament_scoreboard` rows [x]
+#### Task 4.2 - Reuse or adapt bulk points update helpers [x]
 
 ## Phase 2 - Processing Contract
 
 ### Task 1 - Add scoreboard cron target [ ]
-#### Task 1.1 - Add `scoreboard.apply_pending_tournaments` to cron constants and registry [ ]
-#### Task 1.2 - Implement handler that discovers eligible tournaments [ ]
+#### Task 1.1 - Add `scoreboard.apply_pending_tournaments` to cron constants and registry [x]
+#### Task 1.2 - Implement handler that discovers eligible tournaments [x]
 #### Task 1.3 - Ensure handler respects tournament-level lock rules [ ]
 
 ### Task 2 - Implement tournament execution runner [ ]
@@ -340,7 +340,7 @@ The first scoreboard implementation will **not** do these things:
 ## Phase 3 - Read Models
 
 ### Task 1 - Tournament score reads [ ]
-#### Task 1.1 - Read member tournament score from `tournament_member.points` [ ]
+#### Task 1.1 - Read member tournament score from `tournament_scoreboard.points` [ ]
 #### Task 1.2 - Return tournament under-calculation status [ ]
 #### Task 1.3 - Keep per-guess detail paths separate from tournament total reads [ ]
 

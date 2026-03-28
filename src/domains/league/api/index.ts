@@ -102,6 +102,30 @@ const getLeague = async (req: Request, res: Response) => {
   }
 };
 
+const getLeagueScore = async (req: Request, res: Response) => {
+  try {
+    const memberId = Utils.getAuthenticatedUserId(req, res);
+    const { leagueId } = req.params;
+
+    const isParticipant = await SERVICES_LEAGUE.checkMembership(memberId, leagueId);
+    if (!isParticipant) {
+      return res.status(ErrorMapper.NOT_LEAGUE_MEMBER.status).send(ErrorMapper.NOT_LEAGUE_MEMBER.user);
+    }
+
+    const leagueScore = await SERVICES_LEAGUE.getLeagueScore(leagueId, memberId);
+    return res.status(200).send(leagueScore);
+  } catch (error: unknown) {
+    Logger.error(error as Error, {
+      domain: DOMAINS.LEAGUE,
+      component: 'api',
+      operation: 'getLeagueScore',
+    });
+    return res
+      .status(GlobalErrorMapper.INTERNAL_SERVER_ERROR.status)
+      .send(GlobalErrorMapper.INTERNAL_SERVER_ERROR.user);
+  }
+};
+
 const updateLeagueTournaments = async (req: Request, res: Response) => {
   try {
     const { updateInput } = req.body;
@@ -123,5 +147,6 @@ export const API_LEAGUE = {
   createLeague,
   inviteToLeague,
   getLeague,
+  getLeagueScore,
   updateLeagueTournaments,
 };

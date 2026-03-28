@@ -57,7 +57,7 @@ const bulkUpdateTournamentScoreboardPoints = async (
 
     for (let i = 0; i < values.length; i++) {
       const [memberId, delta] = values[i];
-      sqlChunks.push(sql`(${memberId}::uuid, ${delta})`);
+      sqlChunks.push(sql`(${memberId}::uuid, ${delta}::integer)`);
       if (i < values.length - 1) {
         sqlChunks.push(sql`,`);
       }

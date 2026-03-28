@@ -41,18 +41,14 @@ const listActiveTournamentsByModes = async (modes: TournamentMode[]) => {
 };
 
 const getTournamentScore = async (memberId: string, tournamentId: string) => {
+  const points = await QUERIES_TOURNAMENT.getMemberTournamentScoreboardPoints(memberId, tournamentId);
   const guesses = await QUERIES_TOURNAMENT.getTournamentGuesses(memberId, tournamentId);
   const parsedGuesses = guesses.map((row: (typeof guesses)[number]) => runGuessAnalysis(row.guess, row.match));
 
   return {
     details: parsedGuesses,
-    points: getTotalPoints(parsedGuesses),
+    points,
   };
-};
-
-const getTotalPoints = (guesses?: ReturnType<typeof runGuessAnalysis>[]) => {
-  if (!guesses) return null;
-  return guesses.reduce((acc, value) => acc + value.total, 0);
 };
 
 const getMatchesWithNullGuess = async (memberId: string, tournamentId: string, round: string) => {

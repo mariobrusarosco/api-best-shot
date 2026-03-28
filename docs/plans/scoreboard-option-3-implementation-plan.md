@@ -399,7 +399,7 @@ The first scoreboard implementation will **not** do these things:
 
 ### Task 1 - Tournament score reads [ ]
 
-#### Task 1.1 - Read member tournament score from `tournament_scoreboard.points` [ ]
+#### Task 1.1 - Read member tournament score from `tournament_scoreboard.points` [x]
 
 #### Task 1.2 - Return tournament under-calculation status [ ]
 

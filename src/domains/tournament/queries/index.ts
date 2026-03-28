@@ -239,6 +239,26 @@ const getTournamentMatches = async (tournamentId: string) => {
   }
 };
 
+const getMemberTournamentScoreboardPoints = async (memberId: string, tournamentId: string): Promise<number> => {
+  try {
+    const [row] = await db
+      .select({ points: T_TournamentScoreboard.points })
+      .from(T_TournamentScoreboard)
+      .where(and(eq(T_TournamentScoreboard.memberId, memberId), eq(T_TournamentScoreboard.tournamentId, tournamentId)))
+      .limit(1);
+
+    return row?.points ?? 0;
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'getMemberTournamentScoreboardPoints',
+    });
+    throw error;
+  }
+};
+
 const getTournamentGuesses = async (memberId: string, tournamentId: string) => {
   try {
     return db
@@ -394,6 +414,7 @@ export const QUERIES_TOURNAMENT = {
   knockoutRounds,
 
   getTournamentMatches,
+  getMemberTournamentScoreboardPoints,
   getTournamentGuesses,
   getMatchesWithNullGuess,
 

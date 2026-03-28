@@ -1,8 +1,35 @@
+import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
+import { QUERIES_MATCH } from '@/domains/match/queries';
+import { SCOREBOARD_OPERATION_TYPES } from '@/domains/scoreboard/contracts';
+import { QUERIES_SCOREBOARD } from '@/domains/scoreboard/queries';
 import { ErrorMapper } from '../error-handling/mapper';
 import { QUERIES_LEAGUE } from '../queries';
 
 const getMemberLeagues = async (memberId: string) => {
   return QUERIES_LEAGUE.getMemberLeagues(memberId);
+};
+
+const getActiveLeagueTournaments = async (leagueId: string) => {
+  return QUERIES_LEAGUE.listActiveLeagueTournaments(leagueId);
+};
+
+const getLeagueScore = async (leagueId: string, memberId: string) => {
+  const activeLeagueTournaments = await QUERIES_LEAGUE.listActiveLeagueTournaments(leagueId);
+  const tournamentIds = activeLeagueTournaments.map(tournament => tournament.tournamentId);
+  const points = await QUERIES_TOURNAMENT.getMemberTournamentScoreboardPointsAcrossTournaments(memberId, tournamentIds);
+  const [hasMatchesAwaitingScoreboardCalculation, hasInProgressScoreboardExecution] = await Promise.all([
+    QUERIES_MATCH.hasMatchesAwaitingScoreboardCalculation({ tournamentIds }),
+    QUERIES_SCOREBOARD.hasInProgressExecution({
+      tournamentIds,
+      operationType: SCOREBOARD_OPERATION_TYPES.APPLY_PENDING_TOURNAMENT,
+    }),
+  ]);
+
+  return {
+    points,
+    tournaments: activeLeagueTournaments,
+    underCalculation: hasMatchesAwaitingScoreboardCalculation || hasInProgressScoreboardExecution,
+  };
 };
 
 const createLeague = async (data: { label: string; description: string; founderId: string }) => {
@@ -50,14 +77,13 @@ const getLeagueDetails = async (leagueId: string, memberId: string) => {
   }));
 
   const memberRole = mainQuery.find((row: (typeof mainQuery)[number]) => row.league_role.memberId === memberId);
+  const isAdmin = memberRole?.league_role.role === 'admin';
   const permissions = {
-    edit: memberRole?.league_role.role === 'admin',
-    invite: memberRole?.league_role.role === 'admin',
-    delete: memberRole?.league_role.role === 'admin',
+    edit: isAdmin,
+    invite: isAdmin,
+    delete: isAdmin,
   };
-
-  const tournamentsQuery = await QUERIES_LEAGUE.getLeagueTournaments(leagueId);
-  const tournaments = tournamentsQuery.map((row: (typeof tournamentsQuery)[number]) => row.tournament);
+  const tournaments = await QUERIES_LEAGUE.getLeagueTournaments(leagueId);
 
   return {
     id: mainQuery[0].league.id,
@@ -82,6 +108,8 @@ const checkMembership = async (memberId: string, leagueId: string): Promise<bool
 
 export const SERVICES_LEAGUE = {
   getMemberLeagues,
+  getActiveLeagueTournaments,
+  getLeagueScore,
   createLeague,
   inviteToLeague,
   getLeagueDetails,

@@ -1,8 +1,7 @@
+import db from '@/core/database';
 import { T_League, T_LeagueRole, T_LeagueTournament } from '@/domains/league/schema';
 import { T_Member } from '@/domains/member/schema';
-
 import { T_Tournament } from '@/domains/tournament/schema';
-import db from '@/core/database';
 import { and, eq, sql } from 'drizzle-orm';
 
 const selectLeague = async (leagueId: string) => {
@@ -64,12 +63,31 @@ const getLeagueDetails = async (leagueId: string) => {
 
 const getLeagueTournaments = async (leagueId: string) => {
   const tournaments = await db
-    .select()
+    .select({
+      id: T_LeagueTournament.tournamentId,
+      logo: T_Tournament.logo,
+      label: T_Tournament.label,
+      status: T_LeagueTournament.status,
+    })
     .from(T_LeagueTournament)
     .leftJoin(T_Tournament, eq(T_LeagueTournament.tournamentId, T_Tournament.id))
-    .where(and(eq(T_LeagueTournament.leagueId, leagueId), eq(T_LeagueTournament.status, 'active')));
+    .where(eq(T_LeagueTournament.leagueId, leagueId));
 
   return tournaments;
+};
+
+const listActiveLeagueTournaments = async (leagueId: string) => {
+  return db
+    .select({
+      leagueId: T_LeagueTournament.leagueId,
+      tournamentId: T_LeagueTournament.tournamentId,
+      tournamentLabel: T_Tournament.label,
+      tournamentStatus: T_Tournament.status,
+    })
+    .from(T_LeagueTournament)
+    .innerJoin(T_Tournament, eq(T_LeagueTournament.tournamentId, T_Tournament.id))
+    .where(and(eq(T_LeagueTournament.leagueId, leagueId), eq(T_LeagueTournament.status, 'active')))
+    .orderBy(T_Tournament.label);
 };
 
 const updateLeagueTournaments = async (
@@ -106,6 +124,7 @@ export const QUERIES_LEAGUE = {
   getMemberById,
   getLeagueDetails,
   getLeagueTournaments,
+  listActiveLeagueTournaments,
   updateLeagueTournaments,
   getMemberLeagueRole,
 };

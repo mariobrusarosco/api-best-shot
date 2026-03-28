@@ -45,8 +45,8 @@ const listActiveTournamentsByModes = async (modes: TournamentMode[]) => {
 const getTournamentScore = async (memberId: string, tournamentId: string) => {
   const points = await QUERIES_TOURNAMENT.getMemberTournamentScoreboardPoints(memberId, tournamentId);
   const [hasMatchesAwaitingScoreboardCalculation, hasInProgressScoreboardExecution] = await Promise.all([
-    QUERIES_MATCH.hasMatchesAwaitingScoreboardCalculation(tournamentId),
-    QUERIES_SCOREBOARD.hasInProgressExecutionForTournament({
+    QUERIES_MATCH.hasMatchesAwaitingScoreboardCalculation({ tournamentId }),
+    QUERIES_SCOREBOARD.hasInProgressExecution({
       tournamentId,
       operationType: SCOREBOARD_OPERATION_TYPES.APPLY_PENDING_TOURNAMENT,
     }),

@@ -339,7 +339,7 @@ The first scoreboard implementation will **not** do these things:
 
 #### Task 1.3 - Ensure handler respects tournament-level lock rules [x]
 
-### Task 2 - Implement tournament execution runner [ ]
+### Task 2 - Implement tournament execution runner [x]
 
 #### Task 2.1 - Create one tournament execution record [x]
 
@@ -383,7 +383,14 @@ The first scoreboard implementation will **not** do these things:
 
 - log finalize/report-upload failures without hiding the original execution error
 
-### Task 3 - Implement per-match application [ ]
+#### Task 2.5 - Wire the scoreboard cron handler to tournament execution [x]
+
+- make `scoreboard.apply_pending_tournaments` call `runTournamentScoreboardExecution(...)`
+- pass `processEndedMatchForScoreboard(...)` into the tournament execution
+- execute only for runnable tournaments discovered by the cron handler
+- keep the current lock rule intact so locked tournaments are skipped, not double-started
+
+### Task 3 - Implement per-match application [x]
 
 #### Task 3.1 - Load match guesses [x]
 
@@ -397,7 +404,7 @@ The first scoreboard implementation will **not** do these things:
 
 ## Phase 3 - Read Models
 
-### Task 1 - Tournament score reads [ ]
+### Task 1 - Tournament score reads [x]
 
 #### Task 1.1 - Read member tournament score from `tournament_scoreboard.points` [x]
 
@@ -405,13 +412,13 @@ The first scoreboard implementation will **not** do these things:
 
 #### Task 1.3 - Keep per-guess detail paths separate from tournament total reads [x]
 
-### Task 2 - League score reads [ ]
+### Task 2 - League score reads [x]
 
-#### Task 2.1 - Load active league tournaments [ ]
+#### Task 2.1 - Load active league tournaments [x]
 
-#### Task 2.2 - Sum member tournament totals across included tournaments [ ]
+#### Task 2.2 - Sum member tournament totals across included tournaments [x]
 
-#### Task 2.3 - Return league under-calculation status derived from tournament states [ ]
+#### Task 2.3 - Return league under-calculation status derived from tournament states [x]
 
 ## Phase 4 - Rollout Safety [POSTPONED]
 

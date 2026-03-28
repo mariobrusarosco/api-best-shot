@@ -6,7 +6,7 @@ import { defineTimebox } from '@/utils/timebox';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import utc from 'dayjs/plugin/utc';
-import { aliasedTable, and, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
+import { aliasedTable, and, asc, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm';
 import type { DB_InsertMatch, DB_SelectMatch } from '../schema';
 
 dayjs.extend(utc);
@@ -246,13 +246,24 @@ const listMatchesAwaitingScoreboardCalculationForTournament = async (params: {
   return await baseQuery;
 };
 
-const hasMatchesAwaitingScoreboardCalculation = async (tournamentId: string): Promise<boolean> => {
+const hasMatchesAwaitingScoreboardCalculation = async (
+  params: { tournamentId: string } | { tournamentIds: string[] }
+): Promise<boolean> => {
+  const tournamentScopeCondition =
+    'tournamentId' in params
+      ? eq(T_Match.tournamentId, params.tournamentId)
+      : params.tournamentIds.length === 0
+        ? null
+        : inArray(T_Match.tournamentId, params.tournamentIds);
+
+  if (!tournamentScopeCondition) {
+    return false;
+  }
+
   const [row] = await db
     .select({ id: T_Match.id })
     .from(T_Match)
-    .where(
-      and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.status, 'ended'), isNull(T_Match.scoreboardAppliedAt))
-    )
+    .where(and(tournamentScopeCondition, eq(T_Match.status, 'ended'), isNull(T_Match.scoreboardAppliedAt)))
     .limit(1);
 
   return !!row;

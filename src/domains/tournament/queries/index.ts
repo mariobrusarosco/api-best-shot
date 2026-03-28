@@ -259,6 +259,36 @@ const getMemberTournamentScoreboardPoints = async (memberId: string, tournamentI
   }
 };
 
+const getMemberTournamentScoreboardPointsAcrossTournaments = async (
+  memberId: string,
+  tournamentIds: string[]
+): Promise<number> => {
+  if (tournamentIds.length === 0) {
+    return 0;
+  }
+
+  try {
+    const [row] = await db
+      .select({
+        points: sql<number>`coalesce(sum(${T_TournamentScoreboard.points}), 0)`,
+      })
+      .from(T_TournamentScoreboard)
+      .where(
+        and(eq(T_TournamentScoreboard.memberId, memberId), inArray(T_TournamentScoreboard.tournamentId, tournamentIds))
+      );
+
+    return row?.points ?? 0;
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'getMemberTournamentScoreboardPointsAcrossTournaments',
+    });
+    throw error;
+  }
+};
+
 const getTournamentGuesses = async (memberId: string, tournamentId: string) => {
   try {
     return db
@@ -415,6 +445,7 @@ export const QUERIES_TOURNAMENT = {
 
   getTournamentMatches,
   getMemberTournamentScoreboardPoints,
+  getMemberTournamentScoreboardPointsAcrossTournaments,
   getTournamentGuesses,
   getMatchesWithNullGuess,
 

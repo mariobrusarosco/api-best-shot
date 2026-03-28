@@ -29,7 +29,6 @@
 import { QUERIES_MATCH } from '@/domains/match/queries';
 import { SCOREBOARD_OPERATION_TYPES } from '@/domains/scoreboard/contracts';
 import { QUERIES_SCOREBOARD } from '@/domains/scoreboard/queries';
-import { runGuessAnalysis } from '@/domains/guess/controllers/guess-analysis';
 import type { ITournamentStadingsMode, TournamentMode } from '@/domains/tournament/typing';
 import { QUERIES_TOURNAMENT } from '../queries';
 import { DB_InsertTournament } from '../schema';
@@ -52,11 +51,8 @@ const getTournamentScore = async (memberId: string, tournamentId: string) => {
       operationType: SCOREBOARD_OPERATION_TYPES.APPLY_PENDING_TOURNAMENT,
     }),
   ]);
-  const guesses = await QUERIES_TOURNAMENT.getTournamentGuesses(memberId, tournamentId);
-  const parsedGuesses = guesses.map((row: (typeof guesses)[number]) => runGuessAnalysis(row.guess, row.match));
 
   return {
-    details: parsedGuesses,
     points,
     underCalculation: hasMatchesAwaitingScoreboardCalculation || hasInProgressScoreboardExecution,
   };

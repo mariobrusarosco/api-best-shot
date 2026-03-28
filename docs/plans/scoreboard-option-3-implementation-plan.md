@@ -403,7 +403,7 @@ The first scoreboard implementation will **not** do these things:
 
 #### Task 1.2 - Return tournament under-calculation status [x]
 
-#### Task 1.3 - Keep per-guess detail paths separate from tournament total reads [ ]
+#### Task 1.3 - Keep per-guess detail paths separate from tournament total reads [x]
 
 ### Task 2 - League score reads [ ]
 

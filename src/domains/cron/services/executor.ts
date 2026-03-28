@@ -8,6 +8,7 @@ import { StandingsDataProviderService } from '@/domains/data-provider/services/s
 import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import { MatchQueries } from '@/domains/match/queries';
 import { matchesSyncEndedHandler } from './matches-sync-ended';
+import { scoreboardApplyPendingTournamentsHandler } from './scoreboard-apply-pending-tournaments';
 
 export type CronTargetPayload = Record<string, unknown> | null | undefined;
 
@@ -69,6 +70,7 @@ const tournamentsKnockoutRoundsSyncHandler: CronTargetHandler = async () => {
 const CRON_TARGET_REGISTRY: Record<string, CronTargetHandler> = {
   [CRON_TARGET_IDS.MATCHES_SYNC_OPEN]: matchesSyncOpenHandler,
   [CRON_TARGET_IDS.MATCHES_SYNC_ENDED]: matchesSyncEndedHandler,
+  [CRON_TARGET_IDS.SCOREBOARD_APPLY_PENDING_TOURNAMENTS]: scoreboardApplyPendingTournamentsHandler,
   [CRON_TARGET_IDS.TOURNAMENTS_CURRENT_ROUND_SYNC]: tournamentsCurrentRoundSyncHandler,
   [CRON_TARGET_IDS.TOURNAMENTS_KNOCKOUT_ROUNDS_SYNC]: tournamentsKnockoutRoundsSyncHandler,
 };

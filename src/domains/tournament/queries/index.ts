@@ -7,13 +7,13 @@ import { DatabaseError } from '@/domains/shared/error-handling/database';
 import { T_Team } from '@/domains/team/schema';
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
 import {
-  DB_InsertTournamentMember,
+  DB_InsertTournamentScoreboard,
   DB_InsertTournament,
   DB_InsertTournamentStandings,
   DB_SelectTournament,
-  DB_SelectTournamentMember,
+  DB_SelectTournamentScoreboard,
   T_Tournament,
-  T_TournamentMember,
+  T_TournamentScoreboard,
   T_TournamentStandings,
 } from '@/domains/tournament/schema';
 import { TournamentMode, TournamentWithTypedMode } from '@/domains/tournament/typing';
@@ -21,26 +21,26 @@ import { and, eq, inArray, SQL, sql } from 'drizzle-orm';
 
 type TournamentQueryExecutor = typeof db;
 
-const updateMemberPoints = async (memberId: string, tournamentId: string, delta: number) => {
+const updateTournamentScoreboardPoints = async (memberId: string, tournamentId: string, delta: number) => {
   try {
     await db
-      .update(T_TournamentMember)
+      .update(T_TournamentScoreboard)
       .set({
-        points: sql`${T_TournamentMember.points} + ${delta}`,
+        points: sql`${T_TournamentScoreboard.points} + ${delta}`,
       })
-      .where(and(eq(T_TournamentMember.memberId, memberId), eq(T_TournamentMember.tournamentId, tournamentId)));
+      .where(and(eq(T_TournamentScoreboard.memberId, memberId), eq(T_TournamentScoreboard.tournamentId, tournamentId)));
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
     Logger.error(dbError, {
       domain: DOMAINS.TOURNAMENT,
       component: 'database',
-      operation: 'updateMemberPoints',
+      operation: 'updateTournamentScoreboardPoints',
     });
     throw error;
   }
 };
 
-const bulkUpdateMemberPoints = async (
+const bulkUpdateTournamentScoreboardPoints = async (
   tournamentId: string,
   updates: Map<string, number>,
   executor: TournamentQueryExecutor = db
@@ -51,8 +51,8 @@ const bulkUpdateMemberPoints = async (
     const values = Array.from(updates.entries());
     const sqlChunks: SQL[] = [];
 
-    sqlChunks.push(sql`UPDATE ${T_TournamentMember} AS tm`);
-    sqlChunks.push(sql`SET points = tm.points + v.delta`);
+    sqlChunks.push(sql`UPDATE ${T_TournamentScoreboard} AS ts`);
+    sqlChunks.push(sql`SET points = ts.points + v.delta`);
     sqlChunks.push(sql`FROM (VALUES`);
 
     for (let i = 0; i < values.length; i++) {
@@ -64,7 +64,7 @@ const bulkUpdateMemberPoints = async (
     }
 
     sqlChunks.push(sql`) AS v(member_id, delta)`);
-    sqlChunks.push(sql`WHERE tm.member_id = v.member_id AND tm.tournament_id = ${tournamentId}`);
+    sqlChunks.push(sql`WHERE ts.member_id = v.member_id AND ts.tournament_id = ${tournamentId}`);
 
     await executor.execute(sql.join(sqlChunks, sql` `));
   } catch (error: unknown) {
@@ -72,16 +72,16 @@ const bulkUpdateMemberPoints = async (
     Logger.error(dbError, {
       domain: DOMAINS.TOURNAMENT,
       component: 'database',
-      operation: 'bulkUpdateMemberPoints',
+      operation: 'bulkUpdateTournamentScoreboardPoints',
     });
     throw error;
   }
 };
 
-const upsertMissingTournamentMembers = async (
+const upsertMissingTournamentScoreboards = async (
   tournamentId: string,
   memberIds: string[]
-): Promise<DB_SelectTournamentMember[]> => {
+): Promise<DB_SelectTournamentScoreboard[]> => {
   const uniqueMemberIds = Array.from(new Set(memberIds));
 
   if (uniqueMemberIds.length === 0) {
@@ -89,17 +89,17 @@ const upsertMissingTournamentMembers = async (
   }
 
   try {
-    const values: DB_InsertTournamentMember[] = uniqueMemberIds.map(memberId => ({
+    const values: DB_InsertTournamentScoreboard[] = uniqueMemberIds.map(memberId => ({
       tournamentId,
       memberId,
       points: 0,
     }));
 
     return await db
-      .insert(T_TournamentMember)
+      .insert(T_TournamentScoreboard)
       .values(values)
       .onConflictDoNothing({
-        target: [T_TournamentMember.memberId, T_TournamentMember.tournamentId],
+        target: [T_TournamentScoreboard.memberId, T_TournamentScoreboard.tournamentId],
       })
       .returning();
   } catch (error: unknown) {
@@ -107,7 +107,7 @@ const upsertMissingTournamentMembers = async (
     Logger.error(dbError, {
       domain: DOMAINS.TOURNAMENT,
       component: 'database',
-      operation: 'upsertMissingTournamentMembers',
+      operation: 'upsertMissingTournamentScoreboards',
     });
     throw error;
   }
@@ -400,7 +400,7 @@ export const QUERIES_TOURNAMENT = {
   createTournament,
   updateTournamentCurrentRound,
   upsertTournamentStandings,
-  updateMemberPoints,
-  bulkUpdateMemberPoints,
-  upsertMissingTournamentMembers,
+  updateTournamentScoreboardPoints,
+  bulkUpdateTournamentScoreboardPoints,
+  upsertMissingTournamentScoreboards,
 };

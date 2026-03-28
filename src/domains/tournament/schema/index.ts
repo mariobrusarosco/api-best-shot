@@ -90,8 +90,8 @@ export type DB_InsertTournamentStandings = typeof T_TournamentStandings.$inferIn
 export type DB_UpdateTournamentStandings = typeof T_TournamentStandings.$inferInsert;
 export type DB_SelectTournamentStandings = typeof T_TournamentStandings.$inferSelect;
 
-export const T_TournamentMember = pgTable(
-  'tournament_member',
+export const T_TournamentScoreboard = pgTable(
+  'tournament_scoreboard',
   {
     id: uuid('id').defaultRandom().primaryKey(),
     tournamentId: uuid('tournament_id')
@@ -109,13 +109,13 @@ export const T_TournamentMember = pgTable(
   },
   table => {
     return {
-      uniqueMemberTournament: uniqueIndex('unique_member_tournament').on(table.memberId, table.tournamentId),
-      tournamentIdx: index('tournament_member_tournament_idx').on(table.tournamentId), // Performance index
-      memberIdx: index('tournament_member_member_idx').on(table.memberId), // Performance index
+      uniqueMemberTournament: uniqueIndex('unique_member_tournament_scoreboard').on(table.memberId, table.tournamentId),
+      tournamentIdx: index('tournament_scoreboard_tournament_idx').on(table.tournamentId), // Performance index
+      memberIdx: index('tournament_scoreboard_member_idx').on(table.memberId), // Performance index
     };
   }
 );
 
-export type DB_InsertTournamentMember = typeof T_TournamentMember.$inferInsert;
-export type DB_UpdateTournamentMember = typeof T_TournamentMember.$inferInsert;
-export type DB_SelectTournamentMember = typeof T_TournamentMember.$inferSelect;
+export type DB_InsertTournamentScoreboard = typeof T_TournamentScoreboard.$inferInsert;
+export type DB_UpdateTournamentScoreboard = typeof T_TournamentScoreboard.$inferInsert;
+export type DB_SelectTournamentScoreboard = typeof T_TournamentScoreboard.$inferSelect;

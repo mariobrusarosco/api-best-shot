@@ -1,3 +1,5 @@
+import type { TeamsTournamentContext } from '@/domains/data-provider-v2/contracts/teams';
+import { runTournamentTeamsCreateOperation } from '@/domains/data-provider-v2/operations/teams-create/tournament-operation-runner';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { TeamsDataProviderService } from '@/domains/data-provider/services/teams';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
@@ -10,10 +12,8 @@ import { Request, Response } from 'express';
 class AdminTeamsService {
   static async createTeams(req: Request, res: Response) {
     const requestId = randomUUID();
-    let scraper: BaseScraper | null = null;
 
     try {
-      // Get tournament ID from URL params
       const tournamentId = req.params.tournamentId;
       if (!tournamentId) {
         return res.status(400).json({
@@ -22,8 +22,7 @@ class AdminTeamsService {
         });
       }
 
-      // Get tournament data to build payload
-      const tournament = await SERVICES_TOURNAMENT.getTournament(tournamentId);
+      const tournament = await SERVICES_TOURNAMENT.getTournamentDetails(tournamentId);
       if (!tournament) {
         return res.status(404).json({
           success: false,
@@ -31,22 +30,37 @@ class AdminTeamsService {
         });
       }
 
-      scraper = await BaseScraper.createInstance();
-      const dataProviderService = new TeamsDataProviderService(scraper, requestId);
+      if (tournament.provider !== 'sofascore') {
+        return res.status(422).json({
+          success: false,
+          error: `V2 teams create only supports provider "${'sofascore'}"`,
+        });
+      }
 
-      // Build proper payload for teams service
-      const payload = {
-        tournamentId: tournamentId,
+      const tournamentContext: TeamsTournamentContext = {
+        tournamentId,
+        tournamentLabel: tournament.label,
         baseUrl: tournament.baseUrl,
-        label: tournament.label,
-        provider: tournament.provider,
+        provider: 'sofascore',
+        mode: tournament.mode,
       };
 
-      const teams = await dataProviderService.init(payload);
+      const operation = await runTournamentTeamsCreateOperation({
+        requestId,
+        tournament: tournamentContext,
+      });
+
+      if (operation.status !== 'completed') {
+        return res.status(422).json({
+          success: false,
+          message: 'Teams create operation failed',
+          data: { teams: operation.result },
+        });
+      }
 
       return res.status(201).json({
         success: true,
-        data: { teams },
+        data: { teams: operation.result },
         message: `Teams created successfully`,
       });
     } catch (error) {
@@ -59,14 +73,6 @@ class AdminTeamsService {
         adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
-    } finally {
-      if (scraper) {
-        await scraper.close();
-        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
-          requestId,
-          source: 'admin_service',
-        });
-      }
     }
   }
 

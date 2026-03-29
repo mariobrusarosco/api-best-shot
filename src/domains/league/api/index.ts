@@ -104,15 +104,23 @@ const getLeague = async (req: Request, res: Response) => {
 
 const getLeagueScore = async (req: Request, res: Response) => {
   try {
-    const memberId = Utils.getAuthenticatedUserId(req, res);
+    const authenticatedMemberId = Utils.getAuthenticatedUserId(req, res);
+    const targetMemberId = typeof req.query.memberId === 'string' ? req.query.memberId : authenticatedMemberId;
     const { leagueId } = req.params;
 
-    const isParticipant = await SERVICES_LEAGUE.checkMembership(memberId, leagueId);
-    if (!isParticipant) {
+    const isRequesterParticipant = await SERVICES_LEAGUE.checkMembership(authenticatedMemberId, leagueId);
+    if (!isRequesterParticipant) {
       return res.status(ErrorMapper.NOT_LEAGUE_MEMBER.status).send(ErrorMapper.NOT_LEAGUE_MEMBER.user);
     }
 
-    const leagueScore = await SERVICES_LEAGUE.getLeagueScore(leagueId, memberId);
+    if (targetMemberId !== authenticatedMemberId) {
+      const isTargetParticipant = await SERVICES_LEAGUE.checkMembership(targetMemberId, leagueId);
+      if (!isTargetParticipant) {
+        return res.status(ErrorMapper.NOT_LEAGUE_MEMBER.status).send(ErrorMapper.NOT_LEAGUE_MEMBER.user);
+      }
+    }
+
+    const leagueScore = await SERVICES_LEAGUE.getLeagueScore(leagueId, targetMemberId);
     return res.status(200).send(leagueScore);
   } catch (error: unknown) {
     Logger.error(error as Error, {

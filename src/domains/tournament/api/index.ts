@@ -25,7 +25,8 @@ const getAllTournaments = async (_: Request, res: Response) => {
 
 const getTournamentScore = async (req: Request, res: Response) => {
   try {
-    const memberId = Utils.getAuthenticatedUserId(req, res);
+    const authenticatedMemberId = Utils.getAuthenticatedUserId(req, res);
+    const memberId = typeof req.query.memberId === 'string' ? req.query.memberId : authenticatedMemberId;
     const { tournamentId } = req.params;
     const score = await SERVICES_TOURNAMENT.getTournamentScore(memberId, tournamentId);
     return res.status(200).send(score);

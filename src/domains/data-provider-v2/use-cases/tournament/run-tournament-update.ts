@@ -1,19 +1,17 @@
 import type {
-  TournamentUpdateFailure,
   TournamentUpdateField,
   TournamentUpdateInput,
-  TournamentUpdateInvalidInput,
   TournamentUpdateWorkflowResult,
 } from '@/domains/data-provider-v2/contracts/tournament-update';
 import { updateTournament } from '@/domains/data-provider-v2/persistence/tournament/update-tournament';
-import {
-  BrowserAssetTransportError,
-  type BrowserAssetUploader,
-} from '@/domains/data-provider-v2/transport/playwright/browser-asset-uploader';
+import { type BrowserAssetUploader } from '@/domains/data-provider-v2/transport/playwright/browser-asset-uploader';
 import type { DB_SelectTournament } from '@/domains/tournament/schema';
-
-const VALID_TOURNAMENT_MODES = ['regular-season-and-knockout', 'regular-season-only', 'knockout-only'] as const;
-const VALID_STANDINGS_MODES = ['unique-group', 'multi-group'] as const;
+import {
+  buildSofaScoreTournamentLogoUrl,
+  buildTournamentWorkflowFailure,
+  normalizeTournamentWorkflowInput,
+  validateTournamentWorkflowInput,
+} from './helpers';
 
 export const runTournamentUpdate = async (input: {
   tournamentId: string;
@@ -21,8 +19,8 @@ export const runTournamentUpdate = async (input: {
   tournament: TournamentUpdateInput;
   logoUploader?: BrowserAssetUploader;
 }): Promise<TournamentUpdateWorkflowResult> => {
-  const normalizedTournament = normalizeTournamentUpdateInput(input.tournament);
-  const invalidInput = validateTournamentUpdateInput(normalizedTournament);
+  const normalizedTournament = normalizeTournamentWorkflowInput(input.tournament);
+  const invalidInput = validateTournamentWorkflowInput(normalizedTournament);
   const changedFields = listTournamentUpdateChangedFields({
     previousTournament: input.previousTournament,
     tournament: normalizedTournament,
@@ -70,7 +68,7 @@ export const runTournamentUpdate = async (input: {
         logoRefreshRequired,
         logoRefreshPerformed: false,
         providerLogoUrl,
-        logoUploadFailure: buildFailure(error),
+        logoUploadFailure: buildTournamentWorkflowFailure(error),
       };
     }
   }
@@ -132,72 +130,13 @@ export const runTournamentUpdate = async (input: {
       logoRefreshPerformed: Boolean(uploadedLogo),
       providerLogoUrl,
       uploadedLogo,
-      databaseUpdateFailure: buildFailure(error),
+      databaseUpdateFailure: buildTournamentWorkflowFailure(error),
     };
   }
 };
 
-const validateTournamentUpdateInput = (tournament: TournamentUpdateInput): TournamentUpdateInvalidInput[] => {
-  const invalidInput: TournamentUpdateInvalidInput[] = [];
-
-  if (!tournament.tournamentPublicId) {
-    invalidInput.push(createInvalidInput('tournamentPublicId', 'Tournament public ID is required'));
-  }
-
-  if (!tournament.baseUrl) {
-    invalidInput.push(createInvalidInput('baseUrl', 'Tournament baseUrl is required'));
-  }
-
-  if (!tournament.publicUrl) {
-    invalidInput.push(createInvalidInput('publicUrl', 'Tournament publicUrl is required'));
-  }
-
-  if (!tournament.slug) {
-    invalidInput.push(createInvalidInput('slug', 'Tournament slug is required'));
-  }
-
-  if (tournament.provider !== 'sofascore') {
-    invalidInput.push(createInvalidInput('provider', 'Tournament provider must be "sofascore"'));
-  }
-
-  if (!tournament.season) {
-    invalidInput.push(createInvalidInput('season', 'Tournament season is required'));
-  }
-
-  if (!VALID_TOURNAMENT_MODES.includes(tournament.mode)) {
-    invalidInput.push(createInvalidInput('mode', 'Tournament mode is invalid'));
-  }
-
-  if (!tournament.label) {
-    invalidInput.push(createInvalidInput('label', 'Tournament label is required'));
-  }
-
-  if (!VALID_STANDINGS_MODES.includes(tournament.standingsMode)) {
-    invalidInput.push(createInvalidInput('standingsMode', 'Tournament standingsMode is invalid'));
-  }
-
-  return invalidInput;
-};
-
-const createInvalidInput = (field: keyof TournamentUpdateInput, errorMessage: string): TournamentUpdateInvalidInput => {
-  return {
-    field,
-    errorMessage,
-  };
-};
-
 export const normalizeTournamentUpdateInput = (tournament: TournamentUpdateInput): TournamentUpdateInput => {
-  return {
-    tournamentPublicId: tournament.tournamentPublicId.trim(),
-    baseUrl: tournament.baseUrl.trim(),
-    publicUrl: tournament.publicUrl.trim(),
-    slug: tournament.slug.trim(),
-    provider: tournament.provider,
-    season: tournament.season.trim(),
-    mode: tournament.mode,
-    label: tournament.label.trim(),
-    standingsMode: tournament.standingsMode,
-  };
+  return normalizeTournamentWorkflowInput(tournament);
 };
 
 const listTournamentUpdateChangedFields = (input: {
@@ -258,26 +197,4 @@ export const shouldRefreshTournamentLogo = (input: {
     !input.previousTournament.logo ||
     !input.previousTournament.logo.trim()
   );
-};
-
-const buildSofaScoreTournamentLogoUrl = (tournamentPublicId: string): string => {
-  if (!tournamentPublicId.trim()) {
-    throw new Error('tournamentPublicId is required to build the SofaScore tournament logo URL');
-  }
-
-  return `https://img.sofascore.com/api/v1/unique-tournament/${tournamentPublicId}/image`;
-};
-
-const buildFailure = (error: unknown): TournamentUpdateFailure => {
-  if (error instanceof BrowserAssetTransportError) {
-    return {
-      requestUrl: error.requestUrl,
-      errorMessage: error.message,
-      causeMessage: error.causeMessage,
-    };
-  }
-
-  return {
-    errorMessage: error instanceof Error ? error.message : String(error),
-  };
 };

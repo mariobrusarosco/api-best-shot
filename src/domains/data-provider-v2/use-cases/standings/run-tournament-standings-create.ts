@@ -1,7 +1,4 @@
-import { ProviderRequestError } from '@/domains/data-provider-v2/contracts/errors';
 import type {
-  SofaScoreStandingsPayload,
-  StandingsCreateDetail,
   StandingsCreateReportData,
   StandingsCreateTournamentContext,
   StandingsCreateWorkflowStatus,
@@ -10,9 +7,8 @@ import type {
   TournamentStandingsCreateSummary,
 } from '@/domains/data-provider-v2/contracts/standings';
 import { SofaScoreStandingsProvider } from '@/domains/data-provider-v2/providers/sofascore/standings-provider';
-import { listTeamsByExternalId } from '@/domains/data-provider-v2/persistence/standings/list-teams-by-external-id';
 import { insertTournamentStandings } from '@/domains/data-provider-v2/persistence/standings/insert-tournament-standings';
-import { extractStandingsTeamExternalIds, mapProviderStandings } from './map-provider-standings';
+import { prepareTournamentStandings } from './prepare-tournament-standings';
 
 const SUMMARY_PREVIEW_LIMIT = 10;
 
@@ -24,7 +20,12 @@ export const runTournamentStandingsCreate = async (input: {
   const data = createEmptyReportData();
   const summary = createEmptySummary();
 
-  if (input.tournament.mode === 'knockout-only') {
+  const preparation = await prepareTournamentStandings({
+    tournament: input.tournament,
+    provider: input.provider,
+  });
+
+  if (preparation.outcome === 'unsupported_tournament_mode') {
     details.unsupportedTournamentMode.push({
       reason: 'tournament_mode_not_supported',
       errorMessage: `Tournament mode "${input.tournament.mode}" does not support standings creation`,
@@ -38,26 +39,28 @@ export const runTournamentStandingsCreate = async (input: {
     });
   }
 
-  let payload: SofaScoreStandingsPayload;
+  if (preparation.outcome === 'provider_missing_standings') {
+    if (typeof preparation.fetchedGroups === 'number') {
+      summary.fetchedGroups = preparation.fetchedGroups;
+    }
 
-  try {
-    payload = await input.provider.fetchTournamentStandings({
-      baseUrl: input.tournament.baseUrl,
-    });
-  } catch (error) {
-    return buildProviderFailureResult({
-      tournamentId: input.tournament.tournamentId,
-      summary,
-      details,
-      data,
-      error,
-    });
-  }
+    if (typeof preparation.fetchedRows === 'number') {
+      summary.fetchedRows = preparation.fetchedRows;
+    }
 
-  if (!hasUsableStandings(payload)) {
+    if (typeof preparation.totalOperations === 'number') {
+      summary.totalOperations = preparation.totalOperations;
+    }
+
     details.providerMissingStandings.push({
+      requestUrl: preparation.requestUrl,
       reason: 'provider_response_missing_standings',
-      errorMessage: 'Provider standings payload did not contain any usable standings rows',
+      errorMessage:
+        preparation.kind === 'no_mappable_rows'
+          ? 'Provider standings payload did not contain any creatable standings rows'
+          : preparation.errorMessage,
+      causeMessage: preparation.causeMessage,
+      responseBodySnippet: preparation.responseBodySnippet,
     });
     summary.providerMissingStandingsCount = 1;
 
@@ -69,14 +72,14 @@ export const runTournamentStandingsCreate = async (input: {
     });
   }
 
-  const teamExternalIds = extractStandingsTeamExternalIds(payload);
-
-  if (teamExternalIds.length === 0) {
-    details.providerMissingStandings.push({
-      reason: 'provider_response_missing_standings',
-      errorMessage: 'Provider standings payload did not contain any usable team identifiers',
+  if (preparation.outcome === 'unexpected_failure') {
+    details.unexpectedFailures.push({
+      requestUrl: preparation.requestUrl,
+      reason: 'unexpected_failure',
+      errorMessage: preparation.errorMessage,
+      causeMessage: preparation.causeMessage,
+      responseBodySnippet: preparation.responseBodySnippet,
     });
-    summary.providerMissingStandingsCount = 1;
 
     return buildResult({
       tournamentId: input.tournament.tournamentId,
@@ -86,26 +89,14 @@ export const runTournamentStandingsCreate = async (input: {
     });
   }
 
-  const resolvedTeams = await listTeamsByExternalId({
-    provider: input.tournament.provider,
-    externalIds: teamExternalIds,
-  });
+  summary.fetchedGroups = preparation.fetchedGroups;
+  summary.fetchedRows = preparation.fetchedRows;
+  summary.totalOperations = preparation.totalOperations;
 
-  const mapped = mapProviderStandings({
-    tournamentId: input.tournament.tournamentId,
-    provider: input.tournament.provider,
-    payload,
-    resolvedTeams,
-  });
-
-  summary.fetchedGroups = mapped.fetchedGroups;
-  summary.fetchedRows = mapped.fetchedRows;
-  summary.totalOperations = mapped.mappedRows.length + mapped.missingTeams.length;
-
-  if (mapped.missingTeams.length > 0) {
-    details.missingTeams.push(...mapped.missingTeams);
-    data.missingTeamExternalIds.push(...collectUniqueMissingTeamExternalIds(mapped.missingTeams));
-    summary.missingTeamsCount = mapped.missingTeams.length;
+  if (preparation.missingTeams.length > 0) {
+    details.missingTeams.push(...preparation.missingTeams);
+    data.missingTeamExternalIds.push(...preparation.missingTeamExternalIds);
+    summary.missingTeamsCount = preparation.missingTeams.length;
     summary.failedOperations = summary.totalOperations;
     summary.missingTeamExternalIdsPreview = data.missingTeamExternalIds.slice(0, SUMMARY_PREVIEW_LIMIT);
 
@@ -117,24 +108,9 @@ export const runTournamentStandingsCreate = async (input: {
     });
   }
 
-  if (mapped.mappedRows.length === 0) {
-    details.providerMissingStandings.push({
-      reason: 'provider_response_missing_standings',
-      errorMessage: 'Provider standings payload did not contain any creatable standings rows',
-    });
-    summary.providerMissingStandingsCount = 1;
-
-    return buildResult({
-      tournamentId: input.tournament.tournamentId,
-      summary,
-      details,
-      data,
-    });
-  }
-
   try {
     const created = await insertTournamentStandings({
-      rows: mapped.mappedRows,
+      rows: preparation.mappedRows,
     });
 
     details.created.push(...created);
@@ -165,40 +141,6 @@ export const runTournamentStandingsCreate = async (input: {
       data,
     });
   }
-};
-
-const buildProviderFailureResult = (input: {
-  tournamentId: string;
-  summary: TournamentStandingsCreateSummary;
-  details: TournamentStandingsCreateDetails;
-  data: StandingsCreateReportData;
-  error: unknown;
-}): TournamentStandingsCreateResult => {
-  if (input.error instanceof ProviderRequestError && input.error.status === 404) {
-    input.details.providerMissingStandings.push({
-      requestUrl: input.error.requestUrl,
-      reason: 'provider_response_missing_standings',
-      errorMessage: input.error.message,
-      causeMessage: input.error.causeMessage,
-      responseBodySnippet: input.error.responseBodySnippet,
-    });
-    input.summary.providerMissingStandingsCount = 1;
-  } else {
-    input.details.unexpectedFailures.push({
-      requestUrl: input.error instanceof ProviderRequestError ? input.error.requestUrl : undefined,
-      reason: 'unexpected_failure',
-      errorMessage: input.error instanceof Error ? input.error.message : String(input.error),
-      causeMessage: input.error instanceof ProviderRequestError ? input.error.causeMessage : undefined,
-      responseBodySnippet: input.error instanceof ProviderRequestError ? input.error.responseBodySnippet : undefined,
-    });
-  }
-
-  return buildResult({
-    tournamentId: input.tournamentId,
-    summary: input.summary,
-    details: input.details,
-    data: input.data,
-  });
 };
 
 const buildResult = (input: {
@@ -268,18 +210,6 @@ const deriveWorkflowStatus = (input: {
   }
 
   return 'failed';
-};
-
-const hasUsableStandings = (payload: SofaScoreStandingsPayload): boolean => {
-  if (!payload.standings.length) {
-    return false;
-  }
-
-  return payload.standings.some(group => group.rows.length > 0);
-};
-
-const collectUniqueMissingTeamExternalIds = (missingTeams: StandingsCreateDetail[]): string[] => {
-  return Array.from(new Set(missingTeams.map(detail => detail.teamExternalId).filter(isNonEmptyString)));
 };
 
 const isNonEmptyString = (value: string | undefined): value is string => {

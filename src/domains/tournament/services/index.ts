@@ -96,6 +96,16 @@ const getTournament = async (tournamentId: string) => {
   return tournament;
 };
 
+const getTournamentRecord = async (tournamentId: string) => {
+  const tournament = await QUERIES_TOURNAMENT.tournamentRecord(tournamentId);
+
+  if (!tournament) {
+    throw new Error('Tournament not found');
+  }
+
+  return tournament;
+};
+
 const createTournament = async (payload: DB_InsertTournament) => {
   return QUERIES_TOURNAMENT.createTournament(payload);
 };
@@ -120,6 +130,7 @@ export const SERVICES_TOURNAMENT = {
   checkOnboardingStatus,
   getTournamentStandings,
   getTournament,
+  getTournamentRecord,
   createTournament,
   getTournamentRounds,
 };

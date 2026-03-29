@@ -23,6 +23,7 @@ router.use('/cron', AdminMiddleware, cronV2Router);
 router.get('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.getAllTournaments);
 router.get('/tournaments/:tournamentId', AdminMiddleware, API_ADMIN_TOURNAMENTS.getTournamentById);
 router.post('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.createTournament);
+router.patch('/tournaments/:tournamentId', AdminMiddleware, API_ADMIN_TOURNAMENTS.updateTournament);
 
 // Tournament Rounds Management (admin only)
 router.post('/tournaments/:tournamentId/rounds', AdminMiddleware, API_ADMIN_TOURNAMENTS.createRounds);

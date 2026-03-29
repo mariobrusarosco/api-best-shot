@@ -209,6 +209,22 @@ const tournament = async (tournamentId: string) => {
   }
 };
 
+const tournamentRecord = async (tournamentId: string): Promise<DB_SelectTournament | null> => {
+  try {
+    const [tournament] = await db.select().from(T_Tournament).where(eq(T_Tournament.id, tournamentId));
+
+    return tournament ?? null;
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'tournamentRecord',
+    });
+    throw error;
+  }
+};
+
 const knockoutRounds = async (tournamentId: string) => {
   try {
     return db
@@ -442,6 +458,7 @@ export const QUERIES_TOURNAMENT = {
   allTournaments,
   listActiveTournamentsByModes,
   tournament,
+  tournamentRecord,
   knockoutRounds,
 
   getTournamentMatches,

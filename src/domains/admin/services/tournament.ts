@@ -3,6 +3,8 @@ import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import type { TournamentCreateInput } from '@/domains/data-provider-v2/contracts/tournament-create';
 import { runTournamentCreateOperation } from '@/domains/data-provider-v2/operations/tournament-create/tournament-operation-runner';
+import type { TournamentUpdateInput } from '@/domains/data-provider-v2/contracts/tournament-update';
+import { runTournamentUpdateOperation } from '@/domains/data-provider-v2/operations/tournament-update/tournament-operation-runner';
 import { T_DataProviderExecutions } from '@/domains/data-provider/schema';
 import type { TournamentRequestIn } from '@/domains/data-provider/typing';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
@@ -71,6 +73,96 @@ class AdminTournamentService {
         requestId,
         adminUser: req.authenticatedUser?.nickName,
       });
+      return handleInternalServerErrorResponse(res, error);
+    }
+  }
+
+  static async updateTournament(req: Request, res: Response) {
+    const requestId = randomUUID();
+
+    try {
+      const { tournamentId } = req.params;
+
+      if (!tournamentId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Tournament ID is required',
+        });
+      }
+
+      const previousTournament = await SERVICES_TOURNAMENT.getTournamentRecord(tournamentId);
+
+      if (previousTournament.provider !== 'sofascore') {
+        return res.status(422).json({
+          success: false,
+          error: `V2 tournament update only supports provider "${'sofascore'}"`,
+        });
+      }
+
+      if (req.body.provider !== 'sofascore') {
+        return res.status(422).json({
+          success: false,
+          error: `V2 tournament update only supports provider "${'sofascore'}"`,
+        });
+      }
+
+      const tournamentInput: TournamentUpdateInput = {
+        tournamentPublicId: req.body.tournamentPublicId,
+        baseUrl: req.body.baseUrl,
+        publicUrl: req.body.publicUrl,
+        slug: req.body.slug,
+        provider: 'sofascore',
+        season: req.body.season,
+        mode: req.body.mode,
+        label: req.body.label,
+        standingsMode: req.body.standingsMode,
+      };
+
+      const operation = await runTournamentUpdateOperation({
+        requestId,
+        tournamentId,
+        previousTournament,
+        tournament: tournamentInput,
+      });
+
+      if (operation.status !== 'completed') {
+        return res.status(422).json({
+          success: false,
+          message: 'Tournament update operation failed',
+          data: { tournament: operation.result },
+        });
+      }
+
+      if (operation.result.outcome !== 'updated') {
+        throw new Error(
+          `Tournament update operation completed without an updated tournament for requestId=${requestId}`
+        );
+      }
+
+      const tournament = operation.result.updatedTournament;
+
+      return res.status(200).json({
+        success: true,
+        data: { tournament },
+        message: `Tournament "${tournament.label}" updated successfully`,
+      });
+    } catch (error) {
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'service',
+        operation: 'update',
+        resource: 'TOURNAMENTS',
+        requestId,
+        adminUser: req.authenticatedUser?.nickName,
+      });
+
+      if (error instanceof Error && error.message === 'Tournament not found') {
+        return res.status(404).json({
+          success: false,
+          message: 'Tournament not found',
+        });
+      }
+
       return handleInternalServerErrorResponse(res, error);
     }
   }

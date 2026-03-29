@@ -1,15 +1,14 @@
-import Logger from '@/core/logger';
-import { DOMAINS } from '@/core/logger/constants';
-import { type SlackBlock, type SlackNotificationPayload, slackService } from '@/core/slack';
+import type { SlackNotificationPayload } from '@/core/slack';
 import type {
   TournamentUpdateReportUploadResult,
   TournamentUpdateSummary,
   TournamentUpdateWorkflowStatus,
 } from '@/domains/data-provider-v2/contracts/tournament-update';
+import {
+  buildOperationSlackPayload,
+  sendOperationSlackNotification,
+} from '@/domains/data-provider-v2/operations/shared/slack-notifier';
 import { TOURNAMENT_UPDATE_EXECUTION_OPERATION_TYPE } from './execution-job-store';
-
-const webhookUrl = process.env.SLACK_JOB_EXECUTIONS_WEBHOOK || '';
-const NODE_ENV = process.env.NODE_ENV || 'development';
 
 export const notifyTournamentUpdateExecution = async (input: {
   requestId: string;
@@ -23,18 +22,13 @@ export const notifyTournamentUpdateExecution = async (input: {
 }): Promise<void> => {
   const payload = buildTournamentUpdateSlackPayload(input);
 
-  try {
-    await slackService.sendNotification(webhookUrl, payload);
-  } catch (error) {
-    Logger.error(error as Error, {
-      domain: DOMAINS.DATA_PROVIDER,
-      component: 'operations',
-      operation: 'notifyTournamentUpdateExecution',
-      requestId: input.requestId,
-      tournamentId: input.tournamentId,
-      executionStatus: input.status,
-    });
-  }
+  await sendOperationSlackNotification({
+    payload,
+    notifyOperation: 'notifyTournamentUpdateExecution',
+    requestId: input.requestId,
+    tournamentId: input.tournamentId,
+    executionStatus: input.status,
+  });
 };
 
 const buildTournamentUpdateSlackPayload = (input: {
@@ -48,99 +42,28 @@ const buildTournamentUpdateSlackPayload = (input: {
   errorMessage?: string;
 }): SlackNotificationPayload => {
   const statusMeta = getStatusPresentation(input.status);
-  const reportText = buildReportText(input.reportUpload);
   const summaryText = formatSummary(input.summary);
 
-  const blocks: SlackBlock[] = [
-    {
-      type: 'header',
-      text: {
-        type: 'plain_text',
-        text: `${statusMeta.emoji} Tournament Update ${statusMeta.label}`,
-        emoji: true,
-      },
-    },
-    {
-      type: 'section',
-      fields: [
-        {
-          type: 'mrkdwn',
-          text: `*Tournament:*\n${input.tournamentLabel}`,
-        },
-        {
-          type: 'mrkdwn',
-          text: `*Operation:*\n${TOURNAMENT_UPDATE_EXECUTION_OPERATION_TYPE}`,
-        },
-        {
-          type: 'mrkdwn',
-          text: `*Status:*\n${statusMeta.label}`,
-        },
-        {
-          type: 'mrkdwn',
-          text: `*Environment:*\n${formatEnvironmentLabel(NODE_ENV)}`,
-        },
-      ],
-    },
-  ];
-
-  if (summaryText) {
-    blocks.push({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `*Summary:*\n${summaryText}`,
-      },
-    });
-  }
-
-  blocks.push({
-    type: 'section',
-    text: {
-      type: 'mrkdwn',
-      text: `*Report:*\n${reportText}`,
-    },
-  });
-
-  if (input.status === 'failed' && input.errorMessage) {
-    blocks.push({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `*Error Details:*\n\`\`\`${input.errorMessage}\`\`\``,
-      },
-    });
-  }
-
-  blocks.push({
-    type: 'context',
-    elements: [
+  return buildOperationSlackPayload({
+    operationTitle: 'Tournament Update',
+    operationType: TOURNAMENT_UPDATE_EXECUTION_OPERATION_TYPE,
+    tournamentLabel: input.tournamentLabel,
+    status: statusMeta,
+    summaryText,
+    reportUpload: input.reportUpload,
+    errorMessage: input.status === 'failed' ? input.errorMessage : undefined,
+    requestId: input.requestId,
+    contextFields: [
       {
-        type: 'mrkdwn',
-        text: `Request ID: \`${input.requestId}\``,
+        label: 'Tournament ID',
+        value: input.tournamentId,
       },
       {
-        type: 'mrkdwn',
-        text: `Tournament ID: \`${input.tournamentId}\``,
-      },
-      {
-        type: 'mrkdwn',
-        text: `Tournament Public ID: \`${input.tournamentPublicId}\``,
-      },
-      {
-        type: 'mrkdwn',
-        text: `Timestamp: <!date^${Math.floor(Date.now() / 1000)}^{date_short_pretty} at {time}|${new Date().toISOString()}>`,
+        label: 'Tournament Public ID',
+        value: input.tournamentPublicId,
       },
     ],
   });
-
-  blocks.push({ type: 'divider' });
-
-  return {
-    text: `${statusMeta.emoji} Tournament Update ${statusMeta.label} - ${input.tournamentLabel}`,
-    username: 'Data Provider Bot',
-    icon_emoji: ':robot_face:',
-    blocks,
-  };
 };
 
 const getStatusPresentation = (
@@ -161,26 +84,6 @@ const getStatusPresentation = (
         label: 'FAILED',
       };
   }
-};
-
-const buildReportText = (reportUpload?: TournamentUpdateReportUploadResult): string => {
-  if (!reportUpload) {
-    return 'Report not attempted';
-  }
-
-  if (reportUpload.reportAvailable && reportUpload.reportFileUrl) {
-    return `📊 <${reportUpload.reportFileUrl}|View Report>`;
-  }
-
-  if (reportUpload.reportUploadStatus === 'failed') {
-    return 'Report unavailable';
-  }
-
-  return 'Report uploaded but public link unavailable';
-};
-
-const formatEnvironmentLabel = (environment: string): string => {
-  return environment.trim().replace(/[-_]+/g, ' ').toUpperCase();
 };
 
 const formatSummary = (summary: TournamentUpdateSummary): string => {

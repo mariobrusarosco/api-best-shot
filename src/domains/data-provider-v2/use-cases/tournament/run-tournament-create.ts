@@ -29,10 +29,11 @@ export const runTournamentCreate = async (input: {
   }
 
   let uploadedLogo = null;
+  const providerLogoUrl = buildSofaScoreTournamentLogoUrl(normalizedTournament.tournamentPublicId);
 
   try {
     uploadedLogo = await input.logoUploader.upload({
-      assetUrl: buildSofaScoreTournamentLogoUrl(normalizedTournament.tournamentPublicId),
+      providerLogoUrl,
       filename: `tournament-${normalizedTournament.tournamentPublicId}`,
     });
   } catch (error) {
@@ -64,6 +65,7 @@ export const runTournamentCreate = async (input: {
       tournament: normalizedTournament,
       uploadedLogo,
       createdTournament,
+      providerLogoUrl,
     };
   } catch (error) {
     return {
@@ -143,7 +145,7 @@ const buildSofaScoreTournamentLogoUrl = (tournamentPublicId: string): string => 
     throw new Error('tournamentPublicId is required to build the SofaScore tournament logo URL');
   }
 
-  return `https://api.sofascore.app/api/v1/unique-tournament/${tournamentPublicId}/image/dark`;
+  return `https://img.sofascore.com/api/v1/unique-tournament/${tournamentPublicId}/image`;
 };
 
 const buildFailure = (error: unknown): TournamentCreateFailure => {

@@ -5,15 +5,15 @@ import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-s
 import { DataProviderExecution } from '@/domains/data-provider/services/execution';
 import { DataProviderReport } from '@/domains/data-provider/services/report';
 import {
-  API_SOFASCORE_ROUNDS,
-  CreateTournamentInput,
+  type API_SOFASCORE_ROUNDS,
+  type CreateTournamentInput,
   DataProviderExecutionOperationType,
 } from '@/domains/data-provider/typing';
 import { QUERIES_TOURNAMENT } from '@/domains/tournament/queries';
-import { DB_InsertTournament, DB_UpdateTournament, T_Tournament } from '@/domains/tournament/schema';
+import { type DB_InsertTournament, type DB_UpdateTournament, T_Tournament } from '@/domains/tournament/schema';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
-import { randomUUID } from 'crypto';
 import { and, eq } from 'drizzle-orm';
+import { randomUUID } from 'node:crypto';
 
 export type SyncTournamentCurrentRoundInput = {
   tournamentId: string;
@@ -109,7 +109,7 @@ export class TournamentDataProvider {
   }
 
   public getTournamentLogoUrl(tournamentId: string | number): string {
-    return `https://api.sofascore.app/api/v1/unique-tournament/${tournamentId}/image/dark`;
+    return `https://api.sofascore.app/api/v1/unique-tournament/${tournamentId}/image`;
   }
 
   public async syncCurrentRound(payload: SyncTournamentCurrentRoundInput): Promise<SyncTournamentCurrentRoundResult> {

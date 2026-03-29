@@ -76,6 +76,7 @@ export type TournamentCreateReportData = {
   submittedInput: TournamentCreateInput;
   createdTournamentId?: string;
   uploadedLogoUrl?: string;
+  providerLogoUrl?: string;
 };
 
 export type TournamentCreateWorkflowStatus = 'completed' | 'failed';
@@ -86,6 +87,7 @@ export type TournamentCreateWorkflowResult =
       tournament: TournamentCreateInput;
       uploadedLogo: TournamentCreateUploadedLogo;
       createdTournament: DB_SelectTournament;
+      providerLogoUrl: string;
     }
   | {
       outcome: 'invalid_input';

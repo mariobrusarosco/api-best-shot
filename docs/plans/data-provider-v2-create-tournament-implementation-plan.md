@@ -17,7 +17,7 @@ It explicitly does **not** include rounds, teams, matches, standings, or current
 
 ## Tasks
 
-### Task 0.1 - Lock the workflow boundary [ ]
+### Task 0.1 - Lock the workflow boundary [x]
 
 Rules:
 
@@ -28,7 +28,7 @@ Rules:
 4. Tournament current-round sync remains on V1 for now.
 5. This slice is manual/admin-triggered, not batch/scheduler-triggered.
 
-### Task 0.2 - Lock the ownership boundaries [ ]
+### Task 0.2 - Lock the ownership boundaries [x]
 
 Stable ownership for this slice:
 
@@ -44,16 +44,17 @@ Stable ownership for this slice:
    - payload validation
    - tournament logo upload orchestration
    - DB insert payload shaping
-   - workflow result shaping
+   - raw workflow result return
 4. `persistence/tournament/`
    - insert tournament row only
 5. `operations/tournament-create/`
    - execution job lifecycle
+   - report build
    - report build/upload
    - Slack notification
    - operation summary shaping
 
-### Task 0.3 - Lock the explicit non-goals [ ]
+### Task 0.3 - Lock the explicit non-goals [x]
 
 Non-goals for this slice:
 
@@ -106,12 +107,10 @@ Why:
 
 ### Temporary execution tournament id
 
-V1 tournament create starts execution before the real tournament row exists.
-It therefore uses a temporary tournament id and later updates the execution record with the real tournament id.
+V2 tournament create still starts execution before the real tournament row exists.
+It therefore creates the execution row with `tournamentId = null` and later updates the execution record with the real tournament id after successful create.
 
-V2 should preserve that behavior in the first slice instead of redesigning execution semantics immediately.
-
-This keeps the cutover low-risk and behaviorally familiar.
+This keeps the cutover low-risk without relying on the V1 fake all-zero UUID placeholder.
 
 ### Transport split rule
 
@@ -139,6 +138,7 @@ src/domains/data-provider-v2/
 ├── operations/
 │   └── tournament-create/
 │       ├── execution-job-store.ts
+│       ├── report-builder.ts
 │       ├── report-uploader.ts
 │       ├── slack-notifier.ts
 │       └── tournament-operation-runner.ts
@@ -186,7 +186,7 @@ Freeze the V2 contract surface for tournament create before runtime code exists.
 
 ## Tasks
 
-### Task 1.1 - Define the tournament-create workflow contract [ ]
+### Task 1.1 - Define the tournament-create workflow contract [x]
 
 Create:
 
@@ -203,7 +203,7 @@ This contract should define:
 5. tournament-create report upload result contract
 6. tournament-create result contract
 
-### Task 1.2 - Define the tournament-create outcome vocabulary [ ]
+### Task 1.2 - Define the tournament-create outcome vocabulary [x]
 
 The tournament create workflow should use explicit local outcomes rather than loose messages.
 
@@ -225,7 +225,7 @@ Rules:
 3. `database_insert_failed` means the tournament row could not be created
 4. `unexpected_failure` is reserved for true runtime or transport failures that are not better classified
 
-### Task 1.3 - Lock the summary contract [ ]
+### Task 1.3 - Lock the summary contract [x]
 
 The tournament-scoped summary should remain compatible with the current admin execution-jobs read path by keeping:
 
@@ -256,7 +256,7 @@ Interpretation rules:
 4. `createdTournaments` = `1` when the tournament row is inserted, otherwise `0`
 5. `uploadedAssets` = `1` when the logo upload completes, otherwise `0`
 
-### Task 1.4 - Lock the report detail contract [ ]
+### Task 1.4 - Lock the report detail contract [x]
 
 Recommended detail buckets:
 
@@ -281,7 +281,7 @@ Implement the tournament-create domain workflow and persistence path.
 
 ## Tasks
 
-### Task 2.1 - Add tournament persistence helper [ ]
+### Task 2.1 - Add tournament persistence helper [x]
 
 Create:
 
@@ -298,7 +298,7 @@ Rules:
 1. persistence should not validate admin payload semantics
 2. persistence should not know execution/report/Slack semantics
 
-### Task 2.2 - Add the tournament-create use-case [ ]
+### Task 2.2 - Add the tournament-create use-case [x]
 
 Create:
 
@@ -312,7 +312,7 @@ Responsibilities:
 2. upload the tournament logo
 3. shape the DB insert payload
 4. insert the tournament row
-5. return explicit summary, details, and workflow status
+5. return raw workflow facts only
 
 Rules:
 
@@ -328,7 +328,7 @@ Add the operational envelope for tournament create.
 
 ## Tasks
 
-### Task 3.1 - Add execution-job store [ ]
+### Task 3.1 - Add execution-job store [x]
 
 Create:
 
@@ -338,11 +338,11 @@ src/domains/data-provider-v2/operations/tournament-create/execution-job-store.ts
 
 Rules:
 
-1. create the `in_progress` row before the tournament exists, using the temporary-id approach from V1
+1. create the `in_progress` row before the tournament exists, with `tournamentId = null`
 2. update the execution record with the real tournament id after create succeeds
 3. finalize as `completed` or `failed`
 
-### Task 3.2 - Add report upload and Slack notification [ ]
+### Task 3.2 - Add report upload and Slack notification [x]
 
 Create:
 
@@ -363,11 +363,12 @@ Rules:
    - compact summary
    - report link when available
 
-### Task 3.3 - Add the tournament operation runner [ ]
+### Task 3.3 - Add the tournament operation runner [x]
 
 Create:
 
 ```text
+src/domains/data-provider-v2/operations/tournament-create/report-builder.ts
 src/domains/data-provider-v2/operations/tournament-create/tournament-operation-runner.ts
 ```
 
@@ -377,10 +378,11 @@ Responsibilities:
 2. create runtime/session
 3. run the tournament-create use-case
 4. update execution job with the real tournament id after successful insert
-5. build/upload report
-6. finalize execution job
-7. send Slack
-8. close session/runtime
+5. build the report/result shape from raw workflow facts
+6. upload report
+7. finalize execution job
+8. send Slack
+9. close session/runtime
 
 This runner should stay workflow-specific and should not try to become a generic tournament bootstrap framework.
 
@@ -392,7 +394,7 @@ Wire the admin create tournament endpoint to the new V2 workflow.
 
 ## Tasks
 
-### Task 4.1 - Switch admin create tournament to V2 [ ]
+### Task 4.1 - Switch admin create tournament to V2 [x]
 
 Edit:
 
@@ -406,7 +408,7 @@ Target behavior:
 2. response shape remains stable for admin callers
 3. V1 tournament update and current-round sync remain untouched
 
-### Task 4.2 - Keep the cutover explicit [ ]
+### Task 4.2 - Keep the cutover explicit [x]
 
 Rules:
 
@@ -422,7 +424,7 @@ Verify V2 tournament-create behavior against the current product expectations.
 
 ## Tasks
 
-### Task 5.1 - Compile verification [ ]
+### Task 5.1 - Compile verification [x]
 
 Run:
 

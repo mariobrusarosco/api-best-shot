@@ -139,6 +139,7 @@ export const buildTournamentCreateReportData = (result: TournamentCreateWorkflow
         submittedInput: result.tournament,
         createdTournamentId: result.createdTournament.id,
         uploadedLogoUrl: result.uploadedLogo.assetUrl,
+        providerLogoUrl: result.providerLogoUrl,
       };
   }
 };

@@ -1,5 +1,5 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { fileTypeFromBuffer } from 'file-type';
+import FileType from 'file-type';
 import mime from 'mime-types';
 import type { Response } from 'playwright';
 import type { BrowserSession } from './browser-session';
@@ -9,7 +9,7 @@ const DEFAULT_CACHE_CONTROL = 'max-age=15768000, public';
 const DEFAULT_EXPIRES_MS = 15768000 * 1000;
 
 export type BrowserAssetUploadInput = {
-  assetUrl: string;
+  providerLogoUrl: string;
   filename: string;
   directory?: string;
   cacheControl?: string;
@@ -50,7 +50,7 @@ export class BrowserAssetUploader {
   constructor(private readonly session: BrowserSession) {}
 
   public async upload(input: BrowserAssetUploadInput): Promise<BrowserAssetUploadResult> {
-    const fetchedAsset = await this.fetchAsset(input.assetUrl);
+    const fetchedAsset = await this.fetchAsset(input.providerLogoUrl);
     const assetKey = await uploadBufferToS3({
       buffer: fetchedAsset.buffer,
       filename: input.filename,
@@ -209,7 +209,7 @@ const resolveAssetType = async (input: {
     return headerType;
   }
 
-  const detectedType = await fileTypeFromBuffer(input.buffer);
+  const detectedType = await FileType.fromBuffer(input.buffer);
 
   if (detectedType?.mime.startsWith('image/')) {
     return {

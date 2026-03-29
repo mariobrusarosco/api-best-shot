@@ -1,6 +1,12 @@
+import type { TournamentCreateSummary } from '@/domains/data-provider-v2/contracts/tournament-create';
 import db from '@/core/database';
 import { T_DataProviderExecutions } from '@/core/database/schema';
-import type { TournamentCreateSummary } from '@/domains/data-provider-v2/contracts/tournament-create';
+import {
+  createExecutionJob,
+  failExecutionJob,
+  finalizeExecutionJob,
+  type DataProviderExecutionRow,
+} from '@/domains/data-provider-v2/operations/shared/execution-job-store';
 import { eq } from 'drizzle-orm';
 
 export const TOURNAMENT_CREATE_EXECUTION_OPERATION_TYPE = 'tournament_create_v2' as const;
@@ -28,16 +34,12 @@ export const createTournamentCreateExecutionJob = async (input: {
   requestId: string;
   startedAt?: Date;
 }): Promise<TournamentCreateExecutionJob> => {
-  const [executionJob] = await db
-    .insert(T_DataProviderExecutions)
-    .values({
-      requestId: input.requestId,
-      tournamentId: EMPTY_TOURNAMENT_ID,
-      operationType: TOURNAMENT_CREATE_EXECUTION_OPERATION_TYPE,
-      status: 'in_progress',
-      startedAt: input.startedAt ?? new Date(),
-    })
-    .returning();
+  const executionJob = await createExecutionJob({
+    requestId: input.requestId,
+    tournamentId: EMPTY_TOURNAMENT_ID,
+    operationType: TOURNAMENT_CREATE_EXECUTION_OPERATION_TYPE,
+    startedAt: input.startedAt,
+  });
 
   return mapExecutionJob(executionJob);
 };
@@ -67,21 +69,15 @@ export const finalizeTournamentCreateExecutionJob = async (input: {
   reportFileKey?: string;
   summary?: TournamentCreateSummary;
 }): Promise<TournamentCreateExecutionJob | null> => {
-  const completedAt = input.completedAt ?? new Date();
-
-  const [executionJob] = await db
-    .update(T_DataProviderExecutions)
-    .set({
-      status: input.status,
-      completedAt,
-      duration: input.duration,
-      reportFileUrl: input.reportFileUrl,
-      reportFileKey: input.reportFileKey,
-      summary: input.summary,
-      updatedAt: completedAt,
-    })
-    .where(eq(T_DataProviderExecutions.requestId, input.requestId))
-    .returning();
+  const executionJob = await finalizeExecutionJob({
+    requestId: input.requestId,
+    status: input.status,
+    completedAt: input.completedAt,
+    duration: input.duration,
+    reportFileUrl: input.reportFileUrl,
+    reportFileKey: input.reportFileKey,
+    summary: input.summary,
+  });
 
   return executionJob ? mapExecutionJob(executionJob) : null;
 };
@@ -94,13 +90,19 @@ export const failTournamentCreateExecutionJob = async (input: {
   reportFileKey?: string;
   summary?: TournamentCreateSummary;
 }): Promise<TournamentCreateExecutionJob | null> => {
-  return finalizeTournamentCreateExecutionJob({
-    ...input,
-    status: 'failed',
+  const executionJob = await failExecutionJob({
+    requestId: input.requestId,
+    completedAt: input.completedAt,
+    duration: input.duration,
+    reportFileUrl: input.reportFileUrl,
+    reportFileKey: input.reportFileKey,
+    summary: input.summary,
   });
+
+  return executionJob ? mapExecutionJob(executionJob) : null;
 };
 
-const mapExecutionJob = (executionJob: typeof T_DataProviderExecutions.$inferSelect): TournamentCreateExecutionJob => {
+const mapExecutionJob = (executionJob: DataProviderExecutionRow): TournamentCreateExecutionJob => {
   return {
     id: executionJob.id,
     requestId: executionJob.requestId,

@@ -1,7 +1,10 @@
-import db from '@/core/database';
-import { T_DataProviderExecutions } from '@/core/database/schema';
 import type { TournamentUpdateSummary } from '@/domains/data-provider-v2/contracts/tournament-update';
-import { eq } from 'drizzle-orm';
+import {
+  createExecutionJob,
+  failExecutionJob,
+  finalizeExecutionJob,
+  type DataProviderExecutionRow,
+} from '@/domains/data-provider-v2/operations/shared/execution-job-store';
 
 export const TOURNAMENT_UPDATE_EXECUTION_OPERATION_TYPE = 'tournament_update_v2' as const;
 
@@ -27,16 +30,12 @@ export const createTournamentUpdateExecutionJob = async (input: {
   tournamentId: string;
   startedAt?: Date;
 }): Promise<TournamentUpdateExecutionJob> => {
-  const [executionJob] = await db
-    .insert(T_DataProviderExecutions)
-    .values({
-      requestId: input.requestId,
-      tournamentId: input.tournamentId,
-      operationType: TOURNAMENT_UPDATE_EXECUTION_OPERATION_TYPE,
-      status: 'in_progress',
-      startedAt: input.startedAt ?? new Date(),
-    })
-    .returning();
+  const executionJob = await createExecutionJob({
+    requestId: input.requestId,
+    tournamentId: input.tournamentId,
+    operationType: TOURNAMENT_UPDATE_EXECUTION_OPERATION_TYPE,
+    startedAt: input.startedAt,
+  });
 
   return mapExecutionJob(executionJob);
 };
@@ -50,21 +49,15 @@ export const finalizeTournamentUpdateExecutionJob = async (input: {
   reportFileKey?: string;
   summary?: TournamentUpdateSummary;
 }): Promise<TournamentUpdateExecutionJob | null> => {
-  const completedAt = input.completedAt ?? new Date();
-
-  const [executionJob] = await db
-    .update(T_DataProviderExecutions)
-    .set({
-      status: input.status,
-      completedAt,
-      duration: input.duration,
-      reportFileUrl: input.reportFileUrl,
-      reportFileKey: input.reportFileKey,
-      summary: input.summary,
-      updatedAt: completedAt,
-    })
-    .where(eq(T_DataProviderExecutions.requestId, input.requestId))
-    .returning();
+  const executionJob = await finalizeExecutionJob({
+    requestId: input.requestId,
+    status: input.status,
+    completedAt: input.completedAt,
+    duration: input.duration,
+    reportFileUrl: input.reportFileUrl,
+    reportFileKey: input.reportFileKey,
+    summary: input.summary,
+  });
 
   return executionJob ? mapExecutionJob(executionJob) : null;
 };
@@ -77,13 +70,19 @@ export const failTournamentUpdateExecutionJob = async (input: {
   reportFileKey?: string;
   summary?: TournamentUpdateSummary;
 }): Promise<TournamentUpdateExecutionJob | null> => {
-  return finalizeTournamentUpdateExecutionJob({
-    ...input,
-    status: 'failed',
+  const executionJob = await failExecutionJob({
+    requestId: input.requestId,
+    completedAt: input.completedAt,
+    duration: input.duration,
+    reportFileUrl: input.reportFileUrl,
+    reportFileKey: input.reportFileKey,
+    summary: input.summary,
   });
+
+  return executionJob ? mapExecutionJob(executionJob) : null;
 };
 
-const mapExecutionJob = (executionJob: typeof T_DataProviderExecutions.$inferSelect): TournamentUpdateExecutionJob => {
+const mapExecutionJob = (executionJob: DataProviderExecutionRow): TournamentUpdateExecutionJob => {
   return {
     id: executionJob.id,
     requestId: executionJob.requestId,

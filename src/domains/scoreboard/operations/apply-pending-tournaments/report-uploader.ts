@@ -22,17 +22,6 @@ export const uploadTournamentScoreboardExecutionReport = async (
     const reportFileUrl = buildTournamentScoreboardExecutionReportUrl(reportFileKey);
     const reportAvailable = Boolean(reportFileUrl);
 
-    Logger.audit('[REPORT_UPLOADED] Tournament scoreboard execution report uploaded successfully', {
-      domain: DOMAINS.TOURNAMENT,
-      component: 'scoreboard',
-      requestId: report.requestId,
-      tournamentId: report.tournament.tournamentId,
-      operation: report.operationType,
-      reportFileKey,
-      reportFileUrl,
-      reportAvailable,
-    });
-
     return {
       reportUploadStatus: 'uploaded',
       reportAvailable,

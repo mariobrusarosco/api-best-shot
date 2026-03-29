@@ -1,7 +1,7 @@
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
-import { mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { S3FileStorage } from './file-storage';
 
 type ScrapingOperationData =
@@ -128,7 +128,7 @@ export class DataProviderReport {
         const cloudFrontDomain = process.env.AWS_CLOUDFRONT_URL || '';
         s3Url = `https://${cloudFrontDomain}/${s3Key}`;
 
-        Logger.info(`[REPORT] Operation report uploaded to S3 successfully`, {
+        Logger.audit(`[REPORT] Operation report uploaded to S3 successfully`, {
           domain: DOMAINS.DATA_PROVIDER,
           component: 'service',
           s3Key,

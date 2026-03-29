@@ -23,17 +23,6 @@ export const uploadOpenMatchSyncReport = async (
     const reportFileUrl = buildCloudFrontUrl(reportFileKey);
     const reportAvailable = Boolean(reportFileUrl);
 
-    Logger.audit('[REPORT_UPLOADED] V2 operation report uploaded to S3 successfully', {
-      domain: DOMAINS.DATA_PROVIDER,
-      component: 'operations',
-      requestId: report.requestId,
-      tournamentId: report.tournament.tournamentId,
-      operation: report.operationType,
-      reportFileKey,
-      reportFileUrl,
-      reportAvailable,
-    });
-
     return {
       reportUploadStatus: 'uploaded',
       reportAvailable,

@@ -129,7 +129,8 @@ const allTournaments = async () => {
         season: T_Tournament.season,
         currentRound: T_Tournament.currentRound,
       })
-      .from(T_Tournament);
+      .from(T_Tournament)
+      .where(eq(T_Tournament.status, 'active'));
   } catch (error: unknown) {
     const dbError = error as DatabaseError;
     Logger.error(dbError, {

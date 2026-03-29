@@ -1,6 +1,9 @@
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
-import { SCOREBOARD_EXECUTION_STATUSES } from '@/domains/scoreboard/contracts';
+import {
+  SCOREBOARD_EXECUTION_STATUSES,
+  type TournamentScoreboardExecutionReportUploadResult,
+} from '@/domains/scoreboard/contracts';
 import { randomUUID } from 'crypto';
 import {
   completeTournamentScoreboardExecutionJob,
@@ -18,7 +21,11 @@ import {
   mergeExecutionSummaryWithReportUpload,
 } from './report-builder';
 import { uploadTournamentScoreboardExecutionReport } from './report-uploader';
-import { runTournamentScoreboardBacklogProcessing } from './tournament-runner';
+import {
+  runTournamentScoreboardBacklogProcessing,
+  type TournamentScoreboardBacklogProcessingResult,
+} from './tournament-runner';
+import { notifyTournamentScoreboardExecution } from './slack-notifier';
 import type { MatchAwaitingScoreboardCalculation, ProcessEndedMatchForScoreboardResult } from './types';
 
 export type RunTournamentScoreboardExecutionInput = {
@@ -55,9 +62,15 @@ export const runTournamentScoreboardExecution = async (
 ): Promise<TournamentScoreboardExecutionResult> => {
   const requestId = input.requestId ?? randomUUID();
   const startedAt = input.startedAt ?? new Date();
+  const tournamentLabel = input.tournamentLabel?.trim() || input.tournamentId;
+  let backlogProcessingResult: Exclude<
+    TournamentScoreboardBacklogProcessingResult,
+    { outcome: 'already_locked' }
+  > | null = null;
+  let reportUpload: TournamentScoreboardExecutionReportUploadResult | undefined;
 
   try {
-    const backlogProcessingResult = await runTournamentScoreboardBacklogProcessing({
+    const tournamentBacklogProcessingResult = await runTournamentScoreboardBacklogProcessing({
       tournamentId: input.tournamentId,
       requestId,
       startedAt,
@@ -65,7 +78,7 @@ export const runTournamentScoreboardExecution = async (
       processEndedMatchForScoreboard: input.processEndedMatchForScoreboard,
     });
 
-    if (backlogProcessingResult.outcome === 'already_locked') {
+    if (tournamentBacklogProcessingResult.outcome === 'already_locked') {
       return {
         outcome: 'already_locked',
         requestId,
@@ -76,8 +89,9 @@ export const runTournamentScoreboardExecution = async (
       };
     }
 
+    backlogProcessingResult = tournamentBacklogProcessingResult;
+
     const completedAt = new Date();
-    const tournamentLabel = input.tournamentLabel?.trim() || input.tournamentId;
     const appliedMatchDetails = backlogProcessingResult.appliedMatchResults.map(buildAppliedMatchDetail);
     const unexpectedFailureDetails =
       backlogProcessingResult.failedMatch !== null
@@ -110,7 +124,7 @@ export const runTournamentScoreboardExecution = async (
       details: executionDetails,
       data: executionReportData,
     });
-    const reportUpload = await uploadTournamentScoreboardExecutionReport(executionReport);
+    reportUpload = await uploadTournamentScoreboardExecutionReport(executionReport);
     const executionSummaryWithReportUpload = mergeExecutionSummaryWithReportUpload({
       summary: executionSummary,
       reportUpload,
@@ -174,6 +188,15 @@ export const runTournamentScoreboardExecution = async (
       throw finalizeError;
     }
 
+    await notifyTournamentScoreboardExecution({
+      requestId,
+      tournamentId: input.tournamentId,
+      tournamentLabel,
+      status: executionStatus,
+      summary: executionSummaryWithReportUpload,
+      reportUpload,
+    });
+
     return {
       outcome: executionStatus,
       requestId,
@@ -200,6 +223,33 @@ export const runTournamentScoreboardExecution = async (
         tournamentId: input.tournamentId,
       });
     }
+
+    const appliedMatchDetails = backlogProcessingResult?.appliedMatchResults.map(buildAppliedMatchDetail) ?? [];
+    const unexpectedFailureDetails =
+      backlogProcessingResult?.failedMatch !== null && backlogProcessingResult?.failedMatch !== undefined
+        ? [buildUnexpectedFailureMatchDetail(backlogProcessingResult.failedMatch)]
+        : [];
+    const failedExecutionSummary = buildExecutionSummary({
+      appliedDetails: appliedMatchDetails,
+      unexpectedFailures: unexpectedFailureDetails,
+    });
+    const failedExecutionSummaryWithReportUpload = reportUpload
+      ? mergeExecutionSummaryWithReportUpload({
+          summary: failedExecutionSummary,
+          reportUpload,
+        })
+      : failedExecutionSummary;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    await notifyTournamentScoreboardExecution({
+      requestId,
+      tournamentId: input.tournamentId,
+      tournamentLabel,
+      status: SCOREBOARD_EXECUTION_STATUSES.FAILED,
+      summary: failedExecutionSummaryWithReportUpload,
+      reportUpload,
+      errorMessage,
+    });
 
     throw error;
   }

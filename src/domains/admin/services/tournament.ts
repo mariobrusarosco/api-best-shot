@@ -1,9 +1,9 @@
 import db from '@/core/database';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
-import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
+import type { TournamentCreateInput } from '@/domains/data-provider-v2/contracts/tournament-create';
+import { runTournamentCreateOperation } from '@/domains/data-provider-v2/operations/tournament-create/tournament-operation-runner';
 import { T_DataProviderExecutions } from '@/domains/data-provider/schema';
-import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import type { TournamentRequestIn } from '@/domains/data-provider/typing';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
 import { SERVICES_TOURNAMENT } from '@/domains/tournament/services';
@@ -15,13 +15,47 @@ class AdminTournamentService {
   // Create tournament with admin context
   static async createTournament(req: TournamentRequestIn, res: Response) {
     const requestId = randomUUID();
-    let scraper: BaseScraper | null = null;
 
     try {
-      scraper = await BaseScraper.createInstance();
-      const dataProviderService = new TournamentDataProvider(scraper, requestId);
+      if (req.body.provider !== 'sofascore') {
+        return res.status(422).json({
+          success: false,
+          error: `V2 tournament create only supports provider "${'sofascore'}"`,
+        });
+      }
 
-      const tournament = await dataProviderService.init(req.body);
+      const tournamentInput: TournamentCreateInput = {
+        tournamentPublicId: req.body.tournamentPublicId,
+        baseUrl: req.body.baseUrl,
+        publicUrl: req.body.publicUrl,
+        slug: req.body.slug,
+        provider: 'sofascore',
+        season: req.body.season,
+        mode: req.body.mode,
+        label: req.body.label,
+        standingsMode: req.body.standingsMode,
+      };
+
+      const operation = await runTournamentCreateOperation({
+        requestId,
+        tournament: tournamentInput,
+      });
+
+      if (operation.status !== 'completed') {
+        return res.status(422).json({
+          success: false,
+          message: 'Tournament create operation failed',
+          data: { tournament: operation.result },
+        });
+      }
+
+      if (operation.result.outcome !== 'created') {
+        throw new Error(
+          `Tournament create operation completed without a created tournament for requestId=${requestId}`
+        );
+      }
+
+      const tournament = operation.result.createdTournament;
 
       return res.status(201).json({
         success: true,
@@ -38,10 +72,6 @@ class AdminTournamentService {
         adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
-    } finally {
-      if (scraper) {
-        await scraper.close();
-      }
     }
   }
 

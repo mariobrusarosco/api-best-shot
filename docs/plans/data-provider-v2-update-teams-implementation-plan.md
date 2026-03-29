@@ -17,7 +17,7 @@ It explicitly does **not** include a public batch API, scheduler work, or change
 
 ## Tasks
 
-### Task 0.1 - Lock the workflow boundary [ ]
+### Task 0.1 - Lock the workflow boundary [x]
 
 Rules:
 
@@ -30,7 +30,7 @@ Rules:
 5. update is explicitly allowed to create newly discovered global team rows via upsert
 6. this slice is manual/admin-triggered, not batch/scheduler-triggered
 
-### Task 0.2 - Lock the ownership boundaries [ ]
+### Task 0.2 - Lock the ownership boundaries [x]
 
 Stable ownership for this slice:
 
@@ -54,7 +54,7 @@ Stable ownership for this slice:
    - Slack notification
    - operation summary shaping
 
-### Task 0.3 - Lock the explicit non-goals [ ]
+### Task 0.3 - Lock the explicit non-goals [x]
 
 Non-goals for this slice:
 
@@ -174,7 +174,7 @@ Extend the shared teams contract for update-specific semantics.
 
 ## Tasks
 
-### Task 1.1 - Extend `contracts/teams.ts` for update [ ]
+### Task 1.1 - Extend `contracts/teams.ts` for update [x]
 
 Edit:
 
@@ -193,7 +193,7 @@ Add:
 7. `TournamentTeamsUpdateWorkflowResult`
 8. `TeamsUpdateReport`
 
-### Task 1.2 - Lock the update outcome vocabulary [ ]
+### Task 1.2 - Lock the update outcome vocabulary [x]
 
 Recommended update outcome vocabulary:
 
@@ -217,7 +217,7 @@ Rules:
 5. `asset_upload_failed` means badge upload failed before DB upsert completed
 6. `database_upsert_failed` means the upsert write step failed
 
-### Task 1.3 - Lock the update summary contract [ ]
+### Task 1.3 - Lock the update summary contract [x]
 
 Recommended summary shape:
 
@@ -240,7 +240,7 @@ type TournamentTeamsUpdateSummary = {
 };
 ```
 
-### Task 1.4 - Lock the update detail buckets [ ]
+### Task 1.4 - Lock the update detail buckets [x]
 
 Recommended detail buckets:
 
@@ -251,7 +251,7 @@ Recommended detail buckets:
 5. `databaseFailures`
 6. `unexpectedFailures`
 
-### Task 1.5 - Lock the workflow status rule [ ]
+### Task 1.5 - Lock the workflow status rule [x]
 
 Recommended workflow status:
 
@@ -267,7 +267,7 @@ Add the update-specific lower layer and the raw update use-case.
 
 ## Tasks
 
-### Task 2.1 - Add `upsert-teams.ts` [ ]
+### Task 2.1 - Add `upsert-teams.ts` [x]
 
 Create:
 
@@ -282,7 +282,7 @@ Responsibility:
    - created during update
    - updated
 
-### Task 2.2 - Implement `run-tournament-teams-update.ts` [ ]
+### Task 2.2 - Implement `run-tournament-teams-update.ts` [x]
 
 Create:
 
@@ -310,7 +310,7 @@ Wrap Team Update in the standard V2 operation envelope and cut over the admin ro
 
 ## Tasks
 
-### Task 3.1 - Add teams-update operation files [ ]
+### Task 3.1 - Add teams-update operation files [x]
 
 Create:
 
@@ -331,7 +331,7 @@ Rules:
    - runner = execution lifecycle + report upload + Slack
 2. reuse the already-shared report upload, execution store, and Slack skeleton helpers
 
-### Task 3.2 - Cut over admin update teams [ ]
+### Task 3.2 - Cut over admin update teams [x]
 
 Edit:
 
@@ -358,7 +358,7 @@ Verify Team Update end to end after Team Create is already in place.
 
 ## Tasks
 
-### Task 4.1 - Static verification [ ]
+### Task 4.1 - Static verification [x]
 
 Run:
 

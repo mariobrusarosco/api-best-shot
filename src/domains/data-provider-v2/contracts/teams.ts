@@ -234,3 +234,139 @@ export type TeamsCreateReportUploadResult = {
   reportFileUrl?: string;
   reportUploadError?: string;
 };
+
+export type TeamsUpdateOutcome =
+  | 'updated'
+  | 'created_during_update'
+  | 'provider_source_missing_teams'
+  | 'provider_team_payload_invalid'
+  | 'asset_upload_failed'
+  | 'database_upsert_failed'
+  | 'unexpected_failure';
+
+export type TournamentTeamsUpdateSummary = {
+  totalOperations: number;
+  successfulOperations: number;
+  failedOperations: number;
+  fetchedSources: number;
+  fetchedTeams: number;
+  upsertedTeams: number;
+  createdTeams: number;
+  updatedTeams: number;
+  uploadedAssets: number;
+  providerMissingSourcesCount: number;
+  invalidProviderTeamsCount: number;
+  reportUploadStatus?: 'uploaded' | 'failed';
+  reportAvailable?: boolean;
+  reportUploadError?: string;
+};
+
+export type TeamsUpdateDetail = {
+  teamId?: string;
+  teamExternalId?: string;
+  teamName?: string;
+  shortName?: string;
+  groupName?: string;
+  roundSlug?: string;
+  requestUrl?: string;
+  badgeUrl?: string;
+  reason: TeamsUpdateOutcome;
+  errorMessage?: string;
+  causeMessage?: string;
+  responseBodySnippet?: string;
+};
+
+export type TournamentTeamsUpdateDetails = {
+  upserted: TeamsUpdateDetail[];
+  providerMissingSources: TeamsUpdateDetail[];
+  invalidProviderTeams: TeamsUpdateDetail[];
+  assetUploadFailures: TeamsUpdateDetail[];
+  databaseFailures: TeamsUpdateDetail[];
+  unexpectedFailures: TeamsUpdateDetail[];
+};
+
+export type TeamsUpdateReportData = {
+  discoveredTeamExternalIds: string[];
+  existingTeamIds: string[];
+  existingTeamExternalIds: string[];
+  upsertedTeamIds: string[];
+  upsertedTeamExternalIds: string[];
+  createdTeamIds: string[];
+  updatedTeamIds: string[];
+  uploadedTeamExternalIds: string[];
+};
+
+export type TeamsUpdateWorkflowStatus = 'completed' | 'partial_failure' | 'failed';
+
+type TeamsUpdateWorkflowBase = {
+  tournament: TeamsTournamentContext;
+  fetchedSources: number;
+  fetchedTeams: number;
+  discoveredTeams: DiscoveredProviderTeam[];
+  providerMissingSources: TeamsProviderSourceIssue[];
+  invalidProviderTeams: TeamsInvalidProviderTeam[];
+  existingTeams: TeamsResolvedTeam[];
+};
+
+export type TournamentTeamsUpdateWorkflowResult =
+  | (TeamsUpdateWorkflowBase & {
+      outcome: 'provider_sources_missing_teams';
+      upsertableTeams: [];
+      uploadedBadges: [];
+      upsertedTeams: [];
+      createdDuringUpdateTeams: [];
+      updatedTeams: [];
+    })
+  | (TeamsUpdateWorkflowBase & {
+      outcome: 'asset_upload_failed';
+      upsertableTeams: DiscoveredProviderTeam[];
+      uploadedBadges: TeamsCreateUploadedBadge[];
+      upsertedTeams: [];
+      createdDuringUpdateTeams: [];
+      updatedTeams: [];
+      assetUploadFailure: TeamsCreateFailure;
+    })
+  | (TeamsUpdateWorkflowBase & {
+      outcome: 'database_upsert_failed';
+      upsertableTeams: DiscoveredProviderTeam[];
+      uploadedBadges: TeamsCreateUploadedBadge[];
+      upsertedTeams: [];
+      createdDuringUpdateTeams: [];
+      updatedTeams: [];
+      databaseUpsertFailure: TeamsCreateFailure;
+    })
+  | (TeamsUpdateWorkflowBase & {
+      outcome: 'processed';
+      upsertableTeams: DiscoveredProviderTeam[];
+      uploadedBadges: TeamsCreateUploadedBadge[];
+      upsertedTeams: DB_SelectTeam[];
+      createdDuringUpdateTeams: DB_SelectTeam[];
+      updatedTeams: DB_SelectTeam[];
+    });
+
+export type TournamentTeamsUpdateResult = {
+  tournamentId: string;
+  tournamentLabel: string;
+  status: TeamsUpdateWorkflowStatus;
+  summary: TournamentTeamsUpdateSummary;
+  details: TournamentTeamsUpdateDetails;
+  data: TeamsUpdateReportData;
+};
+
+export type TeamsUpdateReport = {
+  requestId: string;
+  operationType: 'teams_update_v2';
+  status: TeamsUpdateWorkflowStatus;
+  tournament: {
+    tournamentId: string;
+    tournamentLabel: string;
+    provider: 'sofascore';
+  };
+  startedAt: string;
+  completedAt: string;
+  summary: TournamentTeamsUpdateSummary;
+  details: TournamentTeamsUpdateDetails;
+  data: TeamsUpdateReportData;
+};
+
+export type TeamsUpdateReportUploadResult = TeamsCreateReportUploadResult;

@@ -18,6 +18,7 @@ It only tracks the V1 workflows we have already implemented in V2.
 | Rounds update | [rounds.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider/services/rounds.ts) `update()` | [run-tournament-rounds-update.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider-v2/use-cases/rounds/run-tournament-rounds-update.ts) and [tournament-operation-runner.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider-v2/operations/rounds-update/tournament-operation-runner.ts) | Implemented and active | Single-operation browser workspace; refreshes the full `/rounds` payload and upserts season and knockout rounds in one pass |
 | Teams create | [teams.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider/services/teams.ts) `init()` | [run-tournament-teams-create.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider-v2/use-cases/teams/run-tournament-teams-create.ts) and [tournament-operation-runner.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider-v2/operations/teams-create/tournament-operation-runner.ts) | Implemented and active | Single-operation browser workspace; tournament-scoped discovery creates missing global team rows |
 | Teams update | [teams.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider/services/teams.ts) `update()` | [run-tournament-teams-update.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider-v2/use-cases/teams/run-tournament-teams-update.ts) and [tournament-operation-runner.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider-v2/operations/teams-update/tournament-operation-runner.ts) | Implemented and active | Single-operation browser workspace; tournament-scoped discovery refreshes existing global team rows and may create newly discovered rows during update |
+| Matches create | [match.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider/services/match.ts) `init()` | [run-tournament-matches-create.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider-v2/use-cases/matches/run-tournament-matches-create.ts) and [tournament-operation-runner.ts](/Users/mariobrusarosco/coding/api-best-shot/src/domains/data-provider-v2/operations/matches-create/tournament-operation-runner.ts) | Implemented and active | Single-operation browser workspace; requires stored rounds and stored teams, then creates only fully resolvable missing matches |
 
 ## Current Admin / Scheduler Cutovers
 
@@ -37,12 +38,14 @@ These are the user-facing or scheduler-facing paths that already point to V2:
    - V2 rounds create
 7. `PATCH /api/v2/admin/tournaments/:tournamentId/rounds`
    - V2 rounds update
+8. `POST /api/v2/admin/tournaments/:tournamentId/matches`
+   - V2 matches create
 
 ## Not Yet Mapped Here
 
 These V1 areas are still outside the implemented-equivalents list in this document:
 
-1. matches create/update
+1. matches update
 2. tournament create/update flows outside the standings/open-match work
 3. tournament current-round sync
 

@@ -1,6 +1,7 @@
 import { ProviderRequestError } from '@/domains/data-provider-v2/contracts/errors';
 import type {
   DiscoveredProviderTeam,
+  SofaScoreRoundPayload,
   TeamsInvalidProviderTeam,
   TeamsProviderSourceIssue,
   TeamsTournamentContext,
@@ -88,7 +89,7 @@ export const prepareTournamentTeams = async (input: {
         fetchedSources++;
 
         try {
-          const payload = await input.roundProvider.fetchTournamentRound({
+          const payload = await input.roundProvider.fetchTournamentRound<SofaScoreRoundPayload>({
             providerUrl: round.providerUrl,
           });
 

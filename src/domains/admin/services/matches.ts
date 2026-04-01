@@ -1,5 +1,7 @@
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
+import type { MatchesTournamentContext } from '@/domains/data-provider-v2/contracts/matches';
+import { runTournamentMatchesCreateOperation } from '@/domains/data-provider-v2/operations/matches-create/tournament-operation-runner';
 import { BaseScraper } from '@/domains/data-provider/providers/playwright/base-scraper';
 import { MatchesDataProviderService } from '@/domains/data-provider/services/match';
 import { SERVICES_DATA_PROVIDER_MATCH_SYNC } from '@/domains/data-provider/services/matches-sync';
@@ -12,10 +14,8 @@ import { Request, Response } from 'express';
 class AdminMatchesService {
   static async createMatches(req: Request, res: Response) {
     const requestId = randomUUID();
-    let scraper: BaseScraper | null = null;
 
     try {
-      // Get tournament ID from URL params
       const tournamentId = req.params.tournamentId;
       if (!tournamentId) {
         return res.status(400).json({
@@ -33,16 +33,35 @@ class AdminMatchesService {
         });
       }
 
-      const rounds = await QUERIES_TOURNAMENT_ROUND.getAllRounds(tournamentId);
+      if (tournament.provider !== 'sofascore') {
+        return res.status(422).json({
+          success: false,
+          error: `V2 matches create only supports provider "${'sofascore'}"`,
+        });
+      }
 
-      scraper = await BaseScraper.createInstance();
-      const dataProviderService = new MatchesDataProviderService(scraper, requestId);
+      const tournamentContext: MatchesTournamentContext = {
+        tournamentId,
+        tournamentLabel: tournament.label,
+        provider: 'sofascore',
+      };
 
-      const matches = await dataProviderService.init(rounds, tournament);
+      const operation = await runTournamentMatchesCreateOperation({
+        requestId,
+        tournament: tournamentContext,
+      });
+
+      if (operation.status !== 'completed') {
+        return res.status(422).json({
+          success: false,
+          message: 'Matches create operation failed',
+          data: { matches: operation.result },
+        });
+      }
 
       return res.status(201).json({
         success: true,
-        data: { matches },
+        data: { matches: operation.result },
         message: `Matches created successfully`,
       });
     } catch (error) {
@@ -54,14 +73,6 @@ class AdminMatchesService {
         adminUser: req.authenticatedUser?.nickName,
       });
       return handleInternalServerErrorResponse(res, error);
-    } finally {
-      if (scraper) {
-        await scraper.close();
-        Logger.info('[CLEANUP] Playwright resources cleaned up successfully', {
-          requestId,
-          source: 'admin_service',
-        });
-      }
     }
   }
 

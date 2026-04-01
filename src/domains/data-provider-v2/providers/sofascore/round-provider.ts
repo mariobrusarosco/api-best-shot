@@ -1,5 +1,4 @@
 import type { SofaScoreTournamentRoundsPayload } from '@/domains/data-provider-v2/contracts/rounds';
-import type { SofaScoreRoundPayload } from '@/domains/data-provider-v2/contracts/teams';
 import { ProviderRequestError } from '@/domains/data-provider-v2/contracts/errors';
 import {
   BrowserRequest,
@@ -65,11 +64,13 @@ export class SofaScoreRoundProvider {
     }
   }
 
-  public async fetchTournamentRound(input: { providerUrl: string }): Promise<SofaScoreRoundPayload> {
+  public async fetchTournamentRound<TPayload extends { events: unknown[] }>(input: {
+    providerUrl: string;
+  }): Promise<TPayload> {
     const requestUrl = input.providerUrl.trim();
 
     try {
-      const response = await this.browserRequest.fetchJson<SofaScoreRoundPayload>(requestUrl);
+      const response = await this.browserRequest.fetchJson<TPayload>(requestUrl);
 
       if (!response.ok) {
         throw new ProviderRequestError({
@@ -83,7 +84,7 @@ export class SofaScoreRoundProvider {
         });
       }
 
-      return response.data ?? { events: [] };
+      return response.data ?? ({ events: [] } as unknown as TPayload);
     } catch (error) {
       if (error instanceof ProviderRequestError) throw error;
 

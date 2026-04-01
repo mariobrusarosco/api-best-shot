@@ -3,8 +3,8 @@ import { CRON_TARGET_IDS } from '@/domains/cron/constants';
 import type { DB_SelectCronJobRun } from '@/domains/cron/schema';
 import type { ICronRunTriggerType } from '@/domains/cron/typing';
 import { runCurrentRoundSyncBatch } from '@/domains/data-provider-v2/use-cases/current-round-sync/run-current-round-sync-batch';
+import { runKnockoutRoundsSyncBatch } from '@/domains/data-provider-v2/use-cases/knockout-rounds-sync/run-knockout-rounds-sync-batch';
 import { SERVICES_DATA_PROVIDER_MATCH_SYNC } from '@/domains/data-provider/services/matches-sync';
-import { RoundsDataProviderService } from '@/domains/data-provider/services/rounds';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
 import { MatchQueries } from '@/domains/match/queries';
 import { matchesSyncEndedHandler } from './matches-sync-ended';
@@ -63,15 +63,24 @@ const tournamentsCurrentRoundSyncHandler: CronTargetHandler = async () => {
 };
 
 const tournamentsKnockoutRoundsSyncHandler: CronTargetHandler = async () => {
-  const summary = await RoundsDataProviderService.updateKnockouts();
+  const batchResult = await runKnockoutRoundsSyncBatch();
+  const tournaments = batchResult.results.map(result => ({
+    tournamentId: result.tournamentId,
+    tournamentLabel: result.tournamentLabel,
+    createdRounds: result.result.summary.createdRounds,
+    createdMatches: result.result.summary.createdMatches,
+    status: result.status,
+  }));
 
-  Logger.audit(`[CRON_TARGET:tournaments.knockout_rounds_sync]`, summary);
+  Logger.audit(`[CRON_TARGET:tournaments.knockout_rounds_sync]`, {
+    summary: batchResult.summary,
+    tournaments,
+  });
 
-  if (summary.failedTournaments.length > 0) {
-    const failures = summary.failedTournaments
-      .map(failure => `tournamentSlug=${failure.tournamentSlug} error=${failure.error}`)
-      .join(' | ');
-    throw new Error(`Knockout rounds sync failed for ${summary.failedTournaments.length} tournaments: ${failures}`);
+  if (batchResult.summary.failedTournaments > 0) {
+    throw new Error(
+      `Knockout rounds sync failed for ${batchResult.summary.failedTournaments}/${batchResult.summary.queuedTournaments} tournaments`
+    );
   }
 };
 

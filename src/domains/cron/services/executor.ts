@@ -2,10 +2,10 @@ import Logger from '@/core/logger';
 import { CRON_TARGET_IDS } from '@/domains/cron/constants';
 import type { DB_SelectCronJobRun } from '@/domains/cron/schema';
 import type { ICronRunTriggerType } from '@/domains/cron/typing';
+import { runCurrentRoundSyncBatch } from '@/domains/data-provider-v2/use-cases/current-round-sync/run-current-round-sync-batch';
 import { SERVICES_DATA_PROVIDER_MATCH_SYNC } from '@/domains/data-provider/services/matches-sync';
 import { RoundsDataProviderService } from '@/domains/data-provider/services/rounds';
 import { StandingsDataProviderService } from '@/domains/data-provider/services/standings';
-import { TournamentDataProvider } from '@/domains/data-provider/services/tournaments';
 import { MatchQueries } from '@/domains/match/queries';
 import { matchesSyncEndedHandler } from './matches-sync-ended';
 import { scoreboardApplyPendingTournamentsHandler } from './scoreboard-apply-pending-tournaments';
@@ -38,19 +38,27 @@ const matchesSyncOpenHandler: CronTargetHandler = async () => {
 const tournamentsCurrentRoundSyncHandler: CronTargetHandler = async () => {
   const todayMatches = await MatchQueries.currentDayMatchesOnDatabase();
   const uniqueTournamentIds = new Set(todayMatches.map(match => match.tournamentId).filter(Boolean));
-  const { failures, results } = await TournamentDataProvider.syncCurrentRoundsForTournamentIds([
-    ...uniqueTournamentIds,
-  ]);
+  const batchResult = await runCurrentRoundSyncBatch({
+    tournamentIds: [...uniqueTournamentIds],
+  });
 
-  const tournaments = results.map(result => ({
-    tournamentSlug: result.tournamentSlug,
-    currentRoundSlug: result.currentRoundSlug,
+  const tournaments = batchResult.results.map(result => ({
+    tournamentId: result.tournamentId,
+    tournamentLabel: result.tournamentLabel,
+    currentRoundSlug: result.result.data.currentRoundSlug,
+    status: result.status,
   }));
 
-  Logger.audit(`[CRON_TARGET:tournaments.current_round_sync]`, { todayMatches, tournaments });
+  Logger.audit(`[CRON_TARGET:tournaments.current_round_sync]`, {
+    todayMatches,
+    summary: batchResult.summary,
+    tournaments,
+  });
 
-  if (failures.length > 0) {
-    throw new Error(`Current round sync failed for ${failures.length}/${uniqueTournamentIds.size} tournaments`);
+  if (batchResult.summary.failedTournaments > 0) {
+    throw new Error(
+      `Current round sync failed for ${batchResult.summary.failedTournaments}/${batchResult.summary.queuedTournaments} tournaments`
+    );
   }
 };
 

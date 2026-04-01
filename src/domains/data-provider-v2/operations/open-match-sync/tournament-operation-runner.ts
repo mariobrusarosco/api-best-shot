@@ -104,14 +104,16 @@ export const runTournamentOpenMatchSyncOperation = async (input: {
       });
     }
 
-    await notifyOpenMatchSyncExecution({
-      requestId,
-      tournamentId: input.tournamentId,
-      tournamentLabel,
-      status: tournamentResult.status,
-      summary,
-      reportUpload,
-    });
+    if (shouldNotifySlackForOpenMatchSync({ status: tournamentResult.status, summary })) {
+      await notifyOpenMatchSyncExecution({
+        requestId,
+        tournamentId: input.tournamentId,
+        tournamentLabel,
+        status: tournamentResult.status,
+        summary,
+        reportUpload,
+      });
+    }
 
     return {
       requestId,
@@ -177,6 +179,17 @@ export const runTournamentOpenMatchSyncOperation = async (input: {
 
     throw error;
   }
+};
+
+const shouldNotifySlackForOpenMatchSync = (input: {
+  status: OpenMatchSyncWorkflowStatus;
+  summary: TournamentOpenMatchSyncSummary;
+}): boolean => {
+  if (input.status === 'failed' || input.status === 'partial_failure') {
+    return true;
+  }
+
+  return input.summary.updatedMatches > 0 || input.summary.postponedMatches > 0;
 };
 
 const buildOpenMatchSyncReport = (input: {

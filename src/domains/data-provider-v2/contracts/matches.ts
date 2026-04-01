@@ -257,3 +257,150 @@ export type MatchesCreateReportUploadResult = {
   reportFileUrl?: string;
   reportUploadError?: string;
 };
+
+export type MatchesUpdateOutcome =
+  | 'updated'
+  | 'created_during_update'
+  | 'rounds_prerequisite_missing'
+  | 'provider_source_missing_matches'
+  | 'provider_match_payload_invalid'
+  | 'team_reference_missing'
+  | 'database_upsert_failed'
+  | 'unexpected_failure';
+
+export type TournamentMatchesUpdateSummary = {
+  totalOperations: number;
+  successfulOperations: number;
+  failedOperations: number;
+  roundsRequested: number;
+  fetchedRounds: number;
+  fetchedMatches: number;
+  upsertedMatches: number;
+  createdMatches: number;
+  updatedMatches: number;
+  blockedByMissingTeamsCount: number;
+  missingRoundsPrerequisiteCount: number;
+  providerIssuesCount: number;
+  invalidProviderMatchesCount: number;
+  reportUploadStatus?: 'uploaded' | 'failed';
+  reportAvailable?: boolean;
+  reportUploadError?: string;
+};
+
+export type MatchesUpdateDetail = {
+  matchId?: string;
+  matchExternalId?: string;
+  roundId?: string;
+  roundLabel?: string;
+  roundSlug?: string;
+  requestUrl?: string;
+  homeTeamExternalId?: string;
+  awayTeamExternalId?: string;
+  missingTeamExternalIds?: string[];
+  reason: MatchesUpdateOutcome;
+  errorMessage?: string;
+  causeMessage?: string;
+  responseBodySnippet?: string;
+};
+
+export type TournamentMatchesUpdateDetails = {
+  upserted: MatchesUpdateDetail[];
+  prerequisiteFailures: MatchesUpdateDetail[];
+  providerIssues: MatchesUpdateDetail[];
+  invalidProviderMatches: MatchesUpdateDetail[];
+  blockedByMissingTeams: MatchesUpdateDetail[];
+  databaseFailures: MatchesUpdateDetail[];
+  unexpectedFailures: MatchesUpdateDetail[];
+};
+
+export type MatchesUpdateReportData = {
+  requestedRoundIds: string[];
+  requestedRoundSlugs: string[];
+  discoveredMatchExternalIds: string[];
+  existingMatchIds: string[];
+  existingMatchExternalIds: string[];
+  upsertedMatchIds: string[];
+  upsertedMatchExternalIds: string[];
+  createdMatchIds: string[];
+  updatedMatchIds: string[];
+  blockedMatchExternalIds: string[];
+  resolvedTeamIds: string[];
+  resolvedTeamExternalIds: string[];
+};
+
+export type MatchesUpdateWorkflowStatus = 'completed' | 'partial_failure' | 'failed';
+
+type MatchesUpdateWorkflowBase = {
+  tournament: MatchesTournamentContext;
+  rounds: MatchesRoundContext[];
+  fetchedRounds: number;
+  discoveredMatches: DiscoveredProviderMatch[];
+  providerIssues: MatchesProviderIssue[];
+  invalidProviderMatches: MatchesInvalidProviderMatch[];
+  existingMatches: MatchesResolvedMatch[];
+  resolvedTeams: MatchesResolvedTeam[];
+  blockedMatches: MatchesBlockedMatch[];
+};
+
+export type TournamentMatchesUpdateWorkflowResult =
+  | (MatchesUpdateWorkflowBase & {
+      outcome: 'rounds_prerequisite_missing';
+      upsertableMatches: [];
+      upsertedMatches: [];
+      missingRoundsPrerequisite: {
+        errorMessage: string;
+      };
+    })
+  | (MatchesUpdateWorkflowBase & {
+      outcome: 'provider_sources_missing_matches';
+      upsertableMatches: [];
+      upsertedMatches: [];
+    })
+  | (MatchesUpdateWorkflowBase & {
+      outcome: 'database_upsert_failed';
+      upsertableMatches: Array<
+        DB_InsertMatch & { externalId: string; roundId: string; roundLabel: string; requestUrl: string }
+      >;
+      upsertedMatches: [];
+      databaseUpsertFailure: MatchesCreateFailure;
+    })
+  | (MatchesUpdateWorkflowBase & {
+      outcome: 'processed';
+      upsertableMatches: Array<
+        DB_InsertMatch & { externalId: string; roundId: string; roundLabel: string; requestUrl: string }
+      >;
+      upsertedMatches: DB_SelectMatch[];
+    });
+
+export type TournamentMatchesUpdateResult = {
+  tournamentId: string;
+  tournamentLabel: string;
+  status: MatchesUpdateWorkflowStatus;
+  summary: TournamentMatchesUpdateSummary;
+  details: TournamentMatchesUpdateDetails;
+  data: MatchesUpdateReportData;
+};
+
+export type MatchesUpdateReport = {
+  requestId: string;
+  operationType: 'matches_update_v2';
+  status: MatchesUpdateWorkflowStatus;
+  tournament: {
+    tournamentId: string;
+    tournamentLabel: string;
+    provider: 'sofascore';
+  };
+  startedAt: string;
+  completedAt: string;
+  summary: TournamentMatchesUpdateSummary;
+  details: TournamentMatchesUpdateDetails;
+  data: MatchesUpdateReportData;
+};
+
+export type MatchesUpdateReportUploadResult = {
+  reportUploadStatus: 'uploaded' | 'failed';
+  reportAvailable: boolean;
+  reportFileKey?: string;
+  reportFileUrl?: string;
+  reportUploadError?: string;
+};

@@ -135,7 +135,8 @@ const getMatchesByTournament = async (tournamentId: string, roundId: string) => 
       .from(T_Match)
       .leftJoin(homeTeam, eq(T_Match.homeTeamId, homeTeam.id))
       .leftJoin(awayTeam, eq(T_Match.awayTeamId, awayTeam.id))
-      .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, roundId)));
+      .where(and(eq(T_Match.tournamentId, tournamentId), eq(T_Match.roundSlug, roundId)))
+      .orderBy(asc(T_Match.date));
   } catch (error: unknown) {
     Logger.error(error as Error, {
       domain: DOMAINS.MATCH,

@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from 'timers/promises';
 import { ProviderRequestError } from '@/domains/data-provider-v2/contracts/errors';
 import type {
   DiscoveredProviderMatch,
@@ -17,6 +18,8 @@ export type PreparedTournamentMatchesResult = {
   invalidProviderMatches: MatchesInvalidProviderMatch[];
 };
 
+const MATCH_ROUND_FETCH_DELAY_MS = 2500;
+
 export const prepareTournamentMatches = async (input: {
   tournament: MatchesTournamentContext;
   rounds: MatchesRoundContext[];
@@ -27,7 +30,7 @@ export const prepareTournamentMatches = async (input: {
   const invalidProviderMatches: MatchesInvalidProviderMatch[] = [];
   let fetchedRounds = 0;
 
-  for (const round of input.rounds) {
+  for (const [index, round] of input.rounds.entries()) {
     fetchedRounds++;
 
     try {
@@ -62,6 +65,10 @@ export const prepareTournamentMatches = async (input: {
           error,
         })
       );
+    } finally {
+      if (index < input.rounds.length - 1) {
+        await sleep(MATCH_ROUND_FETCH_DELAY_MS);
+      }
     }
   }
 

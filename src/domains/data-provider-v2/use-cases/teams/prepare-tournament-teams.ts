@@ -28,6 +28,7 @@ export const prepareTournamentTeams = async (input: {
   const providerMissingSources: TeamsProviderSourceIssue[] = [];
   const invalidProviderTeams: TeamsInvalidProviderTeam[] = [];
   let fetchedSources = 0;
+  let standingsSourceProducedTeams = false;
 
   if (shouldUseStandingsSource(input.tournament.mode)) {
     fetchedSources++;
@@ -60,6 +61,7 @@ export const prepareTournamentTeams = async (input: {
             errorMessage: 'Provider standings payload did not contain any mappable teams',
           });
         } else {
+          standingsSourceProducedTeams = true;
           discoveredTeams.push(...mapped.teams);
         }
       }
@@ -79,11 +81,17 @@ export const prepareTournamentTeams = async (input: {
 
     if (knockoutRounds.length === 0) {
       fetchedSources++;
-      providerMissingSources.push({
-        source: 'knockout_round',
-        kind: 'missing_rounds',
-        errorMessage: 'Tournament does not have any stored knockout rounds to fetch teams from',
-      });
+
+      const shouldReportMissingKnockoutRounds =
+        input.tournament.mode !== 'regular-season-and-knockout' || !standingsSourceProducedTeams;
+
+      if (shouldReportMissingKnockoutRounds) {
+        providerMissingSources.push({
+          source: 'knockout_round',
+          kind: 'missing_rounds',
+          errorMessage: 'Tournament does not have any stored knockout rounds to fetch teams from',
+        });
+      }
     } else {
       for (const round of knockoutRounds) {
         fetchedSources++;

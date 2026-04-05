@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from 'timers/promises';
 import type {
   TeamsCreateFailure,
   TeamsCreateUploadedBadge,
@@ -11,6 +12,8 @@ import { SofaScoreStandingsProvider } from '@/domains/data-provider-v2/providers
 import { type BrowserAssetUploader } from '@/domains/data-provider-v2/transport/playwright/browser-asset-uploader';
 import { collectDiscoveredTeamExternalIds } from './map-provider-teams';
 import { prepareTournamentTeams } from './prepare-tournament-teams';
+
+const TEAM_BADGE_UPLOAD_DELAY_MS = 3000;
 
 export const runTournamentTeamsCreate = async (input: {
   tournament: TeamsTournamentContext;
@@ -66,7 +69,7 @@ export const runTournamentTeamsCreate = async (input: {
 
   const uploadedBadges: TeamsCreateUploadedBadge[] = [];
 
-  for (const team of creatableTeams) {
+  for (const [index, team] of creatableTeams.entries()) {
     try {
       const uploadedBadge = await input.badgeUploader.upload({
         providerLogoUrl: buildSofaScoreTeamBadgeUrl(team.externalId),
@@ -100,6 +103,10 @@ export const runTournamentTeamsCreate = async (input: {
           requestUrl: buildSofaScoreTeamBadgeUrl(team.externalId),
         }),
       };
+    } finally {
+      if (index < creatableTeams.length - 1) {
+        await sleep(TEAM_BADGE_UPLOAD_DELAY_MS);
+      }
     }
   }
 

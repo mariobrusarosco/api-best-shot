@@ -24,6 +24,7 @@ router.get('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.getAllTourname
 router.get('/tournaments/:tournamentId', AdminMiddleware, API_ADMIN_TOURNAMENTS.getTournamentById);
 router.post('/tournaments', AdminMiddleware, API_ADMIN_TOURNAMENTS.createTournament);
 router.patch('/tournaments/:tournamentId', AdminMiddleware, API_ADMIN_TOURNAMENTS.updateTournament);
+router.delete('/tournaments/:tournamentId', AdminMiddleware, API_ADMIN_TOURNAMENTS.deleteTournament);
 
 // Tournament Rounds Management (admin only)
 router.post('/tournaments/:tournamentId/rounds', AdminMiddleware, API_ADMIN_TOURNAMENTS.createRounds);

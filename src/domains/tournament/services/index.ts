@@ -110,6 +110,10 @@ const createTournament = async (payload: DB_InsertTournament) => {
   return QUERIES_TOURNAMENT.createTournament(payload);
 };
 
+const deleteTournament = async (tournamentId: string) => {
+  return QUERIES_TOURNAMENT.deleteTournamentAggregate(tournamentId);
+};
+
 const getTournamentRounds = async (tournamentId: string) => {
   const tournament = await QUERIES_TOURNAMENT.tournament(tournamentId);
 
@@ -132,5 +136,6 @@ export const SERVICES_TOURNAMENT = {
   getTournament,
   getTournamentRecord,
   createTournament,
+  deleteTournament,
   getTournamentRounds,
 };

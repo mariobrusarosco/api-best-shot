@@ -23,6 +23,10 @@ export const API_ADMIN_TOURNAMENTS = {
     return await AdminTournamentService.updateTournament(req, res);
   },
 
+  async deleteTournament(req: Request, res: Response) {
+    return await AdminTournamentService.deleteTournament(req, res);
+  },
+
   async createRounds(req: Request, res: Response) {
     return await AdminRoundsService.createRounds(req, res);
   },

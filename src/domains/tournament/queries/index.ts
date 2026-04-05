@@ -1,8 +1,10 @@
 import db from '@/core/database';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
+import { T_DataProviderExecutions } from '@/domains/data-provider/schema';
 import { T_Guess } from '@/domains/guess/schema';
 import { T_Match } from '@/domains/match/schema';
+import { T_ScoreboardExecutions } from '@/domains/scoreboard/schema';
 import type { DatabaseError } from '@/domains/shared/error-handling/database';
 import { T_Team } from '@/domains/team/schema';
 import { T_TournamentRound } from '@/domains/tournament-round/schema';
@@ -20,6 +22,11 @@ import type { TournamentMode, TournamentWithTypedMode } from '@/domains/tourname
 import { and, eq, inArray, type SQL, sql } from 'drizzle-orm';
 
 type TournamentQueryExecutor = typeof db;
+type TournamentDeleteBlocker = 'data_provider_execution' | 'scoreboard_execution';
+type TournamentDeleteResult =
+  | { outcome: 'not_found' }
+  | { outcome: 'blocked'; blocker: TournamentDeleteBlocker; tournament: DB_SelectTournament }
+  | { outcome: 'deleted'; tournament: DB_SelectTournament };
 
 const updateTournamentScoreboardPoints = async (memberId: string, tournamentId: string, delta: number) => {
   try {
@@ -225,6 +232,34 @@ const tournamentRecord = async (tournamentId: string): Promise<DB_SelectTourname
   }
 };
 
+const hasInProgressDataProviderExecutions = async (
+  tournamentId: string,
+  executor: TournamentQueryExecutor = db
+): Promise<boolean> => {
+  const [executionJob] = await executor
+    .select({ id: T_DataProviderExecutions.id })
+    .from(T_DataProviderExecutions)
+    .where(
+      and(eq(T_DataProviderExecutions.tournamentId, tournamentId), eq(T_DataProviderExecutions.status, 'in_progress'))
+    )
+    .limit(1);
+
+  return !!executionJob;
+};
+
+const hasInProgressScoreboardExecutions = async (
+  tournamentId: string,
+  executor: TournamentQueryExecutor = db
+): Promise<boolean> => {
+  const [executionJob] = await executor
+    .select({ id: T_ScoreboardExecutions.id })
+    .from(T_ScoreboardExecutions)
+    .where(and(eq(T_ScoreboardExecutions.tournamentId, tournamentId), eq(T_ScoreboardExecutions.status, 'in_progress')))
+    .limit(1);
+
+  return !!executionJob;
+};
+
 const knockoutRounds = async (tournamentId: string) => {
   try {
     return db
@@ -396,6 +431,77 @@ const createTournament = async (input: DB_InsertTournament) => {
   }
 };
 
+const deleteTournamentAggregate = async (tournamentId: string): Promise<TournamentDeleteResult> => {
+  try {
+    return await db.transaction(async tx => {
+      const [existingTournament] = await tx
+        .select()
+        .from(T_Tournament)
+        .where(eq(T_Tournament.id, tournamentId))
+        .limit(1);
+
+      if (!existingTournament) {
+        return { outcome: 'not_found' };
+      }
+
+      // Lock the parent row so a new child execution cannot race the destructive delete.
+      await tx.execute(
+        sql`select ${T_Tournament.id} from ${T_Tournament} where ${T_Tournament.id} = ${tournamentId} for update`
+      );
+
+      if (await hasInProgressDataProviderExecutions(tournamentId, tx)) {
+        return {
+          outcome: 'blocked',
+          blocker: 'data_provider_execution',
+          tournament: existingTournament,
+        };
+      }
+
+      if (await hasInProgressScoreboardExecutions(tournamentId, tx)) {
+        return {
+          outcome: 'blocked',
+          blocker: 'scoreboard_execution',
+          tournament: existingTournament,
+        };
+      }
+
+      const tournamentMatches = await tx
+        .select({ id: T_Match.id })
+        .from(T_Match)
+        .where(eq(T_Match.tournamentId, tournamentId));
+      const matchIds = tournamentMatches.map(match => match.id);
+
+      await tx.delete(T_DataProviderExecutions).where(eq(T_DataProviderExecutions.tournamentId, tournamentId));
+
+      if (matchIds.length > 0) {
+        await tx.delete(T_DataProviderExecutions).where(inArray(T_DataProviderExecutions.matchId, matchIds));
+      }
+
+      await tx.delete(T_TournamentStandings).where(eq(T_TournamentStandings.tournamentId, tournamentId));
+
+      const [deletedTournament] = await tx.delete(T_Tournament).where(eq(T_Tournament.id, tournamentId)).returning();
+
+      if (!deletedTournament) {
+        return { outcome: 'not_found' };
+      }
+
+      return {
+        outcome: 'deleted',
+        tournament: deletedTournament,
+      };
+    });
+  } catch (error: unknown) {
+    const dbError = error as DatabaseError;
+    Logger.error(dbError, {
+      domain: DOMAINS.TOURNAMENT,
+      component: 'database',
+      operation: 'deleteTournamentAggregate',
+      tournamentId,
+    });
+    throw error;
+  }
+};
+
 const updateTournamentCurrentRound = async (
   tournamentId: string,
   currentRound: string
@@ -469,6 +575,7 @@ export const QUERIES_TOURNAMENT = {
 
   getTournamentStandings,
   createTournament,
+  deleteTournamentAggregate,
   updateTournamentCurrentRound,
   upsertTournamentStandings,
   updateTournamentScoreboardPoints,

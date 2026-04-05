@@ -167,6 +167,62 @@ class AdminTournamentService {
     }
   }
 
+  static async deleteTournament(req: Request, res: Response) {
+    const requestId = randomUUID();
+
+    try {
+      const { tournamentId } = req.params;
+
+      if (!tournamentId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Tournament ID is required',
+        });
+      }
+
+      const result = await SERVICES_TOURNAMENT.deleteTournament(tournamentId);
+
+      if (result.outcome === 'not_found') {
+        return res.status(404).json({
+          success: false,
+          message: 'Tournament not found',
+        });
+      }
+
+      if (result.outcome === 'blocked') {
+        const blockingResource =
+          result.blocker === 'data_provider_execution' ? 'data provider execution' : 'scoreboard execution';
+
+        return res.status(409).json({
+          success: false,
+          message: `Tournament "${result.tournament.label}" cannot be deleted while a ${blockingResource} is in progress`,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          tournament: {
+            id: result.tournament.id,
+            label: result.tournament.label,
+          },
+        },
+        message: `Tournament "${result.tournament.label}" deleted successfully`,
+      });
+    } catch (error) {
+      Logger.error(error as Error, {
+        domain: DOMAINS.ADMIN,
+        component: 'service',
+        operation: 'delete',
+        resource: 'TOURNAMENTS',
+        requestId,
+        adminUser: req.authenticatedUser?.nickName,
+      });
+
+      return handleInternalServerErrorResponse(res, error);
+    }
+  }
+
   // Get all tournaments for admin
   static async getAllTournaments(_req: Request, res: Response) {
     try {

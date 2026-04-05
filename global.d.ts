@@ -9,6 +9,8 @@ declare global {
       MEMBER_PUBLIC_ID_COOKIE: string;
       NODE_ENV: string;
       JWT_SECRET: string;
+      AUTH0_ISSUER_BASE_URL: string;
+      AUTH0_AUDIENCE: string;
       VITE_BEST_SHOT_API: string;
       API_PROVIDER: string;
       DATA_PROVIDER_COOKIE: string;

@@ -3,6 +3,7 @@ import { AuthenticateMemberRequest } from '../typing';
 import { SERVICES_AUTH } from '../services';
 import { z } from 'zod';
 import { handleInternalServerErrorResponse } from '@/domains/shared/error-handling/httpResponsesHelper';
+import { GlobalErrorMapper } from '@/domains/shared/error-handling/mapper';
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
 import { ErrorMapper } from '../error-handling/mapper';
@@ -50,6 +51,50 @@ const authenticateUser = async (req: AuthenticateMemberRequest, res: Response) =
   }
 };
 
+type Auth0AuthenticatedRequest = Request & {
+  auth?: {
+    payload?: {
+      sub?: string;
+    };
+  };
+};
+
+const authenticateUserWithAuth0Proof = async (req: Auth0AuthenticatedRequest, res: Response) => {
+  try {
+    const auth0Subject = req.auth?.payload?.sub;
+
+    if (!auth0Subject) {
+      Logger.error(new Error('Missing Auth0 subject after token validation'), {
+        domain: DOMAINS.AUTH,
+        component: 'api',
+        operation: 'authenticateUserWithAuth0Proof',
+      });
+
+      return res
+        .status(GlobalErrorMapper.NOT_AUTHORIZED.status)
+        .send({ message: GlobalErrorMapper.NOT_AUTHORIZED.userMessage });
+    }
+
+    const result = await SERVICES_AUTH.authenticateUserWithAuth0Subject(auth0Subject, res);
+
+    if (!result) {
+      return res.status(ErrorMapper.USER_NOT_FOUND.status).send({ message: ErrorMapper.USER_NOT_FOUND.user });
+    }
+
+    return res.status(200).send(result.token);
+  } catch (error: unknown) {
+    Logger.error(error as Error, {
+      domain: DOMAINS.AUTH,
+      component: 'api',
+      operation: 'authenticateUserWithAuth0Proof',
+    });
+
+    return res.status(ErrorMapper.USER_NOT_FOUND.status).send({
+      message: ErrorMapper.USER_NOT_FOUND.user,
+    });
+  }
+};
+
 const unauthenticateUser = (_: Request, res: Response) => {
   try {
     SERVICES_AUTH.unauthenticateUser(res);
@@ -70,6 +115,7 @@ const unauthenticateUser = (_: Request, res: Response) => {
 
 export const API_AUTH = {
   authenticateUser,
+  authenticateUserWithAuth0Proof,
   unauthenticateUser,
 };
 

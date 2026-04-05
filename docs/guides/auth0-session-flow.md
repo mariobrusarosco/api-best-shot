@@ -1,254 +1,518 @@
 # Auth0 Session Flow Guide
 
-This guide explains the current Best Shot authentication flow, the recommended secure flow, and how authentication, authorization, and database security fit together.
+This document defines the intended authentication and authorization model for Best Shot.
 
-## Core Model
+It describes one concrete direction:
 
-Keep this sentence in mind:
-
-`Auth0 proves identity. Best Shot verifies that proof. Best Shot creates its own session. Best Shot authorizes access. The database adds defense in depth.`
-
-## Current Flow
-
-Today, the system appears to work like this:
-
-1. The frontend starts Auth0 login using Authorization Code Flow with PKCE.
-2. Auth0 authenticates the user and returns tokens to the browser.
-3. The frontend calls `POST /api/v2/auth` with a plain `publicId`.
-4. The backend looks up the member by `publicId`.
-5. If the member exists, the backend signs its own JWT and sets the `member_public_id` cookie.
-6. Later API requests send that cookie.
-7. The backend validates its own JWT cookie and allows protected routes.
-
-```mermaid
-flowchart LR
-  A["User logs in with Auth0"] --> B["Browser receives Auth0 tokens"]
-  B --> C["Frontend calls POST /api/v2/auth with publicId"]
-  C --> D["Backend finds member by publicId"]
-  D --> E["Backend signs Best Shot JWT cookie"]
-  E --> F["Browser calls protected API routes"]
-  F --> G["Backend validates Best Shot cookie"]
+```text
+Auth0 proves identity at login time.
+Best Shot verifies that proof.
+Best Shot creates and owns the app session cookie.
+Protected routes continue to trust the Best Shot session cookie.
+Best Shot database remains the source of truth for local authorization.
 ```
 
-## Why The Current Flow Is Weak
+## Core Rule
 
-The weak point is step 3.
-
-`publicId` is an identifier, not proof.
-
-That means the current flow answers:
-
-- "Does this account exist?"
-
-But it does not answer:
-
-- "Did Auth0 prove that this caller is the owner of this account?"
-
-So the problem is not "the user might not exist."
-
-The problem is:
-
-- if an attacker learns a valid `publicId`
-- and the backend accepts only that `publicId`
-- the backend can create a session for the attacker as that existing user
-
-This is the sentence to remember:
-
-`Checking that a user exists is not the same as checking that the caller is that user.`
-
-## Recommended Flow For Best Shot
-
-For this app, the best near-term shape is:
-
-1. Keep Auth0 on the frontend.
-2. Keep the backend-issued `httpOnly` session cookie.
-3. Replace the plain `publicId` handoff with an Auth0 proof that the backend verifies.
-4. Only after successful verification should the backend create the Best Shot session.
-
-```mermaid
-flowchart LR
-  A["User logs in with Auth0"] --> B["Browser receives Auth0 proof"]
-  B --> C["Frontend calls session exchange endpoint"]
-  C --> D["Backend verifies Auth0 proof"]
-  D --> E["Backend maps Auth0 subject to local member"]
-  E --> F["Backend signs Best Shot httpOnly cookie"]
-  F --> G["Browser calls protected API routes"]
-  G --> H["Backend validates Best Shot cookie and authorizes request"]
+```text
+Auth0 = identity proof provider
+Best Shot API = session authority
+Best Shot database = authorization authority
 ```
 
-## What The Backend Should Verify
+## What We Are Keeping
+
+We are keeping cookie-based authentication for protected routes.
+
+That means:
+
+```text
+browser sends Best Shot auth cookie
+Best Shot API validates that cookie
+protected routes use that cookie-based session
+```
+
+This is a valid backend-session architecture.
+
+## What We Are Changing
+
+We are changing how the Best Shot session is created.
+
+Today, `/api/v2/auth` trusts `req.body.publicId` as if it were proof of identity.
 
-Before minting its own session, the backend should verify:
+That is the weak point.
+
+The new rule is:
+
+```text
+req.body.publicId is not proof
+validated Auth0 proof is proof
+```
 
-1. token signature
-2. issuer (`iss`)
-3. audience (`aud`)
-4. expiration (`exp`)
-5. subject (`sub`)
+## Intended Flow
 
-Optionally, depending on business rules:
+```text
+STEP 1
+Frontend authenticates with Auth0
 
-1. `email_verified`
-2. allowed connection/provider
-3. any required org or tenant claims
+STEP 2
+Frontend obtains Auth0 proof
 
-## Which Auth0 Proof Fits Best
+STEP 3
+Frontend calls POST /api/v2/auth
 
-There are two practical options.
+STEP 4
+Best Shot verifies the Auth0 proof
 
-### Option A - Best Near-Term Fit
+STEP 5
+Best Shot reads the authenticated user's Auth0 sub
 
-The frontend sends an Auth0 proof to a dedicated session exchange endpoint, and the backend verifies it before setting the Best Shot cookie.
+STEP 6
+Best Shot finds the local member where:
+member.publicId = Auth0 sub
 
-For an API boundary, the preferred proof is an Auth0 access token intended for the Best Shot API audience.
+STEP 7
+Best Shot creates its own auth session cookie
 
-Why this fits Best Shot:
+STEP 8
+Browser sends that Best Shot cookie on later protected requests
 
-- minimal change to the current frontend UX
-- keeps backend-owned `httpOnly` sessions
-- preserves the current cookie-based API model
-- lets Best Shot stay the source of truth for local roles
+STEP 9
+Protected routes trust the Best Shot cookie-based session
+```
 
-### Option B - Best Long-Term Boundary
+## Visual Overview
 
-Move more of the login exchange to the backend so the backend handles the Auth0 callback or code exchange directly before issuing the Best Shot session.
+```text
+                         TARGET AUTHENTICATION MODEL
 
-Why teams choose this:
+    +------------------+            +-----------------------------+
+    | Frontend         |            | Auth0                       |
+    |                  |            |                             |
+    | login / token    |<---------->| authenticates user          |
+    | retrieval        |            | issues proof                |
+    +---------+--------+            +--------------+--------------+
+              |
+              | POST /api/v2/auth with Auth0 proof
+              v
+    +---------+---------------------------------------------------+
+    | Best Shot API                                               |
+    |                                                             |
+    | 1. verify Auth0 proof                                       |
+    | 2. read authenticated sub                                   |
+    | 3. find member by publicId = sub                            |
+    | 4. create Best Shot auth cookie                             |
+    +---------+---------------------------------------------------+
+              |
+              | Set-Cookie: Best Shot session
+              v
+    +---------+---------------------------------------------------+
+    | Browser                                                     |
+    |                                                             |
+    | later protected requests automatically send Best Shot cookie|
+    +---------+---------------------------------------------------+
+              |
+              v
+    +---------+---------------------------------------------------+
+    | Protected Best Shot Routes                                  |
+    |                                                             |
+    | validate Best Shot cookie                                   |
+    | load local member / role                                    |
+    | allow or deny request                                       |
+    +-------------------------------------------------------------+
+```
 
-- strongest trust boundary
-- fewer identity decisions made in the browser
-- simpler mental model for server-owned sessions
+## The Identity Link
 
-Why it may be heavier right now:
+For now, the local member link remains:
 
-- more frontend and backend auth plumbing
-- deeper changes to current login flow
+```text
+member.publicId = Auth0 sub
+```
 
-## Recommended Direction
+Example:
 
-For Best Shot, the recommended direction is:
+```text
+member.publicId = "google-oauth2|102617786899713612616"
+Auth0 sub       = "google-oauth2|102617786899713612616"
+```
 
-1. keep the backend-issued `httpOnly` cookie
-2. keep Best Shot authorization in backend code and the local database
-3. change the Auth0-to-backend handoff so the backend verifies Auth0 proof before minting a session
-4. consider a fuller backend-owned callback flow later if the team wants a stronger long-term boundary
+That means:
 
-## Responsibilities By Layer
+```text
+publicId can remain the stored identity link
+publicId must stop being accepted as identity proof
+```
 
-### Frontend
+## Request Types
 
-The frontend should:
+### 1. Public Routes
 
-1. start Auth0 login
-2. receive Auth0 proof
-3. call the session exchange endpoint
-4. avoid deciding local roles or trust levels
-5. rely on the browser to send the Best Shot cookie on later requests
+No user session required.
 
-### Auth0
+Examples:
 
-Auth0 should:
+```text
+/health
+/
+/api/v2/admin/health
+/api/v2/auth
+```
 
-1. authenticate the human user
-2. issue signed proof of identity
-3. remain the external identity provider
+### 2. Protected Member Routes
 
-### Backend
+Require a valid Best Shot session cookie.
 
-The backend should:
+Examples in the current codebase:
 
-1. verify Auth0 proof
-2. map the Auth0 subject to a local member
-3. create the Best Shot session cookie
-4. validate the Best Shot session cookie on later requests
-5. enforce route and action authorization
+```text
+/api/v2/member GET
+/api/v2/guess
+/api/v2/leagues
+/api/v2/tournaments
+/api/v2/match
+```
 
-### Database
+Flow:
 
-The database should:
+```text
+request
+  -> read Best Shot auth cookie
+  -> validate Best Shot session token
+  -> attach req.authenticatedUser
+  -> route handler
+```
+
+### 3. Protected Admin Routes
+
+Require:
+
+```text
+1. valid Best Shot session cookie
+2. local member.role == "admin"
+```
+
+Flow:
+
+```text
+request
+  -> validate Best Shot session cookie
+  -> load local member
+  -> verify local admin role
+  -> route handler
+```
+
+### 4. Internal Routes
+
+Internal routes remain separate from user authentication.
+
+Flow:
 
-1. store the local member record
-2. store Best Shot roles such as `admin` and `member`
-3. remain the source of truth for authorization data
-4. later add row-level protection where appropriate
+```text
+request
+  -> validate internal credential
+  -> route handler
+```
 
-## Authentication vs Authorization In Best Shot
+## Login And Session Exchange
 
-Use this split:
+This is the important flow to fix.
 
-- Authentication: "Who is this user?"  
-  Auth0 answers this, and Best Shot verifies the proof.
+### Current Weak Flow
 
-- Session authentication: "Does this request have a valid Best Shot session?"  
-  Best Shot answers this using its own cookie.
+```text
+Frontend
+  -> POST /api/v2/auth with publicId
 
-- Authorization: "What can this user do?"  
-  Best Shot answers this using local data such as `member.role`, ownership, and league membership.
+Backend
+  -> find member by publicId
+  -> create Best Shot cookie
+```
 
-This means admin rights should come from the Best Shot database, not from the frontend.
+Weakness:
 
-## Admin Roles
+```text
+the backend is trusting an identifier from the request body
+instead of verified identity proof
+```
 
-The healthy model is:
+### Intended Secure Flow
 
-1. Auth0 identifies the user
-2. Best Shot maps that user to a local member row
-3. Best Shot reads the local role
-4. admin checks use the local role as the source of truth
+```text
+Frontend
+  -> authenticate user with Auth0
+  -> obtain Auth0 proof
+  -> POST /api/v2/auth with that proof
 
-That keeps external identity separate from internal permission decisions.
+Backend
+  -> verify Auth0 proof
+  -> read authenticated sub
+  -> find member by publicId = sub
+  -> create Best Shot cookie
+```
 
-## How This Connects To Database Security And RLS
+## First Login Sequence
 
-Authentication, authorization, and RLS protect different boundaries.
+```text
++----------+        +---------+        +----------------------+
+| User     |        | Frontend|        | Auth0                |
++----+-----+        +----+----+        +----------+-----------+
+     |                   |                          |
+     | click login       |                          |
+     +------------------>|                          |
+                         | login                    |
+                         +------------------------->|
+                         |                          |
+                         |<-------------------------+
+                         | Auth0 proof available    |
+                         |                          |
+                         | POST /api/v2/auth        |
+                         +--------------------------------------+
+                                                                |
+                                                                v
+                                              +-----------------+-----------------+
+                                              | Best Shot API                    |
+                                              |                                   |
+                                              | verify Auth0 proof               |
+                                              | read sub                         |
+                                              | find member                      |
+                                              | set Best Shot auth cookie        |
+                                              +-----------------+-----------------+
+                                                                |
+                                                                v
+                                                       +--------+--------+
+                                                       | Browser         |
+                                                       | cookie stored   |
+                                                       +-----------------+
+```
 
-### Auth0 Verification
+## Recurrent User Flow
 
-Protects the login handoff.
+After the Best Shot session cookie exists:
 
-Goal:
+```text
+browser
+  -> automatically sends Best Shot auth cookie
 
-- stop the backend from minting a local session based on an unverified identity claim
+api
+  -> validates Best Shot cookie
+  -> authenticates request
+  -> authorizes request from local member data
+```
 
-### Backend Authorization
+That means recurrent protected requests do not need Auth0 proof every time.
 
-Protects API routes and business actions.
+That is intentional in this design.
 
-Goal:
+## Token And Session Lifetimes
 
-- ensure only allowed users can perform allowed actions
+In this architecture there are two separate lifetimes:
 
-### RLS
+```text
+1. Auth0 proof lifetime
+   used at login / session exchange time
 
-Protects the database rows themselves.
+2. Best Shot session cookie lifetime
+   used on protected app requests afterward
+```
 
-Goal:
+This is normal for a backend-session model.
 
-- ensure row access rules still exist even if the application layer is bypassed or makes a mistake
+### Meaning
 
-This is why fixing Auth0 login does not replace RLS, and adding RLS does not replace proper Auth0 verification.
+```text
+Auth0 proof expiration
+  matters when creating a new Best Shot session
 
-They solve different problems.
+Best Shot cookie expiration
+  matters for recurrent protected API requests
+```
 
-## Best Shot Security Sequence
+## Important Security Consequence
 
-If we harden this system in stages, the order should be:
+Because Best Shot owns the protected-route session after login:
 
-1. fix the Auth0-to-backend trust handoff
-2. keep authorization decisions in backend code using local roles and ownership
-3. review admin and internal-only routes
-4. add RLS for sensitive tables as defense in depth
-
-## Practical Rule Of Thumb
-
-If the browser says:
-
-`I am user X`
-
-the backend should not trust that by itself.
-
-If Auth0 says:
-
-`I signed proof that this caller is user X`
-
-the backend can verify that, then create its own session.
+```text
+Best Shot cookie/session design matters a lot
+```
+
+That means Best Shot must make good choices for:
+
+```text
+- cookie expiry
+- cookie flags
+- logout behavior
+- session invalidation
+- optional future session revocation
+```
+
+## What Stays The Same In Authorization
+
+Authorization remains local.
+
+That means:
+
+```text
+Auth0 tells us who the user is
+Best Shot decides what the user can do
+```
+
+The local database stays responsible for:
+
+```text
+- member lookup
+- member.role
+- admin checks
+- ownership rules
+- league membership rules
+```
+
+## Source Of Truth By Concern
+
+```text
+Identity proof
+  -> Auth0
+
+Local member link
+  -> member.publicId
+
+Protected route session
+  -> Best Shot auth cookie
+
+App role / permissions
+  -> Best Shot database
+```
+
+## Middleware Model
+
+### `/api/v2/auth`
+
+```text
+request
+  -> verify Auth0 proof
+  -> resolve local member
+  -> set Best Shot session cookie
+  -> success / failure response
+```
+
+### Protected Member Routes
+
+```text
+request
+  -> validate Best Shot cookie
+  -> attach authenticated member
+  -> route handler
+```
+
+### Protected Admin Routes
+
+```text
+request
+  -> validate Best Shot cookie
+  -> attach authenticated member
+  -> require local admin role
+  -> route handler
+```
+
+## Route Decision Tree
+
+```text
+incoming request
+  |
+  +-- public route?
+  |     |
+  |     +-- yes -> allow
+  |     |
+  |     +-- no
+  |
+  +-- /api/v2/auth session exchange route?
+  |     |
+  |     +-- yes -> verify Auth0 proof
+  |     |          |
+  |     |          +-- invalid proof -> 401
+  |     |          +-- valid proof
+  |     |                -> read sub
+  |     |                -> load member
+  |     |                -> create Best Shot cookie
+  |     |
+  |     +-- no
+  |
+  +-- internal route?
+  |     |
+  |     +-- yes -> validate internal credential
+  |     |
+  |     +-- no
+  |
+  +-- protected user route
+        |
+        +-- validate Best Shot auth cookie
+        |     |
+        |     +-- invalid -> 401
+        |     +-- valid
+        |
+        +-- load authenticated user
+        |
+        +-- admin route?
+              |
+              +-- yes -> require local admin role
+              |          |
+              |          +-- no -> 403
+              |          +-- yes -> allow
+              |
+              +-- no -> allow
+```
+
+## What The Frontend Must Do
+
+```text
+1. authenticate the user with Auth0
+2. obtain the Auth0 proof needed for /api/v2/auth
+3. call /api/v2/auth with that proof
+4. let the browser keep and send the Best Shot auth cookie afterward
+5. stop using req.body.publicId as the thing that proves identity
+```
+
+## What The API Must Do
+
+```text
+1. verify Auth0 proof during /api/v2/auth
+2. read the verified Auth0 sub
+3. map sub -> member.publicId
+4. create and set the Best Shot auth cookie
+5. keep protected routes on Best Shot cookie auth
+6. keep admin authorization in the local database
+```
+
+## What The API Must Stop Doing
+
+```text
+1. trusting req.body.publicId as proof of identity
+2. minting a Best Shot session from an unverified identifier
+```
+
+## Current Codebase Mapping
+
+```text
+Current protected-route session mechanism
+  src/domains/auth/middleware.ts
+  -> Best Shot cookie / local JWT
+
+Keep
+  -> cookie-based protected-route auth model
+
+Fix
+  -> how /api/v2/auth decides who is allowed to receive that cookie
+
+Current local identity link
+  src/domains/member/schema/index.ts
+  -> member.publicId
+
+Keep for now
+  -> member.publicId stores Auth0 sub
+```
+
+## One-Sentence Summary
+
+```text
+Best Shot should verify Auth0 proof at login time, then create and own its own cookie-based session for protected routes.
+```

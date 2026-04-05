@@ -14,6 +14,17 @@ const authenticateUser = async (publicId: string, res: Response) => {
   return { token, member };
 };
 
+const authenticateUserWithAuth0Subject = async (auth0Subject: string, res: Response) => {
+  const member = await QUERIES_AUTH.getMemberByPublicId(auth0Subject);
+
+  if (!member) {
+    throw Error('No user found');
+  }
+
+  const token = Utils.signUserCookieBased({ memberId: member.id, res });
+  return { token, member };
+};
+
 const unauthenticateUser = (res: Response) => {
   Utils.clearUserCookie(res);
   return true;
@@ -21,5 +32,6 @@ const unauthenticateUser = (res: Response) => {
 
 export const SERVICES_AUTH = {
   authenticateUser,
+  authenticateUserWithAuth0Subject,
   unauthenticateUser,
 };

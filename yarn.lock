@@ -4317,6 +4317,7 @@ __metadata:
     eslint-config-prettier: 9.1.0
     eslint-plugin-prettier: 5.1.3
     express: ^4.18.1
+    express-oauth2-jwt-bearer: ^1.7.1
     file-type: 16.5.4
     hbs: ^4.2.0
     husky: 8.0.3
@@ -6077,6 +6078,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"express-oauth2-jwt-bearer@npm:^1.7.1":
+  version: 1.7.4
+  resolution: "express-oauth2-jwt-bearer@npm:1.7.4"
+  dependencies:
+    jose: ^4.15.5
+  checksum: 9d831ede1452f4b91788061bf49d35268528e5f331a07d8238c2d7565c2d494f0b27bf8056e8e7d49c5afe41315eda34c55bcfbfbccf958feb1956f0d448ab66
+  languageName: node
+  linkType: hard
+
 "express@npm:^4.18.1":
   version: 4.21.2
   resolution: "express@npm:4.21.2"
@@ -7697,6 +7707,13 @@ __metadata:
   bin:
     jest: bin/jest.js
   checksum: 17ca8d67504a7dbb1998cf3c3077ec9031ba3eb512da8d71cb91bcabb2b8995c4e4b292b740cb9bf1cbff5ce3e110b3f7c777b0cefb6f41ab05445f248d0ee0b
+  languageName: node
+  linkType: hard
+
+"jose@npm:^4.15.5":
+  version: 4.15.9
+  resolution: "jose@npm:4.15.9"
+  checksum: 41abe1c99baa3cf8a78ebbf93da8f8e50e417b7a26754c4afa21865d87527b8ac2baf66de2c5f6accc3f7d7158658dae7364043677236ea1d07895b040097f15
   languageName: node
   linkType: hard
 

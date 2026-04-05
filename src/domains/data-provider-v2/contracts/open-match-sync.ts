@@ -143,4 +143,5 @@ export type OpenMatchSyncBatchSummary = {
   tournamentsQueued: number;
   tournamentsCompleted: number;
   tournamentsFailed: number;
+  tournamentIdsWithEndedMatches: string[];
 };

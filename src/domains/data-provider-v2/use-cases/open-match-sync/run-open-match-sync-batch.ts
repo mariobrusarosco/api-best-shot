@@ -35,6 +35,7 @@ export const runOpenMatchSyncBatch = async (
     tournamentsQueued: groupedMatches.groups.size,
     tournamentsCompleted: 0,
     tournamentsFailed: 0,
+    tournamentIdsWithEndedMatches: [],
   };
 
   if (groupedMatches.groups.size === 0) return summary;
@@ -53,6 +54,10 @@ export const runOpenMatchSyncBatch = async (
           tournamentId,
           dueMatches: tournamentMatches,
         });
+
+        if (result.summary.endedMatches > 0) {
+          summary.tournamentIdsWithEndedMatches.push(tournamentId);
+        }
 
         if (result.status === 'completed') summary.tournamentsCompleted++;
         else summary.tournamentsFailed++;

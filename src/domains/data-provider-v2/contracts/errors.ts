@@ -1,7 +1,12 @@
 export type ProviderRequestErrorKind = 'provider_request_error';
 export type ReportUploadErrorKind = 'report_upload_error';
 export type ProviderName = 'sofascore';
-export type ProviderResource = 'match_event' | 'tournament_standings' | 'tournament_round' | 'tournament_rounds';
+export type ProviderResource =
+  | 'match_event'
+  | 'tournament_standings'
+  | 'tournament_team_events'
+  | 'tournament_round'
+  | 'tournament_rounds';
 
 export type ProviderRequestErrorProps = {
   provider: ProviderName;

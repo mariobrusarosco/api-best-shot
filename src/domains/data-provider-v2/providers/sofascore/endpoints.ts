@@ -18,6 +18,16 @@ export const buildSofaScoreTournamentStandingsUrl = (baseUrl: string): string =>
   return `${normalizedBaseUrl}/standings/total`;
 };
 
+export const buildSofaScoreTournamentTeamEventsUrl = (baseUrl: string): string => {
+  const normalizedBaseUrl = baseUrl.trim();
+
+  if (!normalizedBaseUrl) {
+    throw new Error('baseUrl is required to build the SofaScore tournament team events URL');
+  }
+
+  return `${normalizedBaseUrl}/team-events/total`;
+};
+
 export const buildSofaScoreTournamentRoundsUrl = (baseUrl: string): string => {
   const normalizedBaseUrl = baseUrl.trim();
 

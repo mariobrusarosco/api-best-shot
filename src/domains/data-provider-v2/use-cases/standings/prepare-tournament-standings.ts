@@ -6,8 +6,12 @@ import type {
   StandingsCreateTournamentContext,
 } from '@/domains/data-provider-v2/contracts/standings';
 import { listTeamsByExternalId } from '@/domains/data-provider-v2/persistence/standings/list-teams-by-external-id';
-import { SofaScoreStandingsProvider } from '@/domains/data-provider-v2/providers/sofascore/standings-provider';
-import { extractStandingsTeamExternalIds, mapProviderStandings } from './map-provider-standings';
+import type { SofaScoreStandingsProvider } from '@/domains/data-provider-v2/providers/sofascore/standings-provider';
+import {
+  extractStandingsTeamExternalIds,
+  mapProviderStandings,
+  mapProviderStandingsForm,
+} from './map-provider-standings';
 
 export type PreparedTournamentStandingsResult =
   | {
@@ -96,15 +100,37 @@ export const prepareTournamentStandings = async (input: {
     };
   }
 
-  const resolvedTeams = await listTeamsByExternalId({
-    provider: input.tournament.provider,
-    externalIds: teamExternalIds,
-  });
+  let resolvedTeams = null;
+  let formsByTeamExternalId = null;
+
+  try {
+    const [resolvedTeamsResult, teamEventsPayload] = await Promise.all([
+      listTeamsByExternalId({
+        provider: input.tournament.provider,
+        externalIds: teamExternalIds,
+      }),
+      input.provider.fetchTournamentTeamEvents({
+        baseUrl: input.tournament.baseUrl,
+      }),
+    ]);
+
+    resolvedTeams = resolvedTeamsResult;
+    formsByTeamExternalId = mapProviderStandingsForm(teamEventsPayload);
+  } catch (error) {
+    return {
+      outcome: 'unexpected_failure',
+      requestUrl: error instanceof ProviderRequestError ? error.requestUrl : undefined,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      causeMessage: error instanceof ProviderRequestError ? error.causeMessage : undefined,
+      responseBodySnippet: error instanceof ProviderRequestError ? error.responseBodySnippet : undefined,
+    };
+  }
 
   const mapped = mapProviderStandings({
     tournamentId: input.tournament.tournamentId,
     provider: input.tournament.provider,
     payload,
+    formsByTeamExternalId,
     resolvedTeams,
   });
 

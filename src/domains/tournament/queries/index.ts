@@ -394,6 +394,7 @@ const getTournamentStandings = async (tournamentId: string) => {
         wins: T_TournamentStandings.wins,
         draws: T_TournamentStandings.draws,
         losses: T_TournamentStandings.losses,
+        form: T_TournamentStandings.form,
         gf: T_TournamentStandings.gf,
         ga: T_TournamentStandings.ga,
         gd: T_TournamentStandings.gd,

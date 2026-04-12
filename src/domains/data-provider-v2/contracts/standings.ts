@@ -12,6 +12,9 @@ export type StandingsCreateTournamentContext = {
 
 export type StandingsUpdateTournamentContext = StandingsCreateTournamentContext;
 
+export type StandingsFormEntry = 'W' | 'D' | 'L';
+export type StandingsForm = StandingsFormEntry[];
+
 export type SofaScoreStandingsRow = {
   team: {
     id: number;
@@ -36,6 +39,21 @@ export type SofaScoreStandingsGroup = {
 
 export type SofaScoreStandingsPayload = {
   standings: SofaScoreStandingsGroup[];
+};
+
+export type SofaScoreTeamEvent = {
+  winnerCode?: number;
+  startTimestamp?: number;
+  homeTeam?: {
+    id?: number | string;
+  };
+  awayTeam?: {
+    id?: number | string;
+  };
+};
+
+export type SofaScoreTournamentTeamEventsPayload = {
+  tournamentTeamEvents: Record<string, Record<string, SofaScoreTeamEvent[]>>;
 };
 
 export type StandingsResolvedTeam = Pick<DB_SelectTeam, 'id' | 'externalId' | 'provider' | 'name' | 'shortName'>;

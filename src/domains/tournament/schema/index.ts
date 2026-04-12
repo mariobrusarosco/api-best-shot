@@ -67,6 +67,7 @@ export const T_TournamentStandings = pgTable(
     wins: integer('wins').notNull().default(0),
     draws: integer('draws').notNull().default(0),
     losses: integer('losses').notNull().default(0),
+    form: text('form').array().$type<Array<'W' | 'D' | 'L'>>().notNull().default([]), // Ordered oldest -> newest for left-to-right UI rendering
     gf: integer('goals_for').notNull().default(0),
     ga: integer('goals_against').notNull().default(0),
     gd: integer('goal_difference').notNull().default(0),

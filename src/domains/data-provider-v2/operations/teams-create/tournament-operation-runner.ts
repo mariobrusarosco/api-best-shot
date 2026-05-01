@@ -70,7 +70,9 @@ export const runTournamentTeamsCreateOperation = async (input: {
         tournament: input.tournament,
         standingsProvider: SofaScoreStandingsProvider.fromSession(session),
         roundProvider: SofaScoreRoundProvider.fromSession(session),
-        badgeUploader: new BrowserAssetUploader(session),
+        badgeUploader: new BrowserAssetUploader(session, {
+          tournamentPublicUrl: input.tournament.tournamentPublicUrl,
+        }),
       });
     } finally {
       await session.close();

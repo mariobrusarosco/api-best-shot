@@ -138,10 +138,20 @@ export class BrowserAssetUploader {
     const initialResponse = await this.navigateToAsset(requestUrl);
     const initialResponseBodySnippet = await this.readResponseBodySnippet();
 
-    if (!this.shouldRecoverFromChallenge(initialResponse, initialResponseBodySnippet) || !this.tournamentPublicUrl) {
+    if (!this.shouldRecoverFromChallenge(initialResponse, initialResponseBodySnippet)) {
       return {
         response: initialResponse,
         responseBodySnippet: initialResponseBodySnippet,
+      };
+    }
+
+    const retriedResponse = await this.navigateToAsset(requestUrl);
+    const retriedResponseBodySnippet = await this.readResponseBodySnippet();
+
+    if (!this.shouldRecoverFromChallenge(retriedResponse, retriedResponseBodySnippet) || !this.tournamentPublicUrl) {
+      return {
+        response: retriedResponse,
+        responseBodySnippet: retriedResponseBodySnippet,
       };
     }
 
@@ -149,12 +159,12 @@ export class BrowserAssetUploader {
       requestUrl,
     });
 
-    const retriedResponse = await this.navigateToAsset(requestUrl);
-    const retriedResponseBodySnippet = await this.readResponseBodySnippet();
+    const warmedResponse = await this.navigateToAsset(requestUrl);
+    const warmedResponseBodySnippet = await this.readResponseBodySnippet();
 
     return {
-      response: retriedResponse,
-      responseBodySnippet: retriedResponseBodySnippet,
+      response: warmedResponse,
+      responseBodySnippet: warmedResponseBodySnippet,
     };
   }
 

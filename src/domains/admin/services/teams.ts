@@ -40,6 +40,7 @@ class AdminTeamsService {
         tournamentId,
         tournamentLabel: tournament.label,
         baseUrl: tournament.baseUrl,
+        tournamentPublicUrl: tournament.publicUrl ?? undefined,
         provider: 'sofascore',
         mode: tournament.mode,
       };

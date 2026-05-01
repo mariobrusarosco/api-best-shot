@@ -6,6 +6,7 @@ export type TeamsTournamentContext = {
   tournamentId: string;
   tournamentLabel: string;
   baseUrl: string;
+  tournamentPublicUrl?: string;
   provider: 'sofascore';
   mode: DB_SelectTournament['mode'];
 };

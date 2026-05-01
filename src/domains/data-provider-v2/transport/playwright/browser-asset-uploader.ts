@@ -1,3 +1,5 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import FileType from 'file-type';
 import mime from 'mime-types';
@@ -7,6 +9,7 @@ import type { BrowserSession } from './browser-session';
 const DEFAULT_ASSET_DIRECTORY = 'data-providers';
 const DEFAULT_CACHE_CONTROL = 'max-age=15768000, public';
 const DEFAULT_EXPIRES_MS = 15768000 * 1000;
+const RESPONSE_BODY_SNIPPET_MAX_LENGTH = 1_000;
 
 export type BrowserAssetUploadInput = {
   providerLogoUrl: string;
@@ -29,6 +32,7 @@ export class BrowserAssetTransportError extends Error {
   public readonly status?: number;
   public readonly responseUrl?: string;
   public readonly causeMessage?: string;
+  public readonly responseBodySnippet?: string;
 
   constructor(props: {
     message: string;
@@ -36,6 +40,7 @@ export class BrowserAssetTransportError extends Error {
     status?: number;
     responseUrl?: string;
     causeMessage?: string;
+    responseBodySnippet?: string;
   }) {
     super(props.message);
     this.name = 'BrowserAssetTransportError';
@@ -43,11 +48,19 @@ export class BrowserAssetTransportError extends Error {
     this.status = props.status;
     this.responseUrl = props.responseUrl;
     this.causeMessage = props.causeMessage;
+    this.responseBodySnippet = props.responseBodySnippet;
   }
 }
 
 export class BrowserAssetUploader {
-  constructor(private readonly session: BrowserSession) {}
+  private readonly tournamentPublicUrl?: string;
+
+  constructor(
+    private readonly session: BrowserSession,
+    options?: { tournamentPublicUrl?: string }
+  ) {
+    this.tournamentPublicUrl = options?.tournamentPublicUrl?.trim() || undefined;
+  }
 
   public async upload(input: BrowserAssetUploadInput): Promise<BrowserAssetUploadResult> {
     const fetchedAsset = await this.fetchAsset(input.providerLogoUrl);
@@ -77,7 +90,7 @@ export class BrowserAssetUploader {
     requestUrl: string;
     responseUrl: string;
   }> {
-    const response = await this.navigateToAsset(requestUrl);
+    const { response, responseBodySnippet } = await this.fetchAssetResponse(requestUrl);
 
     if (!response.ok()) {
       throw new BrowserAssetTransportError({
@@ -85,6 +98,7 @@ export class BrowserAssetUploader {
         requestUrl,
         status: response.status(),
         responseUrl: response.url(),
+        responseBodySnippet,
       });
     }
 
@@ -96,6 +110,7 @@ export class BrowserAssetUploader {
         requestUrl,
         status: response.status(),
         responseUrl: response.url(),
+        responseBodySnippet,
       });
     }
 
@@ -113,6 +128,33 @@ export class BrowserAssetUploader {
       fileExtension: assetType.fileExtension,
       requestUrl,
       responseUrl: response.url(),
+    };
+  }
+
+  private async fetchAssetResponse(requestUrl: string): Promise<{
+    response: Response;
+    responseBodySnippet?: string;
+  }> {
+    const initialResponse = await this.navigateToAsset(requestUrl);
+    const initialResponseBodySnippet = await this.readResponseBodySnippet();
+
+    if (!this.shouldRecoverFromChallenge(initialResponse, initialResponseBodySnippet) || !this.tournamentPublicUrl) {
+      return {
+        response: initialResponse,
+        responseBodySnippet: initialResponseBodySnippet,
+      };
+    }
+
+    await this.warmTournamentContext({
+      requestUrl,
+    });
+
+    const retriedResponse = await this.navigateToAsset(requestUrl);
+    const retriedResponseBodySnippet = await this.readResponseBodySnippet();
+
+    return {
+      response: retriedResponse,
+      responseBodySnippet: retriedResponseBodySnippet,
     };
   }
 
@@ -142,6 +184,46 @@ export class BrowserAssetUploader {
     }
 
     return response;
+  }
+
+  private async warmTournamentContext(input: { requestUrl: string }): Promise<void> {
+    const tournamentPublicUrl = this.tournamentPublicUrl;
+
+    if (!tournamentPublicUrl) {
+      return;
+    }
+
+    const page = this.session.getPage();
+
+    try {
+      await page.goto(tournamentPublicUrl, {
+        waitUntil: 'load',
+        timeout: 30_000,
+      });
+    } catch (error) {
+      Logger.warn('SofaScore tournament warmup failed before retrying challenged asset request', {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'transport',
+        operation: 'BrowserAssetUploader.warmTournamentContext',
+        requestUrl: input.requestUrl,
+        tournamentPublicUrl,
+        causeMessage: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private shouldRecoverFromChallenge(response: Response, responseBodySnippet?: string): boolean {
+    return response.status() === 403 && responseBodySnippet?.toLowerCase().includes('challenge') === true;
+  }
+
+  private async readResponseBodySnippet(): Promise<string | undefined> {
+    const page = this.session.getPage();
+    const responseText = await page.evaluate(() => {
+      const pre = document.querySelector('pre');
+      return pre ? pre.textContent ?? '' : document.body.textContent ?? '';
+    });
+
+    return responseText.length > 0 ? responseText.slice(0, RESPONSE_BODY_SNIPPET_MAX_LENGTH) : undefined;
   }
 }
 

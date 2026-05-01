@@ -63,7 +63,9 @@ export const runTournamentCreateOperation = async (input: {
     const session = await runtime.createSession();
 
     try {
-      const logoUploader = new BrowserAssetUploader(session);
+      const logoUploader = new BrowserAssetUploader(session, {
+        tournamentPublicUrl: input.tournament.publicUrl,
+      });
 
       tournamentResult = await runTournamentCreate({
         tournament: input.tournament,

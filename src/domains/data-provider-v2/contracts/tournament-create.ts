@@ -1,4 +1,5 @@
 import type { DB_InsertTournament, DB_SelectTournament } from '@/domains/tournament/schema';
+import type { ProviderTransportFlow } from './provider-transport-flow';
 
 export type TournamentCreateInput = {
   tournamentPublicId: string;
@@ -32,6 +33,7 @@ export type TournamentCreateFailure = {
   errorMessage: string;
   causeMessage?: string;
   responseBodySnippet?: string;
+  transportFlow?: ProviderTransportFlow;
 };
 
 export type TournamentCreateOutcome =
@@ -58,6 +60,7 @@ export type TournamentCreateDetail = {
   field?: keyof TournamentCreateInput;
   uploadedLogoUrl?: string;
   requestUrl?: string;
+  transportFlow?: ProviderTransportFlow;
   reason: TournamentCreateOutcome;
   errorMessage?: string;
   causeMessage?: string;

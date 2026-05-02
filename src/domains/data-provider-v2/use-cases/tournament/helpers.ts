@@ -1,4 +1,5 @@
 import { BrowserAssetTransportError } from '@/domains/data-provider-v2/transport/playwright/browser-asset-uploader';
+import type { ProviderTransportFlow } from '@/domains/data-provider-v2/contracts/provider-transport-flow';
 import type { DB_SelectTournament } from '@/domains/tournament/schema';
 
 const VALID_TOURNAMENT_MODES = ['regular-season-and-knockout', 'regular-season-only', 'knockout-only'] as const;
@@ -26,6 +27,7 @@ export type TournamentWorkflowFailure = {
   errorMessage: string;
   causeMessage?: string;
   responseBodySnippet?: string;
+  transportFlow?: ProviderTransportFlow;
 };
 
 export const normalizeTournamentWorkflowInput = <TInput extends TournamentWorkflowInputShape>(
@@ -100,6 +102,8 @@ export const buildTournamentWorkflowFailure = (error: unknown): TournamentWorkfl
       requestUrl: error.requestUrl,
       errorMessage: error.message,
       causeMessage: error.causeMessage,
+      responseBodySnippet: error.responseBodySnippet,
+      transportFlow: error.transportFlow,
     };
   }
 

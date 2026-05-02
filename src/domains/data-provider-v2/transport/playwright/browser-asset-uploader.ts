@@ -1,5 +1,9 @@
 import Logger from '@/core/logger';
 import { DOMAINS } from '@/core/logger/constants';
+import type {
+  ProviderTransportFlow,
+  ProviderTransportFlowStep,
+} from '@/domains/data-provider-v2/contracts/provider-transport-flow';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import FileType from 'file-type';
 import mime from 'mime-types';
@@ -33,6 +37,7 @@ export class BrowserAssetTransportError extends Error {
   public readonly responseUrl?: string;
   public readonly causeMessage?: string;
   public readonly responseBodySnippet?: string;
+  public readonly transportFlow?: ProviderTransportFlow;
 
   constructor(props: {
     message: string;
@@ -41,6 +46,7 @@ export class BrowserAssetTransportError extends Error {
     responseUrl?: string;
     causeMessage?: string;
     responseBodySnippet?: string;
+    transportFlow?: ProviderTransportFlow;
   }) {
     super(props.message);
     this.name = 'BrowserAssetTransportError';
@@ -49,6 +55,7 @@ export class BrowserAssetTransportError extends Error {
     this.responseUrl = props.responseUrl;
     this.causeMessage = props.causeMessage;
     this.responseBodySnippet = props.responseBodySnippet;
+    this.transportFlow = props.transportFlow;
   }
 }
 
@@ -90,7 +97,7 @@ export class BrowserAssetUploader {
     requestUrl: string;
     responseUrl: string;
   }> {
-    const { response, responseBodySnippet } = await this.fetchAssetResponse(requestUrl);
+    const { response, responseBodySnippet, transportFlow } = await this.fetchAssetResponse(requestUrl);
 
     if (!response.ok()) {
       throw new BrowserAssetTransportError({
@@ -99,6 +106,7 @@ export class BrowserAssetUploader {
         status: response.status(),
         responseUrl: response.url(),
         responseBodySnippet,
+        transportFlow,
       });
     }
 
@@ -111,6 +119,7 @@ export class BrowserAssetUploader {
         status: response.status(),
         responseUrl: response.url(),
         responseBodySnippet,
+        transportFlow,
       });
     }
 
@@ -134,37 +143,65 @@ export class BrowserAssetUploader {
   private async fetchAssetResponse(requestUrl: string): Promise<{
     response: Response;
     responseBodySnippet?: string;
+    transportFlow: ProviderTransportFlow;
   }> {
     const initialResponse = await this.navigateToAsset(requestUrl);
     const initialResponseBodySnippet = await this.readResponseBodySnippet();
+    const steps: ProviderTransportFlowStep[] = [
+      {
+        kind: 'request',
+        label: 'request 1',
+        url: requestUrl,
+        status: initialResponse.status(),
+        ok: initialResponse.ok(),
+      },
+    ];
 
     if (!this.shouldRecoverFrom403(initialResponse)) {
       return {
         response: initialResponse,
         responseBodySnippet: initialResponseBodySnippet,
+        transportFlow: buildTransportFlow({ steps }),
       };
     }
 
     const retriedResponse = await this.navigateToAsset(requestUrl);
     const retriedResponseBodySnippet = await this.readResponseBodySnippet();
+    steps.push({
+      kind: 'request',
+      label: 'request 2',
+      url: requestUrl,
+      status: retriedResponse.status(),
+      ok: retriedResponse.ok(),
+    });
 
     if (!this.shouldRecoverFrom403(retriedResponse) || !this.tournamentPublicUrl) {
       return {
         response: retriedResponse,
         responseBodySnippet: retriedResponseBodySnippet,
+        transportFlow: buildTransportFlow({ steps }),
       };
     }
 
-    await this.warmTournamentContext({
+    const warmupStep = await this.warmTournamentContext({
       requestUrl,
     });
+    steps.push(warmupStep);
 
     const warmedResponse = await this.navigateToAsset(requestUrl);
     const warmedResponseBodySnippet = await this.readResponseBodySnippet();
+    steps.push({
+      kind: 'request',
+      label: 'request 3',
+      url: requestUrl,
+      status: warmedResponse.status(),
+      ok: warmedResponse.ok(),
+    });
 
     return {
       response: warmedResponse,
       responseBodySnippet: warmedResponseBodySnippet,
+      transportFlow: buildTransportFlow({ steps }),
     };
   }
 
@@ -196,11 +233,16 @@ export class BrowserAssetUploader {
     return response;
   }
 
-  private async warmTournamentContext(input: { requestUrl: string }): Promise<void> {
+  private async warmTournamentContext(input: { requestUrl: string }): Promise<ProviderTransportFlowStep> {
     const tournamentPublicUrl = this.tournamentPublicUrl;
 
     if (!tournamentPublicUrl) {
-      return;
+      return {
+        kind: 'warmup',
+        label: 'warm-up',
+        url: input.requestUrl,
+        note: 'skipped',
+      };
     }
 
     const page = this.session.getPage();
@@ -210,6 +252,12 @@ export class BrowserAssetUploader {
         waitUntil: 'load',
         timeout: 30_000,
       });
+
+      return {
+        kind: 'warmup',
+        label: 'warm-up',
+        url: tournamentPublicUrl,
+      };
     } catch (error) {
       Logger.warn('SofaScore tournament warmup failed before retrying challenged asset request', {
         domain: DOMAINS.DATA_PROVIDER,
@@ -219,6 +267,13 @@ export class BrowserAssetUploader {
         tournamentPublicUrl,
         causeMessage: error instanceof Error ? error.message : String(error),
       });
+
+      return {
+        kind: 'warmup',
+        label: 'warm-up',
+        url: tournamentPublicUrl,
+        note: error instanceof Error ? error.message : String(error),
+      };
     }
   }
 
@@ -236,6 +291,25 @@ export class BrowserAssetUploader {
     return responseText.length > 0 ? responseText.slice(0, RESPONSE_BODY_SNIPPET_MAX_LENGTH) : undefined;
   }
 }
+
+const buildTransportFlow = (input: { steps: ProviderTransportFlowStep[] }): ProviderTransportFlow => {
+  return {
+    summary: input.steps
+      .map(step => {
+        if (step.kind === 'request') {
+          return `${step.label} -> ${step.status ?? 'unknown'}`;
+        }
+
+        if (step.note) {
+          return `${step.label} (${step.note})`;
+        }
+
+        return step.label;
+      })
+      .join(', '),
+    steps: input.steps,
+  };
+};
 
 const uploadBufferToS3 = async (input: {
   buffer: Buffer;

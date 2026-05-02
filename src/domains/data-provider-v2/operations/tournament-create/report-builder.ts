@@ -82,6 +82,7 @@ export const buildTournamentCreateDetails = (result: TournamentCreateWorkflowRes
           {
             tournamentPublicId: result.tournament.tournamentPublicId,
             requestUrl: result.logoUploadFailure.requestUrl,
+            transportFlow: result.logoUploadFailure.transportFlow,
             reason: 'logo_upload_failed',
             errorMessage: result.logoUploadFailure.errorMessage,
             causeMessage: result.logoUploadFailure.causeMessage,

@@ -29,6 +29,7 @@ export type BrowserAssetUploadResult = {
   contentType: string;
   requestUrl: string;
   responseUrl: string;
+  transportFlow?: ProviderTransportFlow;
 };
 
 export class BrowserAssetTransportError extends Error {
@@ -87,6 +88,7 @@ export class BrowserAssetUploader {
       contentType: fetchedAsset.contentType,
       requestUrl: fetchedAsset.requestUrl,
       responseUrl: fetchedAsset.responseUrl,
+      transportFlow: fetchedAsset.transportFlow,
     };
   }
 
@@ -96,6 +98,7 @@ export class BrowserAssetUploader {
     fileExtension: string;
     requestUrl: string;
     responseUrl: string;
+    transportFlow: ProviderTransportFlow;
   }> {
     const { response, responseBodySnippet, transportFlow } = await this.fetchAssetResponse(requestUrl);
 
@@ -137,6 +140,7 @@ export class BrowserAssetUploader {
       fileExtension: assetType.fileExtension,
       requestUrl,
       responseUrl: response.url(),
+      transportFlow,
     };
   }
 

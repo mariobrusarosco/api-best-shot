@@ -26,6 +26,7 @@ export type TournamentCreateUploadedLogo = {
   contentType: string;
   requestUrl: string;
   responseUrl: string;
+  transportFlow?: ProviderTransportFlow;
 };
 
 export type TournamentCreateFailure = {

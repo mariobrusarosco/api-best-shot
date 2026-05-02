@@ -186,6 +186,7 @@ const buildCreatedTournamentDetail = (
     tournamentPublicId: result.tournament.tournamentPublicId,
     createdTournamentId: result.createdTournament.id,
     uploadedLogoUrl: result.uploadedLogo.assetUrl,
+    transportFlow: result.uploadedLogo.transportFlow,
     reason: 'created',
   };
 };

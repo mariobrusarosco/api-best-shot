@@ -138,7 +138,7 @@ export class BrowserAssetUploader {
     const initialResponse = await this.navigateToAsset(requestUrl);
     const initialResponseBodySnippet = await this.readResponseBodySnippet();
 
-    if (!this.shouldRecoverFromChallenge(initialResponse, initialResponseBodySnippet)) {
+    if (!this.shouldRecoverFrom403(initialResponse)) {
       return {
         response: initialResponse,
         responseBodySnippet: initialResponseBodySnippet,
@@ -148,7 +148,7 @@ export class BrowserAssetUploader {
     const retriedResponse = await this.navigateToAsset(requestUrl);
     const retriedResponseBodySnippet = await this.readResponseBodySnippet();
 
-    if (!this.shouldRecoverFromChallenge(retriedResponse, retriedResponseBodySnippet) || !this.tournamentPublicUrl) {
+    if (!this.shouldRecoverFrom403(retriedResponse) || !this.tournamentPublicUrl) {
       return {
         response: retriedResponse,
         responseBodySnippet: retriedResponseBodySnippet,
@@ -222,8 +222,8 @@ export class BrowserAssetUploader {
     }
   }
 
-  private shouldRecoverFromChallenge(response: Response, responseBodySnippet?: string): boolean {
-    return response.status() === 403 && responseBodySnippet?.toLowerCase().includes('challenge') === true;
+  private shouldRecoverFrom403(response: Response): boolean {
+    return response.status() === 403;
   }
 
   private async readResponseBodySnippet(): Promise<string | undefined> {

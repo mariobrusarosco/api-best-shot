@@ -1,7 +1,10 @@
+import Logger from '@/core/logger';
+import { DOMAINS } from '@/core/logger/constants';
 import type { SofaScoreTournamentRoundsPayload } from '@/domains/data-provider-v2/contracts/rounds';
 import { ProviderRequestError } from '@/domains/data-provider-v2/contracts/errors';
 import {
   BrowserRequest,
+  type BrowserJsonResponse,
   BrowserRequestTransportError,
 } from '@/domains/data-provider-v2/transport/playwright/browser-request';
 import type { BrowserSession } from '@/domains/data-provider-v2/transport/playwright/browser-session';
@@ -9,20 +12,33 @@ import { buildSofaScoreTournamentRoundsUrl } from './endpoints';
 
 export class SofaScoreRoundProvider {
   private readonly browserRequest: BrowserRequest;
+  private readonly tournamentPublicUrl?: string;
 
-  private constructor(browserRequest: BrowserRequest) {
-    this.browserRequest = browserRequest;
+  private constructor(input: { browserRequest: BrowserRequest; tournamentPublicUrl?: string }) {
+    this.browserRequest = input.browserRequest;
+    this.tournamentPublicUrl = input.tournamentPublicUrl?.trim() || undefined;
   }
 
-  public static fromSession(session: BrowserSession): SofaScoreRoundProvider {
-    return new SofaScoreRoundProvider(new BrowserRequest(session));
+  public static fromSession(
+    session: BrowserSession,
+    options?: { tournamentPublicUrl?: string }
+  ): SofaScoreRoundProvider {
+    return new SofaScoreRoundProvider({
+      browserRequest: new BrowserRequest(session),
+      tournamentPublicUrl: options?.tournamentPublicUrl,
+    });
   }
 
   public async fetchTournamentRounds(input: { baseUrl: string }): Promise<SofaScoreTournamentRoundsPayload> {
     const requestUrl = buildSofaScoreTournamentRoundsUrl(input.baseUrl);
 
     try {
-      const response = await this.browserRequest.fetchJson<SofaScoreTournamentRoundsPayload>(requestUrl);
+      const response = await this.fetchJsonWithWarmup<SofaScoreTournamentRoundsPayload>({
+        requestUrl,
+        requestIdentifier: input.baseUrl,
+        operation: 'SofaScoreRoundProvider.fetchTournamentRounds',
+        warningMessage: 'SofaScore tournament warmup failed before retrying rounds request',
+      });
 
       if (!response.ok) {
         throw new ProviderRequestError({
@@ -70,7 +86,12 @@ export class SofaScoreRoundProvider {
     const requestUrl = input.providerUrl.trim();
 
     try {
-      const response = await this.browserRequest.fetchJson<TPayload>(requestUrl);
+      const response = await this.fetchJsonWithWarmup<TPayload>({
+        requestUrl,
+        requestIdentifier: requestUrl,
+        operation: 'SofaScoreRoundProvider.fetchTournamentRound',
+        warningMessage: 'SofaScore tournament warmup failed before retrying round request',
+      });
 
       if (!response.ok) {
         throw new ProviderRequestError({
@@ -110,5 +131,43 @@ export class SofaScoreRoundProvider {
         causeMessage: error instanceof Error ? error.message : String(error),
       });
     }
+  }
+
+  private async fetchJsonWithWarmup<TPayload>(input: {
+    requestUrl: string;
+    requestIdentifier: string;
+    operation: string;
+    warningMessage: string;
+  }): Promise<BrowserJsonResponse<TPayload>> {
+    const firstResponse = await this.browserRequest.fetchJson<TPayload>(input.requestUrl);
+
+    if (firstResponse.status !== 403) {
+      return firstResponse;
+    }
+
+    const secondResponse = await this.browserRequest.fetchJson<TPayload>(input.requestUrl);
+
+    if (secondResponse.status !== 403 || !this.tournamentPublicUrl) {
+      return secondResponse;
+    }
+
+    try {
+      await this.browserRequest.navigate({
+        url: this.tournamentPublicUrl,
+        waitUntil: 'load',
+      });
+    } catch (error) {
+      Logger.warn(input.warningMessage, {
+        domain: DOMAINS.DATA_PROVIDER,
+        component: 'providers',
+        operation: input.operation,
+        requestUrl: input.requestUrl,
+        requestIdentifier: input.requestIdentifier,
+        tournamentPublicUrl: this.tournamentPublicUrl,
+        causeMessage: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    return this.browserRequest.fetchJson<TPayload>(input.requestUrl);
   }
 }

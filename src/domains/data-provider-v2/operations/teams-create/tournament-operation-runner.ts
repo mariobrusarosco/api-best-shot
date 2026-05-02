@@ -68,8 +68,12 @@ export const runTournamentTeamsCreateOperation = async (input: {
     try {
       teamsResult = await runTournamentTeamsCreate({
         tournament: input.tournament,
-        standingsProvider: SofaScoreStandingsProvider.fromSession(session),
-        roundProvider: SofaScoreRoundProvider.fromSession(session),
+        standingsProvider: SofaScoreStandingsProvider.fromSession(session, {
+          tournamentPublicUrl: input.tournament.tournamentPublicUrl,
+        }),
+        roundProvider: SofaScoreRoundProvider.fromSession(session, {
+          tournamentPublicUrl: input.tournament.tournamentPublicUrl,
+        }),
         badgeUploader: new BrowserAssetUploader(session, {
           tournamentPublicUrl: input.tournament.tournamentPublicUrl,
         }),

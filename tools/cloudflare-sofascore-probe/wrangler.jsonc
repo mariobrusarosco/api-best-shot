@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "cloudflare-sofascore-probe",
+  "main": "src/index.ts",
+  "workers_dev": true,
+  "compatibility_date": "2026-05-03",
+  "compatibility_flags": ["nodejs_compat"],
+  "upload_source_maps": true,
+  "browser": {
+    "binding": "MYBROWSER"
+  }
+}

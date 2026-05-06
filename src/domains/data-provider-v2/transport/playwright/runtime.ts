@@ -20,7 +20,7 @@ export class PlaywrightRuntime {
 
   public static async create(options: PlaywrightRuntimeOptions = {}): Promise<PlaywrightRuntime> {
     const browser = await chromium.launch({
-      headless: options.headless ?? true,
+      headless: options.headless ?? resolveDefaultHeadless(),
       args: buildChromiumArgs(),
       timeout: options.launchTimeoutMs ?? DEFAULT_LAUNCH_TIMEOUT_MS,
     });
@@ -56,6 +56,12 @@ export class PlaywrightRuntime {
     }
   }
 }
+
+const resolveDefaultHeadless = (): boolean => {
+  const nodeEnv = (process.env.NODE_ENV || 'development').trim();
+
+  return nodeEnv !== 'development';
+};
 
 const buildChromiumArgs = (): string[] => {
   return [

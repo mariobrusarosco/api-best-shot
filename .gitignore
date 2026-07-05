@@ -67,7 +67,8 @@ crash.log
 !.yarn/versions
 # .yarn/cache should be ignored (no ! prefix)
 # .yarn/install-state.gz should be ignored (covered by .yarn/*)
+
+
 .pnp.*
+.pnpm-store
 
-
-data-provider-operation-reports/

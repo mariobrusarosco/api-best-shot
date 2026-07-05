@@ -2,35 +2,22 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "CommonJS",
-    "lib": ["ES2017", "dom"],
-    "outDir": "./dist",
-    "rootDir": "./",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "strict": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "types": ["node"],
-    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "strictNullChecks": true,
-    "sourceMap": true,
-    "inlineSources": true,
+    "outDir": "dist",
+    "rootDir": ".",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     },
-    "sourceRoot": "/",
-    "typeRoots": ["./src/types", "./node_modules/@types"]
+    "types": ["node"],
+    "sourceMap": true
   },
-  "include": ["src/**/*", "scripts/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
-  "files": ["src/types/express/index.d.ts", "drizzle.config.ts", "global.d.ts"],
-  "ts-node": {
-    "require": ["tsconfig-paths/register"]
-  },
-  "replacements": [
-    {
-      "pattern": "@/domains/(.*)/routes",
-      "replacement": "./src/domains/$1/routes"
-    }
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["dist", "node_modules", "legacy"]
 }

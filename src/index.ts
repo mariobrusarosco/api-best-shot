@@ -1,3 +1,1 @@
-import app from '@/apps/api';
-
-export default app;
+import '@/apps/api';

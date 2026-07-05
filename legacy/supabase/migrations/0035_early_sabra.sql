@@ -1,0 +1,1 @@
+ALTER TABLE "cron_job_definitions" DROP COLUMN IF EXISTS "supersedes_job_id";

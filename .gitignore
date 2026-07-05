@@ -70,5 +70,4 @@ crash.log
 
 
 .pnp.*
-.pnpm-store
-
+.pnpm-store/

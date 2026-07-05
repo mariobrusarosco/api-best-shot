@@ -197,7 +197,7 @@ Cloud deployment matters because provider access is environment-sensitive. Local
 Build this slice in small steps:
 
 1. [x] Define the provider preview contract
-2. [ ] Add the admin route shell
+2. [x] Add the admin route shell
 3. [ ] Parse and validate the request input
 4. [ ] Fetch one simple SofaScore endpoint
 5. [ ] Return status, timing, and a small preview payload
@@ -214,8 +214,8 @@ Suggested first implementation target:
 
 ```text
 POST /api/admin/provider-preview
-input: tournament URL or explicit SofaScore ids
-output: provider status, timings, tournament summary, standings count, error details
+input: SofaScore URLs
+output: fetched data or errors
 ```
 
 Do not add persistence until local and deployed provider access are both understood.

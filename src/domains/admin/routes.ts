@@ -30,7 +30,49 @@ const providerPreviewRequestSchema = z
   })
   .strict();
 
-adminRouter.post('/provider-preview', (req, res) => {
+const parseResponseData = (contentType: string, body: string): unknown => {
+  if (!contentType.includes('application/json')) {
+    return body;
+  }
+
+  return JSON.parse(body);
+};
+
+const fetchSofaScoreUrl = async (url: string) => {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        accept: 'application/json,text/plain,text/html,*/*',
+      },
+    });
+    const contentType = response.headers.get('content-type') ?? '';
+    const body = await response.text();
+
+    if (!response.ok) {
+      return {
+        url,
+        ok: false,
+        status: response.status,
+        error: `Provider returned ${response.status}`,
+      };
+    }
+
+    return {
+      url,
+      ok: true,
+      status: response.status,
+      data: parseResponseData(contentType, body),
+    };
+  } catch (error) {
+    return {
+      url,
+      ok: false,
+      error: error instanceof Error ? error.message : 'Provider request failed',
+    };
+  }
+};
+
+adminRouter.post('/provider-preview', async (req, res) => {
   const parsedBody = providerPreviewRequestSchema.safeParse(req.body);
 
   if (!parsedBody.success) {
@@ -45,10 +87,11 @@ adminRouter.post('/provider-preview', (req, res) => {
     return;
   }
 
-  res.status(501).json({
-    ok: false,
-    urls: parsedBody.data.urls,
-    error: 'Provider preview fetch is not implemented yet',
+  const results = await Promise.all(parsedBody.data.urls.map(fetchSofaScoreUrl));
+
+  res.json({
+    ok: results.every((result) => result.ok),
+    results,
   });
 });
 

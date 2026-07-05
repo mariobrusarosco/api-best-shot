@@ -199,7 +199,7 @@ Build this slice in small steps:
 1. [x] Define the provider preview contract
 2. [x] Add the admin route shell
 3. [x] Parse and validate the request input
-4. [ ] Fetch one simple SofaScore endpoint
+4. [x] Fetch one simple SofaScore endpoint
 5. [ ] Return fetched data or a simple error for each URL
 6. [ ] Verify with a real standings URL
 7. [ ] Verify with teams/matches URLs after standings works

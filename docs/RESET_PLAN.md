@@ -1,4 +1,4 @@
-# Best Shot Root Reset Plan
+# Football Platform API Root Reset Plan
 
 ## Purpose
 
@@ -23,7 +23,7 @@ Every old idea has to earn its way back into the new app.
 
 ## What We Are Building
 
-Best Shot is a football prediction API.
+Football Platform API supports football products including Game, Almanac, Provider, Identity, and Admin domains.
 
 The app needs to:
 
@@ -104,9 +104,9 @@ We still need a local database.
 Use Docker only for Postgres:
 
 ```text
-Postgres container
+Docker Compose service: postgres
 localhost:5433
-database: bestshot
+database: football_platform
 user: postgres
 password: postgres
 ```
@@ -114,7 +114,7 @@ password: postgres
 Root env should point to:
 
 ```text
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/bestshot
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/football_platform
 ```
 
 ## First Technical Baseline

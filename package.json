@@ -1,8 +1,8 @@
 {
-  "name": "api-best-shot",
+  "name": "football-platform-api",
   "version": "1.0.1",
   "private": true,
-  "description": "Best Shot API",
+  "description": "Football Platform API",
   "engines": {
     "node": ">=22"
   },
@@ -15,7 +15,7 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
-    "db:psql": "docker compose exec postgres psql -U postgres -d bestshot"
+    "db:psql": "docker compose exec postgres psql -U postgres -d football_platform"
   },
   "dependencies": {
     "cors": "^2.8.5",

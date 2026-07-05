@@ -19,7 +19,7 @@ export const createApiApp = (): express.Express => {
 
   app.get('/', (_req, res) => {
     res.json({
-      name: 'api-best-shot',
+      name: 'football-platform-api',
       status: 'ok',
     });
   });

@@ -21,6 +21,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "playwright": "^1.61.1",
     "postgres": "^3.4.5",
     "tsconfig-paths": "^4.2.0",
     "zod": "^3.24.1"

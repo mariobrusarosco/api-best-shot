@@ -1,7 +1,34 @@
 import express from 'express';
+import type { Browser } from 'playwright';
 import { z } from 'zod';
 
+type ProviderPreviewResult = {
+  url: string;
+  ok: boolean;
+  status?: number;
+  data?: unknown;
+  error?: string;
+};
+
+type ProviderPreviewWarmup = {
+  url: string;
+  ok: boolean;
+  status?: number;
+  finalUrl?: string;
+  error?: string;
+};
+
+type ProviderPreviewRun = {
+  warmup: ProviderPreviewWarmup;
+  results: ProviderPreviewResult[];
+};
+
 const adminRouter = express.Router();
+
+const defaultSofaScorePageUrl =
+  'https://www.sofascore.com/football/tournament/brazil/brasileirao-serie-b/390';
+
+const browserSessionWaitMs = 5000;
 
 const isSofaScoreUrl = (value: string): boolean => {
   try {
@@ -27,48 +54,98 @@ const providerPreviewRequestSchema = z
       )
       .min(1, 'At least one URL is required')
       .max(10, 'At most 10 URLs are allowed'),
+    pageUrl: z
+      .string()
+      .url()
+      .refine(isSofaScoreUrl, 'Page URL must use https and belong to sofascore.com')
+      .optional(),
   })
   .strict();
 
-const parseResponseData = (contentType: string, body: string): unknown => {
-  if (!contentType.includes('application/json')) {
-    return body;
+const parseBrowserResponse = (text: string): unknown => {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
   }
-
-  return JSON.parse(body);
 };
 
-const fetchSofaScoreUrl = async (url: string) => {
-  try {
-    const response = await fetch(url, {
-      headers: {
-        accept: 'application/json,text/plain,text/html,*/*',
-      },
-    });
-    const contentType = response.headers.get('content-type') ?? '';
-    const body = await response.text();
+const fetchUrlsFromPageContext = async (
+  pageUrl: string,
+  urls: string[]
+): Promise<ProviderPreviewRun> => {
+  let browser: Browser | undefined;
 
-    if (!response.ok) {
-      return {
-        url,
-        ok: false,
-        status: response.status,
-        error: `Provider returned ${response.status}`,
-      };
-    }
+  try {
+    const { chromium } = await import('playwright');
+
+    browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
+    const warmupResponse = await page.goto(pageUrl, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000,
+    });
+
+    const warmup: ProviderPreviewWarmup = {
+      url: pageUrl,
+      ok: warmupResponse?.ok() ?? false,
+      status: warmupResponse?.status(),
+      finalUrl: page.url(),
+    };
+
+    await page.waitForTimeout(browserSessionWaitMs);
+
+    const results = await Promise.all(
+      urls.map((url) =>
+        page.evaluate(async (targetUrl: string) => {
+          try {
+            const response = await fetch(targetUrl, {
+              headers: {
+                accept: 'application/json,*/*',
+              },
+            });
+            const text = await response.text();
+
+            return {
+              url: targetUrl,
+              ok: response.ok,
+              status: response.status,
+              data: text,
+              error: response.ok ? undefined : `Provider returned ${response.status}`,
+            };
+          } catch (error) {
+            return {
+              url: targetUrl,
+              ok: false,
+              error: error instanceof Error ? error.message : 'Provider request failed',
+            };
+          }
+        }, url)
+      )
+    );
 
     return {
-      url,
-      ok: true,
-      status: response.status,
-      data: parseResponseData(contentType, body),
+      warmup,
+      results: results.map((result) => ({
+        ...result,
+        data: typeof result.data === 'string' ? parseBrowserResponse(result.data) : result.data,
+      })),
     };
   } catch (error) {
     return {
-      url,
-      ok: false,
-      error: error instanceof Error ? error.message : 'Provider request failed',
+      warmup: {
+        url: pageUrl,
+        ok: false,
+        error: error instanceof Error ? error.message : 'Browser warmup failed',
+      },
+      results: urls.map((url) => ({
+        url,
+        ok: false,
+        error: 'Browser provider preview did not run',
+      })),
     };
+  } finally {
+    await browser?.close();
   }
 };
 
@@ -87,11 +164,16 @@ adminRouter.post('/provider-preview', async (req, res) => {
     return;
   }
 
-  const results = await Promise.all(parsedBody.data.urls.map(fetchSofaScoreUrl));
+  const preview = await fetchUrlsFromPageContext(
+    parsedBody.data.pageUrl ?? defaultSofaScorePageUrl,
+    parsedBody.data.urls
+  );
 
   res.json({
-    ok: results.every((result) => result.ok),
-    results,
+    ok: preview.warmup.ok && preview.results.every((result) => result.ok),
+    mode: 'playwright-headless-chromium',
+    warmup: preview.warmup,
+    results: preview.results,
   });
 });
 

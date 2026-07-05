@@ -70,83 +70,102 @@ Playwright production setup
 
 Those decisions come after provider access is proven.
 
-## Proposed Endpoint
+## Provider Preview Contract
+
+### Endpoint
 
 ```text
 POST /api/admin/provider-preview
 ```
 
-Example request:
+This endpoint is an admin/operator tool. It is not a public product endpoint.
+
+### Contract Decision
+
+For the first implementation, keep the endpoint simple:
+
+```text
+Receive SofaScore URLs.
+Fetch them.
+Return the data.
+If something fails, return the error.
+```
+
+Do not parse tournament pages yet.
+
+Do not write to the database.
+
+Do not introduce transports, use cases, operation runners, browser warmups, reports, or provider architecture layers.
+
+### Request
 
 ```json
 {
-  "tournamentUrl": "https://www.sofascore.com/football/tournament/england/premier-league/17"
+  "urls": [
+    "https://www.sofascore.com/api/v1/unique-tournament/17/season/76986/standings/total"
+  ]
 }
 ```
 
-The endpoint may also accept explicit provider identifiers later:
+Multiple URLs are allowed so we can test standings, teams, matches, and other important SofaScore endpoints in one request.
 
-```json
-{
-  "provider": "sofascore",
-  "uniqueTournamentId": 17,
-  "seasonId": 76986
-}
+### Request Rules
+
+```text
+urls must be an array
+urls must contain at least 1 URL
+urls should be capped at 10 URLs
+each URL must use https
+each URL must belong to sofascore.com or a SofaScore subdomain
 ```
 
-Start with whichever input is simpler to implement correctly.
-
-## Response Shape
-
-Successful response:
+### Successful Response
 
 ```json
 {
   "ok": true,
-  "provider": "sofascore",
-  "input": {
-    "tournamentUrl": "https://www.sofascore.com/football/tournament/england/premier-league/17"
-  },
-  "preview": {
-    "tournament": {
-      "name": "Premier League",
-      "providerId": 17
-    },
-    "season": {
-      "providerId": 76986,
-      "name": "25/26"
-    },
-    "counts": {
-      "teams": 20,
-      "matches": 380,
-      "standingsRows": 20
+  "results": [
+    {
+      "url": "https://www.sofascore.com/api/v1/unique-tournament/17/season/76986/standings/total",
+      "ok": true,
+      "status": 200,
+      "data": {
+        "standings": []
+      }
     }
-  },
-  "timings": {
-    "durationMs": 1234
-  }
+  ]
 }
 ```
 
-Failure response:
+### Failure Response
+
+If one or more URLs fail, return the failure beside the URL that failed.
 
 ```json
 {
   "ok": false,
-  "provider": "sofascore",
-  "error": {
-    "stage": "provider_fetch",
-    "kind": "blocked",
-    "status": 403,
-    "message": "Provider request was blocked or challenged"
-  },
-  "timings": {
-    "durationMs": 800
-  }
+  "results": [
+    {
+      "url": "https://www.sofascore.com/api/v1/unique-tournament/17/season/76986/standings/total",
+      "ok": false,
+      "status": 403,
+      "error": "Provider returned 403"
+    }
+  ]
 }
 ```
 
-The exact fields can change during implementation. The important requirement is that failures are explicit enough to compare local and deployed behavior.
+### Done Criteria For Task 1
+
+Task 1 is done when the slice has a simple contract for:
+
+```text
+endpoint
+request body
+request rules
+success response
+failure response
+```
 
 ## Validation Matrix
 
@@ -177,7 +196,7 @@ Cloud deployment matters because provider access is environment-sensitive. Local
 
 Build this slice in small steps:
 
-1. [ ] Define the provider preview contract
+1. [x] Define the provider preview contract
 2. [ ] Add the admin route shell
 3. [ ] Parse and validate the request input
 4. [ ] Fetch one simple SofaScore endpoint

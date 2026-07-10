@@ -60,6 +60,8 @@ From the repository root:
 pnpm install
 cp .env.example .env
 pnpm db:up
+pnpm db:migrate
+pnpm db:seed:almanac
 pnpm dev
 ```
 
@@ -96,6 +98,7 @@ With the dev server running, check the API:
 curl http://localhost:3000/
 curl http://localhost:3000/api/health
 curl http://localhost:3000/api/health/db
+curl http://localhost:3000/api/almanac/world-cups
 ```
 
 Expected result:
@@ -104,6 +107,7 @@ Expected result:
 /                         API responds
 /api/health               API health responds
 /api/health/db            API can reach local Postgres
+/api/almanac/world-cups   API returns the seeded Almanac editions
 ```
 
 If `/api/health/db` fails, check that Postgres is running:
@@ -127,9 +131,11 @@ Start local Postgres first:
 
 ```sh
 pnpm db:up
+pnpm db:migrate
 ```
 
-This requires Docker to be running. It starts Docker Postgres in the background. The command exits after the container is started; it does not need to stay open.
+This requires Docker to be running. `db:up` starts Docker Postgres in the background and exits;
+`db:migrate` applies only migrations that have not already been recorded.
 
 Then start the API in watch mode:
 
@@ -167,6 +173,9 @@ Run the compiled API:
 pnpm run start
 ```
 
+For table definitions, migrations, seed data, Drizzle Studio, and database troubleshooting,
+see [Database Development Guide](docs/guides/database-development.md).
+
 Stop local Postgres:
 
 ```sh
@@ -181,13 +190,17 @@ pnpm db:psql
 
 ## Current v1 Baseline
 
-The current root app intentionally contains only the API baseline:
+The current root app contains:
 
 ```text
 Express API
 environment validation
 local Postgres connection
+Drizzle schema and migration tooling
+Almanac seed data
 health routes
+Almanac hello and World Cup editions routes
+Cloudflare Worker and Container deployment
 TypeScript build
 pnpm scripts
 ```
@@ -199,11 +212,11 @@ provider ingestion
 scheduler
 admin routes
 game routes
-almanac routes
+broader Almanac routes
 scoring
 leaderboards
-Cloudflare
-Playwright
+hosted PostgreSQL integration for the Cloudflare deployment
+automated browser tests
 Redis
 ```
 

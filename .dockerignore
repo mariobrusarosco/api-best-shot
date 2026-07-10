@@ -1,0 +1,15 @@
+.git
+.github
+.claude
+.cursor
+.vscode
+dist
+legacy
+node_modules
+npm-debug.log*
+pnpm-debug.log*
+.env
+.env.*
+!.env.example
+docs
+scripts/probes

@@ -1,6 +1,6 @@
 import express from 'express';
-import { env } from '@/config/env';
-import { checkDatabase } from '@/core/database';
+import { env } from '../../config/env';
+import { checkDatabase } from '../../core/database';
 
 const healthRouter = express.Router();
 

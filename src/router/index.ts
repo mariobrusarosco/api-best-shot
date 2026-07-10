@@ -1,10 +1,10 @@
-import express from 'express';
-import adminRouter from '@/domains/admin/routes';
-import healthRouter from '@/domains/health/routes';
+import express from "express";
+import almanacRouter from "../domains/almanac/routes";
+import healthRouter from "../domains/health/routes";
 
 const apiRouter = express.Router();
 
-apiRouter.use('/health', healthRouter);
-apiRouter.use('/admin', adminRouter);
+apiRouter.use("/health", healthRouter);
+apiRouter.use("/almanac", almanacRouter);
 
 export default apiRouter;

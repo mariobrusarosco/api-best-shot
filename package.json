@@ -8,16 +8,17 @@
   },
   "packageManager": "pnpm@11.7.0",
   "scripts": {
-    "dev": "tsx watch -r tsconfig-paths/register src/apps/api/index.ts",
+    "dev": "tsx watch src/apps/api/index.ts",
     "build": "tsc",
-    "start": "node -r tsconfig-paths/register dist/src/apps/api/index.js",
+    "start": "node dist/src/apps/api/index.js",
     "typecheck": "tsc --noEmit",
+    "cf:deploy": "wrangler deploy",
+    "cf:containers": "wrangler containers list",
+    "cf:images": "wrangler containers images list",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
-    "db:psql": "docker compose exec postgres psql -U postgres -d football_platform",
-    "db:migrate": "node scripts/db/run-sql-file.mjs sql/schema/001_almanac_world_cup_editions.sql",
-    "db:seed": "node scripts/db/run-sql-file.mjs sql/seeds/001_almanac_world_cup_editions.sql"
+    "db:psql": "docker compose exec postgres psql -U postgres -d football_platform"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -25,14 +26,16 @@
     "express": "^4.21.2",
     "playwright": "^1.61.1",
     "postgres": "^3.4.5",
-    "tsconfig-paths": "^4.2.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@cloudflare/containers": "^0.3.7",
+    "@cloudflare/workers-types": "^5.20260708.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^22.10.2",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "wrangler": "^4.109.0"
   }
 }

@@ -1,4 +1,4 @@
-import { env } from '@/config/env';
+import { env } from '../../config/env';
 import { createApiApp } from './app';
 
 const app = createApiApp();

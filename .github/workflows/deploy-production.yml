@@ -1,4 +1,4 @@
-name: Deploy to Production
+name: Legacy Railway Production
 
 on:
   workflow_dispatch:

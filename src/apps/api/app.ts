@@ -1,7 +1,7 @@
 import cors from 'cors';
 import express from 'express';
-import { env } from '@/config/env';
-import apiRouter from '@/router';
+import { env } from '../../config/env';
+import apiRouter from '../../router';
 
 export const createApiApp = (): express.Express => {
   const app = express();

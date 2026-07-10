@@ -1,9 +1,7 @@
-name: Deploy to Staging
+name: Legacy Railway Staging
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ staging ]
 
 concurrency:
   group: deploy-staging

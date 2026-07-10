@@ -1,9 +1,7 @@
-name: Deploy to Demo
+name: Legacy Railway Demo
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 concurrency:
   group: deploy-demo

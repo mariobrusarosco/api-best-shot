@@ -64,37 +64,43 @@ the editions index data path. This is not the final edition-detail contract.
 - Apply remote migrations outside application startup.
 - Apply additive migrations before deploying code that depends on them.
 - Keep the first deployed database environment aligned with the existing Cloudflare demo deployment.
+- Use one new PostgreSQL project and database per environment.
+- Separate product ownership inside an environment with PostgreSQL schemas.
+- Use `almanac` for Almanac data and `best_shot` for the Best Shot score-prediction game.
+- Give future games their own schemas instead of placing them under a generic `game` schema.
+- Keep one ordered Drizzle migration history while this remains one deployable application.
 
-## Explicitly Deferred Architecture Decisions
+## Database Boundary Decision
 
 The platform will contain at least two product domains:
 
 ```text
-Game     = the prediction/guesser product rebuilt from legacy product knowledge
-Almanac  = the new historical football product
+Best Shot = the score-prediction product rebuilt from legacy product knowledge
+Almanac   = the new historical football product
 ```
 
 They may use different data models even when entities have the same everyday name. For example, an
-Almanac player is not automatically the same domain entity as a Game player.
+Almanac player is not automatically the same domain entity as a Best Shot player.
 
-This slice does not decide:
-
-- whether Game and Almanac ultimately share one PostgreSQL database or use separate databases;
-- whether database ownership is expressed with PostgreSQL schemas, table prefixes, or another
-  convention;
-- whether tables should eventually look like `almanac.player` and `game.player`,
-  `almanac_players` and `game_players`, or use another naming model;
-- whether a future Identity domain maps corresponding real-world people across Game and Almanac;
-- the complete Almanac schema.
-
-Revisit these decisions before either of the following happens:
+The accepted boundary is:
 
 ```text
-1. The first Game table is introduced in the new root application.
-2. The first same-named entity, such as player or team, is needed by more than one domain.
+one new PostgreSQL project and database per environment
+almanac.* for Almanac product tables
+best_shot.* for Best Shot product tables
+a separate schema for every future game
+public.__drizzle_migrations for the shared migration ledger
 ```
 
-The editions-only table does not require that broader decision.
+Product table prefixes in `public` and a generic `game` schema were rejected. The complete decision,
+tradeoffs, and extraction triggers are recorded in
+[ADR 0001: Database Domain Boundaries](../adr/0001-database-domain-boundaries.md).
+
+Still deferred:
+
+- whether a future Identity domain maps corresponding real-world people across products;
+- the complete Almanac schema;
+- whether measured operational needs eventually justify extracting a domain into another database.
 
 ## Non-Goals
 
@@ -103,7 +109,7 @@ Do not build:
 - players;
 - teams or squads;
 - matches or goals;
-- Game domain tables;
+- Best Shot domain tables;
 - cross-domain identity mapping;
 - the complete World Cup edition detail response;
 - provider ingestion;
@@ -141,7 +147,13 @@ Do not build:
 - [x] Add only the constraints and indexes required by this slice.
 - [x] Generate the first root migration with a descriptive name.
 - [x] Review the generated SQL before applying it.
-- [ ] Commit the generated SQL and Drizzle migration metadata.
+- [x] Commit the first generated SQL and Drizzle migration metadata.
+- [x] Record the database ownership decision in ADR 0001.
+- [x] Declare `almanac` as a PostgreSQL schema through Drizzle.
+- [x] Generate a forward migration that moves the existing table into `almanac`.
+- [x] Keep migration `0000` unchanged.
+- [x] Verify that the move preserves rows, UUIDs, constraints, and indexes.
+- [ ] Commit ADR 0001, the Drizzle schema change, migration `0001`, and its metadata.
 
 ### 4. Add Seed Data
 
@@ -224,14 +236,24 @@ pnpm db:migrate
 pnpm db:seed:almanac
 pnpm run typecheck
 pnpm run build
+pnpm db:generate --name=move_world_cup_editions_to_almanac_schema
+pnpm db:migrate
+pnpm db:migrate
+pnpm db:seed:almanac
+pnpm db:seed:almanac
 ```
 
 The migration was reviewed before it was applied. It creates only `world_cup_editions`, its check
-constraint, and its two unique indexes. The seed command has been run once successfully.
+constraint, and its two unique indexes.
 
-The next validation is deliberately engineer-led: follow `docs/guides/database-development.md`,
-run the repeat migration and repeat seed paths, inspect the table in Drizzle Studio, start the
-API, and verify both local database endpoints. Any undocumented assumption is a guide defect.
+The engineer-led local walkthrough was completed successfully. Migration `0001` creates the
+`almanac` schema and moves the table without dropping or rebuilding it. The table exists only as
+`almanac.world_cup_editions`; both original UUIDs and all three indexes were preserved. Two
+consecutive seed runs left exactly two rows, and a repeat migration run left exactly two applied
+migrations in Drizzle's ledger.
+
+After the schema move, `/api/health/db`, `/api/almanac/world-cups`, and `/api/almanac/hello` all
+returned HTTP 200 locally. The editions response and UUIDs were unchanged.
 
 No hosted PostgreSQL project, Cloudflare database secret, remote migration, or deployed database
 endpoint has been configured by this work.
@@ -241,11 +263,10 @@ endpoint has been configured by this work.
 This slice is done when:
 
 - [x] A new root-owned migration creates exactly one Almanac product table.
-- [ ] Engineers can generate, review, apply, inspect, and evolve the database locally through the
+- [x] Engineers can generate, review, apply, inspect, and evolve the database locally through the
       documented pnpm commands.
-- [ ] The local endpoint returns data from Docker PostgreSQL.
+- [x] The local endpoint returns data from Docker PostgreSQL.
 - [ ] The deployed endpoint returns data from hosted PostgreSQL through the Cloudflare Container.
 - [x] No legacy database or migration is reused.
-- [ ] The database DX guide describes the verified implementation.
-- [x] Cross-domain Game/Almanac entity and table-naming decisions remain explicitly deferred and
-      tracked.
+- [x] The database DX guide describes the verified implementation.
+- [x] Cross-domain Almanac/Best Shot ownership and naming are recorded in ADR 0001.

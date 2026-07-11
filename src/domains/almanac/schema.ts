@@ -1,7 +1,9 @@
 import { sql } from 'drizzle-orm';
-import { check, pgTable, smallint, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { check, pgSchema, smallint, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
-export const worldCupEditions = pgTable(
+export const almanacSchema = pgSchema('almanac');
+
+export const worldCupEditions = almanacSchema.table(
   'world_cup_editions',
   {
     id: uuid('id').defaultRandom().primaryKey(),

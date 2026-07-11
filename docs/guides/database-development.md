@@ -9,7 +9,7 @@ are reference material and are not part of this workflow.
 
 ## Current Status
 
-Implemented and statically validated in the repository:
+Locally verified on 2026-07-10:
 
 ```text
 Local PostgreSQL in Docker
@@ -18,11 +18,6 @@ Generated SQL migration history
 Drizzle migration application
 Non-destructive Almanac seed data
 Drizzle-backed application queries
-```
-
-Awaiting engineer-led guide validation:
-
-```text
 Repeat migration and seed commands
 Drizzle Studio inspection
 Local API startup
@@ -49,6 +44,7 @@ Normal local development uses three separate processes:
 Node/Express API on the engineer's machine
   -> Drizzle ORM
   -> PostgreSQL 16 in Docker
+    -> almanac schema
 
 Drizzle Studio on the engineer's machine
   -> PostgreSQL 16 in Docker
@@ -56,11 +52,29 @@ Drizzle Studio on the engineer's machine
 
 Docker runs PostgreSQL only. The API and Drizzle Studio run directly on the host machine.
 
+Each environment receives a separate PostgreSQL project and database. Product domains share the
+database within one environment but own separate PostgreSQL schemas:
+
+```text
+public.__drizzle_migrations
+almanac.*
+best_shot.* when the first Best Shot table is introduced
+```
+
+Use natural table names inside each schema, such as `almanac.players` and `best_shot.players`. Do
+not replace schema ownership with names such as `almanac_players` in `public`.
+
+The rationale and extraction triggers are recorded in
+[ADR 0001: Database Domain Boundaries](../adr/0001-database-domain-boundaries.md).
+
 ## Important Files
 
 ```text
 docker-compose.yml
   Defines local PostgreSQL.
+
+docs/adr/0001-database-domain-boundaries.md
+  Defines physical environment isolation and logical product-domain ownership.
 
 .env
   Contains the local DATABASE_URL. It is never committed.
@@ -203,6 +217,9 @@ src/domains/<domain>/schema.ts
 ```
 
 Keep table ownership with the product domain that owns the data.
+
+Declare product tables through that domain's PostgreSQL schema object. The current example is
+`almanacSchema.table(...)` in `src/domains/almanac/schema.ts`.
 
 ### 2. Generate A Migration
 
@@ -349,7 +366,10 @@ the engineer explicitly intends to delete all local data.
 - Do not commit secrets or connection strings.
 - Do not run migrations automatically when an API container starts.
 - Do not make a destructive migration and dependent application change as one unplanned release.
-- Do not assume Game and Almanac entities with the same name share one data model.
+- Do not put product tables in `public`; use the owning product's PostgreSQL schema.
+- Do not repeat a schema name as a table prefix.
+- Do not assume Best Shot and Almanac entities with the same name share one data model.
+- Do not add cross-schema foreign keys without a concrete use case and an architecture decision.
 
 ## Troubleshooting
 

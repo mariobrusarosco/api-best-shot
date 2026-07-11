@@ -75,7 +75,7 @@ Start this work before the Cloudflare deployment becomes an automatic production
 ## Documentation And Legacy Cleanup
 
 - [ ] Update `README.md` with the proven Cloudflare deployment architecture and commands.
-- [ ] Remove stale README statements that list Almanac and Cloudflare as not implemented.
+- [x] Remove stale README statements that list Almanac and Cloudflare as not implemented.
 - [ ] Decide when to delete the disabled Railway workflows instead of retaining them as legacy
   reference material.
 - [ ] Remove deployment configuration that is proven unnecessary, including the currently inactive
@@ -88,5 +88,5 @@ Start this work before the Cloudflare deployment becomes an automatic production
 - [ ] If an ADR is useful, create it with the actual next ADR number and record the runtime decision,
   alternatives, constraints, and consequences.
 
-There is currently no `ADR 001` file in this repository. This follow-up deliberately does not claim
-that one exists.
+ADR 0001 records database domain boundaries, not the Cloudflare runtime decision. If the runtime
+decision receives its own ADR, it must use the next available ADR number.

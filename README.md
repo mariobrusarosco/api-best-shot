@@ -17,7 +17,7 @@ This API is intentionally broader than a single product. The main domains are:
 
 | Domain | Purpose |
 | --- | --- |
-| Game | Prediction and guessing product. Handles playable tournaments, matches, guesses, scoring, and leaderboards. |
+| Best Shot | Score-prediction game. Handles playable tournaments, matches, guesses, scoring, and leaderboards. |
 | Almanac | Read-only historical football data. Handles tournament history, national squads, players, teams, and historical context. |
 | Identity | Shared real-world entities used by multiple domains, such as people, teams, competitions, and provider identifiers. |
 | Provider | External data ingestion from sources such as SofaScore. Provider data is imported into our database; user-facing requests should read our database, not depend on live provider calls. |
@@ -27,11 +27,15 @@ Keep the domain boundaries clear:
 
 ```text
 Identity answers: "Who is this real-world person/team/competition?"
-Game answers: "How does the prediction product use it?"
+Best Shot answers: "How does the score-prediction product use it?"
 Almanac answers: "What was historically true?"
 Provider answers: "Where did this data come from and how do we refresh it?"
 Admin answers: "How do operators manage it?"
 ```
+
+Almanac and Best Shot share one PostgreSQL database per environment while owning separate
+PostgreSQL schemas. Future games receive their own schemas. See
+[ADR 0001: Database Domain Boundaries](docs/adr/0001-database-domain-boundaries.md).
 
 ## Requirements
 
@@ -211,7 +215,7 @@ Not included yet:
 provider ingestion
 scheduler
 admin routes
-game routes
+Best Shot routes
 broader Almanac routes
 scoring
 leaderboards

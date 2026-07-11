@@ -8,6 +8,13 @@
       "when": 1783707930609,
       "tag": "0000_almanac_world_cup_editions",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783718248432,
+      "tag": "0001_move_world_cup_editions_to_almanac_schema",
+      "breakpoints": true
     }
   ]
 }

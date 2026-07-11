@@ -2,6 +2,12 @@ name: Deploy Cloudflare Demo
 
 on:
   workflow_dispatch:
+    inputs:
+      seed:
+        description: Seed Almanac demo data
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -48,10 +54,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      # - name: Seed Almanac demo data
-      #   run: pnpm db:seed:almanac
-      #   env:
-      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Seed Almanac demo data
+        if: ${{ inputs.seed }}
+        run: pnpm db:seed:almanac
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3

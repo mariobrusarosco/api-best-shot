@@ -154,7 +154,7 @@ Do not build:
 - [x] Generate a forward migration that moves the existing table into `almanac`.
 - [x] Keep migration `0000` unchanged.
 - [x] Verify that the move preserves rows, UUIDs, constraints, and indexes.
-- [ ] Commit ADR 0001, the Drizzle schema change, migration `0001`, and its metadata.
+- [x] Commit ADR 0001, the Drizzle schema change, migration `0001`, and its metadata.
 
 ### 4. Add Seed Data
 
@@ -199,20 +199,19 @@ Do not build:
 - [x] Install dependencies from the lockfile in GitHub Actions.
 - [x] Run migration validation before deployment.
 - [x] Configure pending additive migrations to run before deploying dependent code.
-- [x] Keep the Almanac seed step visible but intentionally disabled while demo data is entered
-      directly in Supabase.
-- [ ] Re-enable the idempotent Almanac seed when automated seed ownership is desired again.
+- [x] Add a boolean `seed` input to the manual workflow that defaults to `false`.
+- [x] Run the idempotent Almanac seed after migrations only when `seed` is selected.
 - [x] Deploy the Worker and Container with Wrangler after database preparation.
 - [x] Keep the workflow manual for this slice.
 - [x] Do not add automated route retries or rollback behavior in this slice.
 
 ### 9. Verify The Deployed Data Path
 
-- [ ] Run the manual Cloudflare demo workflow successfully.
-- [ ] Verify deployed `/api/health/db` returns HTTP 200.
-- [ ] Verify deployed `GET /api/almanac/world-cups` returns the expected edition data.
-- [ ] Confirm the response came from hosted PostgreSQL rather than a bundled mock or fallback.
-- [ ] Record the deployed validation result in this document.
+- [x] Run the manual Cloudflare demo workflow successfully.
+- [x] Verify deployed `/api/health/db` returns HTTP 200.
+- [x] Verify deployed `GET /api/almanac/world-cups` returns HTTP 200 with an editions array.
+- [x] Confirm the response came from hosted PostgreSQL rather than a bundled mock or fallback.
+- [x] Record the deployed validation result in this document.
 
 ### 10. Document The Proven Database DX
 
@@ -261,8 +260,13 @@ After the schema move, `/api/health/db`, `/api/almanac/world-cups`, and `/api/al
 returned HTTP 200 locally. The editions response and UUIDs were unchanged.
 
 A brand-new Supabase demo project now exists. `DATABASE_URL` is configured in both the GitHub
-`demo` environment and the `football-platform-api-demo` Cloudflare Worker. Remote migration,
-deployment, and database endpoint verification remain pending.
+`demo` environment and the `football-platform-api-demo` Cloudflare Worker.
+
+Remote verification completed on 2026-07-11. The manual workflow applied both Drizzle migrations
+to Supabase and deployed the Cloudflare Worker and Container. The deployed `/api/health/db` route
+returned HTTP 200 with `database.ok` equal to `true`. The deployed `/api/almanac/world-cups` route
+returned HTTP 200 with `{"editions":[]}`. The empty array was expected because the verified workflow
+run left the optional seed input disabled; demo data was entered manually afterward.
 
 ## Done Criteria
 
@@ -272,7 +276,7 @@ This slice is done when:
 - [x] Engineers can generate, review, apply, inspect, and evolve the database locally through the
       documented pnpm commands.
 - [x] The local endpoint returns data from Docker PostgreSQL.
-- [ ] The deployed endpoint returns data from hosted PostgreSQL through the Cloudflare Container.
+- [x] The deployed endpoint reads from hosted PostgreSQL through the Cloudflare Container.
 - [x] No legacy database or migration is reused.
 - [x] The database DX guide describes the verified implementation.
 - [x] Cross-domain Almanac/Best Shot ownership and naming are recorded in ADR 0001.

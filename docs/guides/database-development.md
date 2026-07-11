@@ -30,19 +30,20 @@ Remote configuration completed on 2026-07-11:
 Brand-new Supabase demo project created
 GitHub demo environment DATABASE_URL secret configured
 Cloudflare demo Worker DATABASE_URL secret configured
-Remote seed intentionally disabled while demo data is entered manually
+Remote Almanac seed available as an opt-in workflow input that defaults to false
 ```
 
-Remote execution and verification still pending:
+Remote deployment verified on 2026-07-11:
 
 ```text
-Remote migration execution
-Cloudflare Worker and Container deployment with the database changes
-Cloudflare database-backed endpoint verification
+GitHub Actions applied the Drizzle migrations to Supabase
+GitHub Actions deployed the Cloudflare Worker and Container
+/api/health/db returned HTTP 200 with database.ok true
+/api/almanac/world-cups returned HTTP 200 with an empty editions array
 ```
 
-The secret configuration steps below are complete. The deployment and verification steps become
-proven only after the manual workflow succeeds.
+The empty editions array was expected because the verified workflow run left the optional seed
+input disabled. Demo data was entered manually afterward.
 
 ## Architecture
 
@@ -560,9 +561,14 @@ deploy the Worker and Container with Wrangler
 
 The API container never performs migrations during startup.
 
-The Almanac seed step remains visible but commented out in the workflow. This is intentional while
-demo data is entered directly in Supabase. Re-enable the step only when automated seed ownership is
-desired again; migration execution does not depend on it.
+The manual workflow presents a boolean **Seed Almanac demo data** input. It defaults to `false`, so
+ordinary deployments skip seeding. When selected, the workflow runs `pnpm db:seed:almanac` after
+migrations and before deployment, using the GitHub `demo` environment's `DATABASE_URL`.
+
+The seed script upserts its known rows by `source_key`. Selecting the input may update a manually
+entered row that uses the same source key. A row with the same year but a different source key will
+conflict with the table's unique year constraint and make the seed step fail; the deployment will
+then stop before Wrangler runs.
 
 ### 5. Verify Manually
 
@@ -604,8 +610,8 @@ Cloudflare deployment fails
 ```
 
 The migration is additive and Drizzle records it once. After a failure is understood and corrected,
-rerunning the manual workflow is the recovery path. When the seed step is re-enabled, it updates
-rows by stable source key and remains safe to rerun.
+rerunning the manual workflow is the recovery path. When the seed input is selected, it updates
+rows by stable source key and remains safe to rerun when those source keys own the seeded records.
 
 ## Guide Verification
 

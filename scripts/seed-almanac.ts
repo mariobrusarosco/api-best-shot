@@ -1,5 +1,5 @@
-import { closeDatabase, db } from '../src/core/database';
-import { worldCupEditions } from '../src/domains/almanac/schema';
+import { closeDatabase, db } from '../src/platform/database';
+import { worldCupEditions } from '../src/products/almanac/domains/editions/schema';
 
 const editions = [
   {

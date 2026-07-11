@@ -533,7 +533,8 @@ For the reset, these are useful patterns but not required in the first Almanac s
 These are not opinions; they come from the audited code.
 
 ```text
-1. Root reset currently has a broken health DB import because src/core/database/index.ts is deleted.
+1. At audit time, the root reset had a broken health DB import because its database client was
+   deleted. The rebuilt application now owns that client at src/platform/database/index.ts.
 2. Root package scripts mention sql/schema and sql/seeds files, but sql/ does not exist.
 3. Root README says Playwright is not included yet, but package.json currently includes playwright.
 4. Legacy match status typing does not match usage: schema typing lists notstarted/in-progress/etc., while logic uses open and not-defined.

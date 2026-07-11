@@ -97,10 +97,10 @@ drizzle.config.ts
 drizzle/
   Contains generated SQL migrations and Drizzle migration metadata.
 
-src/domains/*/schema.ts
-  Contains the current TypeScript declarations for database tables.
+src/products/*/domains/*/schema.ts
+  Contains product-owned TypeScript declarations for database tables.
 
-src/core/database/index.ts
+src/platform/database/index.ts
   Creates the postgres.js connection and Drizzle application client.
 
 scripts/seed-almanac.ts
@@ -222,13 +222,13 @@ migration.
 Add or edit the appropriate file under:
 
 ```text
-src/domains/<domain>/schema.ts
+src/products/<product>/domains/<domain>/schema.ts
 ```
 
 Keep table ownership with the product domain that owns the data.
 
 Declare product tables through that domain's PostgreSQL schema object. The current example is
-`almanacSchema.table(...)` in `src/domains/almanac/schema.ts`.
+`almanacSchema.table(...)` in `src/products/almanac/domains/editions/schema.ts`.
 
 ### 2. Generate A Migration
 

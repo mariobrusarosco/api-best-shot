@@ -1,5 +1,5 @@
 import { desc } from 'drizzle-orm';
-import { db } from '../../core/database';
+import { db } from '../../../../platform/database';
 import { worldCupEditions } from './schema';
 
 export type WorldCupEditionListItem = {

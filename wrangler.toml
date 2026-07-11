@@ -1,5 +1,5 @@
 name = "football-platform-api-demo"
-main = "src/cloudflare/worker.ts"
+main = "src/apps/cloudflare-worker/worker.ts"
 compatibility_date = "2026-07-09"
 workers_dev = true
 

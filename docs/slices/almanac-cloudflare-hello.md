@@ -67,7 +67,9 @@ Those can come later after the deployment path is proven.
 
 ### 1. Root Baseline
 
-- [x] Restore or replace `src/core/database` so `src/domains/health/routes.ts` can compile.
+- [x] Restore or replace the database client, now located at `src/platform/database`, so the health
+      router at
+      `src/platform/health/routes.ts`, can compile.
 - [x] Decide whether `/api/health/db` should remain database-backed in this slice.
 - [x] Remove or defer broken `db:migrate` and `db:seed` scripts until the referenced files exist.
 - [x] Run `pnpm run typecheck`.
@@ -75,7 +77,7 @@ Those can come later after the deployment path is proven.
 
 ### 2. Almanac Hello Endpoint
 
-- [x] Add `src/domains/almanac/routes.ts`.
+- [x] Add the Almanac router, now located at `src/products/almanac/router.ts`.
 - [x] Add `GET /api/almanac/hello`.
 - [x] Return exactly:
 
@@ -83,7 +85,7 @@ Those can come later after the deployment path is proven.
 hello wordl
 ```
 
-- [x] Mount the Almanac router in `src/router/index.ts`.
+- [x] Mount the Almanac router in `src/apps/api/router.ts`.
 - [x] Verify locally with the dev server.
 - [x] Verify the response body is exactly `hello wordl`.
 
@@ -242,7 +244,7 @@ This file tells Wrangler what Cloudflare must deploy.
   `new_sqlite_classes` is Cloudflare's required Durable Object migration type; it does not replace
   the application's PostgreSQL database with SQLite.
 
-#### `src/cloudflare/worker.ts`
+#### `src/apps/cloudflare-worker/worker.ts`
 
 This is the small Cloudflare Worker in front of the Node server.
 
@@ -252,7 +254,7 @@ This is the small Cloudflare Worker in front of the Node server.
 - `defaultPort = 3000` tells the Worker where Express listens inside the container.
 - `sleepAfter = '10m'` allows Cloudflare to stop the container after ten idle minutes. A later
   request starts it again.
-- `envVars` starts Node with the production environment and port 3000.
+- `envVars` starts Node with the production environment, port 3000, and the encrypted database URL.
 - `onStart`, `onStop`, and `onError` write lifecycle information to Cloudflare logs.
 - The `Env` type documents the `API_CONTAINER` binding created by `wrangler.toml`.
 - The `fetch` handler receives every public request and forwards it unchanged to the named `api`
@@ -285,15 +287,15 @@ it excludes Git history, editor settings, dependencies, legacy code, generated o
 
 #### Application Files
 
-- `src/domains/almanac/routes.ts` defines `GET /hello` and returns the exact plain-text response
+- `src/products/almanac/router.ts` defines `GET /hello` and returns the exact plain-text response
   `hello wordl`.
-- `src/router/index.ts` mounts that router at `/almanac`.
+- `src/apps/api/router.ts` mounts that router at `/almanac`.
 - `src/apps/api/app.ts` mounts the API router at `/api`.
 - Together those mounts produce `GET /api/almanac/hello`.
-- `src/apps/api/index.ts` listens on `0.0.0.0`, allowing Cloudflare's container network to reach the
+- `src/apps/api/server.ts` listens on `0.0.0.0`, allowing Cloudflare's container network to reach the
   Node process on port 3000.
-- Relative imports replaced the old TypeScript path alias so compiled JavaScript runs directly in
-  Node without the removed `tsconfig-paths` runtime hook.
+- Relative imports allow compiled JavaScript to run directly in Node without a runtime path-alias
+  hook.
 
 #### Package And Legacy Workflow Changes
 

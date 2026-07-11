@@ -1,13 +1,9 @@
 import express from 'express';
 import { listWorldCupEditions } from './repository';
 
-const almanacRouter = express.Router();
+const editionsRouter = express.Router();
 
-almanacRouter.get('/hello', (_req, res) => {
-  res.type('text/plain').send('hello wordl');
-});
-
-almanacRouter.get('/world-cups', async (_req, res) => {
+editionsRouter.get('/', async (_req, res) => {
   try {
     const editions = await listWorldCupEditions();
 
@@ -18,4 +14,4 @@ almanacRouter.get('/world-cups', async (_req, res) => {
   }
 });
 
-export default almanacRouter;
+export default editionsRouter;

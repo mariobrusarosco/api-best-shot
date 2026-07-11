@@ -8,9 +8,9 @@
   },
   "packageManager": "pnpm@11.7.0",
   "scripts": {
-    "dev": "tsx watch src/apps/api/index.ts",
+    "dev": "tsx watch src/apps/api/server.ts",
     "build": "tsc",
-    "start": "node dist/src/apps/api/index.js",
+    "start": "node dist/src/apps/api/server.js",
     "typecheck": "tsc --noEmit",
     "cf:deploy": "wrangler deploy",
     "cf:containers": "wrangler containers list",

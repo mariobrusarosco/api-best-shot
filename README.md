@@ -33,6 +33,28 @@ Provider answers: "Where did this data come from and how do we refresh it?"
 Admin answers: "How do operators manage it?"
 ```
 
+Source code has three top-level ownership categories:
+
+```text
+src/apps/      Executable entry points and application composition
+src/products/  Product-owned business capabilities
+src/platform/  Shared technical and operational capabilities
+```
+
+Business source code is organized by product first and domain second:
+
+```text
+src/products/<product>/domains/<domain>/
+```
+
+For example, Almanac edition routes, queries, and schema declarations live together under
+`src/products/almanac/domains/editions/`. The product router at
+`src/products/almanac/router.ts` composes its domains. Use the specific product name, such as
+`best-shot`, rather than a generic `game` directory. Technical capabilities that are not owned by a
+product remain outside `src/products/`. Configuration, database access, and operational health
+routes live under `src/platform/`. The Node API and Cloudflare Worker entry points live under
+`src/apps/`.
+
 Almanac and Best Shot share one PostgreSQL database per environment while owning separate
 PostgreSQL schemas. Future games receive their own schemas. See
 [ADR 0001: Database Domain Boundaries](docs/adr/0001-database-domain-boundaries.md).

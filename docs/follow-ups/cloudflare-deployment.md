@@ -42,21 +42,39 @@ environment-specific infrastructure or is ready for user traffic.
 
 When the split becomes necessary, avoid copying the complete deployment implementation into
 three independent workflows that can drift apart.
+
+Use consistent configuration names when environments are introduced:
+
+```text
+GitHub environment: <environment>
+  -> DATABASE_URL
+
+Cloudflare Worker: football-platform-api-<environment>
+  -> DATABASE_URL
+```
+
+Environment identity belongs to the configuration scope, not to the secret name.
 ```
 
 ## Database Deployment
 
-- [ ] Decide how production database migrations run when the first deployed schema is introduced.
-- [ ] Decide whether migrations use a dedicated workflow, a reusable workflow job, or an explicit
-  release step.
+- [x] Decide how demo database migrations run when the first deployed schema is introduced.
+- [x] Run demo migrations and seed as explicit steps in the existing manual Cloudflare workflow.
+- [ ] Revisit whether staging and production should use a dedicated or reusable database workflow
+  before either environment is introduced.
 - [ ] Configure the deployed database connection before treating `/api/health/db` as a deployment
   health requirement.
-- [ ] Decide whether `/api/health/db` is an operator diagnostic or a release gate.
+- [x] Keep `/api/health/db` as a manually checked operator diagnostic rather than an automated
+  release gate until rollback behavior is designed.
+- [ ] Replace the shared demo `postgres` credential with separate least-privilege runtime and
+  migration roles before creating production.
 
 Trigger:
 
 ```text
-Start this work when a product slice introduces the first deployed database schema.
+The demo implementation is tracked in
+`docs/slices/almanac-editions-database.md`. Revisit the remaining items before staging or
+production is introduced.
 ```
 
 ## Reliability And Rollback
@@ -76,8 +94,8 @@ Start this work before the Cloudflare deployment becomes an automatic production
 
 - [ ] Update `README.md` with the proven Cloudflare deployment architecture and commands.
 - [x] Remove stale README statements that list Almanac and Cloudflare as not implemented.
-- [ ] Decide when to delete the disabled Railway workflows instead of retaining them as legacy
-  reference material.
+- [x] Delete the obsolete Railway demo, staging, and production workflows. Deployment history
+  remains available through Git and `legacy/` documentation rather than executable root workflows.
 - [ ] Remove deployment configuration that is proven unnecessary, including the currently inactive
   `minimumReleaseAgeExclude` entries.
 

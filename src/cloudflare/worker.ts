@@ -1,6 +1,15 @@
 /// <reference types="@cloudflare/workers-types" />
 
 import { Container, getContainer } from '@cloudflare/containers';
+import { env } from 'cloudflare:workers';
+
+declare global {
+  namespace Cloudflare {
+    interface Env {
+      DATABASE_URL: string;
+    }
+  }
+}
 
 export class ApiContainer extends Container {
   defaultPort = 3000;
@@ -8,6 +17,7 @@ export class ApiContainer extends Container {
   envVars = {
     NODE_ENV: 'production',
     PORT: '3000',
+    DATABASE_URL: env.DATABASE_URL,
   };
 
   override onStart() {
@@ -24,12 +34,12 @@ export class ApiContainer extends Container {
   }
 }
 
-type Env = {
+type WorkerEnv = Cloudflare.Env & {
   API_CONTAINER: DurableObjectNamespace<ApiContainer>;
 };
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: WorkerEnv): Promise<Response> {
     return getContainer(env.API_CONTAINER, 'api').fetch(request);
   },
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<WorkerEnv>;

@@ -92,6 +92,9 @@ DB_STRING_CONNECTION_STAGING
 DB_STRING_CONNECTION_PRODUCTION
 ```
 
+These are historical legacy names. The new root application does not reuse them; it uses the
+canonical name `DATABASE_URL`, scoped by local runtime, GitHub Environment, or Cloudflare Worker.
+
 The legacy migrations lived here:
 
 ```text

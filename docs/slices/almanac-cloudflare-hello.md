@@ -307,14 +307,14 @@ it excludes Git history, editor settings, dependencies, legacy code, generated o
   entries currently have no effect because this repository does not configure
   `minimumReleaseAge`; they were not required for this deployment and can be removed in a later
   cleanup.
-- The existing Railway workflows were renamed with `Legacy Railway` and their automatic push
-  triggers were removed. They remain available for reference or manual use, but pushes to the new
-  root application no longer deploy automatically to Railway.
+- The obsolete Railway demo, staging, and production workflows were deleted after Cloudflare became
+  the accepted deployment target. Historical deployment knowledge remains in Git and `legacy/`
+  documentation rather than executable root workflows.
 
 ### 8. Follow-Up Work
 
 The first deployment slice is complete. Post-deployment documentation, environment promotion,
-database deployment, reliability, and legacy workflow cleanup are tracked separately in
+database deployment and reliability are tracked separately in
 [Cloudflare Deployment Follow-Ups](../follow-ups/cloudflare-deployment.md).
 
 ## Done Criteria

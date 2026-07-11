@@ -120,11 +120,12 @@ Do not build:
 
 ### 1. Confirm The Deployed Database Boundary
 
-- [ ] Confirm that the first deployed database is a brand-new hosted PostgreSQL project and does not
+- [x] Confirm that the first deployed database is a brand-new hosted PostgreSQL project and does not
       reuse the legacy database.
-- [ ] Confirm the hosted PostgreSQL provider for the Cloudflare demo environment.
+- [x] Confirm the hosted PostgreSQL provider for the Cloudflare demo environment: Supabase.
 - [ ] Obtain the runtime and migration connection information without committing credentials.
-- [ ] Record which connection mode is used by the persistent Cloudflare Container and by migrations.
+- [x] Record Shared Pooler Session mode on port `5432` for the persistent Cloudflare Container and
+      GitHub-hosted migrations.
 
 ### 2. Establish The Root Database Tooling
 
@@ -185,21 +186,25 @@ Do not build:
 ### 7. Connect The Cloudflare Container To Hosted PostgreSQL
 
 - [ ] Store the runtime database URL as an encrypted Cloudflare Worker secret.
-- [ ] Declare the runtime database secret as required deployment configuration.
-- [ ] Forward the Worker secret into the Node container as `DATABASE_URL`.
-- [ ] Store the migration connection URL as an encrypted GitHub Actions secret.
-- [ ] Do not place either connection string in `wrangler.toml`, the Docker image, source files, or
+- [x] Declare the runtime database secret as required deployment configuration.
+- [x] Forward the Worker secret into the Node container as `DATABASE_URL`.
+- [x] Configure the demo workflow to use the GitHub `demo` environment and its `DATABASE_URL`
+      secret.
+- [ ] Store the migration connection URL as `DATABASE_URL` in the GitHub `demo` environment.
+- [x] Do not place either connection string in `wrangler.toml`, the Docker image, source files, or
       workflow logs.
 
 ### 8. Extend The Manual Demo Deployment
 
-- [ ] Install dependencies from the lockfile in GitHub Actions.
-- [ ] Run migration validation before deployment.
-- [ ] Apply pending additive migrations to the hosted demo database before deploying dependent code.
-- [ ] Run the idempotent Almanac seed for the demo dataset.
-- [ ] Deploy the Worker and Container with Wrangler.
-- [ ] Keep the workflow manual for this slice.
-- [ ] Do not add automated route retries or rollback behavior in this slice.
+- [x] Install dependencies from the lockfile in GitHub Actions.
+- [x] Run migration validation before deployment.
+- [x] Configure pending additive migrations to run before deploying dependent code.
+- [x] Keep the Almanac seed step visible but intentionally disabled while demo data is entered
+      directly in Supabase.
+- [ ] Re-enable the idempotent Almanac seed when automated seed ownership is desired again.
+- [x] Deploy the Worker and Container with Wrangler after database preparation.
+- [x] Keep the workflow manual for this slice.
+- [x] Do not add automated route retries or rollback behavior in this slice.
 
 ### 9. Verify The Deployed Data Path
 
@@ -219,8 +224,8 @@ Do not build:
 - [x] Explain seed data versus destructive test fixtures.
 - [x] Explain Drizzle Studio.
 - [x] Explain local reset safety.
-- [ ] Explain GitHub and Cloudflare database-secret ownership.
-- [ ] Explain remote migration and deployment ordering.
+- [x] Explain GitHub and Cloudflare database-secret ownership.
+- [x] Explain remote migration and deployment ordering.
 - [x] Document prohibited shortcuts and troubleshooting.
 - [x] Update the root `README.md` to link to the guide.
 
@@ -255,8 +260,9 @@ migrations in Drizzle's ledger.
 After the schema move, `/api/health/db`, `/api/almanac/world-cups`, and `/api/almanac/hello` all
 returned HTTP 200 locally. The editions response and UUIDs were unchanged.
 
-No hosted PostgreSQL project, Cloudflare database secret, remote migration, or deployed database
-endpoint has been configured by this work.
+A brand-new Supabase demo project now exists. The GitHub `demo` environment secret, Cloudflare
+Worker-specific secret, remote migration, and deployed database endpoint verification remain
+pending.
 
 ## Done Criteria
 

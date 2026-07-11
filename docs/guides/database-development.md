@@ -24,17 +24,18 @@ Local API startup
 Local database health and Almanac endpoint requests
 ```
 
-Not configured yet:
+Remote provider selected and procedure documented, but not yet connected:
 
 ```text
-Hosted PostgreSQL for the Cloudflare demo
+Brand-new Supabase demo project created
 Cloudflare DATABASE_URL secret
 GitHub Actions migration secret
-Remote migration and seed execution
+Remote migration execution
+Remote seed intentionally disabled while demo data is entered manually
+Cloudflare database-backed endpoint verification
 ```
 
-Do not use this guide to deploy database changes remotely until the hosted-database section is
-completed and verified.
+The hosted-database procedure below becomes verified only after an engineer follows it successfully.
 
 ## Architecture
 
@@ -414,21 +415,184 @@ If a migration has already been applied, fix it with a new forward migration.
 
 ## Hosted Database And Cloudflare
 
-This section is intentionally incomplete until the hosted PostgreSQL project is selected and the
-full deployed path is verified.
+The Cloudflare demo uses a brand-new Supabase PostgreSQL project. It does not reuse the legacy
+database. The project region is South America (Sao Paulo), `sa-east-1`, so the database is close to
+the demo's initial users.
 
-The accepted direction is:
+The application does not use Supabase's Data API or JavaScript client. The Node container connects
+to PostgreSQL through Drizzle and postgres.js exactly as it does locally.
+
+### Connection Mode Decision
+
+Use the Supabase Shared Pooler in **Session mode on port 5432** for both paths in this first demo:
+
+| Path | Secret name | Reason |
+| --- | --- | --- |
+| Cloudflare Worker to Node container | `DATABASE_URL` | The container is a persistent backend while it is running. Session mode preserves connection semantics without depending on IPv6 availability. |
+| GitHub Actions to migrations | `DATABASE_URL` | GitHub-hosted runners are IPv4-only, and Supabase documents Session mode for migration clients on IPv4. |
+
+Do not use these alternatives for this slice:
 
 ```text
-GitHub Actions holds the migration connection secret.
-Cloudflare holds the application runtime DATABASE_URL secret.
-The Worker passes DATABASE_URL into the Node container.
-CI applies additive migrations before deploying code that requires them.
-The API container never performs migrations during startup.
+Direct connection, db.<project-ref>.supabase.co:5432
+  -> IPv6 by default; GitHub-hosted runners cannot reach it without an IPv4 add-on.
+
+Transaction pooler, *.pooler.supabase.com:6543
+  -> Intended for transient serverless clients, not our persistent container or migration job.
 ```
 
-Do not add real secret values to this guide. Once verified, this section must document the exact
-secret names, migration order, deployment command, and recovery behavior.
+References:
+
+- [Supabase connection modes](https://supabase.com/docs/guides/database/connecting-to-postgres)
+- [Supabase IPv4 and IPv6 compatibility](https://supabase.com/docs/guides/troubleshooting/supabase--your-network-ipv4-and-ipv6-compatibility-cHe3BP)
+- [Supabase regions](https://supabase.com/docs/guides/platform/regions)
+
+### Secret Naming And Ownership
+
+The same Session-pooler URI is stored in two independent systems under the same semantic name:
+
+```text
+Supabase
+  -> owns the database and its connection URI
+
+GitHub environment: demo
+  -> environment secret: DATABASE_URL
+  -> available only to jobs that target the demo environment
+  -> used by the Drizzle migration command
+
+Cloudflare Worker: football-platform-api-demo
+  -> Worker-specific secret: DATABASE_URL
+  -> forwarded by the Worker to the Node container as DATABASE_URL
+```
+
+GitHub and Cloudflare cannot read each other's secret stores, so each stores its own copy. The name
+remains `DATABASE_URL` because the value has the same meaning in both places. Environment identity
+belongs to the GitHub Environment or Cloudflare Worker scope, not to the secret name.
+
+Using the default Supabase `postgres` credential for both paths is a deliberate demo-stage
+simplification. Separate least-privilege runtime and migration roles are required before a
+production environment is created. If those become genuinely different credentials, their names
+must describe that difference explicitly.
+
+Never place either URI in source files, `wrangler.toml`, the Docker image, `.env`, workflow output,
+or this guide. The existing local `.env` must continue pointing to Docker PostgreSQL.
+
+### 1. Obtain The Session-Pooler URI
+
+In the new Supabase project:
+
+1. Select **Connect**.
+2. Select the connection-string **URI** format.
+3. Select the **Shared Pooler** in **Session** mode.
+4. Confirm the URI uses port `5432`, a `*.pooler.supabase.com` host, and a username shaped like
+   `postgres.<project-ref>`.
+5. Replace the password placeholder with the project database password.
+6. Store the completed URI in a password manager. Do not paste it into chat.
+
+If the password contains reserved URI characters, percent-encode the password portion. Supabase's
+[Postgres roles documentation](https://supabase.com/docs/guides/database/postgres/roles) shows this
+requirement.
+
+Stop if the selected URI uses `db.<project-ref>.supabase.co` or port `6543`; that is not the chosen
+connection mode.
+
+### 2. Add The GitHub Demo Environment Secret
+
+In the GitHub repository:
+
+1. Open **Settings**.
+2. Open **Environments**.
+3. Create or open the environment named exactly `demo`.
+4. Under **Environment secrets**, add a secret named exactly `DATABASE_URL`.
+5. Set its value to the complete Session-pooler URI.
+6. Save it.
+
+The `Deploy Cloudflare Demo` job declares `environment: demo`, which is what grants that job access
+to the environment-scoped secret. GitHub stores the value encrypted, and the workflow does not
+print it. See [GitHub deployment environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments).
+
+After this environment secret exists, delete the obsolete repository secret
+`DB_STRING_CONNECTION_DEMO`. No current workflow references it.
+
+### 3. Add The Cloudflare Runtime Secret
+
+In the Cloudflare dashboard:
+
+1. Open **Workers & Pages**.
+2. Select `football-platform-api-demo`.
+3. Open **Settings** > **Variables and Secrets**.
+4. Add a variable with type **Secret**.
+5. Name it exactly `DATABASE_URL`.
+6. Set its value to the complete Session-pooler URI.
+7. Deploy the secret change.
+
+Do not create this value in Cloudflare's account-level **Secrets Store**. This application uses a
+Worker-specific secret bound directly to `football-platform-api-demo`.
+
+`wrangler.toml` declares `DATABASE_URL` as required. A code deployment will fail clearly if the
+secret is absent. The Worker passes the encrypted value into the container through `envVars`; it is
+not baked into the image. See [Cloudflare Container secrets](https://developers.cloudflare.com/containers/examples/env-vars-and-secrets/)
+and [required Worker secrets](https://developers.cloudflare.com/workers/configuration/secrets/).
+
+### 4. Run The Manual Demo Workflow
+
+In GitHub Actions, run **Deploy Cloudflare Demo** manually. The workflow order is:
+
+```text
+checkout and install from the pnpm lockfile
+typecheck and build
+validate Drizzle migration history
+apply pending migrations with the demo environment's DATABASE_URL
+deploy the Worker and Container with Wrangler
+```
+
+The API container never performs migrations during startup.
+
+The Almanac seed step remains visible but commented out in the workflow. This is intentional while
+demo data is entered directly in Supabase. Re-enable the step only when automated seed ownership is
+desired again; migration execution does not depend on it.
+
+### 5. Verify Manually
+
+After the workflow succeeds, verify these routes manually:
+
+```text
+https://football-platform-api-demo.mariobrusarosco.workers.dev/api/health/db
+https://football-platform-api-demo.mariobrusarosco.workers.dev/api/almanac/world-cups
+```
+
+Expected results:
+
+```text
+/api/health/db
+  -> HTTP 200
+  -> database.ok is true
+
+/api/almanac/world-cups
+  -> HTTP 200
+  -> editions contains the rows entered directly in the demo database
+```
+
+This remains a human verification step. There is no automated retrying smoke test or rollback gate.
+
+### Failure Behavior
+
+```text
+Static validation fails
+  -> no database or deployment change occurs
+
+Migration fails
+  -> deployment does not run
+  -> read the database error before retrying
+
+Cloudflare deployment fails
+  -> the additive migration remains in Supabase
+  -> no database rollback is attempted
+```
+
+The migration is additive and Drizzle records it once. After a failure is understood and corrected,
+rerunning the manual workflow is the recovery path. When the seed step is re-enabled, it updates
+rows by stable source key and remains safe to rerun.
 
 ## Guide Verification
 

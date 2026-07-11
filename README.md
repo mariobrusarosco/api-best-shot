@@ -37,6 +37,15 @@ Almanac and Best Shot share one PostgreSQL database per environment while owning
 PostgreSQL schemas. Future games receive their own schemas. See
 [ADR 0001: Database Domain Boundaries](docs/adr/0001-database-domain-boundaries.md).
 
+Configuration follows one semantic naming rule: the same value has the same name in every runtime,
+and the environment is expressed by scope rather than by renaming the variable. For example:
+
+```text
+Local .env:                  DATABASE_URL
+GitHub environment demo:    DATABASE_URL
+Cloudflare demo Worker:     DATABASE_URL
+```
+
 ## Requirements
 
 Install these before working on the API:

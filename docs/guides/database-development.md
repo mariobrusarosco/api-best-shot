@@ -24,18 +24,25 @@ Local API startup
 Local database health and Almanac endpoint requests
 ```
 
-Remote provider selected and procedure documented, but not yet connected:
+Remote configuration completed on 2026-07-11:
 
 ```text
 Brand-new Supabase demo project created
-Cloudflare DATABASE_URL secret
-GitHub Actions migration secret
-Remote migration execution
+GitHub demo environment DATABASE_URL secret configured
+Cloudflare demo Worker DATABASE_URL secret configured
 Remote seed intentionally disabled while demo data is entered manually
+```
+
+Remote execution and verification still pending:
+
+```text
+Remote migration execution
+Cloudflare Worker and Container deployment with the database changes
 Cloudflare database-backed endpoint verification
 ```
 
-The hosted-database procedure below becomes verified only after an engineer follows it successfully.
+The secret configuration steps below are complete. The deployment and verification steps become
+proven only after the manual workflow succeeds.
 
 ## Architecture
 
@@ -252,7 +259,8 @@ Do not apply generated SQL that you have not reviewed.
 pnpm db:check
 ```
 
-This checks the generated migration history for consistency.
+This checks the generated migration history for consistency. It is a static file check and does not
+read `DATABASE_URL` or connect to PostgreSQL.
 
 ### 5. Apply Locally
 
@@ -330,7 +338,7 @@ pnpm db:generate --name=<description>
   Generate SQL from schema declaration changes.
 
 pnpm db:check
-  Validate migration history consistency.
+  Validate migration history consistency without connecting to PostgreSQL.
 
 pnpm db:migrate
   Apply pending migrations to DATABASE_URL.
@@ -508,8 +516,12 @@ In the GitHub repository:
 6. Save it.
 
 The `Deploy Cloudflare Demo` job declares `environment: demo`, which is what grants that job access
-to the environment-scoped secret. GitHub stores the value encrypted, and the workflow does not
-print it. See [GitHub deployment environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments).
+to the environment-scoped secret. GitHub does not automatically export an environment secret as a
+shell variable. The migration step explicitly maps `secrets.DATABASE_URL` to the process variable
+`DATABASE_URL`; the static migration-history check does not receive the secret. GitHub stores the
+value encrypted, and the workflow does not print it. See
+[GitHub deployment environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
+and [using secrets in workflows](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets).
 
 After this environment secret exists, delete the obsolete repository secret
 `DB_STRING_CONNECTION_DEMO`. No current workflow references it.
@@ -570,7 +582,8 @@ Expected results:
 
 /api/almanac/world-cups
   -> HTTP 200
-  -> editions contains the rows entered directly in the demo database
+  -> editions is an array
+  -> an empty array is valid until demo rows are entered manually
 ```
 
 This remains a human verification step. There is no automated retrying smoke test or rollback gate.

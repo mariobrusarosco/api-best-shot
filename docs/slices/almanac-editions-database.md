@@ -123,7 +123,7 @@ Do not build:
 - [x] Confirm that the first deployed database is a brand-new hosted PostgreSQL project and does not
       reuse the legacy database.
 - [x] Confirm the hosted PostgreSQL provider for the Cloudflare demo environment: Supabase.
-- [ ] Obtain the runtime and migration connection information without committing credentials.
+- [x] Obtain the runtime and migration connection information without committing credentials.
 - [x] Record Shared Pooler Session mode on port `5432` for the persistent Cloudflare Container and
       GitHub-hosted migrations.
 
@@ -185,12 +185,12 @@ Do not build:
 
 ### 7. Connect The Cloudflare Container To Hosted PostgreSQL
 
-- [ ] Store the runtime database URL as an encrypted Cloudflare Worker secret.
+- [x] Store the runtime database URL as an encrypted Cloudflare Worker secret.
 - [x] Declare the runtime database secret as required deployment configuration.
 - [x] Forward the Worker secret into the Node container as `DATABASE_URL`.
 - [x] Configure the demo workflow to use the GitHub `demo` environment and its `DATABASE_URL`
       secret.
-- [ ] Store the migration connection URL as `DATABASE_URL` in the GitHub `demo` environment.
+- [x] Store the migration connection URL as `DATABASE_URL` in the GitHub `demo` environment.
 - [x] Do not place either connection string in `wrangler.toml`, the Docker image, source files, or
       workflow logs.
 
@@ -260,9 +260,9 @@ migrations in Drizzle's ledger.
 After the schema move, `/api/health/db`, `/api/almanac/world-cups`, and `/api/almanac/hello` all
 returned HTTP 200 locally. The editions response and UUIDs were unchanged.
 
-A brand-new Supabase demo project now exists. The GitHub `demo` environment secret, Cloudflare
-Worker-specific secret, remote migration, and deployed database endpoint verification remain
-pending.
+A brand-new Supabase demo project now exists. `DATABASE_URL` is configured in both the GitHub
+`demo` environment and the `football-platform-api-demo` Cloudflare Worker. Remote migration,
+deployment, and database endpoint verification remain pending.
 
 ## Done Criteria
 

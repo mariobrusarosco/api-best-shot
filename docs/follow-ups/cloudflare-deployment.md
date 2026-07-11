@@ -59,11 +59,13 @@ Environment identity belongs to the configuration scope, not to the secret name.
 ## Database Deployment
 
 - [x] Decide how demo database migrations run when the first deployed schema is introduced.
-- [x] Run demo migrations and seed as explicit steps in the existing manual Cloudflare workflow.
+- [x] Run demo migrations as an explicit step in the existing manual Cloudflare workflow.
+- [x] Keep the idempotent Almanac seed step visible but disabled while demo data is entered
+  manually.
 - [ ] Revisit whether staging and production should use a dedicated or reusable database workflow
   before either environment is introduced.
-- [ ] Configure the deployed database connection before treating `/api/health/db` as a deployment
-  health requirement.
+- [x] Configure `DATABASE_URL` in the GitHub `demo` environment and the demo Cloudflare Worker.
+- [ ] Run the remote migration and deployment, then verify `/api/health/db` manually.
 - [x] Keep `/api/health/db` as a manually checked operator diagnostic rather than an automated
   release gate until rollback behavior is designed.
 - [ ] Replace the shared demo `postgres` credential with separate least-privilege runtime and

@@ -47,13 +47,17 @@ Business source code is organized by product first and domain second:
 src/products/<product>/domains/<domain>/
 ```
 
-For example, Almanac edition routes, queries, and schema declarations live together under
+For example, Almanac edition routes, services, repositories, and schema declarations live together under
 `src/products/almanac/domains/editions/`. The product router at
 `src/products/almanac/router.ts` composes its domains. Use the specific product name, such as
 `best-shot`, rather than a generic `game` directory. Technical capabilities that are not owned by a
 product remain outside `src/products/`. Configuration, database access, and operational health
 routes live under `src/platform/`. The Node API and Cloudflare Worker entry points live under
 `src/apps/`.
+
+The exact domain-layer responsibilities and dependency direction are defined in the canonical
+[Domain Module Architecture](docs/architecture/domain-modules.md) and recorded by
+[ADR 0002](docs/adr/0002-product-domain-module-layers.md).
 
 Almanac and Best Shot share one PostgreSQL database per environment while owning separate
 PostgreSQL schemas. Future games receive their own schemas. See
@@ -67,6 +71,10 @@ Local .env:                  DATABASE_URL
 GitHub environment demo:    DATABASE_URL
 Cloudflare demo Worker:     DATABASE_URL
 ```
+
+Public assets use the same semantic rule. Local development and the demo Worker currently use the
+same public `ASSET_BASE_URL`; PostgreSQL stores only object keys. See
+[Almanac Public Assets](docs/slices/almanac-assets.md).
 
 ## Requirements
 

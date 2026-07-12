@@ -1,0 +1,82 @@
+[
+  {
+    "id": "WC-1994",
+    "year": 1994,
+    "name": "1994 FIFA Men's World Cup",
+    "hostCountry": "United States",
+    "winner": "Brazil",
+    "startDate": "1994-06-17",
+    "endDate": "1994-07-17",
+    "teamCount": 24
+  },
+  {
+    "id": "WC-1998",
+    "year": 1998,
+    "name": "1998 FIFA Men's World Cup",
+    "hostCountry": "France",
+    "winner": "France",
+    "startDate": "1998-06-10",
+    "endDate": "1998-07-12",
+    "teamCount": 32
+  },
+  {
+    "id": "WC-2002",
+    "year": 2002,
+    "name": "2002 FIFA Men's World Cup",
+    "hostCountry": "Korea, Japan",
+    "winner": "Brazil",
+    "startDate": "2002-05-31",
+    "endDate": "2002-06-30",
+    "teamCount": 32
+  },
+  {
+    "id": "WC-2006",
+    "year": 2006,
+    "name": "2006 FIFA Men's World Cup",
+    "hostCountry": "Germany",
+    "winner": "Italy",
+    "startDate": "2006-06-09",
+    "endDate": "2006-07-09",
+    "teamCount": 32
+  },
+  {
+    "id": "WC-2010",
+    "year": 2010,
+    "name": "2010 FIFA Men's World Cup",
+    "hostCountry": "South Africa",
+    "winner": "Spain",
+    "startDate": "2010-06-11",
+    "endDate": "2010-07-11",
+    "teamCount": 32
+  },
+  {
+    "id": "WC-2014",
+    "year": 2014,
+    "name": "2014 FIFA Men's World Cup",
+    "hostCountry": "Brazil",
+    "winner": "Germany",
+    "startDate": "2014-06-12",
+    "endDate": "2014-07-13",
+    "teamCount": 32
+  },
+  {
+    "id": "WC-2018",
+    "year": 2018,
+    "name": "2018 FIFA Men's World Cup",
+    "hostCountry": "Russia",
+    "winner": "France",
+    "startDate": "2018-06-14",
+    "endDate": "2018-07-15",
+    "teamCount": 32
+  },
+  {
+    "id": "WC-2022",
+    "year": 2022,
+    "name": "2022 FIFA Men's World Cup",
+    "hostCountry": "Qatar",
+    "winner": "Argentina",
+    "startDate": "2022-11-20",
+    "endDate": "2022-12-18",
+    "teamCount": 32
+  }
+]

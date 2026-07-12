@@ -45,6 +45,9 @@ GitHub Actions deployed the Cloudflare Worker and Container
 The empty editions array was expected because the verified workflow run left the optional seed
 input disabled. Demo data was entered manually afterward.
 
+That dated deployment proof used the provisional `/api/almanac/world-cups` route. The current
+Editions index route is `/api/almanac/editions`; there is no compatibility alias.
+
 ## Architecture
 
 Normal local development uses three separate processes:
@@ -160,7 +163,7 @@ With the API running, use another terminal:
 
 ```sh
 curl -i http://localhost:3000/api/health/db
-curl -i http://localhost:3000/api/almanac/world-cups
+curl -i http://localhost:3000/api/almanac/editions
 ```
 
 Expected behavior:
@@ -170,9 +173,9 @@ Expected behavior:
   -> HTTP 200
   -> database.ok is true
 
-/api/almanac/world-cups
+/api/almanac/editions
   -> HTTP 200
-  -> editions contains the seeded World Cup rows
+  -> editions contains the seeded Editions index rows
 ```
 
 An empty `world_cup_editions` table is valid. The endpoint returns HTTP 200 with an empty
@@ -598,7 +601,7 @@ After the workflow succeeds, verify these routes manually:
 
 ```text
 https://football-platform-api-demo.mariobrusarosco.workers.dev/api/health/db
-https://football-platform-api-demo.mariobrusarosco.workers.dev/api/almanac/world-cups
+https://football-platform-api-demo.mariobrusarosco.workers.dev/api/almanac/editions
 ```
 
 Expected results:
@@ -608,7 +611,7 @@ Expected results:
   -> HTTP 200
   -> database.ok is true
 
-/api/almanac/world-cups
+/api/almanac/editions
   -> HTTP 200
   -> editions is an array
   -> an empty array is valid until demo rows are entered manually

@@ -31,7 +31,8 @@ Examples:
 
 ```text
 src/products/almanac/domains/editions/
-src/products/almanac/domains/squads/
+src/products/almanac/domains/contents/
+src/products/almanac/domains/teams/
 src/products/best-shot/domains/guesses/
 ```
 
@@ -235,7 +236,7 @@ src/products/almanac/domains/editions/
 Its request flow is:
 
 ```text
-GET /api/almanac/world-cups
+GET /api/almanac/editions
   -> editions/routes.ts
     -> editions/service.ts
       -> editions/repository.ts
@@ -244,6 +245,20 @@ GET /api/almanac/world-cups
 
 New domains should follow this implementation unless an accepted architecture decision says
 otherwise.
+
+A domain without persistence omits files whose responsibilities do not exist. For example, the
+Almanac Contents request follows:
+
+```text
+GET /api/almanac/contents
+  -> contents/routes.ts
+    -> contents/service.ts
+      -> editions/service.ts for the public edition-count behavior
+```
+
+It has no repository or schema because its section metadata is backend configuration rather than
+database data. This is an application of the standard optional-file rules, not a different
+architecture.
 
 ## Creating A Domain
 

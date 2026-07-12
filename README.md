@@ -141,7 +141,9 @@ With the dev server running, check the API:
 curl http://localhost:3000/
 curl http://localhost:3000/api/health
 curl http://localhost:3000/api/health/db
-curl http://localhost:3000/api/almanac/world-cups
+curl http://localhost:3000/api/almanac/contents
+curl http://localhost:3000/api/almanac/editions
+curl http://localhost:3000/api/almanac/teams
 ```
 
 Expected result:
@@ -150,8 +152,14 @@ Expected result:
 /                         API responds
 /api/health               API health responds
 /api/health/db            API can reach local Postgres
-/api/almanac/world-cups   API returns the seeded Almanac editions
+/api/almanac/contents     API returns the Almanac section navigation
+/api/almanac/editions     API returns the seeded Almanac Editions index
+/api/almanac/teams        API returns the seeded national-team index
 ```
+
+`CORS_ORIGIN` is the frontend origin allowed to call the API. Local development and the current
+demo configuration use `http://localhost:5173`. Replace the demo value when the frontend receives
+a deployed origin.
 
 If `/api/health/db` fails, check that Postgres is running:
 

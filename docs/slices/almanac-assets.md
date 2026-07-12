@@ -1,5 +1,16 @@
 # Almanac Public Assets
 
+## Superseded API Contract Notice
+
+This slice records the initial public-asset proof. Its former top-level Editions `logoUrl` response
+was superseded on 2026-07-12 by decision N9 in
+[Almanac Index Navigation](./almanac-index-navigation.md). The current Editions index route is
+`GET /api/almanac/editions` and returns the host-country flag as `host.flagUrl`. Edition
+`logo_asset_key` remains valid stored data for other Almanac contexts.
+
+Do not restore `/api/almanac/world-cups` or its top-level `logoUrl` response from the historical
+evidence and checklists below.
+
 ## Status
 
 Implementation in progress. The database and API contract is implemented and verified locally.
@@ -44,7 +55,7 @@ column: logo_asset_key
 example: editions/2018-logo.svg
 ```
 
-The implemented API returns:
+The initial proof API returned:
 
 ```json
 {
@@ -160,6 +171,7 @@ Status meanings:
 ```text
 Existing   Already established by current code or product requirements
 Accepted   Explicitly confirmed for this architecture
+Superseded Replaced by a later accepted decision and no longer current
 Proposed   Recommended for this slice but still awaiting explicit acceptance
 Open       A choice is still required
 Deferred   Explicitly outside this slice
@@ -175,7 +187,7 @@ Follow-up  Valid later work that is intentionally tracked outside this slice
 | A4  | Accepted  | Store edition logos under `editions/<year>-logo.svg`, without a leading slash.                                                                           |
 | A5  | Accepted  | Store the R2 object key in PostgreSQL, not an absolute CDN URL.                                                                                          |
 | A6  | Accepted  | Configure the public origin through `ASSET_BASE_URL`. This is public configuration, not a secret.                                                        |
-| A7  | Accepted  | Return an absolute top-level `logoUrl` from the Editions API so frontends do not need to know the asset origin.                                          |
+| A7  | Superseded | The initial top-level `logoUrl` proof was replaced by Index Navigation N9. The current Editions index returns `host.flagUrl`.                            |
 | A8  | Deferred  | A custom asset domain and Cloudflare cache policy belong to a separate infrastructure decision.                                                          |
 | A9  | Accepted  | Use `https://pub-ad9a25475486494b8665c0b11bd920ca.r2.dev` as the demo `ASSET_BASE_URL`.                                                                  |
 | A10 | Accepted  | Keep mutable identity assets at stable keys and overwrite the bytes at the same key. The canonical URL and database reference do not change.             |
@@ -278,9 +290,9 @@ audit history;
 one centrally managed asset referenced by unrelated domain owners.
 ```
 
-## API Contract
+## Historical API Contract
 
-Accepted response:
+Response accepted for the initial asset proof and later superseded by Index Navigation N9:
 
 ```json
 {

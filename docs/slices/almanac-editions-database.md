@@ -1,5 +1,13 @@
 # Slice: Almanac Editions Database
 
+## Superseded Route Notice
+
+This completed slice records the first database-backed proof, which used the provisional
+`GET /api/almanac/world-cups` route. That route was superseded on 2026-07-12 by
+[Almanac Index Navigation](./almanac-index-navigation.md). The current route is
+`GET /api/almanac/editions`, with no compatibility alias. Historical verification below retains
+the route that was actually tested at the time.
+
 ## Purpose
 
 Build the smallest complete database-backed Almanac feature and prove the same application flow

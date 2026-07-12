@@ -8,6 +8,7 @@ declare global {
     interface Env {
       DATABASE_URL: string;
       ASSET_BASE_URL: string;
+      CORS_ORIGIN: string;
     }
   }
 }
@@ -20,6 +21,7 @@ export class ApiContainer extends Container {
     PORT: '3000',
     DATABASE_URL: env.DATABASE_URL,
     ASSET_BASE_URL: env.ASSET_BASE_URL,
+    CORS_ORIGIN: env.CORS_ORIGIN,
   };
 
   override onStart() {

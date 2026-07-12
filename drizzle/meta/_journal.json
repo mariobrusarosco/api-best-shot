@@ -15,6 +15,13 @@
       "when": 1783718248432,
       "tag": "0001_move_world_cup_editions_to_almanac_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783797355640,
+      "tag": "0002_almanac_edition_logo_asset_key",
+      "breakpoints": true
     }
   ]
 }

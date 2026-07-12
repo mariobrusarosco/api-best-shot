@@ -7,14 +7,14 @@ const editions = [
     year: 2022,
     name: '2022 FIFA World Cup',
     hostDisplayName: 'Qatar',
-    hostAssetPath: '/assets/flags/qatar.svg',
+    logoAssetKey: 'editions/2022-logo.svg',
   },
   {
     sourceKey: 'fifa-world-cup-2018',
     year: 2018,
     name: '2018 FIFA World Cup',
     hostDisplayName: 'Russia',
-    hostAssetPath: '/assets/flags/russia.svg',
+    logoAssetKey: 'editions/2018-logo.svg',
   },
 ] as const;
 
@@ -29,7 +29,7 @@ const seedAlmanac = async (): Promise<void> => {
           year: edition.year,
           name: edition.name,
           hostDisplayName: edition.hostDisplayName,
-          hostAssetPath: edition.hostAssetPath,
+          logoAssetKey: edition.logoAssetKey,
           updatedAt: new Date(),
         },
       });

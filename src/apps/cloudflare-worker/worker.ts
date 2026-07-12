@@ -7,6 +7,7 @@ declare global {
   namespace Cloudflare {
     interface Env {
       DATABASE_URL: string;
+      ASSET_BASE_URL: string;
     }
   }
 }
@@ -18,6 +19,7 @@ export class ApiContainer extends Container {
     NODE_ENV: 'production',
     PORT: '3000',
     DATABASE_URL: env.DATABASE_URL,
+    ASSET_BASE_URL: env.ASSET_BASE_URL,
   };
 
   override onStart() {

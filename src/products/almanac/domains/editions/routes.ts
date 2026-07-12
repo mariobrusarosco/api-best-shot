@@ -1,5 +1,5 @@
 import express from 'express';
-import { listWorldCupEditions } from './repository';
+import { listWorldCupEditions } from './service';
 
 const editionsRouter = express.Router();
 

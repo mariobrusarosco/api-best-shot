@@ -215,6 +215,28 @@ Use Studio to inspect tables and rows. Do not use Studio to make schema changes 
 your local database. Schema changes must begin in a committed Drizzle schema declaration and
 migration.
 
+## Store Public Asset References
+
+PostgreSQL stores provider-neutral object keys, not complete Cloudflare URLs. Name the column for
+the asset's domain meaning, such as `logo_asset_key`.
+
+```text
+Correct:   editions/2018-logo.svg
+Incorrect: /editions/2018-logo.svg
+Incorrect: https://pub-example.r2.dev/editions/2018-logo.svg
+```
+
+Object keys do not begin with `/`. The owning product service passes the key to the shared platform
+URL builder and returns the resulting absolute URL in its API response. Repositories remain unaware
+of `ASSET_BASE_URL`.
+
+Local development and the Cloudflare demo deployment currently use the same public demo R2 origin.
+They retain separate PostgreSQL databases; sharing the public asset origin does not share database
+state.
+
+See [Almanac Public Assets](../slices/almanac-assets.md) for the accepted demo delivery, upload, and
+replacement decisions.
+
 ## Create Or Change A Table
 
 ### 1. Change The Domain Schema

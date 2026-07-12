@@ -37,14 +37,14 @@ For editions, the frontend needs enough data to render the editions list:
 - tournament identifier
 - year
 - host display name
-- host badge or flag asset path
+- edition logo URL
 
 For squads, the frontend needs enough data to render the national squads list:
 
 - team identifier
 - team code
 - team display name
-- badge or flag asset path
+- badge or flag URL
 - all-time World Cup appearance count
 
 The index screens do not need complete detail payloads.
@@ -67,8 +67,8 @@ The frontend assumes visual identity is data returned by the API or derived from
 
 Visual identity includes:
 
-- badge or flag asset paths
-- tournament logo and trophy asset paths
+- badge or flag asset URLs
+- tournament logo and trophy asset URLs
 - team button colors
 - page accent colors
 - accent text colors
@@ -92,9 +92,10 @@ The backend can expose page metadata in the future if the almanac becomes backen
 
 ### Missing Assets Are Allowed During The POC
 
-Some asset paths may point to files that have not been added yet.
+Some asset URLs may point to files that have not been added yet.
 
-The API can still return the intended asset path string. The frontend may visually show a broken image until the asset is added. This is acceptable while we are populating the visual asset set.
+The API can still return the intended absolute asset URL. The frontend may visually show a broken
+image until the object is added. This is acceptable while we are populating the visual asset set.
 
 ### Errors Are Simple For Now
 
@@ -119,7 +120,9 @@ The schema below uses PostgreSQL types. If the backend uses an ORM, the same PK,
 - Use `smallint` for years, shirt numbers, scores, and counts that are naturally small.
 - Use `integer` for aggregate stats that can grow over time.
 - Store visual paint values as plain strings. They may be hex colors, named colors, `rgb(...)`, `hsl(...)`, `linear-gradient(...)`, `radial-gradient(...)`, or future CSS-compatible tokens.
-- Store asset paths as strings for now. If asset metadata becomes important, introduce an `assets` table later.
+- Store provider-neutral asset object keys as strings, without a leading slash or delivery hostname.
+  API services turn those keys into absolute URLs. If asset metadata becomes important, introduce
+  an `assets` table later.
 - Use `ON DELETE RESTRICT` for historical football data. Accidental parent deletion should fail loudly.
 
 ### Shared Types
@@ -322,7 +325,7 @@ Visual identity is data. It should not be recreated in frontend CSS from country
 CREATE TABLE team_visual_identities (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id uuid NOT NULL UNIQUE REFERENCES teams(id) ON DELETE RESTRICT,
-  badge_asset_path text,
+  badge_asset_key text,
   accent text NOT NULL,
   accent_text text NOT NULL,
   spine_color text NOT NULL,
@@ -335,8 +338,8 @@ CREATE TABLE team_visual_identities (
 CREATE TABLE world_cup_visual_identities (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   world_cup_id uuid NOT NULL UNIQUE REFERENCES world_cups(id) ON DELETE RESTRICT,
-  logo_asset_path text,
-  trophy_asset_path text,
+  logo_asset_key text,
+  trophy_asset_key text,
   accent text NOT NULL,
   accent_text text NOT NULL,
   spine_color text NOT NULL,
@@ -349,7 +352,7 @@ CREATE TABLE world_cup_visual_identities (
 CREATE TABLE world_cup_team_visual_identities (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   world_cup_team_id uuid NOT NULL UNIQUE REFERENCES world_cup_teams(id) ON DELETE RESTRICT,
-  badge_asset_path text,
+  badge_asset_key text,
   button_face text NOT NULL,
   button_face_dark text NOT NULL,
   button_side text NOT NULL,
@@ -490,8 +493,8 @@ The backend should return visual identity values as data.
 
 This includes:
 
-- team badge asset paths
-- tournament logo and trophy asset paths
+- team badge asset URLs
+- tournament logo and trophy asset URLs
 - page colors
 - accent text colors
 - spine colors
@@ -502,7 +505,8 @@ Paint values are strings. The backend should not restrict them to hex colors, be
 
 ### Own Asset References, Not Asset Rendering
 
-The backend should return asset references such as badge paths, flag paths, tournament logos, and trophy images.
+The backend should return absolute asset URLs such as badge URLs, flag URLs, tournament logos, and
+trophy images. PostgreSQL stores only the corresponding provider-neutral object keys.
 
 The backend does not need to render those assets or know how they are positioned inside the UI. It only needs to return stable references and the metadata needed for the frontend to render the correct visual identity.
 

@@ -32,7 +32,6 @@ The host flag field is implemented by migration `0004_almanac_edition_host_flag_
 | `name` | `text` | No | Edition display name |
 | `host_display_name` | `text` | No | Current accepted host display value |
 | `host_flag_asset_key` | `text` | Yes | Provider-neutral host-country flag key used by the Editions index |
-| `logo_asset_key` | `text` | Yes | Provider-neutral public asset key |
 | `created_at` | `timestamptz` | No | Defaults to `now()` |
 | `updated_at` | `timestamptz` | No | Defaults to `now()` |
 
@@ -46,8 +45,41 @@ pageNumber   = first edition page + ordered array index
 host.flagUrl = ASSET_BASE_URL + host_flag_asset_key
 ```
 
-`logo_asset_key` remains edition-logo data for other Almanac contexts. The Editions index does not
-return it because that screen displays the host-country flag.
+## `almanac.world_cup_edition_visual_identities`
+
+Owner: Editions domain.
+
+This table stores the optional visual identity for one World Cup edition.
+
+| Column | Type | Null | Rules |
+| --- | --- | --- | --- |
+| `edition_id` | `uuid` | No | Primary key; foreign key to `world_cup_editions.id`; cascades on edition deletion |
+| `logo_asset_key` | `text` | Yes | Provider-neutral edition-logo asset key |
+| `trophy_asset_key` | `text` | Yes | Provider-neutral edition-trophy asset key |
+| `accent_color` | `text` | No | Edition accent color |
+| `accent_text_color` | `text` | No | Text color intended for the accent color |
+| `spine_color` | `text` | No | Edition spine color |
+| `created_at` | `timestamptz` | No | Defaults to `now()` |
+| `updated_at` | `timestamptz` | No | Defaults to `now()` |
+
+Relationship:
+
+```text
+world_cup_editions 1 -> 0..1 world_cup_edition_visual_identities
+```
+
+An edition may exist without a visual-identity row. When the row exists, all three color fields are
+required while both asset keys remain nullable.
+
+The API derives these values instead of storing them:
+
+```text
+logoUrl   = ASSET_BASE_URL + logo_asset_key
+trophyUrl = ASSET_BASE_URL + trophy_asset_key
+```
+
+Page background and surface colors are not part of the accepted schema. Visual-identity values are
+engineer-owned data; the schema and migration do not define or backfill them.
 
 ## `almanac.national_teams`
 
@@ -79,7 +111,10 @@ flagUrl    = ASSET_BASE_URL + flag_asset_key
 
 ## Current Relationships
 
-No accepted relationship exists yet between `national_teams` and `world_cup_editions`.
+The Editions domain owns a one-to-zero-or-one relationship from `world_cup_editions` to
+`world_cup_edition_visual_identities`.
+
+No accepted relationship exists between `national_teams` and `world_cup_editions`.
 
 Edition participation, tournament-specific squads, players, and appearance aggregation require a
 future accepted slice and are not represented in the current schema.

@@ -1,73 +1,34 @@
-import { closeDatabase, db } from '../src/platform/database';
-import { worldCupEditions } from '../src/products/almanac/domains/editions/schema';
-import { nationalTeams } from '../src/products/almanac/domains/teams/schema';
-
-const editions = [
-  {
-    sourceKey: 'fifa-world-cup-2022',
-    year: 2022,
-    name: '2022 FIFA World Cup',
-    hostDisplayName: 'Qatar',
-    logoAssetKey: 'editions/2022-logo.svg',
-  },
-  {
-    sourceKey: 'fifa-world-cup-2018',
-    year: 2018,
-    name: '2018 FIFA World Cup',
-    hostDisplayName: 'Russia',
-    logoAssetKey: 'editions/2018-logo.svg',
-  },
-] as const;
-
-const teams = [
-  {
-    code: 'ARG',
-    displayName: 'Argentina',
-  },
-  {
-    code: 'BRA',
-    displayName: 'Brazil',
-  },
-] as const;
+import { closeDatabase, db } from "../src/platform/database";
+import { seedNationalTeams } from "./seed-almanac/national-teams";
+import { seedWorldCupEditionVisualIdentities } from "./seed-almanac/world-cup-edition-visual-identities";
+import { seedWorldCupEditions } from "./seed-almanac/world-cup-editions";
 
 const seedAlmanac = async (): Promise<void> => {
-  for (const edition of editions) {
-    await db
-      .insert(worldCupEditions)
-      .values(edition)
-      .onConflictDoUpdate({
-        target: worldCupEditions.sourceKey,
-        set: {
-          year: edition.year,
-          name: edition.name,
-          hostDisplayName: edition.hostDisplayName,
-          logoAssetKey: edition.logoAssetKey,
-          updatedAt: new Date(),
-        },
-      });
-  }
+  const result = await db.transaction(async (transaction) => {
+    const updatedAt = new Date();
+    const editions = await seedWorldCupEditions(transaction, updatedAt);
+    const visualIdentityCount = await seedWorldCupEditionVisualIdentities(
+      transaction,
+      updatedAt,
+      editions.bySourceKey,
+    );
+    const nationalTeamCount = await seedNationalTeams(transaction, updatedAt);
 
-  for (const team of teams) {
-    await db
-      .insert(nationalTeams)
-      .values(team)
-      .onConflictDoUpdate({
-        target: nationalTeams.code,
-        set: {
-          displayName: team.displayName,
-          updatedAt: new Date(),
-        },
-      });
-  }
+    return {
+      editionCount: editions.count,
+      visualIdentityCount,
+      nationalTeamCount,
+    };
+  });
 
   console.log(
-    `Seeded ${editions.length} Almanac World Cup editions and ${teams.length} national teams.`
+    `Seeded ${result.editionCount} Almanac World Cup editions, ${result.visualIdentityCount} edition visual identities, and ${result.nationalTeamCount} national teams.`,
   );
 };
 
 seedAlmanac()
-  .catch(error => {
-    console.error('Unable to seed Almanac data', error);
+  .catch((error) => {
+    console.error("Unable to seed Almanac data", error);
     process.exitCode = 1;
   })
   .finally(async () => {

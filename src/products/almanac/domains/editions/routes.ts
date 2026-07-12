@@ -1,11 +1,11 @@
 import express from 'express';
-import { listWorldCupEditions } from './service';
+import { listEditions } from './service';
 
 const editionsRouter = express.Router();
 
 editionsRouter.get('/', async (_req, res) => {
   try {
-    const editions = await listWorldCupEditions();
+    const editions = await listEditions();
 
     res.json({ editions });
   } catch (error) {

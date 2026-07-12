@@ -1,0 +1,1 @@
+ALTER TABLE "almanac"."world_cup_editions" ADD COLUMN "host_flag_asset_key" text;

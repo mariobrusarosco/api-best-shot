@@ -1,26 +1,34 @@
 import { buildPublicAssetUrl } from '../../../../platform/assets/public-asset-url';
-import { listWorldCupEditionRecords } from './repository';
+import { countWorldCupEditionRecords, listEditionIndexRecords } from './repository';
 
-export type WorldCupEditionListItem = {
+const firstEditionPageNumber = 4;
+
+export type EditionIndexItem = {
   id: string;
   year: number;
-  name: string;
-  logoUrl: string | null;
+  path: string;
+  pageNumber: number;
   host: {
     displayName: string;
+    flagUrl: string | null;
   };
 };
 
-export const listWorldCupEditions = async (): Promise<WorldCupEditionListItem[]> => {
-  const editions = await listWorldCupEditionRecords();
+export const listEditions = async (): Promise<EditionIndexItem[]> => {
+  const editions = await listEditionIndexRecords();
 
-  return editions.map(edition => ({
+  return editions.map((edition, index) => ({
     id: edition.id,
     year: edition.year,
-    name: edition.name,
-    logoUrl: buildPublicAssetUrl(edition.logoAssetKey),
+    path: `/editions/${edition.year}`,
+    pageNumber: firstEditionPageNumber + index,
     host: {
       displayName: edition.hostDisplayName,
+      flagUrl: buildPublicAssetUrl(edition.hostFlagAssetKey),
     },
   }));
+};
+
+export const countWorldCupEditions = async (): Promise<number> => {
+  return countWorldCupEditionRecords();
 };

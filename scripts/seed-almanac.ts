@@ -1,5 +1,6 @@
 import { closeDatabase, db } from '../src/platform/database';
 import { worldCupEditions } from '../src/products/almanac/domains/editions/schema';
+import { nationalTeams } from '../src/products/almanac/domains/teams/schema';
 
 const editions = [
   {
@@ -15,6 +16,17 @@ const editions = [
     name: '2018 FIFA World Cup',
     hostDisplayName: 'Russia',
     logoAssetKey: 'editions/2018-logo.svg',
+  },
+] as const;
+
+const teams = [
+  {
+    code: 'ARG',
+    displayName: 'Argentina',
+  },
+  {
+    code: 'BRA',
+    displayName: 'Brazil',
   },
 ] as const;
 
@@ -35,7 +47,22 @@ const seedAlmanac = async (): Promise<void> => {
       });
   }
 
-  console.log(`Seeded ${editions.length} Almanac World Cup editions.`);
+  for (const team of teams) {
+    await db
+      .insert(nationalTeams)
+      .values(team)
+      .onConflictDoUpdate({
+        target: nationalTeams.code,
+        set: {
+          displayName: team.displayName,
+          updatedAt: new Date(),
+        },
+      });
+  }
+
+  console.log(
+    `Seeded ${editions.length} Almanac World Cup editions and ${teams.length} national teams.`
+  );
 };
 
 seedAlmanac()

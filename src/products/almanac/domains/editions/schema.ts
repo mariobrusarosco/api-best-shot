@@ -11,6 +11,7 @@ export const worldCupEditions = almanacSchema.table(
     year: smallint('year').notNull(),
     name: text('name').notNull(),
     hostDisplayName: text('host_display_name').notNull(),
+    hostFlagAssetKey: text('host_flag_asset_key'),
     logoAssetKey: text('logo_asset_key'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

@@ -22,6 +22,20 @@
       "when": 1783797355640,
       "tag": "0002_almanac_edition_logo_asset_key",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783870345142,
+      "tag": "0003_almanac_national_teams",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783881268163,
+      "tag": "0004_almanac_edition_host_flag_asset_key",
+      "breakpoints": true
     }
   ]
 }

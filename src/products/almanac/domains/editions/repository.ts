@@ -1,24 +1,28 @@
-import { desc } from 'drizzle-orm';
+import { count, desc } from 'drizzle-orm';
 import { db } from '../../../../platform/database';
 import { worldCupEditions } from './schema';
 
-export type WorldCupEditionRecord = {
+export type EditionIndexRecord = {
   id: string;
   year: number;
-  name: string;
   hostDisplayName: string;
-  logoAssetKey: string | null;
+  hostFlagAssetKey: string | null;
 };
 
-export const listWorldCupEditionRecords = async (): Promise<WorldCupEditionRecord[]> => {
+export const listEditionIndexRecords = async (): Promise<EditionIndexRecord[]> => {
   return db
     .select({
       id: worldCupEditions.id,
       year: worldCupEditions.year,
-      name: worldCupEditions.name,
       hostDisplayName: worldCupEditions.hostDisplayName,
-      logoAssetKey: worldCupEditions.logoAssetKey,
+      hostFlagAssetKey: worldCupEditions.hostFlagAssetKey,
     })
     .from(worldCupEditions)
     .orderBy(desc(worldCupEditions.year));
+};
+
+export const countWorldCupEditionRecords = async (): Promise<number> => {
+  const [result] = await db.select({ count: count() }).from(worldCupEditions);
+
+  return result.count;
 };

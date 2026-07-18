@@ -28,6 +28,7 @@ domain avoids inventing a separate Goals domain before independent behavior requ
 
 - `src/products/almanac/domains/matches/`
 - One new Drizzle migration containing both match and goal tables.
+- `docs/validated-data/db/matches.json`
 - `scripts/seed-almanac/matches.ts`
 - `scripts/seed-almanac/goals.ts`
 - `scripts/seed-almanac.ts`
@@ -42,6 +43,8 @@ domain avoids inventing a separate Goals domain before independent behavior requ
 - [ ] Preserve own-goal and penalty semantics from validated goal data.
 - [ ] Add score, penalty-shootout, team-distinction, and minute constraints.
 - [ ] Generate exactly one Matches migration for both owned tables.
+- [ ] Add `matches.json` from the validated POC match source.
+- [ ] Verify that tournament, team, match, player, squad, and goal references resolve.
 - [ ] Add an idempotent match seed from `matches.json`.
 - [ ] Add an idempotent goal seed from `goals.json`.
 - [ ] Seed exactly 911 matches and 2,496 goals.
@@ -77,4 +80,3 @@ pnpm build
 - Lineups, appearances, bookings, substitutions, penalties, referees, and stadiums.
 - Cached leaderboard tables.
 - The `/api/almanac/about` endpoint.
-

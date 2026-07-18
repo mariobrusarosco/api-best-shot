@@ -2,16 +2,15 @@
 
 ## Status
 
-- [ ] Blocked by Ticket 00
+- [ ] Ready for implementation
 
 ## Objective
 
 Create the Participations domain that connects a national team to one World Cup edition and stores
 the validated edition-specific finish and tournament statistics.
 
-## Dependency
+## Dependencies
 
-- Ticket 00: Almanac Historical Source Foundation.
 - Existing Editions and Teams domains.
 
 ## Data Ownership
@@ -34,6 +33,7 @@ champions and title droughts. It does not represent a reusable team or a player 
 - `scripts/seed-almanac/world-cup-edition-teams.ts`
 - `scripts/seed-almanac.ts`
 - Existing edition seed data for the validated 1950-2022 source set.
+- `docs/adr/` and the canonical architecture documentation.
 - `docs/almanac-schema.md`
 - Focused Participations tests.
 
@@ -44,6 +44,10 @@ champions and title droughts. It does not represent a reusable team or a player 
 - [ ] Add constraints for positive positions and non-negative statistics.
 - [ ] Generate exactly one Participations migration.
 - [ ] Extend edition seeding to the complete validated 1950-2022 source set.
+- [ ] Verify tournament and participation identifiers against the validated POC source.
+- [ ] Record the accepted schema-only same-product foreign-key dependency rule in an ADR.
+- [ ] Keep routes, services, and repositories prohibited from importing another domain's schema or
+  repository.
 - [ ] Add an idempotent seed from `world_cup_teams.json`.
 - [ ] Seed all 445 validated edition-team participations.
 - [ ] Add repository reads for ordered champions and edition participation facts.
@@ -79,4 +83,3 @@ pnpm build
 - Match and goal records.
 - Cached champion or title-drought aggregate tables.
 - The `/api/almanac/about` endpoint.
-

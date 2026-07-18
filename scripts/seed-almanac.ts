@@ -1,5 +1,6 @@
 import { closeDatabase, db } from "../src/platform/database";
 import { seedNationalTeams } from "./seed-almanac/national-teams";
+import { seedPlayers } from "./seed-almanac/players";
 import { seedWorldCupEditionVisualIdentities } from "./seed-almanac/world-cup-edition-visual-identities";
 import { seedWorldCupEditions } from "./seed-almanac/world-cup-editions";
 
@@ -13,16 +14,18 @@ const seedAlmanac = async (): Promise<void> => {
       editions.bySourceKey,
     );
     const nationalTeamCount = await seedNationalTeams(transaction, updatedAt);
+    const playerCount = await seedPlayers(transaction, updatedAt);
 
     return {
       editionCount: editions.count,
       visualIdentityCount,
       nationalTeamCount,
+      playerCount,
     };
   });
 
   console.log(
-    `Seeded ${result.editionCount} Almanac World Cup editions, ${result.visualIdentityCount} edition visual identities, and ${result.nationalTeamCount} national teams.`,
+    `Seeded ${result.editionCount} Almanac World Cup editions, ${result.visualIdentityCount} edition visual identities, ${result.nationalTeamCount} national teams, and ${result.playerCount} players.`,
   );
 };
 

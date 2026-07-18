@@ -186,6 +186,10 @@ It must not import routes, services, repositories, or Express.
 Use `types.ts` only when a type is shared by more than one domain file or when naming the contract
 improves clarity. A type used by one implementation can remain beside that implementation.
 
+Product-domain types used by supporting scripts, including validated source and seed record types,
+remain owned by the domain and live in its `types.ts`. Seed files consume those types; they do not
+define product-domain record shapes inside `scripts/`.
+
 Do not use database schema types as public API response types. Persistence and HTTP contracts may
 change independently.
 

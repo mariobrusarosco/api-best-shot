@@ -43,6 +43,13 @@
       "when": 1783893133844,
       "tag": "0005_almanac_edition_visual_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784338756732,
+      "tag": "0006_almanac_players",
+      "breakpoints": true
     }
   ]
 }

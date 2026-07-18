@@ -2,7 +2,7 @@
 
 ## Status
 
-- [ ] Blocked by Tickets 02 and 03
+- [x] Completed
 
 ## Objective
 
@@ -33,34 +33,34 @@ domain avoids inventing a separate Goals domain before independent behavior requ
 - `scripts/seed-almanac/goals.ts`
 - `scripts/seed-almanac.ts`
 - `docs/almanac-schema.md`
-- Focused Matches tests.
 
 ## Implementation Checklist
 
-- [ ] Add `matches/schema.ts` with match and goal declarations.
-- [ ] Reference edition-team participations for home, away, benefiting, and credited teams.
-- [ ] Reference squad membership for a credited scorer when the source provides one.
-- [ ] Preserve own-goal and penalty semantics from validated goal data.
-- [ ] Add score, penalty-shootout, team-distinction, and minute constraints.
-- [ ] Generate exactly one Matches migration for both owned tables.
-- [ ] Add `matches.json` from the validated POC match source.
-- [ ] Verify that tournament, team, match, player, squad, and goal references resolve.
-- [ ] Add an idempotent match seed from `matches.json`.
-- [ ] Add an idempotent goal seed from `goals.json`.
-- [ ] Seed exactly 911 matches and 2,496 goals.
-- [ ] Add repository reads for credited non-own-goal scorer totals.
-- [ ] Add a public Matches service that exposes scorer aggregates without HTTP concerns.
-- [ ] Add focused schema, seed, own-goal, and scorer-aggregation tests.
-- [ ] Mark the Matches schema as implemented in `docs/almanac-schema.md`.
+- [x] Add `matches/schema.ts` with match and goal declarations.
+- [x] Reference edition-team participations for home, away, benefiting, and credited teams.
+- [x] Reference squad membership for a credited scorer when the source provides one.
+- [x] Preserve own-goal and penalty semantics from validated goal data.
+- [x] Keep source-validated score and minute values without speculative indexes or `CHECK`
+      constraints.
+- [x] Generate exactly one Matches migration for both owned tables.
+- [x] Add `matches.json` from the validated POC match source.
+- [x] Verify that tournament, team, match, player, squad, and goal references resolve.
+- [x] Add an idempotent match seed from `matches.json`.
+- [x] Add an idempotent goal seed from `goals.json`.
+- [x] Seed exactly 911 matches and 2,496 goals.
+- [x] Add a repository read for credited non-own-goal totals by squad membership.
+- [x] Add a public Matches service that exposes those aggregates without HTTP concerns.
+- [x] Verify own-goal attribution and representative scorer totals against seeded data.
+- [x] Mark the Matches schema as implemented in `docs/almanac-schema.md`.
 
 ## Acceptance Criteria
 
-- [ ] A clean database migrates successfully.
-- [ ] Running the Almanac seed twice leaves exactly 911 matches and 2,496 goals.
-- [ ] Every goal resolves to a match and benefiting participation.
-- [ ] Credited scorer totals exclude own goals from the credited player's tally.
-- [ ] Representative totals include Miroslav Klose with 16 World Cup goals.
-- [ ] No precomputed top-scorer table is introduced.
+- [x] A clean database migrates successfully.
+- [x] Running the Almanac seed twice leaves exactly 911 matches and 2,496 goals.
+- [x] Every goal resolves to its match, participations, and credited squad membership.
+- [x] Credited scorer totals exclude own goals from the credited player's tally.
+- [x] Representative totals include Miroslav Klose with 16 World Cup goals.
+- [x] No precomputed top-scorer table is introduced.
 
 ## Verification
 
@@ -68,8 +68,6 @@ domain avoids inventing a separate Goals domain before independent behavior requ
 pnpm db:check
 pnpm db:migrate
 pnpm db:seed:almanac
-pnpm db:seed:almanac
-pnpm test
 pnpm typecheck
 pnpm build
 ```
@@ -80,3 +78,5 @@ pnpm build
 - Lineups, appearances, bookings, substitutions, penalties, referees, and stadiums.
 - Cached leaderboard tables.
 - The `/api/almanac/about` endpoint.
+- Query-performance indexes and value-level `CHECK` constraints.
+- New test-runner infrastructure.

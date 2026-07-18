@@ -1,7 +1,7 @@
 import { worldCupEditionVisualIdentities } from "../../src/products/almanac/domains/editions/schema";
 import type { SeedTransaction } from "./database";
 import { assetPlaceholder, readSeedSource } from "./source";
-import type { SeededEdition } from "./world-cup-editions";
+import type { SeededEdition } from "../../src/products/almanac/domains/editions/types";
 
 type EditionVisualIdentitySource = {
   worldCupId: string;

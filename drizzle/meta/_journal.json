@@ -50,6 +50,13 @@
       "when": 1784338756732,
       "tag": "0006_almanac_players",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784339464388,
+      "tag": "0007_almanac_participations",
+      "breakpoints": true
     }
   ]
 }

@@ -181,6 +181,11 @@ normalize database rows, while the service owns the final response shape.
 
 It must not import routes, services, repositories, or Express.
 
+A schema module may import another domain's schema module only to declare an accepted foreign key
+between tables in the same product schema. This narrow exception is defined by
+[ADR 0003](../adr/0003-same-product-schema-foreign-keys.md); it does not permit cross-domain runtime
+queries or behavior.
+
 ### Types
 
 Use `types.ts` only when a type is shared by more than one domain file or when naming the contract
@@ -195,7 +200,10 @@ change independently.
 
 ## Cross-Domain Rules
 
-- A domain must never import another domain's `repository.ts` or `schema.ts`.
+- A domain must never import another domain's `repository.ts`.
+- Routes, services, and repositories must never import another domain's `schema.ts`.
+- A `schema.ts` may import another same-product domain's `schema.ts` only for an accepted foreign
+  key dependency documented by ADR 0003.
 - A service may call another domain's public service for a small, explicit, one-way dependency.
 - A workflow coordinating several peer domains should move to a clearly named product-level
   orchestration module after a concrete use case demonstrates that need.

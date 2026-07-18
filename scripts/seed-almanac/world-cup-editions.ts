@@ -1,20 +1,12 @@
 import { worldCupEditions } from "../../src/products/almanac/domains/editions/schema";
+import type {
+  SeededEdition,
+  TournamentSourceRecord,
+} from "../../src/products/almanac/domains/editions/types";
 import type { SeedTransaction } from "./database";
 import { assetPlaceholder, readSeedSource } from "./source";
 
-type TournamentSource = {
-  id: string;
-  year: number;
-  name: string;
-  hostCountry: string;
-};
-
-export type SeededEdition = {
-  id: string;
-  year: number;
-};
-
-const tournaments = readSeedSource<TournamentSource>("tournaments.json");
+const tournaments = readSeedSource<TournamentSourceRecord>("tournaments.json");
 
 export const seedWorldCupEditions = async (
   transaction: SeedTransaction,

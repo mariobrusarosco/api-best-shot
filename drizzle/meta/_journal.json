@@ -57,6 +57,13 @@
       "when": 1784339464388,
       "tag": "0007_almanac_participations",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784342066387,
+      "tag": "0008_almanac_squads",
+      "breakpoints": true
     }
   ]
 }

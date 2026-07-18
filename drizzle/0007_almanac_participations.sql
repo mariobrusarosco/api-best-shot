@@ -22,5 +22,4 @@ ALTER TABLE "almanac"."world_cup_edition_teams" ADD CONSTRAINT "world_cup_editio
 ALTER TABLE "almanac"."world_cup_edition_teams" ADD CONSTRAINT "world_cup_edition_teams_team_id_national_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "almanac"."national_teams"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "world_cup_edition_teams_source_key_unique" ON "almanac"."world_cup_edition_teams" USING btree ("source_key");--> statement-breakpoint
 CREATE UNIQUE INDEX "world_cup_edition_teams_edition_team_unique" ON "almanac"."world_cup_edition_teams" USING btree ("edition_id","team_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "world_cup_edition_teams_edition_final_position_unique" ON "almanac"."world_cup_edition_teams" USING btree ("edition_id","final_position");--> statement-breakpoint
-CREATE INDEX "world_cup_edition_teams_team_id_index" ON "almanac"."world_cup_edition_teams" USING btree ("team_id");
+CREATE UNIQUE INDEX "world_cup_edition_teams_edition_final_position_unique" ON "almanac"."world_cup_edition_teams" USING btree ("edition_id","final_position");

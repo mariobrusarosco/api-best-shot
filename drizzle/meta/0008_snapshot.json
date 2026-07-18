@@ -1,6 +1,6 @@
 {
-  "id": "3e9f3803-4a5a-4854-8b30-79af48afeacf",
-  "prevId": "503d9e3f-7a66-41a6-bad1-82b508ce5e73",
+  "id": "d91b7495-7aa7-4818-8a4e-6f4315f9b756",
+  "prevId": "3e9f3803-4a5a-4854-8b30-79af48afeacf",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -467,6 +467,136 @@
         }
       },
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "almanac.world_cup_squad_players": {
+      "name": "world_cup_squad_players",
+      "schema": "almanac",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "source_key": {
+          "name": "source_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "participation_id": {
+          "name": "participation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shirt_number": {
+          "name": "shirt_number",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position_code": {
+          "name": "position_code",
+          "type": "varchar(2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "world_cup_squad_players_source_key_unique": {
+          "name": "world_cup_squad_players_source_key_unique",
+          "columns": [
+            {
+              "expression": "source_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "world_cup_squad_players_participation_player_unique": {
+          "name": "world_cup_squad_players_participation_player_unique",
+          "columns": [
+            {
+              "expression": "participation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "player_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "world_cup_squad_players_participation_id_world_cup_edition_teams_id_fk": {
+          "name": "world_cup_squad_players_participation_id_world_cup_edition_teams_id_fk",
+          "tableFrom": "world_cup_squad_players",
+          "tableTo": "world_cup_edition_teams",
+          "schemaTo": "almanac",
+          "columnsFrom": [
+            "participation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "world_cup_squad_players_player_id_players_id_fk": {
+          "name": "world_cup_squad_players_player_id_players_id_fk",
+          "tableFrom": "world_cup_squad_players",
+          "tableTo": "players",
+          "schemaTo": "almanac",
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

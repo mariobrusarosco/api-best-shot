@@ -4,6 +4,7 @@ import { seedPlayers } from "./seed-almanac/players";
 import { seedWorldCupEditionVisualIdentities } from "./seed-almanac/world-cup-edition-visual-identities";
 import { seedWorldCupEditionTeams } from "./seed-almanac/world-cup-edition-teams";
 import { seedWorldCupEditions } from "./seed-almanac/world-cup-editions";
+import { seedWorldCupSquadPlayers } from "./seed-almanac/world-cup-squad-players";
 
 const seedAlmanac = async (): Promise<void> => {
   const result = await db.transaction(async (transaction) => {
@@ -22,6 +23,7 @@ const seedAlmanac = async (): Promise<void> => {
       editions.bySourceKey,
       nationalTeams.bySourceKey,
     );
+    const squadPlayerCount = await seedWorldCupSquadPlayers(transaction, updatedAt);
 
     return {
       editionCount: editions.count,
@@ -29,11 +31,12 @@ const seedAlmanac = async (): Promise<void> => {
       nationalTeamCount: nationalTeams.count,
       playerCount,
       participationCount,
+      squadPlayerCount,
     };
   });
 
   console.log(
-    `Seeded ${result.editionCount} Almanac World Cup editions, ${result.visualIdentityCount} edition visual identities, ${result.nationalTeamCount} national teams, ${result.playerCount} players, and ${result.participationCount} edition-team participations.`,
+    `Seeded ${result.editionCount} Almanac World Cup editions, ${result.visualIdentityCount} edition visual identities, ${result.nationalTeamCount} national teams, ${result.playerCount} players, ${result.participationCount} edition-team participations, and ${result.squadPlayerCount} squad-player memberships.`,
   );
 };
 

@@ -1,5 +1,4 @@
 import {
-  index,
   pgSchema,
   smallint,
   text,
@@ -53,6 +52,5 @@ export const worldCupEditionTeams = almanacSchema.table(
       table.editionId,
       table.finalPosition,
     ),
-    index("world_cup_edition_teams_team_id_index").on(table.teamId),
   ],
 );
